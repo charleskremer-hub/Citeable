@@ -90,7 +90,7 @@ export default function Home() {
         style={{
           maxWidth: "64rem",
           margin: "0 auto",
-          padding: "7rem 1.5rem 5rem",
+          padding: "2rem 1.5rem 5rem",
           position: "relative",
         }}
       >
@@ -113,7 +113,7 @@ export default function Home() {
             display: "inline-flex",
             alignItems: "center",
             gap: "8px",
-            marginBottom: "2rem",
+            marginBottom: "1rem",
           }}>
             <span style={{
               width: "6px",
@@ -139,12 +139,12 @@ export default function Home() {
             className="animate-fade-up-1"
             style={{
               fontFamily: "var(--font-display)",
-              fontSize: "clamp(2.8rem, 7vw, 5.5rem)",
+              fontSize: "clamp(2.5rem, 5vw, 3.75rem)",
               lineHeight: 1.02,
               letterSpacing: "-0.03em",
               color: "#F0F0EC",
               maxWidth: "820px",
-              marginBottom: "1.75rem",
+              marginBottom: "1rem",
             }}
           >
             Make your brand<br />
@@ -155,11 +155,11 @@ export default function Home() {
           <p
             className="animate-fade-up-2"
             style={{
-              fontSize: "1.15rem",
-              lineHeight: 1.7,
+              fontSize: "1.05rem",
+              lineHeight: 1.6,
               color: "#9999A8",
               maxWidth: "520px",
-              marginBottom: "3rem",
+              marginBottom: "1.5rem",
             }}
           >
             We audit and optimize how your brand appears across{" "}
