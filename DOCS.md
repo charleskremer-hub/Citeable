@@ -42,3 +42,9 @@
   - Reachable: `Brave web_search snippets`, `Perplexity.ai public search page`.
   - Unavailable with reasons: `ChatGPT web answer`, `You.com AI answer`, `Phind AI search`, `Google AI Overviews`, `Gemini web answer`, `Microsoft Copilot web answer`.
 - Test audit ID: `fca1de1c-6b6e-4147-8cca-2b343e2af349`.
+
+### Production verification after deploy
+- Commit `c739249` deployed to `https://getciteable.nanocorp.app` and the homepage snapshot showed the three required fields: `Acme SAS`, `https://acme.fr`, and `your@company.com`.
+- Production API test audit for `Citeable` / `https://getciteable.nanocorp.app` returned score `23/100` with audit ID `54d030c6-6ddb-4f1c-aa18-1e17f113a1b1`.
+- Production reachable engines: `Brave web_search snippets`, `Perplexity.ai public search page`.
+- Production unavailable engines were reported with reasons: `ChatGPT web answer`, `You.com AI answer`, `Phind AI search`, `Google AI Overviews`, `Gemini web answer`, `Microsoft Copilot web answer`.
