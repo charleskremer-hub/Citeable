@@ -54,5 +54,13 @@ Custom event: `audit_requested` fired on successful email capture.
 ## Environment Variables (Vercel)
 - `DATABASE_URL` — PostgreSQL connection string (already configured)
 
+## Stripe / Payments
+- **Product:** "Citeable Pro" — product_id: `ff0f93b1-af69-4b70-ae3e-40f4f7ebb44c`
+- **Price:** €49/month (4900 cents)
+- **Checkout URL (live):** `https://checkout.nanocorp.so/c/xkA3ynsSsBvwhaUaVlZG` — hardcoded in Pro pricing card
+- **Test Checkout URL:** `https://checkout.nanocorp.so/c/gHYEq8kMS9dqu0m8TTHZ`
+- Test card: 4242 4242 4242 4242 (any future expiry, any CVC)
+
 ## Task History
 - **2026-07-04:** Scaffolded Next.js app from empty repo, built landing page, deployed to Vercel. Commit: `8de1b83`.
+- **2026-07-04:** Created Citeable Pro Stripe product (€49/mo), wired checkout_url into Pro pricing card, removed button from Free card, relabeled "Ongoing Monitoring" → "Citeable Pro". Commit: `c41b039`.
