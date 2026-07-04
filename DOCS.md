@@ -77,3 +77,21 @@
 ### Verification notes
 - `nanocorp emails list --direction outbound --limit 12` showed the 10 outbound messages from `getciteable@nanocorp.app` with the requested subject.
 - `nanocorp emails list --direction inbound --limit 5` returned no inbound emails immediately after sending; no bounces or errors were observed during the task window.
+
+## 2026-07-04 — Fix capture form fold position
+
+### Problem
+On 1280×577px viewport, the email capture form was positioned at ~587px from the top — just below the fold, making it invisible without scroll.
+
+### Changes made (commit `0d1bd94`)
+- `src/app/page.tsx` hero section only; no copywriting changes.
+- Hero `padding-top`: `7rem` → `2rem` (saved 80px)
+- Eyebrow `marginBottom`: `2rem` → `1rem` (saved 16px)
+- H1 `font-size`: `clamp(2.8rem, 7vw, 5.5rem)` → `clamp(2.5rem, 5vw, 3.75rem)` (saved ~58px of vertical height)
+- H1 `marginBottom`: `1.75rem` → `1rem` (saved 12px)
+- Subheadline `font-size`: `1.15rem` → `1.05rem`, `lineHeight`: `1.7` → `1.6`, `marginBottom`: `3rem` → `1.5rem`
+
+### Result
+- Form top measured at **396.9px** on 1280×577 viewport (below 400px target ✓).
+- All inputs + "Get free audit →" button fully visible within 577px viewport height.
+- Mobile (375px) layout remains centered and readable.
