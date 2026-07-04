@@ -410,23 +410,6 @@ export default function Home() {
                 </li>
               ))}
             </ul>
-            <a
-              href="#audit"
-              style={{
-                display: "block",
-                textAlign: "center",
-                padding: "11px 20px",
-                borderRadius: "8px",
-                border: "1px solid rgba(202,255,60,0.3)",
-                color: "#CAFF3C",
-                fontWeight: 600,
-                fontSize: "0.875rem",
-                textDecoration: "none",
-                transition: "background 0.15s ease",
-              }}
-            >
-              Get your free audit
-            </a>
           </div>
 
           {/* Pro tier */}
@@ -460,7 +443,7 @@ export default function Home() {
               color: "#CAFF3C",
               marginBottom: "1rem",
             }}>
-              Ongoing Monitoring
+              Citeable Pro
             </div>
             <div style={{
               fontFamily: "var(--font-display)",
@@ -487,7 +470,8 @@ export default function Home() {
               ))}
             </ul>
             <a
-              href="#audit"
+              href="https://checkout.nanocorp.so/c/xkA3ynsSsBvwhaUaVlZG"
+              onClick={() => window.posthog?.capture("subscribe_clicked", { plan: "pro", source: "pricing_card" })}
               style={{
                 display: "block",
                 textAlign: "center",
@@ -500,7 +484,7 @@ export default function Home() {
                 textDecoration: "none",
               }}
             >
-              Start with free audit →
+              Start monitoring →
             </a>
           </div>
         </div>
