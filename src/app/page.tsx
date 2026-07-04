@@ -4,24 +4,37 @@ import { useState } from "react";
 
 export default function Home() {
   const [email, setEmail] = useState("");
+  const [brandName, setBrandName] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!email) return;
+    if (!email || !brandName || !websiteUrl) return;
     setStatus("loading");
     setErrorMsg("");
     try {
       const res = await fetch("/api/capture-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, brand_name: brandName, website_url: websiteUrl }),
       });
-      if (!res.ok) throw new Error("Failed");
-      setStatus("success");
-      setEmail("");
-      window.posthog?.capture("audit_requested", { source: "hero_cta" });
+      const data = await res.json();
+      if (!res.ok || !data.audit_id) throw new Error(data.error ?? "Failed");
+      window.posthog?.capture("audit_requested", { source: "hero_cta", brand_name: brandName });
+      void fetch("/api/run-audit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          brand_name: brandName,
+          website_url: websiteUrl,
+          audit_id: data.audit_id,
+        }),
+        keepalive: true,
+      }).catch(() => undefined);
+      window.location.href = `/audit/${data.audit_id}`;
     } catch {
       setStatus("error");
       setErrorMsg("Something went wrong. Please try again.");
@@ -176,7 +189,41 @@ export default function Home() {
                 <span>You&apos;re on the list — we&apos;ll be in touch with your free audit.</span>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "12px", maxWidth: "480px" }}>
+              <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "12px", maxWidth: "520px" }}>
+                <input
+                  type="text"
+                  required
+                  placeholder="Acme SAS"
+                  value={brandName}
+                  onChange={(e) => setBrandName(e.target.value)}
+                  style={{
+                    padding: "14px 18px",
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: "10px",
+                    outline: "none",
+                    color: "#F0F0EC",
+                    fontSize: "0.95rem",
+                    fontFamily: "var(--font-sans)",
+                  }}
+                />
+                <input
+                  type="url"
+                  required
+                  placeholder="https://acme.fr"
+                  value={websiteUrl}
+                  onChange={(e) => setWebsiteUrl(e.target.value)}
+                  style={{
+                    padding: "14px 18px",
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: "10px",
+                    outline: "none",
+                    color: "#F0F0EC",
+                    fontSize: "0.95rem",
+                    fontFamily: "var(--font-sans)",
+                  }}
+                />
                 <div style={{ display: "flex", gap: "0", borderRadius: "10px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)" }}>
                   <input
                     type="email"
@@ -186,6 +233,7 @@ export default function Home() {
                     onChange={(e) => setEmail(e.target.value)}
                     style={{
                       flex: 1,
+                      minWidth: 0,
                       padding: "14px 18px",
                       background: "transparent",
                       border: "none",
@@ -213,14 +261,14 @@ export default function Home() {
                       transition: "opacity 0.15s ease",
                     }}
                   >
-                    {status === "loading" ? "Sending…" : "Get free audit →"}
+                    {status === "loading" ? "Running…" : "Get free audit →"}
                   </button>
                 </div>
                 {errorMsg && (
                   <p style={{ color: "#FF5F5F", fontSize: "0.85rem", margin: 0 }}>{errorMsg}</p>
                 )}
                 <p style={{ color: "#555566", fontSize: "0.8rem", margin: 0 }}>
-                  No credit card required · Results in 48h
+                  No credit card required · Live AI-engine report starts immediately
                 </p>
               </form>
             )}
