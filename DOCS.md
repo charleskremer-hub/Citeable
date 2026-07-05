@@ -198,3 +198,33 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - Form top measured at **396.9px** on 1280×577 viewport (below 400px target ✓).
 - All inputs + "Get free audit →" button fully visible within 577px viewport height.
 - Mobile (375px) layout remains centered and readable.
+
+## 2026-07-05 — Fix website URL field and production audit queue
+
+### Findings
+- Per `AGENTS.md`, installed dependencies and read local Next.js 16.2 docs before route changes:
+  - `node_modules/next/dist/docs/01-app/01-getting-started/15-route-handlers.md`
+  - `node_modules/next/dist/docs/01-app/03-api-reference/04-functions/after.md`
+  - `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/02-route-segment-config/maxDuration.md`
+- The homepage website field was `type="url"`, so browsers rejected bare domains like `www.keyban.fr` before the app could normalize them.
+- The audit was queued by `/api/capture-email`, then started by a client-side fire-and-forget `/api/run-audit` call from `src/app/page.tsx`; this is unreliable in production because the browser can navigate before the request runs.
+- Production had `NANOCORP_TOKEN`, `NANOCORP_BACKEND_URL`, and `DATABASE_URL` configured, but recent failed audits showed `NanoCorp web_fetch failed with HTTP 401` and `NanoCorp send_email failed with HTTP 401`, indicating the production `NANOCORP_TOKEN` secret is invalid/expired.
+- The worker sandbox `NANOCORP_TOKEN` successfully called the internal NanoCorp `web_search` and `web_fetch` tools, but `nanocorp whoami --json` showed it expires at `2026-07-05T19:18:17.451958Z`, so it must not be used as a durable production secret.
+
+### Changes made
+- Changed the homepage website input in `src/app/page.tsx` from `type="url"` to `type="text"` with URL-friendly input hints so bare domains are accepted by the browser.
+- Strengthened `normalizeWebsiteUrl()` in `src/lib/audit-engine.ts` to accept `keyban.fr`, `www.keyban.fr`, and `https://keyban.fr`, prepend `https://` when no scheme is present, lowercase the hostname, and reject only clearly invalid/non-domain values.
+- Removed the client fire-and-forget audit start from the homepage submit handler.
+- Updated `/api/capture-email` to use Next.js `after()` and start `runQueuedAudit()` server-side after returning the queued audit id.
+- Added `runQueuedAudit()` with a Postgres advisory lock so the capture route and audit poller can safely race without double-running prompts.
+- Changed `runAudit()` to hard-fail if zero NanoCorp prompts run, instead of completing a misleading `0/100` report with `0/0 prompts`.
+- Updated `/api/run-audit` to use the shared queued runner and surface failed audit state instead of repeatedly retrying silently.
+- Updated the audit report page to stop polling and display a clear failed state when server-side NanoCorp tools cannot run.
+
+### Verification
+- `npm run build` passed on Next.js 16.2.10.
+- Local built-server smoke test posted `website_url: "www.keyban.fr"` to `/api/capture-email`; the stored URL normalized to `https://www.keyban.fr/`.
+- Local built-server smoke audit completed with audit ID `5a6545c7-0147-4cba-b02a-38256f06092d`, score `90/100`, 2 reachable engines out of 8 listed engines, and `emailSent=true` using the sandbox token.
+
+### Production follow-up
+- A durable production NanoCorp API token is still required in the existing `NANOCORP_TOKEN` Vercel secret if live production tests continue to return HTTP 401 from NanoCorp tools.

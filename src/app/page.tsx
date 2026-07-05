@@ -35,17 +35,6 @@ export default function Home() {
       const data = await res.json();
       if (!res.ok || !data.audit_id) throw new Error(data.error ?? "Failed");
       window.posthog?.capture("audit_requested", { source: "hero_cta", brand_name: brandName });
-      void fetch("/api/run-audit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          brand_name: brandName,
-          website_url: websiteUrl,
-          audit_id: data.audit_id,
-        }),
-        keepalive: true,
-      }).catch(() => undefined);
       window.location.href = `/audit/${data.audit_id}`;
     } catch {
       setStatus("error");
@@ -120,9 +109,12 @@ export default function Home() {
                   <label className="sr-only" htmlFor="website-url">Website</label>
                   <input
                     id="website-url"
-                    type="url"
+                    type="text"
                     required
-                    placeholder="https://yourbusiness.com"
+                    placeholder="yourbusiness.com"
+                    inputMode="url"
+                    autoCapitalize="none"
+                    autoCorrect="off"
                     value={websiteUrl}
                     onChange={(e) => setWebsiteUrl(e.target.value)}
                     style={inputStyle}

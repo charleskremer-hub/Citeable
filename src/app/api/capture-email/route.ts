@@ -1,6 +1,20 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
-import { validateAuditInput } from "@/lib/audit-engine";
+import { runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
+
+export const maxDuration = 60;
+
+function startQueuedAudit(auditId: string) {
+  after(async () => {
+    try {
+      const result = await runQueuedAudit(auditId);
+      console.log(`[citeable] audit ${auditId} ${result.status}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Audit failed";
+      console.error(`[citeable] audit ${auditId} failed: ${message}`);
+    }
+  });
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,9 +38,11 @@ export async function POST(req: NextRequest) {
       [email, brandName, websiteUrl, { status: "queued", queuedAt: new Date().toISOString() }]
     );
 
-    console.log(`[citeable] audit queued: ${audit.rows[0].id} for ${email}`);
+    const auditId = audit.rows[0].id;
+    console.log(`[citeable] audit queued: ${auditId} for ${email}`);
+    startQueuedAudit(auditId);
 
-    return NextResponse.json({ ok: true, audit_id: audit.rows[0].id });
+    return NextResponse.json({ ok: true, audit_id: auditId, website_url: websiteUrl });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Invalid request";
     return NextResponse.json({ error: message }, { status: 400 });

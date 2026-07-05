@@ -17,6 +17,7 @@ type AuditRow = {
   fixes: string[] | null;
   raw_results: {
     status?: string;
+    error?: string;
     formula?: string;
     structuredDataFound?: boolean;
     category?: string;
@@ -67,6 +68,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
 
   if (!audit) notFound();
 
+  const failed = audit.raw_results?.status === "failed";
   const complete = audit.score !== null;
   const engines = audit.engines_checked ?? [];
   const competitors = audit.competitors_found ?? [];
@@ -81,7 +83,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
         email={audit.email}
         brandName={audit.brand_name}
         websiteUrl={audit.website_url}
-        complete={complete}
+        complete={complete || failed}
       />
 
       <section style={{ maxWidth: "72rem", margin: "0 auto", padding: "3rem 1.5rem 5rem" }}>
@@ -96,13 +98,18 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
 
         <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 220px", gap: "2rem", alignItems: "center", marginBottom: "2rem" }}>
           <div>
-            <Pill tone={complete ? "green" : "orange"}>{complete ? "Audit complete" : "Audit running — refreshing every 3s"}</Pill>
+            <Pill tone={failed ? "red" : complete ? "green" : "orange"}>{failed ? "Audit failed" : complete ? "Audit complete" : "Audit running — refreshing every 3s"}</Pill>
             <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(2.4rem, 6vw, 4.5rem)", lineHeight: 1, margin: "1rem 0", letterSpacing: "-0.03em" }}>
               AI Visibility Report for {audit.brand_name}
             </h1>
             <p style={{ color: "#9999A8", fontSize: "1rem", lineHeight: 1.7, maxWidth: "720px" }}>
               Live audit for <a href={audit.website_url} style={{ color: "#CAFF3C" }}>{audit.website_url}</a>. Results use only reachable NanoCorp web_search/web_fetch data; unavailable engines are listed honestly.
             </p>
+            {failed && (
+              <p style={{ marginTop: "1rem", color: "#FF8A8A", fontWeight: 700, lineHeight: 1.6, maxWidth: "720px" }}>
+                The audit could not run because the server-side NanoCorp tools failed: {audit.raw_results?.error ?? "Unknown error"}
+              </p>
+            )}
           </div>
 
           <div

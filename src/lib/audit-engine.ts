@@ -55,9 +55,26 @@ type WebFetchResult = {
   total_chars?: number;
 };
 
-function normalizeWebsiteUrl(input: string) {
-  const withProtocol = /^https?:\/\//i.test(input.trim()) ? input.trim() : `https://${input.trim()}`;
+export function normalizeWebsiteUrl(input: string) {
+  const raw = input.trim();
+
+  if (!raw || /\s/.test(raw)) {
+    throw new Error("Website must be a domain like keyban.fr, www.keyban.fr, or https://keyban.fr.");
+  }
+
+  const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
   const url = new URL(withProtocol);
+  const hostname = url.hostname.toLowerCase();
+
+  if (url.protocol !== "https:" && url.protocol !== "http:") {
+    throw new Error("Website must start with http:// or https:// when a scheme is included.");
+  }
+
+  if (hostname !== "localhost" && !/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/i.test(hostname)) {
+    throw new Error("Website must be a domain like keyban.fr, www.keyban.fr, or https://keyban.fr.");
+  }
+
+  url.hostname = hostname;
   return url.toString();
 }
 
@@ -81,7 +98,7 @@ export function validateAuditInput(input: Record<string, unknown>) {
   return { email, brandName, websiteUrl: normalizeWebsiteUrl(rawWebsiteUrl) };
 }
 
-async function callNanoTool<T>(toolName: string, args: Record<string, unknown>) {
+export async function callNanoTool<T>(toolName: string, args: Record<string, unknown>) {
   if (!process.env.NANOCORP_TOKEN) {
     throw new Error("NANOCORP_TOKEN is not configured for server-side NanoCorp tool access.");
   }
@@ -98,7 +115,8 @@ async function callNanoTool<T>(toolName: string, args: Record<string, unknown>) 
   const payload = (await response.json().catch(() => ({}))) as ToolEnvelope<T>;
 
   if (!response.ok || payload.error || payload.success === false) {
-    throw new Error(payload.error ?? `NanoCorp ${toolName} failed with HTTP ${response.status}`);
+    const detail = typeof payload.detail === "string" ? `: ${payload.detail}` : "";
+    throw new Error(payload.error ?? `NanoCorp ${toolName} failed with HTTP ${response.status}${detail}`);
   }
 
   if (!payload.result) {
@@ -542,6 +560,13 @@ export async function runAudit(args: { auditId?: string; email: string; brandNam
 
   const engines = [...reachableEngines, ...unavailableEngines()];
   const scoredPromptResults = reachableEngines.flatMap((engine) => engine.promptResults);
+
+  if (scoredPromptResults.length === 0) {
+    const reasons = reachableEngines
+      .map((engine) => `${engine.engine}: ${engine.unavailableReason ?? "no prompt results"}`)
+      .join("; ");
+    throw new Error(`No NanoCorp prompts ran. Check NANOCORP_TOKEN production secret and NanoCorp tool access. ${reasons}`);
+  }
   const { score, formula } = calculateScore(scoredPromptResults, structuredDataFound);
   const competitors = [
     ...new Set(reachableEngines.flatMap((engine) => engine.competitors).filter((name) => !includesBrand(name, args.brandName))),
@@ -615,4 +640,79 @@ export async function runAudit(args: { auditId?: string; email: string; brandNam
   );
 
   return report;
+}
+
+export async function runQueuedAudit(auditId: string) {
+  await pool.query(
+    `UPDATE audits
+     SET raw_results = raw_results || $2::jsonb
+     WHERE id = $1 AND score IS NULL`,
+    [auditId, JSON.stringify({ status: "starting", startedAt: new Date().toISOString() })]
+  );
+
+  const lockClient = await pool.connect();
+  try {
+    const lock = await lockClient.query<{ locked: boolean }>(
+      `SELECT pg_try_advisory_lock(hashtext($1)) AS locked`,
+      [auditId]
+    );
+
+    if (!lock.rows[0]?.locked) {
+      return { audit_id: auditId, status: "running" as const };
+    }
+
+    const existing = await lockClient.query<{
+      id: string;
+      email: string;
+      brand_name: string;
+      website_url: string;
+      score: number | null;
+    }>(`SELECT id, email, brand_name, website_url, score FROM audits WHERE id = $1`, [auditId]);
+
+    const audit = existing.rows[0];
+    if (!audit) {
+      throw new Error(`Audit ${auditId} was not found.`);
+    }
+
+    if (audit.score !== null && audit.score !== undefined) {
+      return { audit_id: audit.id, status: "complete" as const, score: audit.score };
+    }
+
+    await lockClient.query(
+      `UPDATE audits
+       SET raw_results = raw_results || $2::jsonb
+       WHERE id = $1 AND score IS NULL`,
+      [auditId, JSON.stringify({ status: "running", startedAt: new Date().toISOString() })]
+    );
+
+    try {
+      const report = await runAudit({
+        auditId,
+        email: audit.email,
+        brandName: audit.brand_name,
+        websiteUrl: audit.website_url,
+      });
+
+      return { audit_id: report.audit_id, status: "complete" as const, score: report.score, report };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Audit failed";
+      await lockClient.query(
+        `UPDATE audits
+         SET raw_results = raw_results || $2::jsonb
+         WHERE id = $1 AND score IS NULL`,
+        [
+          auditId,
+          JSON.stringify({
+            status: "failed",
+            error: message,
+            failedAt: new Date().toISOString(),
+          }),
+        ]
+      );
+      throw error;
+    }
+  } finally {
+    await lockClient.query(`SELECT pg_advisory_unlock(hashtext($1))`, [auditId]).catch(() => undefined);
+    lockClient.release();
+  }
 }
