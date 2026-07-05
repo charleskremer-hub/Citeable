@@ -1,4 +1,37 @@
 
+## 2026-07-05 — Meta Ads geo-targeting access check
+
+### Findings
+- `nanocorp ads list` is read-only; its help text says ads are controlled by the owner from the company dashboard and the CLI can only list campaigns/view performance.
+- No local environment variables or repo references were found for Meta/Facebook/Graph API credentials.
+- `nanocorp docs list` showed only the LinkedIn launch-post document; no Meta access notes were available.
+- Meta Ads Manager browser access reached a login wall at `business.facebook.com`, with options to continue with Facebook/Instagram or a managed Meta account; no authenticated session was available in the worker browser.
+- Active Citeable ads data available through the read-only CLI:
+  - Campaign local ID: `49b54812-ad64-42d0-bcd2-09344457d29f`
+  - Status/effective status: `ACTIVE` / `ACTIVE`
+  - Creative status: `READY`
+  - Destination URL: `https://getciteable.nanocorp.app?utm_source=facebook&utm_medium=paid_social&utm_campaign=49b54812-ad64-42d0-bcd2-09344457d29f`
+  - Daily cap: `$4/day`
+  - Countries returned by read-only CLI: `FR`, `BE`, `CH`, `DE`, `NL`, `GB`, `US`, `CA`
+  - Latest sync timestamp returned by CLI: `2026-07-05T12:00:31.354116`
+
+### Result
+- Programmatic/API write access was unavailable, so the targeting was not changed by the worker.
+- As of the read-only CLI snapshot, `FR`, `BE`, `CH`, `DE`, and `NL` were still present and need to be removed by the owner/admin.
+- `US`, `GB`, and `CA` were present in the read-only CLI data. `AU` was not returned by the CLI snapshot, so Charles should verify/add Australia in Ads Manager if it is missing.
+- Daily budget/cap remained `$4/day`; no budget change was made.
+
+### Manual steps for Charles
+1. Open Meta Ads Manager for Citeable and log in with the Meta account that owns or administers the Citeable ad account.
+2. Go to the campaign/ad set table and filter to active items only.
+3. Open each active ad set that sends traffic to `getciteable.nanocorp.app`.
+4. Click `Edit`, then open the `Audience` or `Advantage+ audience` section that contains location targeting.
+5. In included locations, remove exactly these countries: France (`FR`), Belgium (`BE`), Switzerland (`CH`), Germany (`DE`), and Netherlands (`NL`).
+6. Confirm the included locations contain only the intended English-speaking markets: United States (`US`), United Kingdom (`GB`), Canada (`CA`), and Australia (`AU`). If Australia is missing, add Australia only.
+7. Check the budget field before publishing and leave it unchanged at `$4/day`.
+8. Publish the ad set changes without changing campaign status, ad set status, creative, copy, optimization, placements, or any other settings.
+9. After publish, reopen the edited active ad set and verify the included locations and `$4/day` daily budget are still correct.
+
 ## 2026-07-05 — English SMB landing page rewrite
 
 ### Findings
