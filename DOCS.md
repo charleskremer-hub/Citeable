@@ -1,5 +1,31 @@
 # Citeable Worker Notes
 
+## 2026-07-05 — J+1 French agency follow-up emails
+
+### Findings
+- Original July 4 outbound emails were present in NanoCorp email history for the 10 requested agency recipients, all from `getciteable@nanocorp.app` with subject `Votre visibilité dans ChatGPT et Perplexity — audit gratuit`.
+- `nanocorp emails send` supports `--reply-to`, so the July 5 follow-ups were sent as threaded replies to the original outbound email IDs while using a different subject.
+
+### Follow-up email sent
+- Sender: `getciteable@nanocorp.app`.
+- Subject used for all recipients: `Re: Citeable — une idée pour vos clients`.
+- Body was 9 short lines in French, covering the Citeable reminder, free 2-3 SME client audit offer, 10% recurring affiliate commission on Citeable Pro at 49 €/month, and CTA to reply `intéressé` for details + affiliate link within 24h.
+- `test@example.com` was not used.
+
+### Send results
+| Agency | Email | Status | NanoCorp email ID |
+| --- | --- | --- | --- |
+| Newp | `contact@newp.fr` | HTTP 200 | `a9becd27-2e74-4980-9202-458663dee204` |
+| ASB Digital | `contact@asb-digital.fr` | HTTP 200 | `a12ceeed-3de8-4969-ba12-c8a5485c8dd9` |
+| Pickers | `contact@agence-pickers.fr` | HTTP 200 | `8a77526c-1cae-41db-9506-2d9ace5fed91` |
+| Adveris | `contact@adveris.fr` | HTTP 200 | `241b054d-9197-43b5-8a50-29ff03ef9069` |
+| Digitale Paris | `contact@digitaleparis.fr` | HTTP 200 | `8c4f0635-12c4-4293-b537-f35774dc6f08` |
+| SW Agency | `contact@swagency.fr` | HTTP 200 | `25413dc7-03d2-4fbc-bc55-d5f373ff4b6c` |
+| WYBE | `contact@wybe.fr` | HTTP 200 | `b60962d7-92d1-4804-9c60-d2ca5017d6f6` |
+| The Digital Counsel | `contact@thedigitalcounsel.com` | HTTP 200 | `aa22e78c-7cfe-4c16-9991-cfcef50a985c` |
+| Pixalione | `contact@pixalione.com` | HTTP 200 | `13c1340e-7486-4eda-9904-317aa61557cd` |
+| Numewoo | `contact@numewoo.com` | HTTP 200 | `6c870a78-5d25-453c-9e3a-86577d050dfe` |
+
 ## 2026-07-05 — NANOCORP_TOKEN production auth audit
 
 ### Findings
