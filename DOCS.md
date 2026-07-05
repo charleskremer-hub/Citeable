@@ -1,3 +1,25 @@
+## 2026-07-05 — Ads-off guardrail enforcement check
+
+### Findings
+- Owner-local time check: `2026-07-05 20:11:59 CEST`, within the requested end-of-day window.
+- Revenue check via `nanocorp payments revenue`: `total_cents = 0`, `total_dollars = 0.0`, `payment_count = 0`; treated as `€0` because no paid conversions exist.
+- Current read-only ads check via `nanocorp ads list` returned one Citeable campaign:
+  - Campaign local ID: `49b54812-ad64-42d0-bcd2-09344457d29f`
+  - Status/effective status: `PAUSED` / `CAMPAIGN_PAUSED`
+  - Creative status: `READY`
+  - Daily cap: `$0/day`
+  - Spend to date: `$2.19`
+  - Destination URL: `https://getciteable.nanocorp.app?utm_source=facebook&utm_medium=paid_social&utm_campaign=49b54812-ad64-42d0-bcd2-09344457d29f`
+  - Countries returned by read-only CLI: `FR`, `BE`, `CH`, `DE`, `NL`, `GB`, `US`, `CA`
+  - Latest sync timestamp returned by CLI: `2026-07-05T18:01:52.826077`
+- `nanocorp ads --help` still reports ads commands are read-only and owner-controlled from the company dashboard, so the worker cannot perform write-side campaign pausing from the CLI.
+
+### Result
+- No active campaigns remained to pause at the time of check; the only returned campaign was already paused with effective status `CAMPAIGN_PAUSED` and a `$0/day` cap.
+- No campaigns were deleted, no budgets were changed, and no targeting was changed by the worker.
+- Ads must remain paused until Charles gives explicit approval to resume.
+- If Charles needs to verify manually: open Meta Ads Manager, select the Citeable ad account, filter campaigns to `Active`, confirm no active campaigns exist for `getciteable.nanocorp.app`, and ensure any Citeable campaign/ad set/ad toggles are off rather than deleted.
+
 
 ## 2026-07-05 — Meta Ads geo-targeting access check
 
