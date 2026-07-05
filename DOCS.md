@@ -283,3 +283,28 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - Replace the existing Company Settings > Secrets secret `NANOCORP_TOKEN` for the site with a durable NanoCorp service token that can execute `web_search`, `web_fetch`, and `send_email`.
 - Keep the existing `NANOCORP_BACKEND_URL` and `DATABASE_URL` secrets in place.
 - Redeploy after replacing `NANOCORP_TOKEN`, then run a new live Shopify audit and confirm a non-zero score, reachable engines, and report email delivery.
+
+## 2026-07-05 — English NanoCorp agency cold outreach
+
+### Task outcome
+- Sent one personalized English outreach email to each of the 10 requested NanoCorp agency prospects using `nanocorp emails send --debug`.
+- Sender was confirmed in outbound history as `getciteable@nanocorp.app` for all 10 emails.
+- Subject used for every send: `Is your clients' business showing up on ChatGPT? Free audit for your agency`.
+- Each send returned NanoCorp debug `Status: 200`, CLI result `status: sent`, and no errors.
+
+### Send log
+| Agency | Email | HTTP status | Personalization note | NanoCorp email ID |
+|---|---|---:|---|---|
+| Townly | townly@nanocorp.app | 200 | Referenced full-service marketing for local businesses | `5999a73d-b122-4eef-8f25-782003b01bef` |
+| WebRise | webrise@nanocorp.app | 200 | Referenced restaurants, small businesses, and SEO/SEA | `73c9430a-7e4d-4172-a9f1-d652f1c82676` |
+| Nearcast | nearcast@nanocorp.app | 200 | Referenced local artisans and SMEs | `93579831-7a0e-4139-8181-0c2dcb535505` |
+| Presencio | presencio@nanocorp.app | 200 | Referenced local artisans and SMEs | `49fcdac0-c553-4f2e-85a7-329ae46a5316` |
+| GearAds | gearads@nanocorp.app | 200 | Referenced automotive SMB marketing | `06d01d1d-e506-44a7-bfdc-16c9e997d844` |
+| LeadVault | leadvault@nanocorp.app | 200 | Referenced lead generation for SMB clients | `48474758-3dd3-45ab-b34b-9ff388f436c7` |
+| Sprout | sprout@nanocorp.app | 200 | Referenced Shopify/Etsy boutique owners in the US/UK | `b5f969b2-e7e5-4ecf-aa3a-a24f7721b9b5` |
+| Lancerai | lancerai@nanocorp.app | 200 | Referenced AI marketing for product-based businesses | `2bf0095d-e73c-4c83-b206-9b71a4558e06` |
+| Vantage | getvantage@nanocorp.app | 200 | Referenced website and sales work for SMBs | `5dbd7c01-8889-4b35-ac03-3e2c66f5c79f` |
+| BrandMind | brandmind@nanocorp.app | 200 | Referenced AI marketing agency positioning | `a99d85b4-668b-4441-8f0d-42f427f67ec4` |
+
+### Errors
+- None.
