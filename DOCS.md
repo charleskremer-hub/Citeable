@@ -308,3 +308,20 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 
 ### Errors
 - None.
+
+## 2026-07-05 — Worker-task audit architecture root fix
+
+### Findings
+- `src/lib/audit-engine.ts` previously executed `web_search`, `web_fetch`, and `send_email` by POSTing to `/internal/tools/{tool}/execute` with `Authorization: Bearer ${process.env.NANOCORP_TOKEN}`.
+- CEO-confirmed root cause: those are native worker sandbox tools, not durable production HTTP endpoints for the Next.js app.
+- The NanoCorp CLI does not expose a `tasks` subcommand, and the public OpenAPI document only listed `/plants`; the working internal task-management collection discovered from the platform is `POST /internal/companies/{company_id}/tasks`.
+
+### Changes made
+- Replaced `src/lib/audit-engine.ts` with a task launcher that uses `NANOCORP_TOKEN` only for NanoCorp task creation, never for `web_search`, `web_fetch`, or `send_email` tool execution.
+- Updated `src/app/api/capture-email/route.ts` to store the audit record and immediately create a worker task for the queued audit.
+- Updated `src/app/api/run-audit/route.ts` so polling only checks/queues worker tasks and never runs audit tools in the Next.js server process.
+- Added `src/app/api/audit-callback/route.ts` so worker tasks can POST verified score, engine results, fixes, and email delivery status back into Postgres.
+- Worker task descriptions now instruct sandbox workers to use native `nanocorp web search`, `nanocorp web fetch`, and `nanocorp emails send`, calculate a real 0–100 score, email the user, and callback with the result.
+
+### Result
+- `NANOCORP_TOKEN` HTTP tool calls are removed from app code; remaining `NANOCORP_TOKEN` usage is scoped to `POST /internal/companies/{company_id}/tasks` task creation.

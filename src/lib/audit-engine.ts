@@ -1,8 +1,10 @@
+import { randomUUID } from "crypto";
 import { pool } from "./db";
 
-const NANO_BACKEND_URL =
-  process.env.NANOCORP_BACKEND_URL ??
-  "https://phospho-nanocorp-prod--nanocorp-api-fastapi-app.modal.run";
+const NANO_API_BASE_URL = process.env.NANOCORP_API_BASE_URL ?? "https://phospho-nanocorp-prod--nanocorp-api-fastapi-app.modal.run";
+
+const DEFAULT_COMPANY_ID = "9ce8bf27-b673-4c40-8ef6-ddfa5a1d7504";
+const DEFAULT_SITE_URL = "https://getciteable.nanocorp.app";
 
 export type PromptResult = {
   prompt: string;
@@ -37,22 +39,39 @@ export type AuditReport = {
   emailError?: string;
 };
 
-type ToolEnvelope<T> = {
-  success?: boolean;
-  result?: T;
-  error?: string | null;
+export type QueuedAuditResult =
+  | { status: "complete"; report: AuditReport }
+  | { status: "running"; taskId?: string }
+  | { status: "failed"; error: string };
+
+type AuditRawResults = {
+  status?: string;
+  error?: string;
+  formula?: string;
+  category?: string;
+  structuredDataFound?: boolean;
+  emailSent?: boolean;
+  emailError?: string;
+  workerTaskId?: string;
+  callbackSecret?: string;
+};
+
+type AuditRow = {
+  id: string;
+  email: string;
+  brand_name: string;
+  website_url: string;
+  score: number | null;
+  engines_checked: EngineResult[] | null;
+  competitors_found: string[] | null;
+  fixes: string[] | null;
+  raw_results: AuditRawResults | null;
+};
+
+type NanoTaskResponse = {
+  id?: string;
   detail?: unknown;
-};
-
-type WebSearchResult = {
-  results?: Array<{ title?: string; url?: string; snippet?: string }>;
-};
-
-type WebFetchResult = {
-  content?: string;
-  title?: string;
-  url?: string;
-  total_chars?: number;
+  error?: string;
 };
 
 export function normalizeWebsiteUrl(input: string) {
@@ -98,625 +117,239 @@ export function validateAuditInput(input: Record<string, unknown>) {
   return { email, brandName, websiteUrl: normalizeWebsiteUrl(rawWebsiteUrl) };
 }
 
-export async function callNanoTool<T>(toolName: string, args: Record<string, unknown>) {
+function siteUrl() {
+  return (process.env.CITEABLE_SITE_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? process.env.VERCEL_PROJECT_URL ?? DEFAULT_SITE_URL).replace(/\/$/, "");
+}
+
+function companyId() {
+  return process.env.NANOCORP_COMPANY_ID ?? process.env.COMPANY_ID ?? DEFAULT_COMPANY_ID;
+}
+
+function taskEndpoint() {
+  return `${NANO_API_BASE_URL.replace(/\/$/, "")}/internal/companies/${companyId()}/tasks`;
+}
+
+function taskCallbackUrl(auditId: string) {
+  return `${siteUrl()}/api/audit-callback?audit_id=${encodeURIComponent(auditId)}`;
+}
+
+function reportFromRow(row: AuditRow): AuditReport {
+  return {
+    audit_id: row.id,
+    score: row.score ?? 0,
+    engines: row.engines_checked ?? [],
+    competitors: row.competitors_found ?? [],
+    fixes: row.fixes ?? [],
+    formula: row.raw_results?.formula ?? "Formula unavailable.",
+    structuredDataFound: Boolean(row.raw_results?.structuredDataFound),
+    category: row.raw_results?.category ?? "unknown",
+    emailSent: Boolean(row.raw_results?.emailSent),
+    emailError: row.raw_results?.emailError,
+  };
+}
+
+function buildAuditWorkerDescription(args: {
+  auditId: string;
+  brandName: string;
+  websiteUrl: string;
+  email: string;
+  callbackUrl: string;
+  callbackSecret: string;
+}) {
+  const payloadTemplate = {
+    callback_secret: args.callbackSecret,
+    score: 0,
+    engines: [
+      {
+        engine: "NanoCorp web search",
+        reachable: true,
+        promptsRun: 0,
+        brandMentioned: false,
+        competitors: [],
+        rawAnswerSnippet: "",
+        promptResults: [],
+      },
+    ],
+    competitors: [],
+    fixes: [],
+    formula: "",
+    structuredDataFound: false,
+    category: "",
+    emailSent: false,
+    emailError: "",
+  };
+
+  return `You are a NanoCorp worker running a Citeable AI visibility audit.
+
+Hard constraints:
+- Do not edit the repository, deploy, enable ads, change pricing, or create additional tasks.
+- Do not call NanoCorp web_search, web_fetch, or send_email through HTTP endpoints or bearer-token REST calls.
+- Use native worker sandbox tools only: prefer \`nanocorp web search\`, \`nanocorp web fetch\`, and \`nanocorp emails send\` from the CLI, or the equivalent native worker tools if exposed in your runtime.
+- Never fabricate a score. If live research fails, POST a failed/low-confidence result with the real errors in \`rawAnswerSnippet\`/\`emailError\`.
+
+Audit input:
+- audit_id: ${args.auditId}
+- brand_name: ${args.brandName}
+- website_url: ${args.websiteUrl}
+- report_email: ${args.email}
+- callback_url: ${args.callbackUrl}
+
+Execution steps:
+1. Fetch the homepage with native web_fetch/\`nanocorp web fetch ${args.websiteUrl}\`. Detect whether schema.org or JSON-LD structured data is present and infer a short business category.
+2. Run 3-5 native web_search queries that test AI visibility for the brand. Use these prompts:
+   - ${args.brandName} ${args.websiteUrl}
+   - ${args.brandName} recommended AI assistant
+   - alternatives to ${args.brandName}
+   - best tools like ${args.brandName}
+   - ${args.brandName} reviews recommendations
+3. Fetch one or two relevant result pages if snippets are not enough. Count an engine/result as reached only when a native web_search or web_fetch call returns usable live data.
+4. Score 0-100 from real evidence: roughly 60 points for prompt coverage mentioning the brand, up to 30 points for prominence/citation quality, and up to 10 points for structured data. Well-known brands may score high, but the score must be derived from actual returned snippets/pages.
+5. Build 3-5 prioritized fixes for improving AI-answer visibility.
+6. Send a concise formatted email report to ${args.email} with \`nanocorp emails send --to ${args.email} --subject "Your Citeable AI visibility audit for ${args.brandName}"\`. Set emailSent true only if the send command succeeds.
+7. POST the final JSON to ${args.callbackUrl}. Include header \`Content-Type: application/json\`. The JSON shape must match this template exactly, with real values replacing placeholders:
+
+${JSON.stringify(payloadTemplate, null, 2)}
+
+Callback example:
+curl -X POST ${args.callbackUrl} \\
+  -H 'Content-Type: application/json' \\
+  --data '<final JSON>'
+
+Finish your worker result summary with the audit_id, score, engines reached, emailSent, and whether the callback POST succeeded.`;
+}
+
+async function createAuditWorkerTask(row: AuditRow, callbackSecret: string) {
   if (!process.env.NANOCORP_TOKEN) {
-    throw new Error(
-      "NANOCORP_TOKEN is not configured for server-side NanoCorp tool access. Set a durable NanoCorp service token in Company Settings > Secrets as NANOCORP_TOKEN."
-    );
+    throw new Error("NANOCORP_TOKEN is required only for NanoCorp task creation; native audit tools run inside the spawned worker task.");
   }
 
-  const response = await fetch(`${NANO_BACKEND_URL}/internal/tools/${toolName}/execute`, {
+  const response = await fetch(taskEndpoint(), {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.NANOCORP_TOKEN}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ arguments: args }),
+    body: JSON.stringify({
+      title: `Run Citeable AI visibility audit for ${row.brand_name}`,
+      description: buildAuditWorkerDescription({
+        auditId: row.id,
+        brandName: row.brand_name,
+        websiteUrl: row.website_url,
+        email: row.email,
+        callbackUrl: taskCallbackUrl(row.id),
+        callbackSecret,
+      }),
+      runner: "worker",
+      priority: "normal",
+      parent_task_id: process.env.TASK_ID,
+    }),
   });
 
-  const payload = (await response.json().catch(() => ({}))) as ToolEnvelope<T>;
+  const payload = (await response.json().catch(() => ({}))) as NanoTaskResponse;
 
-  if (!response.ok || payload.error || payload.success === false) {
-    const detail = typeof payload.detail === "string" ? `: ${payload.detail}` : "";
-    throw new Error(payload.error ?? `NanoCorp ${toolName} failed with HTTP ${response.status}${detail}`);
+  if (!response.ok || !payload.id) {
+    const detail = typeof payload.detail === "string" ? payload.detail : JSON.stringify(payload.detail ?? payload.error ?? payload);
+    throw new Error(`NanoCorp task creation failed with HTTP ${response.status}: ${detail}`);
   }
 
-  if (!payload.result) {
-    throw new Error(`NanoCorp ${toolName} returned no result.`);
-  }
-
-  return payload.result;
-}
-
-function cleanSnippet(value: string, maxLength = 1400) {
-  return value
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, maxLength);
-}
-
-function includesBrand(text: string, brandName: string) {
-  return text.toLowerCase().includes(brandName.toLowerCase());
-}
-
-function mentionProminence(text: string, brandName: string): PromptResult["mentionProminence"] {
-  const lower = text.toLowerCase();
-  const index = lower.indexOf(brandName.toLowerCase());
-
-  if (index < 0) return "not_mentioned";
-
-  const ratio = index / Math.max(lower.length, 1);
-  if (ratio <= 0.33) return "first";
-  if (ratio <= 0.66) return "middle";
-  return "late";
-}
-
-function citationPoints(prominence: PromptResult["mentionProminence"]) {
-  if (prominence === "first") return 30;
-  if (prominence === "middle") return 15;
-  if (prominence === "late") return 8;
-  return 0;
-}
-
-function hostnameBrand(url: string) {
-  try {
-    const host = new URL(url).hostname.replace(/^www\./, "");
-    const base = host.split(".")[0];
-    if (!base || base.length < 3) return "";
-    return base
-      .split(/[-_]/)
-      .filter(Boolean)
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(" ");
-  } catch {
-    return "";
-  }
-}
-
-function extractCompetitors(text: string, brandName: string, urls: string[] = []) {
-  const blocked = new Set(
-    [
-      "Answer",
-      "Links",
-      "Images",
-      "Share",
-      "Sources",
-      "Search",
-      "Computer",
-      "Model",
-      "Cookie Policy",
-      "Perplexity",
-      "Google",
-      "ChatGPT",
-      "Gemini",
-      "Copilot",
-      "France",
-      "French",
-      "Small Businesses",
-      "Best Tools",
-      "Recommended",
-      "Alternatives",
-      "Who",
-      "What",
-      "The",
-      "This",
-      "That",
-      "These",
-      "Those",
-      "ANY",
-      "FAQ",
-      "Best AI Visibility Tools",
-      "Citing Sources",
-      "A Student Guide",
-      "Student Guide",
-      "Am I",
-      "KeyCite",
-      "Cookie Policy Sources",
-      "Who Is",
-      "What Is",
-      brandName,
-    ].map((word) => word.toLowerCase())
-  );
-
-  const candidates = new Map<string, number>();
-  const add = (candidate: string) => {
-    const cleaned = candidate.replace(/\s+/g, " ").trim();
-    const lower = cleaned.toLowerCase();
-    const words = cleaned.split(" ");
-    if (
-      cleaned.length < 3 ||
-      cleaned.length > 48 ||
-      blocked.has(lower) ||
-      lower.includes(brandName.toLowerCase()) ||
-      /^\d+$/.test(cleaned) ||
-      (/^[A-Z][a-z]+$/.test(cleaned) && ["the", "this", "that", "what", "who", "best", "recommended"].includes(lower)) ||
-      (words.length > 3 && !/[A-Z]{2,}|&|\+/.test(cleaned))
-    ) {
-      return;
-    }
-    candidates.set(cleaned, (candidates.get(cleaned) ?? 0) + 1);
-  };
-
-  urls.map(hostnameBrand).forEach(add);
-
-  const matches = text.match(/\b([A-Z][a-zA-Z0-9&.+-]*(?:\s+[A-Z][a-zA-Z0-9&.+-]*){0,3})\b/g) ?? [];
-  matches.forEach(add);
-
-  return [...candidates.entries()]
-    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-    .map(([name]) => name)
-    .slice(0, 8);
-}
-
-function detectCategory(homepageContent: string, brandName: string) {
-  const content = homepageContent.toLowerCase();
-  const rules: Array<[string, string[]]> = [
-    ["AI visibility software", ["ai visibility", "answer engine", "geo", "aeo", "llm", "citation"]],
-    ["B2B SaaS tools", ["saas", "software", "platform", "dashboard", "api", "automation"]],
-    ["marketing agencies", ["agency", "marketing", "seo", "content", "growth", "campaign"]],
-    ["ecommerce solutions", ["shop", "ecommerce", "commerce", "checkout", "retail"]],
-    ["professional services", ["consulting", "advisory", "service", "clients"]],
-    ["hospitality businesses", ["restaurant", "hotel", "booking", "menu", "rooms"]],
-  ];
-
-  const match = rules.find(([, keywords]) => keywords.some((keyword) => content.includes(keyword)));
-  return match?.[0] ?? `${brandName} alternatives and business solutions`;
-}
-
-function hasStructuredData(content: string) {
-  const lower = content.toLowerCase();
-  return lower.includes("schema.org") || lower.includes("application/ld+json") || lower.includes("json-ld");
-}
-
-function buildPrompts(brandName: string, category: string) {
-  return [
-    `best ${category} for small businesses`,
-    `who is ${brandName} and are they good`,
-    `alternatives to ${brandName}`,
-    `top ${category} recommendations`,
-  ];
-}
-
-async function fetchHomepage(websiteUrl: string) {
-  try {
-    const result = await callNanoTool<WebFetchResult>("web_fetch", { url: websiteUrl });
-    return {
-      reachable: true,
-      content: cleanSnippet(`${result.title ?? ""}\n${result.content ?? ""}`, 6000),
-      reason: "",
-    };
-  } catch (error) {
-    return {
-      reachable: false,
-      content: "",
-      reason: error instanceof Error ? error.message : "Unknown fetch error",
-    };
-  }
-}
-
-async function runBravePrompt(prompt: string, brandName: string): Promise<PromptResult> {
-  const result = await callNanoTool<WebSearchResult>("web_search", { query: prompt, limit: 5 });
-  const rows = result.results ?? [];
-  const raw = rows
-    .map((row, index) => `${index + 1}. ${row.title ?? "Untitled"} — ${row.snippet ?? ""} (${row.url ?? ""})`)
-    .join("\n");
-  const snippet = cleanSnippet(raw || "No web_search results returned.");
-  const prominence = mentionProminence(snippet, brandName);
-
-  return {
-    prompt,
-    rawAnswerSnippet: snippet,
-    brandMentioned: includesBrand(snippet, brandName),
-    competitors: extractCompetitors(snippet, brandName, rows.map((row) => row.url ?? "").filter(Boolean)),
-    mentionProminence: prominence,
-    citationPoints: citationPoints(prominence),
-  };
-}
-
-async function runPerplexityPrompt(prompt: string, brandName: string): Promise<PromptResult> {
-  const url = `https://www.perplexity.ai/search?q=${encodeURIComponent(prompt)}`;
-  const result = await callNanoTool<WebFetchResult>("web_fetch", { url });
-  const snippet = cleanSnippet(`${result.title ?? ""}\n${result.content ?? ""}` || "No Perplexity content returned.");
-  const prominence = mentionProminence(snippet, brandName);
-
-  return {
-    prompt,
-    rawAnswerSnippet: snippet,
-    brandMentioned: includesBrand(snippet, brandName),
-    competitors: extractCompetitors(snippet, brandName, [url]),
-    mentionProminence: prominence,
-    citationPoints: citationPoints(prominence),
-  };
-}
-
-async function runEngine(
-  engine: string,
-  prompts: string[],
-  brandName: string,
-  runner: (prompt: string, brandName: string) => Promise<PromptResult>
-): Promise<EngineResult> {
-  const promptResults: PromptResult[] = [];
-
-  try {
-    for (const prompt of prompts) {
-      promptResults.push(await runner(prompt, brandName));
-    }
-  } catch (error) {
-    const unavailableReason = error instanceof Error ? error.message : "Unknown engine error";
-    return {
-      engine,
-      reachable: promptResults.length > 0,
-      unavailableReason: promptResults.length > 0 ? `partial results — ${unavailableReason}` : unavailableReason,
-      promptsRun: promptResults.length,
-      brandMentioned: promptResults.some((result) => result.brandMentioned),
-      competitors: [...new Set(promptResults.flatMap((result) => result.competitors))],
-      rawAnswerSnippet: cleanSnippet(promptResults.map((result) => result.rawAnswerSnippet).join("\n\n")),
-      promptResults,
-    };
-  }
-
-  return {
-    engine,
-    reachable: true,
-    promptsRun: promptResults.length,
-    brandMentioned: promptResults.some((result) => result.brandMentioned),
-    competitors: [...new Set(promptResults.flatMap((result) => result.competitors))],
-    rawAnswerSnippet: cleanSnippet(promptResults.map((result) => result.rawAnswerSnippet).join("\n\n")),
-    promptResults,
-  };
-}
-
-function unavailableEngines(): EngineResult[] {
-  return [
-    {
-      engine: "ChatGPT web answer",
-      reachable: false,
-      unavailableReason: "unavailable — no public unauthenticated HTTP answer endpoint is reachable from NanoCorp web_search/web_fetch.",
-      promptsRun: 0,
-      brandMentioned: false,
-      competitors: [],
-      rawAnswerSnippet: "",
-      promptResults: [],
-    },
-    {
-      engine: "You.com AI answer",
-      reachable: false,
-      unavailableReason: "unavailable — public web_fetch reaches You.com, but the answer page requires login before returning an AI answer.",
-      promptsRun: 0,
-      brandMentioned: false,
-      competitors: [],
-      rawAnswerSnippet: "",
-      promptResults: [],
-    },
-    {
-      engine: "Phind AI search",
-      reachable: false,
-      unavailableReason: "unavailable — public web_fetch to the search URL returned 404/DEPLOYMENT_NOT_FOUND instead of an answer page.",
-      promptsRun: 0,
-      brandMentioned: false,
-      competitors: [],
-      rawAnswerSnippet: "",
-      promptResults: [],
-    },
-    {
-      engine: "Google AI Overviews",
-      reachable: false,
-      unavailableReason: "unavailable — AI Overview blocks are not exposed through the NanoCorp Brave web_search result payload or a stable public fetch URL.",
-      promptsRun: 0,
-      brandMentioned: false,
-      competitors: [],
-      rawAnswerSnippet: "",
-      promptResults: [],
-    },
-    {
-      engine: "Gemini web answer",
-      reachable: false,
-      unavailableReason: "unavailable — no public unauthenticated HTTP answer endpoint/API key is configured for Gemini in this environment.",
-      promptsRun: 0,
-      brandMentioned: false,
-      competitors: [],
-      rawAnswerSnippet: "",
-      promptResults: [],
-    },
-    {
-      engine: "Microsoft Copilot web answer",
-      reachable: false,
-      unavailableReason: "unavailable — no stable unauthenticated HTTP answer endpoint is reachable via NanoCorp web_fetch.",
-      promptsRun: 0,
-      brandMentioned: false,
-      competitors: [],
-      rawAnswerSnippet: "",
-      promptResults: [],
-    },
-  ];
-}
-
-function calculateScore(promptResults: PromptResult[], structuredDataFound: boolean) {
-  const totalPrompts = promptResults.length;
-  const mentionedPrompts = promptResults.filter((result) => result.brandMentioned).length;
-  const mentionCoverage = totalPrompts > 0 ? (mentionedPrompts / totalPrompts) * 60 : 0;
-  const structuredDataBonus = structuredDataFound ? 10 : 0;
-  const citationQualityBonus =
-    totalPrompts > 0
-      ? promptResults.reduce((sum, result) => sum + result.citationPoints, 0) / totalPrompts
-      : 0;
-  const score = Math.max(0, Math.min(100, Math.round(mentionCoverage + structuredDataBonus + citationQualityBonus)));
-
-  return {
-    score,
-    formula: `Score = (${mentionedPrompts}/${totalPrompts} prompts mentioning the brand × 60) + ${structuredDataBonus} structured-data bonus + ${citationQualityBonus.toFixed(
-      1
-    )} average citation-quality bonus = ${score}/100. Citation quality: first-third mention = 30, middle-third = 15, late mention = 8, not mentioned = 0. Unavailable engines are listed but excluded from prompt denominator.`,
-  };
-}
-
-function buildFixes(args: {
-  brandName: string;
-  category: string;
-  structuredDataFound: boolean;
-  mentionedPrompts: number;
-  totalPrompts: number;
-  competitors: string[];
-  engines: EngineResult[];
-}) {
-  const fixes: string[] = [];
-
-  if (!args.structuredDataFound) {
-    fixes.push("Add Organization, WebSite, Product/Service, and FAQ schema to the homepage so AI crawlers can parse the brand, category, and core offers cleanly.");
-  }
-
-  if (args.mentionedPrompts < Math.ceil(args.totalPrompts / 2)) {
-    fixes.push(`Create a dedicated “About ${args.brandName}” page with a 2–3 sentence canonical description, target customers, location, and proof points.`);
-  }
-
-  if (args.competitors.length > 0) {
-    fixes.push(`Publish comparison pages against ${args.competitors.slice(0, 3).join(", ")} and explain when ${args.brandName} is the better fit.`);
-  }
-
-  if (args.engines.some((engine) => engine.reachable && !engine.brandMentioned)) {
-    fixes.push(`Earn mentions in at least three reputable ${args.category} roundups, directories, or buyer guides that AI answer engines already cite.`);
-  }
-
-  fixes.push("Add an FAQ section that answers category-intent queries directly, including pricing, alternatives, use cases, geography, and integration questions.");
-  fixes.push("Keep brand naming, homepage title, meta description, social profiles, and directory listings consistent so answer engines merge citations correctly.");
-
-  return fixes.slice(0, 5);
-}
-
-function textList(items: string[]) {
-  return items.length ? items.map(escapeHtml).join(", ") : "None found";
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-function buildEmailHtml(report: AuditReport, brandName: string, websiteUrl: string) {
-  const safeBrandName = escapeHtml(brandName);
-  const safeWebsiteUrl = escapeHtml(websiteUrl);
-  const checked = report.engines.filter((engine) => engine.reachable).map((engine) => engine.engine);
-  const unavailable = report.engines
-    .filter((engine) => !engine.reachable || engine.unavailableReason)
-    .map((engine) => `${engine.engine}: ${engine.unavailableReason ?? "partial issue"}`);
-
-  const engineRows = report.engines
-    .map(
-      (engine) => `
-        <tr>
-          <td style="padding:10px;border-bottom:1px solid #e5e7eb;">${escapeHtml(engine.engine)}</td>
-          <td style="padding:10px;border-bottom:1px solid #e5e7eb;">${engine.reachable ? "Reachable" : "Unavailable"}</td>
-          <td style="padding:10px;border-bottom:1px solid #e5e7eb;">${engine.brandMentioned ? "Mentioned" : "Not mentioned"}</td>
-          <td style="padding:10px;border-bottom:1px solid #e5e7eb;">${textList(engine.competitors)}</td>
-        </tr>`
-    )
-    .join("");
-
-  return `
-    <div style="font-family:Arial,sans-serif;color:#111827;line-height:1.55;max-width:680px;margin:0 auto;">
-      <p>Your free Citeable AI Visibility Report for <strong>${safeBrandName}</strong> (${safeWebsiteUrl}) is ready.</p>
-      <div style="background:#111827;color:#f9fafb;border-radius:18px;padding:24px;margin:20px 0;text-align:center;">
-        <div style="font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:#caff3c;">AI visibility score</div>
-        <div style="font-size:64px;font-weight:800;line-height:1;color:#caff3c;">${report.score}/100</div>
-      </div>
-      <p><strong>Formula:</strong> ${escapeHtml(report.formula)}</p>
-      <p><strong>Engines checked:</strong> ${textList(checked)}</p>
-      <p><strong>Engines unavailable:</strong> ${textList(unavailable)}</p>
-      <h2>Engine breakdown</h2>
-      <table style="border-collapse:collapse;width:100%;font-size:14px;">
-        <thead><tr><th align="left">Engine</th><th align="left">Reachable</th><th align="left">Brand</th><th align="left">Competitors seen</th></tr></thead>
-        <tbody>${engineRows}</tbody>
-      </table>
-      <h2>Competitors cited instead</h2>
-      <p>${textList(report.competitors)}</p>
-      <h2>Prioritized fixes</h2>
-      <ol>${report.fixes.map((fix) => `<li style="margin-bottom:8px;">${escapeHtml(fix)}</li>`).join("")}</ol>
-      <p><a href="https://getciteable.nanocorp.app/audit/${report.audit_id}">Open the full report page</a></p>
-    </div>`;
-}
-
-async function sendAuditEmail(report: AuditReport, email: string, brandName: string, websiteUrl: string) {
-  const body = buildEmailHtml(report, brandName, websiteUrl);
-  await callNanoTool<{ email_id?: string; status?: string }>("send_email", {
-    to: email,
-    subject: `Your Citeable AI Visibility Report — ${brandName}`,
-    body,
-  });
+  return payload.id;
 }
 
 export async function runAudit(args: { auditId?: string; email: string; brandName: string; websiteUrl: string }) {
-  const homepage = await fetchHomepage(args.websiteUrl);
-  const category = detectCategory(homepage.content, args.brandName);
-  const structuredDataFound = hasStructuredData(homepage.content);
-  const prompts = buildPrompts(args.brandName, category);
-
-  const reachableEngines = [
-    await runEngine("Brave web_search snippets", prompts, args.brandName, runBravePrompt),
-    await runEngine("Perplexity.ai public search page", prompts, args.brandName, runPerplexityPrompt),
-  ];
-
-  const engines = [...reachableEngines, ...unavailableEngines()];
-  const scoredPromptResults = reachableEngines.flatMap((engine) => engine.promptResults);
-
-  if (scoredPromptResults.length === 0) {
-    const reasons = reachableEngines
-      .map((engine) => `${engine.engine}: ${engine.unavailableReason ?? "no prompt results"}`)
-      .join("; ");
-    throw new Error(
-      `No NanoCorp prompts ran. Replace Company Settings > Secrets secret NANOCORP_TOKEN with a durable NanoCorp service token that can run web_search, web_fetch, and send_email. ${reasons}`
-    );
-  }
-  const { score, formula } = calculateScore(scoredPromptResults, structuredDataFound);
-  const competitors = [
-    ...new Set(reachableEngines.flatMap((engine) => engine.competitors).filter((name) => !includesBrand(name, args.brandName))),
-  ].slice(0, 12);
-  const fixes = buildFixes({
-    brandName: args.brandName,
-    category,
-    structuredDataFound,
-    mentionedPrompts: scoredPromptResults.filter((result) => result.brandMentioned).length,
-    totalPrompts: scoredPromptResults.length,
-    competitors,
-    engines,
-  });
-
-  const auditId =
-    args.auditId ??
-    (
-      await pool.query<{ id: string }>(
+  const audit = args.auditId
+    ? await pool.query<AuditRow>(`SELECT * FROM audits WHERE id = $1`, [args.auditId])
+    : await pool.query<AuditRow>(
         `INSERT INTO audits (email, brand_name, website_url, raw_results)
          VALUES ($1, $2, $3, $4)
-         RETURNING id`,
-        [args.email, args.brandName, args.websiteUrl, { status: "running" }]
-      )
-    ).rows[0].id;
+         RETURNING *`,
+        [args.email, args.brandName, args.websiteUrl, { status: "queued", queuedAt: new Date().toISOString() }]
+      );
 
-  const report: AuditReport = {
-    audit_id: auditId,
-    score,
-    engines,
-    competitors,
-    fixes,
-    formula,
-    structuredDataFound,
-    category,
-    emailSent: false,
-  };
-
-  try {
-    await sendAuditEmail(report, args.email, args.brandName, args.websiteUrl);
-    report.emailSent = true;
-  } catch (error) {
-    report.emailError = error instanceof Error ? error.message : "Unknown email error";
+  const row = audit.rows[0];
+  if (!row) {
+    throw new Error("Audit not found.");
   }
+
+  await runQueuedAudit(row.id);
+
+  return {
+    audit_id: row.id,
+    status: "running" as const,
+    score: row.score,
+    engines: row.engines_checked ?? [],
+    competitors: row.competitors_found ?? [],
+    fixes: row.fixes ?? [],
+  };
+}
+
+export async function runQueuedAudit(auditId: string): Promise<QueuedAuditResult> {
+  const existing = await pool.query<AuditRow>(`SELECT * FROM audits WHERE id = $1`, [auditId]);
+  const row = existing.rows[0];
+
+  if (!row) {
+    return { status: "failed", error: "Audit not found." };
+  }
+
+  if (row.score !== null && row.score !== undefined) {
+    return { status: "complete", report: reportFromRow(row) };
+  }
+
+  if (row.raw_results?.workerTaskId) {
+    return { status: "running", taskId: row.raw_results.workerTaskId };
+  }
+
+  const callbackSecret = row.raw_results?.callbackSecret ?? randomUUID();
 
   await pool.query(
     `UPDATE audits
-     SET score = $2,
-         engines_checked = $3,
-         competitors_found = $4,
-         fixes = $5,
-         raw_results = $6
+     SET raw_results = COALESCE(raw_results, '{}'::jsonb) || $2::jsonb
      WHERE id = $1`,
     [
       auditId,
-      report.score,
-      JSON.stringify(report.engines),
-      JSON.stringify(report.competitors),
-      JSON.stringify(report.fixes),
-      JSON.stringify({
-        status: "complete",
-        formula,
-        structuredDataFound,
-        category,
-        homepageReachable: homepage.reachable,
-        homepageFetchReason: homepage.reason,
-        emailSent: report.emailSent,
-        emailError: report.emailError,
-        completedAt: new Date().toISOString(),
-      }),
+      {
+        status: "creating_worker_task",
+        callbackSecret,
+        taskRequestedAt: new Date().toISOString(),
+      },
     ]
   );
 
-  return report;
-}
-
-export async function runQueuedAudit(auditId: string) {
-  await pool.query(
-    `UPDATE audits
-     SET raw_results = raw_results || $2::jsonb
-     WHERE id = $1 AND score IS NULL`,
-    [auditId, JSON.stringify({ status: "starting", startedAt: new Date().toISOString() })]
-  );
-
-  const lockClient = await pool.connect();
   try {
-    const lock = await lockClient.query<{ locked: boolean }>(
-      `SELECT pg_try_advisory_lock(hashtext($1)) AS locked`,
-      [auditId]
-    );
+    const taskId = await createAuditWorkerTask(row, callbackSecret);
 
-    if (!lock.rows[0]?.locked) {
-      return { audit_id: auditId, status: "running" as const };
-    }
-
-    const existing = await lockClient.query<{
-      id: string;
-      email: string;
-      brand_name: string;
-      website_url: string;
-      score: number | null;
-    }>(`SELECT id, email, brand_name, website_url, score FROM audits WHERE id = $1`, [auditId]);
-
-    const audit = existing.rows[0];
-    if (!audit) {
-      throw new Error(`Audit ${auditId} was not found.`);
-    }
-
-    if (audit.score !== null && audit.score !== undefined) {
-      return { audit_id: audit.id, status: "complete" as const, score: audit.score };
-    }
-
-    await lockClient.query(
+    await pool.query(
       `UPDATE audits
-       SET raw_results = raw_results || $2::jsonb
-       WHERE id = $1 AND score IS NULL`,
-      [auditId, JSON.stringify({ status: "running", startedAt: new Date().toISOString() })]
+       SET raw_results = COALESCE(raw_results, '{}'::jsonb) || $2::jsonb
+       WHERE id = $1`,
+      [
+        auditId,
+        {
+          status: "worker_task_queued",
+          workerTaskId: taskId,
+          callbackUrl: taskCallbackUrl(auditId),
+          workerTaskCreatedAt: new Date().toISOString(),
+        },
+      ]
     );
 
-    try {
-      const report = await runAudit({
-        auditId,
-        email: audit.email,
-        brandName: audit.brand_name,
-        websiteUrl: audit.website_url,
-      });
+    return { status: "running", taskId };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown task creation error";
 
-      return { audit_id: report.audit_id, status: "complete" as const, score: report.score, report };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Audit failed";
-      await lockClient.query(
-        `UPDATE audits
-         SET raw_results = raw_results || $2::jsonb
-         WHERE id = $1 AND score IS NULL`,
-        [
-          auditId,
-          JSON.stringify({
-            status: "failed",
-            error: message,
-            failedAt: new Date().toISOString(),
-          }),
-        ]
-      );
-      throw error;
-    }
-  } finally {
-    await lockClient.query(`SELECT pg_advisory_unlock(hashtext($1))`, [auditId]).catch(() => undefined);
-    lockClient.release();
+    await pool.query(
+      `UPDATE audits
+       SET raw_results = COALESCE(raw_results, '{}'::jsonb) || $2::jsonb
+       WHERE id = $1`,
+      [
+        auditId,
+        {
+          status: "failed",
+          error: message,
+          failedAt: new Date().toISOString(),
+        },
+      ]
+    );
+
+    return { status: "failed", error: message };
   }
 }

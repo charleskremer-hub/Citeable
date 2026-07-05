@@ -107,7 +107,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             </p>
             {failed && (
               <p style={{ marginTop: "1rem", color: "#FF8A8A", fontWeight: 700, lineHeight: 1.6, maxWidth: "720px" }}>
-                The audit could not run because the server-side NanoCorp tools failed: {audit.raw_results?.error ?? "Unknown error"}
+                The audit could not run because worker task creation or execution failed: {audit.raw_results?.error ?? "Unknown error"}
               </p>
             )}
           </div>

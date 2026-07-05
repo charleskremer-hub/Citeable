@@ -1,20 +1,8 @@
-import { after, NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
 import { runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
 
 export const maxDuration = 60;
-
-function startQueuedAudit(auditId: string) {
-  after(async () => {
-    try {
-      const result = await runQueuedAudit(auditId);
-      console.log(`[citeable] audit ${auditId} ${result.status}`);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Audit failed";
-      console.error(`[citeable] audit ${auditId} failed: ${message}`);
-    }
-  });
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -39,10 +27,21 @@ export async function POST(req: NextRequest) {
     );
 
     const auditId = audit.rows[0].id;
-    console.log(`[citeable] audit queued: ${auditId} for ${email}`);
-    startQueuedAudit(auditId);
+    const launch = await runQueuedAudit(auditId);
 
-    return NextResponse.json({ ok: true, audit_id: auditId, website_url: websiteUrl });
+    console.log(`[citeable] audit queued: ${auditId} for ${email}; worker status: ${launch.status}`);
+
+    if (launch.status === "failed") {
+      return NextResponse.json({ ok: false, audit_id: auditId, error: launch.error }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      ok: true,
+      audit_id: auditId,
+      website_url: websiteUrl,
+      status: launch.status,
+      worker_task_id: launch.status === "running" ? launch.taskId : undefined,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Invalid request";
     return NextResponse.json({ error: message }, { status: 400 });

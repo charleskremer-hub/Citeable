@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
         engines_checked: unknown;
         competitors_found: unknown;
         fixes: unknown;
-        raw_results: { status?: string; error?: string } | null;
+        raw_results: { status?: string; error?: string; workerTaskId?: string } | null;
       }>(`SELECT id, score, engines_checked, competitors_found, fixes, raw_results FROM audits WHERE id = $1`, [auditId]);
 
       const row = existing.rows[0];
@@ -40,11 +40,11 @@ export async function POST(req: NextRequest) {
       }
 
       const result = await runQueuedAudit(auditId);
-      if (result.status === "running") {
-        return NextResponse.json({ audit_id: auditId, status: "running" }, { status: 202 });
+      if (result.status === "failed") {
+        return NextResponse.json({ audit_id: auditId, status: "failed", error: result.error }, { status: 500 });
       }
 
-      if (result.status === "complete" && result.report) {
+      if (result.status === "complete") {
         return NextResponse.json({
           audit_id: result.report.audit_id,
           score: result.report.score,
@@ -54,19 +54,20 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      return NextResponse.json({ audit_id: auditId, status: result.status, score: result.score });
+      return NextResponse.json({ audit_id: auditId, status: "running", worker_task_id: result.taskId }, { status: 202 });
     }
 
     const { email, brandName, websiteUrl } = validateAuditInput(payload);
-    const report = await runAudit({ email, brandName, websiteUrl });
+    const result = await runAudit({ email, brandName, websiteUrl });
 
-    return NextResponse.json({
-      audit_id: report.audit_id,
-      score: report.score,
-      engines: report.engines,
-      competitors: report.competitors,
-      fixes: report.fixes,
-    });
+    return NextResponse.json(
+      {
+        audit_id: result.audit_id,
+        status: result.status,
+        worker_task_queued: true,
+      },
+      { status: 202 }
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Audit failed";
     return NextResponse.json({ error: message }, { status: 500 });
