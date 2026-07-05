@@ -325,3 +325,22 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 
 ### Result
 - `NANOCORP_TOKEN` HTTP tool calls are removed from app code; remaining `NANOCORP_TOKEN` usage is scoped to `POST /internal/companies/{company_id}/tasks` task creation.
+
+## 2026-07-05 — Live Shopify smoke test after worker-task rewrite
+
+### Smoke test input
+- Endpoint: `POST https://getciteable.nanocorp.app/api/capture-email`
+- Payload: `{"brand_name":"Shopify","website_url":"https://shopify.com","email":"charles@getciteable.nanocorp.app"}`
+
+### Result
+- Production request returned HTTP `500` with audit ID `67c43241-fb31-4177-b303-a0846c5f312d`.
+- Postgres record status: `failed`.
+- Stored error: `NanoCorp task creation failed with HTTP 401: API key expired`.
+- Score remained `NULL`, engines reached `0`, `emailSent` remained unset/false, and no `workerTaskId` was stored.
+- Runtime logs confirmed `/api/capture-email` queued the audit but `runQueuedAudit` returned worker status `failed`.
+- `nanocorp token list --json` could not be used to mint/inspect a replacement token from this worker: `backend returned status 403: {"detail":"Cannot access this conglomerate"}`.
+
+### Interpretation
+- The root code fix is deployed: the app no longer calls `/internal/tools/{web_search|web_fetch|send_email}/execute` from Next.js.
+- The live smoke is blocked at task creation because the existing production `NANOCORP_TOKEN` secret is expired for the task-management API.
+- Follow-up needs a valid production task-management token in the site `NANOCORP_TOKEN` secret or a tokenless first-party task enqueue mechanism from NanoCorp.
