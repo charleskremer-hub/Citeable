@@ -12,7 +12,10 @@
 - No source-code auth fix was needed: all NanoCorp calls already read `process.env.NANOCORP_TOKEN` and pass it as a Bearer token.
 - Verified the masked worker `NANOCORP_TOKEN` against the same internal `web_fetch` endpoint: HTTP `200`, `success: true`, result present.
 - Updated Vercel env var `NANOCORP_TOKEN` with the masked worker token via `nanocorp site env set` (`updated: 1`) as a temporary replacement; Charles should still provision a durable company/server token.
-- Smoke test status: pending after deploy from the documentation commit.
+- Pre-redeploy production smoke still showed the old runtime auth failure: capture HTTP `200`, run-audit HTTP `200`, score `0`, `web_search`/`web_fetch` unavailable with HTTP `401`.
+- Post-redeploy production smoke passed for `charles@getciteable.nanocorp.app`: capture HTTP `200`, audit ID `cf528319-fffe-4aeb-9dd5-ba37da773848`, run-audit HTTP `200`, score `23`, `raw_results.emailSent` = `true`.
+- DB verification for audit `cf528319-fffe-4aeb-9dd5-ba37da773848`: `score = 23`, `email_sent = true`, `email_error` empty, completed at `2026-07-05T07:38:54.457Z`.
+- Outbound email verification: `nanocorp emails list --direction outbound --limit 10` showed email ID `7e212cd4-5760-46bc-ac97-ae6024e2f846` to `charles@getciteable.nanocorp.app` with subject `Your Citeable AI Visibility Report — Citeable` at `2026-07-05T07:38:53.938027`.
 
 ## 2026-07-04 — Free AI Visibility Audit Engine
 
