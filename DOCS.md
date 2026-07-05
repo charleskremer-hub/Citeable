@@ -236,3 +236,28 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - Live failure stored in Postgres: `No NanoCorp prompts ran. Check NANOCORP_TOKEN production secret and NanoCorp tool access. Brave web_search snippets: NanoCorp web_search failed with HTTP 401: API key expired; Perplexity.ai public search page: NanoCorp web_fetch failed with HTTP 401: API key expired`.
 - Live score remained `NULL`, reachable engines `0`, and no report email was sent for `worker-live@getciteable.nanocorp.app` because the audit stopped before `send_email`.
 - Required owner action: replace the existing production/preview Vercel secret `NANOCORP_TOKEN` in Company Settings > Secrets with a durable NanoCorp service token that can execute `web_search`, `web_fetch`, and `send_email`, then redeploy/retest.
+
+## 2026-07-05 — Fresh validation for URL field and production audit queue
+
+### Findings
+- Current code already contains the intended website input and queue-runner changes from commit `036550b`.
+- Per `AGENTS.md`, dependencies were installed and local Next.js 16.2 docs were read before touching route/audit code:
+  - `node_modules/next/dist/docs/01-app/01-getting-started/15-route-handlers.md`
+  - `node_modules/next/dist/docs/01-app/03-api-reference/04-functions/after.md`
+  - `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/02-route-segment-config/maxDuration.md`
+- Local `npm run build` passed on Next.js 16.2.10.
+- Local built-server smoke test submitted `website_url: "www.keyban.fr"`; `/api/capture-email` accepted it and stored `https://www.keyban.fr/`.
+- Local audit ID `809f01a5-5c99-46c0-9567-45399137a7b9` completed with real NanoCorp tools: score `90/100`, 2 reachable engines out of 8 listed engines, and `emailSent=true`.
+- Live homepage DOM check showed `#website-url` is `type="text"`; setting `www.keyban.fr` returned `checkValidity() === true` and an empty validation message.
+- Live Shopify submission created audit ID `9c950f27-7d80-4fff-8fd9-3906a8e85e67`, normalized `www.shopify.com` to `https://www.shopify.com/`, and proved the production queue processor does start server-side from `/api/capture-email`.
+- Live production audit still failed before scoring because the existing production `NANOCORP_TOKEN` is expired: `web_search` and `web_fetch` both returned HTTP 401 `API key expired`.
+- Live Shopify score remained `NULL`, reachable engines `0`, and no report email was sent.
+- The worker sandbox token can run the tools but expires at `2026-07-05T19:48:58.823836Z`, so it must not be copied into production as a durable secret.
+
+### Changes made
+- Clarified server-side NanoCorp tool errors in `src/lib/audit-engine.ts` so production failures state the exact required secret and location: Company Settings > Secrets secret `NANOCORP_TOKEN`.
+
+### Required owner action
+- Replace the existing Company Settings > Secrets secret `NANOCORP_TOKEN` for the site with a durable NanoCorp service token that can execute `web_search`, `web_fetch`, and `send_email`.
+- Keep the existing `NANOCORP_BACKEND_URL` and `DATABASE_URL` secrets in place.
+- Redeploy after replacing `NANOCORP_TOKEN`, then run a new live Shopify audit and confirm a non-zero score, reachable engines, and report email delivery.

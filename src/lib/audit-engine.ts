@@ -100,7 +100,9 @@ export function validateAuditInput(input: Record<string, unknown>) {
 
 export async function callNanoTool<T>(toolName: string, args: Record<string, unknown>) {
   if (!process.env.NANOCORP_TOKEN) {
-    throw new Error("NANOCORP_TOKEN is not configured for server-side NanoCorp tool access.");
+    throw new Error(
+      "NANOCORP_TOKEN is not configured for server-side NanoCorp tool access. Set a durable NanoCorp service token in Company Settings > Secrets as NANOCORP_TOKEN."
+    );
   }
 
   const response = await fetch(`${NANO_BACKEND_URL}/internal/tools/${toolName}/execute`, {
@@ -565,7 +567,9 @@ export async function runAudit(args: { auditId?: string; email: string; brandNam
     const reasons = reachableEngines
       .map((engine) => `${engine.engine}: ${engine.unavailableReason ?? "no prompt results"}`)
       .join("; ");
-    throw new Error(`No NanoCorp prompts ran. Check NANOCORP_TOKEN production secret and NanoCorp tool access. ${reasons}`);
+    throw new Error(
+      `No NanoCorp prompts ran. Replace Company Settings > Secrets secret NANOCORP_TOKEN with a durable NanoCorp service token that can run web_search, web_fetch, and send_email. ${reasons}`
+    );
   }
   const { score, formula } = calculateScore(scoredPromptResults, structuredDataFound);
   const competitors = [
