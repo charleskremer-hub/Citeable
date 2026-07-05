@@ -228,3 +228,11 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 
 ### Production follow-up
 - A durable production NanoCorp API token is still required in the existing `NANOCORP_TOKEN` Vercel secret if live production tests continue to return HTTP 401 from NanoCorp tools.
+
+### Production verification after deploy
+- Commit `036550b` was pushed to `main` and the live homepage DOM showed `#website-url` as `type="text"`.
+- Live browser check set `#website-url` to `www.keyban.fr`; `checkValidity()` returned `true` with an empty validation message, confirming the browser no longer rejects the bare domain.
+- Live Shopify E2E submission created audit ID `885b2fd2-55bd-4e44-a3dc-db55a4fb789c` for `Shopify`, normalized `www.shopify.com` to `https://www.shopify.com/`, then failed honestly before scoring because no NanoCorp prompts could run.
+- Live failure stored in Postgres: `No NanoCorp prompts ran. Check NANOCORP_TOKEN production secret and NanoCorp tool access. Brave web_search snippets: NanoCorp web_search failed with HTTP 401: API key expired; Perplexity.ai public search page: NanoCorp web_fetch failed with HTTP 401: API key expired`.
+- Live score remained `NULL`, reachable engines `0`, and no report email was sent for `worker-live@getciteable.nanocorp.app` because the audit stopped before `send_email`.
+- Required owner action: replace the existing production/preview Vercel secret `NANOCORP_TOKEN` in Company Settings > Secrets with a durable NanoCorp service token that can execute `web_search`, `web_fetch`, and `send_email`, then redeploy/retest.
