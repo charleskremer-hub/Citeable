@@ -251,10 +251,10 @@ function hasStructuredData(content: string) {
 
 function buildPrompts(brandName: string, category: string) {
   return [
-    `What are the best tools for ${category}?`,
-    `Who is ${brandName} and what do they do?`,
-    `Recommended ${category} solutions for small businesses in France`,
-    `What alternatives exist to ${brandName}?`,
+    `best ${category} for small businesses`,
+    `who is ${brandName} and are they good`,
+    `alternatives to ${brandName}`,
+    `top ${category} recommendations`,
   ];
 }
 

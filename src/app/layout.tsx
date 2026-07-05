@@ -14,9 +14,9 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Citeable — Make Your Brand the Answer AI Gives",
+  title: "Citeable — Free AI Business Visibility Audit",
   description:
-    "Citeable audits and optimizes how your brand appears in AI answer engines: ChatGPT, Perplexity, Google AI Overviews, Gemini, and Copilot.",
+    "Check whether ChatGPT, Perplexity, and Google mention your business, then get a score and 3 fixes by email.",
 };
 
 export default function RootLayout({

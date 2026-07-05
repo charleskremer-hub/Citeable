@@ -1,3 +1,30 @@
+
+## 2026-07-05 — English SMB landing page rewrite
+
+### Findings
+- Current homepage used a technical hero (`AI Visibility · GEO/AEO`) and French-local placeholders (`Acme SAS`, `https://acme.fr`) above the fold.
+- Audit prompts still included a France-specific small-business query template.
+- Per `AGENTS.md`, dependencies were installed and relevant local Next.js 16 docs were read from `node_modules/next/dist/docs/01-app/` before editing: layouts/pages, server/client components, forms, and route handlers.
+
+### Changes made
+- Rewrote `src/app/page.tsx` for English-speaking SMB owners with the owner-approved H1, subhead, and CTA copy verbatim.
+- Reworked the hero into a mobile-first layout with plain-English copy above the fold and the audit form immediately visible on mobile.
+- Removed French-local form placeholders and replaced them with generic English SMB placeholders.
+- Replaced the below-fold “How it works” section with the requested 3-step plain-English sequence.
+- Reframed pricing as `Get found by AI — €49/month` while keeping the existing €49/month price and checkout link unchanged.
+- Moved technical `GEO`/`AEO` wording into a small below-fold FAQ only.
+- Updated `src/lib/audit-engine.ts` prompt templates to:
+  - `best [category] for small businesses`
+  - `who is [brand] and are they good`
+  - `alternatives to [brand]`
+  - `top [category] recommendations`
+- Updated homepage metadata in `src/app/layout.tsx` to match the English SMB positioning.
+
+### Verification
+- `npm run build` passed.
+- Local mobile QA at 375×667 with `agent-browser`: audit panel top `340px`, first input top `357px`, CTA text `Run my free audit`.
+- Page scan found no French-local copy or forbidden above-fold jargon in `src/app/page.tsx` / `src/app/layout.tsx`.
+
 # Citeable Worker Notes
 
 ## 2026-07-05 — J+1 French agency follow-up emails
