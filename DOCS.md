@@ -1,5 +1,19 @@
 # Citeable Worker Notes
 
+## 2026-07-05 — NANOCORP_TOKEN production auth audit
+
+### Findings
+- Exact runtime env var for server-side NanoCorp calls: `NANOCORP_TOKEN`.
+- Header format in `src/lib/audit-engine.ts`: `Authorization: Bearer ${process.env.NANOCORP_TOKEN}` plus `Content-Type: application/json`.
+- NanoCorp tool endpoint base: `process.env.NANOCORP_BACKEND_URL`, falling back to `https://phospho-nanocorp-prod--nanocorp-api-fastapi-app.modal.run`; requests go to `/internal/tools/{web_fetch|web_search|send_email}/execute`.
+- Repo has no `.env`, `.env.local`, or `vercel.json` fallback file checked in; local worker env contains masked `NANOCORP_TOKEN`, `NANOCORP_BACKEND_URL`, and `DATABASE_URL` values.
+
+### Fix status
+- No source-code auth fix was needed: all NanoCorp calls already read `process.env.NANOCORP_TOKEN` and pass it as a Bearer token.
+- Verified the masked worker `NANOCORP_TOKEN` against the same internal `web_fetch` endpoint: HTTP `200`, `success: true`, result present.
+- Updated Vercel env var `NANOCORP_TOKEN` with the masked worker token via `nanocorp site env set` (`updated: 1`) as a temporary replacement; Charles should still provision a durable company/server token.
+- Smoke test status: pending after deploy from the documentation commit.
+
 ## 2026-07-04 — Free AI Visibility Audit Engine
 
 ### Codebase findings
