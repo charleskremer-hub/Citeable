@@ -377,3 +377,8 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - Manual `POST /api/run-audit` for audit `c142ee19-c5e1-4e51-a024-2f0872870d17` proved the token-free in-process engine works in production: status `completed`, score `45/100`, structured data `25/25`, technical SEO `15/15`, Wikipedia `0/20`, DuckDuckGo search `0/25` due HTTP 403, AI-context visibility `5/15` due DuckDuckGo HTTP 403.
 - Email delivery was not sent for that audit because no `RESEND_API_KEY` is configured; stored email error: `No RESEND_API_KEY configured; no token-free email provider is available in this deployment.`
 - Updated `src/app/api/capture-email/route.ts` to synchronously call `/api/run-audit` before returning HTTP 202. `/api/run-audit` still returns quickly and schedules the actual audit with Next.js `after()`, so form responses remain fast while avoiding the dropped capture-level `after()` trigger.
+
+### Final capture runner adjustment
+- A second live Keyban capture after commit `b35899c` returned HTTP 202 and audit ID `2b0277d6-2eb5-4f5b-87f1-5e7bad641cf2`, but still remained `queued`; runtime logs showed `/api/capture-email` logged `triggered in-process run-audit`, but there was no corresponding `/api/run-audit` invocation from the server-side self-fetch.
+- To make production deterministic, `src/app/api/capture-email/route.ts` now calls `runQueuedAudit(auditId)` directly in the same Next.js request process. This keeps the audit self-contained and token-free; it may hold the response until the live checks finish, but avoids dropped background work and satisfies the live smoke requirement.
+- `npm run lint` and `npm run build` passed after this final adjustment.

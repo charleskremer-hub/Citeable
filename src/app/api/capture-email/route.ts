@@ -1,29 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
-import { validateAuditInput } from "@/lib/audit-engine";
+import { runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
 
 export const maxDuration = 60;
-
-async function triggerRunAudit(auditId: string, requestUrl: string) {
-  const runAuditUrl = new URL("/api/run-audit", requestUrl);
-
-  try {
-    const response = await fetch(runAuditUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ audit_id: auditId }),
-    });
-
-    if (!response.ok) {
-      const detail = await response.text().catch(() => "");
-      throw new Error(`run-audit trigger failed with HTTP ${response.status}: ${detail}`);
-    }
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown run-audit trigger error";
-    console.error(`[citeable] audit ${auditId} trigger failed: ${message}`);
-    throw new Error(message);
-  }
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -48,16 +27,24 @@ export async function POST(req: NextRequest) {
     );
 
     const auditId = audit.rows[0].id;
-    await triggerRunAudit(auditId, req.url);
+    const result = await runQueuedAudit(auditId);
 
-    console.log(`[citeable] audit queued: ${auditId} for ${email}; triggered in-process run-audit`);
+    console.log(`[citeable] audit queued: ${auditId} for ${email}; in-process status: ${result.status}`);
+
+    if (result.status === "failed") {
+      return NextResponse.json({ ok: false, audit_id: auditId, error: result.error }, { status: 500 });
+    }
 
     return NextResponse.json(
       {
         ok: true,
         audit_id: auditId,
         website_url: websiteUrl,
-        status: "running",
+        status: result.status === "complete" ? "completed" : "running",
+        score: result.status === "complete" ? result.report.score : null,
+        checks: result.status === "complete" ? result.report.checks : [],
+        email_sent: result.status === "complete" ? result.report.emailSent : false,
+        email_error: result.status === "complete" ? result.report.emailError : undefined,
       },
       { status: 202 }
     );
