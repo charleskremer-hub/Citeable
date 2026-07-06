@@ -62,6 +62,11 @@ export async function ensureAuditSchema() {
   await pool.query(`CREATE INDEX IF NOT EXISTS monitored_brands_due_idx ON monitored_brands (active, next_run_at)`);
   await pool.query(`CREATE INDEX IF NOT EXISTS audits_brand_site_created_idx ON audits (lower(brand_name), website_url, created_at DESC)`);
   await pool.query(`
+    UPDATE monitored_brands
+    SET next_run_at = GREATEST(next_run_at, COALESCE(last_run_at, created_at) + interval '30 days')
+    WHERE active = true
+  `);
+  await pool.query(`
     WITH latest AS (
       SELECT DISTINCT ON (email, brand_name, website_url)
         id, email, brand_name, website_url, created_at
@@ -70,7 +75,7 @@ export async function ensureAuditSchema() {
       ORDER BY email, brand_name, website_url, created_at DESC
     )
     INSERT INTO monitored_brands (email, brand_name, website_url, last_audit_id, last_run_at, next_run_at)
-    SELECT email, brand_name, website_url, id, created_at, created_at + interval '7 days'
+    SELECT email, brand_name, website_url, id, created_at, created_at + interval '30 days'
     FROM latest
     ON CONFLICT (email, brand_name, website_url) DO NOTHING
   `);

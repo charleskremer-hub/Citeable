@@ -509,3 +509,36 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - LIVE: source report renders domains extracted from live answers/search snippets with concrete actions.
 - LIVE when `RESEND_API_KEY` is configured: weekly summary email send path.
 - PENDING: configure a production `RESEND_API_KEY`/verified sender if founders want actual weekly emails delivered from Vercel; code currently records the missing-provider error honestly.
+
+## 2026-07-06 — Plain actions report, €9/€49 ladder, GEO Agent assets
+
+### Findings
+- Per root `AGENTS.md`, Next.js 16.2 docs under `node_modules/next/dist/docs/01-app/01-getting-started/03-layouts-and-pages.md`, `05-server-and-client-components.md`, and `15-route-handlers.md` were checked before changing App Router pages/routes.
+- The working audit engine already had real Keyban data: latest completed audit `37237082-af94-47c8-a291-d8ff48718f74`, score `12/100`, category `agentic commerce infrastructure`, and real competitors from live surfaces including `Stripe`, `Crossmint`, `Coinbase`, `Google`, `OpenAI`, `Nevermined`, `Eco`, and `Adyen`.
+- Existing active product was `Citeable Pro` at `4900 usd`; NanoCorp product currency is locked by active products, so it was deactivated before creating the requested EUR products.
+- Keyban exposes a real `/llms.txt`, which the GEO Agent asset endpoint uses as the preferred factual brand description before falling back to stored audit snippets.
+
+### Changes made
+- Replaced the technical report right column in `src/app/audit/[id]/page.tsx` with `3 things to do this week`, generated from real buyer prompts and competitors via `buildPlainActions()`.
+- Kept the emotional `Who AI recommends instead of you` report section and validated the Keyban report has that hook plus the action column, with no visible `Sources report`, `cited domain`, or raw `fireblocks.com` domain.
+- Updated report and email copy to use plainer wording and changed stored monitoring cadence from 7 days to 30 days for the €9 Monitor tier.
+- Added `src/app/api/geo-agent-assets/route.ts`, which returns copy-paste-ready FAQ answers, `/llms.txt`, weekly action plan, and review request templates for a completed audit.
+- Updated `src/app/page.tsx` pricing to three tiers: Free audit, €9/month Monitor, and €49/month GEO Agent, with CTAs wired to per-product checkout links.
+- Created live EUR products:
+  - `Citeable Monitor` (`55cd1e94-8746-46ab-b201-f374b2fad594`), `900 eur`, checkout `https://checkout.nanocorp.so/c/SQdBFx6vxsKgDB0CUVXV`.
+  - `Citeable GEO Agent` (`c6e3e751-da75-47f9-9d77-5911a6280beb`), `4900 eur`, checkout `https://checkout.nanocorp.so/c/fzVo0YiuyHM5GStaVrpT`.
+- Applied production DB update so existing monitored brands cannot re-run before `last_run_at/created_at + 30 days`; `UPDATE 18` rows.
+
+### Validation
+- `npm run lint` passed.
+- `npm run build` passed on Next.js 16.2.10.
+- Local Keyban report validation for `/audit/37237082-af94-47c8-a291-d8ff48718f74` returned: `has_actions_heading=true`, `has_sources_report=false`, `has_cited_domain=false`, `has_fireblocks_visible=false`, `has_ai_hook=true`.
+- Local GEO Agent run via `POST /api/geo-agent-assets {"brand_name":"Keyban"}` returned score `12`, 5 FAQ answers, 3 actions, `/llms.txt`, and 3 review templates; output saved locally at `/tmp/keyban-geo-assets.md` for final handoff.
+
+### Live vs pending
+- LIVE after push/deploy: report right column shows 3 plain-English actions instead of the old Sources report.
+- LIVE now: €9 Monitor and €49 GEO Agent Stripe/NanoCorp products exist in EUR with per-product checkout links.
+- LIVE after push/deploy: pricing page advertises Free / Monitor / GEO Agent and uses the new per-product links.
+- LIVE after push/deploy: GEO Agent assets endpoint can generate assets from completed audits; it uses real audit prompts/competitors and live `/llms.txt` when available.
+- PENDING: actual paid-customer fulfilment automation after NanoCorp checkout is not wired; product purchases currently need operational follow-up or a future NanoCorp webhook task to trigger asset delivery automatically.
+- PENDING: production email delivery for Monitor alerts still depends on `RESEND_API_KEY` / verified sender configuration, as documented in the previous monitoring task.

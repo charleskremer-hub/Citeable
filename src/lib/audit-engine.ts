@@ -52,10 +52,18 @@ export type SourceCitationReport = {
   action: string;
 };
 
+export type PlainAction = {
+  title: string;
+  doThis: string;
+  where: string;
+  basedOn?: string[];
+};
+
 export type MonitoringSnapshot = {
   trend: ScoreTrendPoint[];
   scoreDelta: number | null;
   competitorMovements: CompetitorMovement[];
+  actions: PlainAction[];
   sources: SourceCitationReport[];
   previousAuditId?: string;
 };
@@ -119,6 +127,7 @@ type AuditRawResults = {
   emailError?: string;
   checks?: AuditCheckResult[];
   monitoring?: MonitoringSnapshot;
+  geoAgentDescription?: string;
   weeklyEmailSent?: boolean;
   weeklyEmailError?: string;
   startedAt?: string;
@@ -225,7 +234,10 @@ function reportFromRow(row: AuditRow): AuditReport {
     emailSent: Boolean(row.raw_results?.emailSent),
     emailError: row.raw_results?.emailError,
     checks,
-    monitoring: emptyMonitoringSnapshot(buyerIntentPrompts),
+    monitoring: {
+      ...emptyMonitoringSnapshot(buyerIntentPrompts),
+      actions: buildPlainActions(buyerIntentPrompts, row.raw_results?.category ?? "your type of business", row.competitors_found ?? []),
+    },
   };
 }
 
@@ -404,8 +416,46 @@ function emptyMonitoringSnapshot(currentPrompts: BuyerIntentPromptResult[] = [])
     trend: [],
     scoreDelta: null,
     competitorMovements: [],
+    actions: buildPlainActions(currentPrompts),
     sources: extractSourceCitationReports(currentPrompts),
   };
+}
+
+export function buildPlainActions(
+  prompts: BuyerIntentPromptResult[] = [],
+  category = "your type of business",
+  competitors: string[] = []
+): PlainAction[] {
+  const testedQuestions = uniqueInOrder(
+    prompts.filter((prompt) => prompt.available).map((prompt) => prompt.prompt),
+    5
+  );
+  const competitorExamples = uniqueInOrder(competitors.length ? competitors : prompts.flatMap((prompt) => prompt.competitors), 4);
+  const questionText = testedQuestions.length
+    ? testedQuestions.map((prompt) => `“${prompt}”`).join("; ")
+    : "the buyer questions in this audit";
+  const compareText = competitorExamples.length
+    ? `Use the real names AI already shows buyers: ${competitorExamples.join(", ")}.`
+    : "Use the names buyers already compare you with, if any appear in future audits.";
+
+  return [
+    {
+      title: "Add a FAQ page for the questions buyers ask AI",
+      doThis: `Create one page that answers these exact tested questions in simple words: ${questionText}.`,
+      where: "On your own website, linked from the homepage and main navigation.",
+      basedOn: testedQuestions,
+    },
+    {
+      title: "Get listed where buyers already look",
+      doThis: `Create or refresh short profiles for ${category}. Say who you help, what you sell, and why someone should choose you.`,
+      where: "Google Business Profile, review sites, Reddit or community threads, YouTube, local directories, and relevant industry lists.",
+    },
+    {
+      title: "Ask 3 happy customers for a review this week",
+      doThis: `Ask customers to mention the problem you solved and the result they got. ${compareText}`,
+      where: "Google reviews, review sites, LinkedIn, and any marketplace or directory profile you already use.",
+    },
+  ];
 }
 
 function normalizePromptKey(prompt: string) {
@@ -563,6 +613,7 @@ function monitoringSnapshotFromRuns(current: StoredPromptRow, runs: StoredPrompt
     trend,
     scoreDelta: previousTrendPoint && current.score !== null && current.score !== undefined ? current.score - previousTrendPoint.score : null,
     competitorMovements: compareCompetitorMovement(currentPrompts, previousPrompts),
+    actions: buildPlainActions(currentPrompts, current.raw_results?.category ?? "your type of business"),
     sources: extractSourceCitationReports(currentPrompts),
     previousAuditId: previousRun?.id,
   };
@@ -1158,7 +1209,7 @@ function computeScore(checks: AuditCheckResult[], buyerIntentPrompts: BuyerInten
 }
 
 function formulaText() {
-  return "Score = buyer-intent AI/search prompt coverage (60%) + direct AI-surface brand visibility (15%) + supporting search/metadata/Wikipedia/technical SEO evidence (25%). Buyer-intent absence is scored as zero, not excluded, so a brand named in 0/5 prompts stays low even when metadata is strong. Probes use live NanoCorp web_search when configured, plus public Perplexity/Brave/Yahoo fallbacks with 8s timeouts; competitors are extracted only from returned answer/search text.";
+  return "Your score mostly comes from one question: when buyers ask AI for a business like yours, are you named or are other brands named instead? We also check whether your website is easy to find and understand. Results come from live checks only; no scores, competitors, or actions are invented.";
 }
 
 function categoryFromWebsite(websiteHtmlCheck: AuditCheckResult) {
@@ -1238,8 +1289,12 @@ export async function sendAuditEmail(email: string, brandName: string, report: A
           `  Competitors named instead: ${prompt.competitors.length ? prompt.competitors.join(", ") : prompt.available ? "None found" : "Unavailable"}`,
         ]),
         "",
-        "Priority fixes:",
-        ...report.fixes.map((fix, index) => `${index + 1}. ${fix}`),
+        "3 things to do this week:",
+        ...report.monitoring.actions.slice(0, 3).flatMap((action, index) => [
+          `${index + 1}. ${action.title}`,
+          `   What to do: ${action.doThis}`,
+          `   Where: ${action.where}`,
+        ]),
         "",
         `View the report: https://getciteable.nanocorp.app/audit/${report.audit_id}`,
       ].join("\n"),
@@ -1255,6 +1310,130 @@ export async function sendAuditEmail(email: string, brandName: string, report: A
   return { sent: true };
 }
 
+
+
+export type GeoAgentAssets = {
+  auditId: string;
+  brandName: string;
+  websiteUrl: string;
+  score: number;
+  category: string;
+  prompts: string[];
+  competitors: string[];
+  faqPageCopy: { question: string; answer: string }[];
+  llmsTxt: string;
+  weeklyActionPlan: PlainAction[];
+  reviewRequestTemplates: string[];
+};
+
+function productPhrase(category: string) {
+  if (/agentic commerce/i.test(category)) return "agentic commerce infrastructure";
+  if (/software/i.test(category)) return "software";
+  if (/financial/i.test(category)) return "financial services";
+  if (/crypto|blockchain/i.test(category)) return "blockchain infrastructure";
+  return category || "this category";
+}
+
+function articleFor(phrase: string) {
+  return /^[aeiou]/i.test(phrase) ? "an" : "a";
+}
+
+function cleanExtractedDescription(value: string) {
+  return value
+    .replace(/\\u([0-9a-f]{4})/gi, (_, code: string) => String.fromCharCode(parseInt(code, 16)))
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function descriptionFromAudit(rawResults: AuditRawResults | null) {
+  if (rawResults?.geoAgentDescription) return cleanExtractedDescription(rawResults.geoAgentDescription);
+
+  const evidence = rawResults?.checks?.find((check) => check.check === "structured_data")?.evidence ?? "";
+  const jsonDescription = evidence.match(/"description"\s*:\s*"([^"{}]{24,500})"/i)?.[1];
+  const metaDescription = evidence.match(/(?:name|property)=["'](?:description|og:description)["'][^>]+content=["']([^"']{24,500})["']/i)?.[1]
+    ?? evidence.match(/content=["']([^"']{24,500})["'][^>]+(?:name|property)=["'](?:description|og:description)["']/i)?.[1];
+
+  return cleanExtractedDescription(jsonDescription ?? metaDescription ?? "")
+    .replace(/\s+No exact Wikipedia.*$/i, "")
+    .replace(/\s+AI surface probes.*$/i, "")
+    .replace(/\s+<!DOCTYPE.*$/i, "");
+}
+
+function faqAnswerForPrompt(brandName: string, category: string, prompt: BuyerIntentPromptResult, competitors: string[], description: string) {
+  const product = productPhrase(category);
+  const namedInstead = uniqueInOrder([...prompt.competitors, ...competitors], 5);
+  const descriptionSentence = description
+    ? `${brandName} describes itself as: “${description}”`
+    : `${brandName} should describe who it helps, what it sells, and the proof a buyer can check.`;
+  const competitorSentence = namedInstead.length
+    ? ` Buyers may also see ${namedInstead.join(", ")}; use this answer to make ${brandName}'s difference clear without attacking them.`
+    : ` Use this answer to make ${brandName}'s difference clear in plain terms.`;
+
+  const separator = /[.!?]”?$/.test(descriptionSentence) ? " " : ". ";
+
+  return `${descriptionSentence}${separator}If you are comparing ${product}, consider ${brandName} when you need those capabilities and want a vendor page that clearly explains the use case, buyer fit, and next step.${competitorSentence}`;
+}
+
+function llmsTxtForBrand(brandName: string, websiteUrl: string, category: string, prompts: string[], description: string) {
+  const url = new URL(websiteUrl);
+  const baseUrl = `${url.protocol}//${url.hostname}`;
+  const product = productPhrase(category);
+
+  return [
+    `# ${brandName}`,
+    "",
+    description || `${brandName} is ${articleFor(product)} ${product} brand. Use the pages below to understand what it offers, who it helps, and which buyer questions it answers.`,
+    "",
+    "## Key Buyer Questions",
+    ...prompts.map((prompt) => `- ${prompt}`),
+    "",
+    "## Pages",
+    `- [Home](${baseUrl}/): Main description, products, proof, and contact path.`,
+    `- [FAQ](${baseUrl}/faq): Answers to the buyer questions AI systems are being asked.`,
+    `- [Reviews](${baseUrl}/reviews): Customer proof and short outcomes when available.`,
+    `- [Contact](${baseUrl}/contact): Contact details for sales or partnership questions.`,
+  ].join("\n");
+}
+
+export function generateGeoAgentAssetsFromAudit(audit: {
+  id: string;
+  brand_name: string;
+  website_url: string;
+  score: number | null;
+  competitors_found: string[] | null;
+  raw_results: AuditRawResults | null;
+}): GeoAgentAssets {
+  const prompts = audit.raw_results?.buyerIntentPrompts ?? [];
+  const availablePromptTexts = uniqueInOrder(prompts.filter((prompt) => prompt.available).map((prompt) => prompt.prompt), 5);
+  const category = audit.raw_results?.category ?? "your type of business";
+  const competitors = uniqueInOrder(audit.competitors_found ?? prompts.flatMap((prompt) => prompt.competitors), 8);
+  const description = descriptionFromAudit(audit.raw_results);
+  const faqPrompts = prompts.filter((prompt) => prompt.available).slice(0, 5);
+  const faqPageCopy = faqPrompts.map((prompt) => ({
+    question: prompt.prompt,
+    answer: faqAnswerForPrompt(audit.brand_name, category, prompt, competitors, description),
+  }));
+
+  return {
+    auditId: audit.id,
+    brandName: audit.brand_name,
+    websiteUrl: audit.website_url,
+    score: audit.score ?? 0,
+    category,
+    prompts: availablePromptTexts,
+    competitors,
+    faqPageCopy,
+    llmsTxt: llmsTxtForBrand(audit.brand_name, audit.website_url, category, availablePromptTexts, description),
+    weeklyActionPlan: buildPlainActions(prompts, category, competitors),
+    reviewRequestTemplates: [
+      `Hi {{customer_name}}, quick favour: would you leave a short review for ${audit.brand_name}? Please mention what you were trying to solve, why you chose us, and the result you got. It helps new buyers understand when ${audit.brand_name} is the right fit.`,
+      `Could you share one sentence about your experience with ${audit.brand_name}? A useful review says: “We used ${audit.brand_name} for {{use_case}} and it helped us {{result}}.”`,
+      `If ${audit.brand_name} helped your team, could you post a quick recommendation on Google, LinkedIn, or the review site you use most? Mention the exact problem, the outcome, and who you would recommend us to.`,
+    ],
+  };
+}
 
 export async function getAuditMonitoringSnapshot(auditId: string): Promise<MonitoringSnapshot> {
   const currentResult = await pool.query<StoredPromptRow & { brand_name: string; website_url: string }>(
@@ -1289,7 +1468,7 @@ export async function upsertMonitoredBrandForAudit(auditId: string) {
 
   const monitored = await pool.query<{ id: string }>(
     `INSERT INTO monitored_brands (email, brand_name, website_url, last_audit_id, last_run_at, next_run_at, updated_at)
-     VALUES ($1, $2, $3, $4, now(), now() + interval '7 days', now())
+     VALUES ($1, $2, $3, $4, now(), now() + interval '30 days', now())
      ON CONFLICT (email, brand_name, website_url) DO UPDATE
      SET last_audit_id = EXCLUDED.last_audit_id,
          last_run_at = EXCLUDED.last_run_at,
@@ -1319,18 +1498,18 @@ function monitoringSummaryText(snapshot: MonitoringSnapshot) {
   const movements = snapshot.competitorMovements.length
     ? snapshot.competitorMovements.slice(0, 5).map((movement) => `- ${movement.competitor}: ${movement.detail} (${movement.prompt})`).join("\n")
     : "- No competitor changes detected from the previous saved run.";
-  const topSource = snapshot.sources[0]
-    ? `${snapshot.sources[0].domain}: ${snapshot.sources[0].action}`
-    : "No cited source domains were extracted from reachable live answers.";
+  const topAction = snapshot.actions[0]
+    ? `${snapshot.actions[0].title}: ${snapshot.actions[0].doThis} Where: ${snapshot.actions[0].where}`
+    : "No action could be generated from this run.";
 
-  return { deltaText, movements, topSource };
+  return { deltaText, movements, topAction };
 }
 
 export async function sendWeeklyMonitoringEmail(email: string, brandName: string, report: AuditReport) {
   if (!process.env.RESEND_API_KEY) {
     return {
       sent: false,
-      error: "No RESEND_API_KEY configured; weekly monitoring email was stored but not sent.",
+      error: "No RESEND_API_KEY configured; monthly monitoring email was stored but not sent.",
     };
   }
 
@@ -1344,20 +1523,24 @@ export async function sendWeeklyMonitoringEmail(email: string, brandName: string
     body: JSON.stringify({
       from: process.env.RESEND_FROM_EMAIL ?? "Citeable <onboarding@resend.dev>",
       to: email,
-      subject: `Weekly Citeable Pro monitoring — ${brandName}`,
+      subject: `Monthly Citeable Monitor — ${brandName}`,
       text: [
-        `Weekly Citeable Pro monitoring for ${brandName}`,
+        `Monthly Citeable Monitor for ${brandName}`,
         "",
         `Score: ${report.score}/100 (${summary.deltaText})`,
         "",
         "Competitor movement:",
         summary.movements,
         "",
-        "Top source action:",
-        `- ${summary.topSource}`,
+        "First action to take:",
+        `- ${summary.topAction}`,
         "",
-        "Your 3 moves this week:",
-        ...report.fixes.slice(0, 3).map((fix, index) => `${index + 1}. ${fix}`),
+        "Your 3 things to do this week:",
+        ...report.monitoring.actions.slice(0, 3).flatMap((action, index) => [
+          `${index + 1}. ${action.title}`,
+          `   What to do: ${action.doThis}`,
+          `   Where: ${action.where}`,
+        ]),
         "",
         `View the report: https://getciteable.nanocorp.app/audit/${report.audit_id}`,
       ].join("\n"),
@@ -1417,7 +1600,7 @@ export async function runDueWeeklyRescans(limit = 3) {
         `UPDATE monitored_brands
          SET last_audit_id = $2,
              last_run_at = now(),
-             next_run_at = now() + interval '7 days',
+             next_run_at = now() + interval '30 days',
              updated_at = now()
          WHERE id = $1`,
         [brand.id, auditId]
@@ -1470,7 +1653,10 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
     buyerIntentPrompts,
     emailSent: false,
     checks,
-    monitoring: emptyMonitoringSnapshot(buyerIntentPrompts),
+    monitoring: {
+      ...emptyMonitoringSnapshot(buyerIntentPrompts),
+      actions: buildPlainActions(buyerIntentPrompts, inferred.category, competitors),
+    },
   };
   const emailResult = await sendAuditEmail(args.email, args.brandName, reportWithoutEmail);
 

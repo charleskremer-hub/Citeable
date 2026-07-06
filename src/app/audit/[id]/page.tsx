@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ensureAuditSchema, pool } from "@/lib/db";
-import { getAuditMonitoringSnapshot } from "@/lib/audit-engine";
+import { buildPlainActions, getAuditMonitoringSnapshot } from "@/lib/audit-engine";
 import type { BuyerIntentPromptResult, EngineResult, MonitoringSnapshot } from "@/lib/audit-engine";
 import AuditPoller from "./AuditPoller";
 
@@ -91,14 +91,15 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const buyerQuestionCount = buyerIntentPrompts.length;
   const buyerBrandMentionCount = buyerIntentPrompts.filter((prompt) => prompt.brandMentioned).length;
   const buyerCompetitorHeadline = competitors.length ? competitors.join(", ") : "None found";
-  const fixes = audit.fixes ?? [];
   const score = audit.score ?? 0;
   const color = scoreColor(score);
   const monitoring = complete ? await getAuditMonitoringSnapshot(audit.id) : audit.raw_results?.monitoring;
   const scoreTrend = monitoring?.trend ?? [];
   const scoreDelta = monitoring?.scoreDelta ?? null;
   const competitorMovements = monitoring?.competitorMovements ?? [];
-  const sources = monitoring?.sources ?? [];
+  const actions = monitoring?.actions?.length
+    ? monitoring.actions
+    : buildPlainActions(buyerIntentPrompts, audit.raw_results?.category ?? "your type of business", competitors);
 
   return (
     <main style={{ minHeight: "100vh", background: "#09090B", color: "#F0F0EC", fontFamily: "var(--font-sans)" }}>
@@ -115,8 +116,8 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
           <Link href="/" style={{ color: "#F0F0EC", textDecoration: "none", fontFamily: "var(--font-display)", fontSize: "1.25rem" }}>
             Citeable
           </Link>
-          <a href="https://checkout.nanocorp.so/c/xkA3ynsSsBvwhaUaVlZG" style={{ color: "#CAFF3C", fontWeight: 700, textDecoration: "none" }}>
-            Subscribe to Pro →
+          <a href="https://checkout.nanocorp.so/c/fzVo0YiuyHM5GStaVrpT" style={{ color: "#CAFF3C", fontWeight: 700, textDecoration: "none" }}>
+            Start GEO Agent →
           </a>
         </nav>
 
@@ -127,7 +128,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
               AI Visibility Report for {audit.brand_name}
             </h1>
             <p style={{ color: "#9999A8", fontSize: "1rem", lineHeight: 1.7, maxWidth: "720px" }}>
-              Live audit for <a href={audit.website_url} style={{ color: "#CAFF3C" }}>{audit.website_url}</a>. Results use direct HTTP checks for search visibility, metadata, entity presence, and technical SEO.
+              Live audit for <a href={audit.website_url} style={{ color: "#CAFF3C" }}>{audit.website_url}</a>. We check whether buyers can find you in AI-style answers and search results, using live data only.
             </p>
             {failed && (
               <p style={{ marginTop: "1rem", color: "#FF8A8A", fontWeight: 700, lineHeight: 1.6, maxWidth: "720px" }}>
@@ -158,20 +159,20 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
 
         {!complete ? (
           <div style={{ border: "1px solid rgba(202,255,60,0.25)", background: "rgba(202,255,60,0.06)", borderRadius: "18px", padding: "1.5rem", color: "#CAFF3C" }}>
-            Running live HTTP checks now. This can take 20–60 seconds because each source is queried live and no results are fabricated.
+            Running the live check now. This can take 20–60 seconds because every result is checked fresh and nothing is invented.
           </div>
         ) : (
           <div style={{ display: "grid", gap: "1.25rem" }}>
             <section style={{ border: "1px solid rgba(255,255,255,0.08)", borderRadius: "18px", background: "#111116", padding: "1.5rem" }}>
-              <h2 style={{ marginTop: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>Transparent formula</h2>
+              <h2 style={{ marginTop: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>How your score is calculated</h2>
               <p style={{ color: "#BCBCC8", lineHeight: 1.7, marginBottom: 0 }}>{audit.raw_results?.formula ?? "Formula unavailable."}</p>
             </section>
 
             <section style={{ border: "1px solid rgba(202,255,60,0.18)", borderRadius: "18px", background: "rgba(202,255,60,0.045)", padding: "1.5rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "start", flexWrap: "wrap" }}>
                 <div>
-                  <h2 style={{ margin: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>Weekly monitoring</h2>
-                  <p style={{ color: "#BCBCC8", lineHeight: 1.7, marginBottom: 0 }}>Every saved run is kept so Pro can answer: are you named this week, who is named instead, and what changed?</p>
+                  <h2 style={{ margin: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>Monthly monitoring</h2>
+                  <p style={{ color: "#BCBCC8", lineHeight: 1.7, marginBottom: 0 }}>Every saved run is kept so Monitor can answer: are you named this month, who is named instead, and what changed?</p>
                 </div>
                 <Pill tone={scoreDelta !== null && scoreDelta < 0 ? "red" : scoreDelta !== null && scoreDelta > 0 ? "green" : "muted"}>{deltaLabel(scoreDelta)}</Pill>
               </div>
@@ -190,54 +191,49 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             </section>
 
             <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.25rem" }}>
-              <div style={{ border: "1px solid rgba(255,255,255,0.08)", borderRadius: "18px", background: "#111116", padding: "1.5rem" }}>
-                <h2 style={{ marginTop: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>Competitor movement</h2>
-                {competitorMovements.length ? (
-                  <div style={{ display: "grid", gap: "0.8rem" }}>
-                    {competitorMovements.map((movement) => (
-                      <div key={`${movement.prompt}-${movement.competitor}-${movement.type}`} style={{ border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "0.9rem", background: "rgba(255,255,255,0.025)" }}>
-                        <Pill tone={movement.type === "overtook_brand" ? "red" : "orange"}>{movement.type === "overtook_brand" ? "Overtook brand" : "New competitor"}</Pill>
-                        <div style={{ color: "#F0F0EC", fontWeight: 900, marginTop: "0.6rem" }}>{movement.competitor}</div>
-                        <div style={{ color: "#BCBCC8", lineHeight: 1.6, marginTop: "0.25rem" }}>{movement.detail}</div>
-                        <div style={{ color: "#777787", fontSize: "0.8rem", marginTop: "0.45rem" }}>{movement.prompt}</div>
-                      </div>
-                    ))}
+              <div style={{ border: "1px solid rgba(202,255,60,0.22)", borderRadius: "18px", background: "linear-gradient(135deg, rgba(202,255,60,0.08), #111116 45%)", padding: "1.5rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "start", flexWrap: "wrap", marginBottom: "1rem" }}>
+                  <div>
+                    <h2 style={{ margin: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>Who AI recommends instead of you</h2>
+                    <p style={{ color: "#BCBCC8", lineHeight: 1.7, margin: "0.6rem 0 0" }}>
+                      In {buyerQuestionCount} buyer questions, you were named {buyerBrandMentionCount} times. Brands named instead: {buyerCompetitorHeadline}.
+                    </p>
+                  </div>
+                  <Pill tone={buyerBrandMentionCount > 0 ? "green" : buyerQuestionCount > 0 ? "orange" : "red"}>{buyerQuestionCount > 0 ? `${buyerBrandMentionCount}/${buyerQuestionCount} questions` : "Unavailable"}</Pill>
+                </div>
+                {competitors.length ? (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem" }}>
+                    {competitors.slice(0, 10).map((competitor) => <Pill key={competitor}>{competitor}</Pill>)}
                   </div>
                 ) : (
-                  <p style={{ color: "#777787", lineHeight: 1.7, marginBottom: 0 }}>No competitor changes detected versus the previous saved run. New competitors will be flagged here after the next weekly re-scan.</p>
+                  <p style={{ color: "#777787", lineHeight: 1.7, marginBottom: 0 }}>No other brands were found in the reachable results.</p>
                 )}
               </div>
 
               <div style={{ border: "1px solid rgba(255,255,255,0.08)", borderRadius: "18px", background: "#111116", padding: "1.5rem" }}>
-                <h2 style={{ marginTop: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>Sources report</h2>
-                {sources.length ? (
-                  <div style={{ display: "grid", gap: "0.8rem" }}>
-                    {sources.slice(0, 5).map((source) => (
-                      <div key={source.domain} style={{ border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "0.9rem", background: "rgba(255,255,255,0.025)" }}>
-                        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
-                          <strong style={{ color: "#F0F0EC" }}>{source.domain}</strong>
-                          <Pill>{source.sourceType}</Pill>
-                          <Pill tone="green">{source.mentions} mention{source.mentions === 1 ? "" : "s"}</Pill>
-                        </div>
-                        <p style={{ color: "#BCBCC8", lineHeight: 1.6, margin: "0.65rem 0 0" }}>{source.action}</p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p style={{ color: "#777787", lineHeight: 1.7, marginBottom: 0 }}>No source domains were extractable from the live answer snippets stored for this run. Future re-scans store cited result URLs when providers return them.</p>
-                )}
+                <h2 style={{ marginTop: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>3 things to do this week</h2>
+                <div style={{ display: "grid", gap: "0.8rem" }}>
+                  {actions.slice(0, 3).map((action, index) => (
+                    <div key={action.title} style={{ border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "0.9rem", background: "rgba(255,255,255,0.025)" }}>
+                      <Pill tone={index === 0 ? "orange" : "muted"}>Step {index + 1}</Pill>
+                      <div style={{ color: "#F0F0EC", fontWeight: 900, marginTop: "0.6rem" }}>{action.title}</div>
+                      <p style={{ color: "#BCBCC8", lineHeight: 1.6, margin: "0.5rem 0 0" }}>{action.doThis}</p>
+                      <p style={{ color: "#8E8E9A", lineHeight: 1.6, margin: "0.45rem 0 0" }}><strong style={{ color: "#F0F0EC" }}>Where:</strong> {action.where}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </section>
 
-            <section style={{ border: "1px solid rgba(202,255,60,0.22)", borderRadius: "18px", background: "linear-gradient(135deg, rgba(202,255,60,0.08), #111116 45%)", padding: "1.5rem" }}>
+            <section style={{ border: "1px solid rgba(255,255,255,0.08)", borderRadius: "18px", background: "#111116", padding: "1.5rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "start", flexWrap: "wrap", marginBottom: "1rem" }}>
                 <div>
-                  <h2 style={{ margin: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>Who AI recommends instead of you</h2>
+                  <h2 style={{ margin: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>Questions we tested</h2>
                   <p style={{ color: "#BCBCC8", lineHeight: 1.7, margin: "0.6rem 0 0" }}>
-                    In {buyerQuestionCount} buyer questions, you were named {buyerBrandMentionCount} times. Brands named instead: {buyerCompetitorHeadline}.
+                    These are the real buyer questions used in this audit. We do not invent results.
                   </p>
                 </div>
-                <Pill tone={buyerBrandMentionCount > 0 ? "green" : buyerQuestionCount > 0 ? "orange" : "red"}>{buyerQuestionCount > 0 ? `${buyerBrandMentionCount}/${buyerQuestionCount} prompts` : "Unavailable"}</Pill>
+                <Pill tone={buyerQuestionCount > 0 ? "muted" : "red"}>{buyerQuestionCount > 0 ? `${buyerQuestionCount} questions` : "Unavailable"}</Pill>
               </div>
 
               {buyerIntentPrompts.length ? (
@@ -249,7 +245,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                         <Pill tone={!prompt.available ? "red" : prompt.brandMentioned ? "green" : "muted"}>{!prompt.available ? "Unavailable" : prompt.brandMentioned ? "Brand named" : "Brand not named"}</Pill>
                       </div>
                       <div style={{ color: "#BCBCC8", lineHeight: 1.6, marginTop: "0.75rem" }}>
-                        <strong style={{ color: "#F0F0EC" }}>Competitors named instead:</strong> {prompt.competitors.length ? prompt.competitors.join(", ") : prompt.available ? "None found" : "Unavailable"}
+                        <strong style={{ color: "#F0F0EC" }}>Brands named instead:</strong> {prompt.competitors.length ? prompt.competitors.join(", ") : prompt.available ? "None found" : "Unavailable"}
                       </div>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: "0.45rem", marginTop: "0.8rem" }}>
                         {prompt.surfaces.map((surface) => (
@@ -262,19 +258,19 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                   ))}
                 </div>
               ) : (
-                <p style={{ color: "#777787", lineHeight: 1.7, marginBottom: 0 }}>Buyer-intent prompt analysis is unavailable for this report.</p>
+                <p style={{ color: "#777787", lineHeight: 1.7, marginBottom: 0 }}>The buyer-question check is unavailable for this report.</p>
               )}
             </section>
 
             <section style={{ border: "1px solid rgba(255,255,255,0.08)", borderRadius: "18px", background: "#111116", padding: "1.5rem", overflowX: "auto" }}>
-              <h2 style={{ marginTop: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>Engine breakdown</h2>
+              <h2 style={{ marginTop: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>Checks we ran</h2>
               <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "760px" }}>
                 <thead>
                   <tr style={{ color: "#777787", textAlign: "left", fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                    <th style={{ padding: "0.75rem", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>Engine</th>
-                    <th style={{ padding: "0.75rem", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>Reachable</th>
-                    <th style={{ padding: "0.75rem", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>Brand mentioned</th>
-                    <th style={{ padding: "0.75rem", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>Competitors seen</th>
+                    <th style={{ padding: "0.75rem", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>Check</th>
+                    <th style={{ padding: "0.75rem", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>Available</th>
+                    <th style={{ padding: "0.75rem", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>Your brand named?</th>
+                    <th style={{ padding: "0.75rem", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>Other brands found</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -299,36 +295,39 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
 
             <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.25rem" }}>
               <div style={{ border: "1px solid rgba(255,255,255,0.08)", borderRadius: "18px", background: "#111116", padding: "1.5rem" }}>
-                <h2 style={{ marginTop: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>Competitors cited</h2>
+                <h2 style={{ marginTop: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>Other brands found</h2>
                 {competitors.length ? (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem" }}>
                     {competitors.map((competitor) => <Pill key={competitor}>{competitor}</Pill>)}
                   </div>
                 ) : (
-                  <p style={{ color: "#777787" }}>No competitor-like brand names were extracted from reachable snippets.</p>
+                  <p style={{ color: "#777787" }}>No other brand names were found in the reachable results.</p>
                 )}
               </div>
 
               <div style={{ border: "1px solid rgba(202,255,60,0.2)", borderRadius: "18px", background: "rgba(202,255,60,0.05)", padding: "1.5rem" }}>
-                <h2 style={{ marginTop: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>Ongoing monitoring</h2>
-                <p style={{ color: "#BCBCC8", lineHeight: 1.7 }}>Track weekly prompt changes, competitor movement, and new citation opportunities with Citeable Pro.</p>
-                <a href="https://checkout.nanocorp.so/c/xkA3ynsSsBvwhaUaVlZG" style={{ display: "inline-block", marginTop: "0.5rem", background: "#CAFF3C", color: "#09090B", padding: "0.85rem 1rem", borderRadius: "10px", fontWeight: 900, textDecoration: "none" }}>
-                  Want ongoing monitoring? Subscribe to Citeable Pro →
+                <h2 style={{ marginTop: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>Keep watching your score</h2>
+                <p style={{ color: "#BCBCC8", lineHeight: 1.7 }}>Monitor re-checks your score monthly and emails you when the score or named competitors change.</p>
+                <a href="https://checkout.nanocorp.so/c/SQdBFx6vxsKgDB0CUVXV" style={{ display: "inline-block", marginTop: "0.5rem", background: "#CAFF3C", color: "#09090B", padding: "0.85rem 1rem", borderRadius: "10px", fontWeight: 900, textDecoration: "none" }}>
+                  Start Monitor →
                 </a>
               </div>
             </section>
 
-            <section style={{ border: "1px solid rgba(255,255,255,0.08)", borderRadius: "18px", background: "#111116", padding: "1.5rem" }}>
-              <h2 style={{ marginTop: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>Prioritized fixes</h2>
-              <ol style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: "0.9rem" }}>
-                {fixes.map((fix, index) => (
-                  <li key={fix} style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "0.85rem", alignItems: "start", color: "#BCBCC8", lineHeight: 1.6 }}>
-                    <Pill tone={index < 2 ? "orange" : "muted"}>P{index + 1}</Pill>
-                    <span>{fix}</span>
-                  </li>
-                ))}
-              </ol>
-            </section>
+            {competitorMovements.length ? (
+              <section style={{ border: "1px solid rgba(255,255,255,0.08)", borderRadius: "18px", background: "#111116", padding: "1.5rem" }}>
+                <h2 style={{ marginTop: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>What changed since the last check</h2>
+                <div style={{ display: "grid", gap: "0.8rem" }}>
+                  {competitorMovements.map((movement) => (
+                    <div key={`${movement.prompt}-${movement.competitor}-${movement.type}`} style={{ border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "0.9rem", background: "rgba(255,255,255,0.025)" }}>
+                      <Pill tone={movement.type === "overtook_brand" ? "red" : "orange"}>{movement.type === "overtook_brand" ? "You disappeared" : "New brand found"}</Pill>
+                      <div style={{ color: "#F0F0EC", fontWeight: 900, marginTop: "0.6rem" }}>{movement.competitor}</div>
+                      <div style={{ color: "#BCBCC8", lineHeight: 1.6, marginTop: "0.25rem" }}>{movement.detail}</div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : null}
           </div>
         )}
       </section>

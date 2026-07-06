@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 
+const GEO_AGENT_CHECKOUT_URL = "https://checkout.nanocorp.so/c/fzVo0YiuyHM5GStaVrpT";
+const MONITOR_CHECKOUT_URL = "https://checkout.nanocorp.so/c/SQdBFx6vxsKgDB0CUVXV";
+
 const inputStyle = {
   width: "100%",
   border: "1px solid rgba(255,255,255,0.12)",
@@ -172,57 +175,89 @@ export default function Home() {
         <section className="mx-auto max-w-5xl border-t border-white/[0.06] px-5 py-14 sm:px-6 sm:py-20">
           <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">Pricing</p>
           <h2 className="max-w-2xl text-[clamp(2rem,5vw,3rem)] leading-[1.02] tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-            Weekly AI visibility monitoring — €49/month.
+            Start free. Watch one number. Get the work done for you when you are ready.
           </h2>
 
-          <div className="mt-8 grid max-w-3xl gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl border border-white/[0.08] bg-[#111116] p-6">
-              <p className="mb-3 text-xs font-bold uppercase tracking-[0.1em] text-[#777786]">Free audit</p>
-              <div className="mb-2 text-4xl tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>€0</div>
-              <p className="mb-5 text-sm text-[#858594]">A one-time check of where your business appears today.</p>
-              <ul className="m-0 flex list-none flex-col gap-2 p-0 text-sm text-[#B8B8C4]">
-                {[
-                  "Your visibility score",
-                  "Where your business is mentioned or missed",
-                  "3 plain-English fixes to try first",
-                ].map((feature) => (
-                  <li key={feature} className="flex gap-2"><span className="text-[#CAFF3C]">✓</span>{feature}</li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="relative rounded-2xl border border-[#CAFF3C]/30 bg-[#CAFF3C]/[0.045] p-6">
-              <span className="absolute -top-3 left-5 rounded-md bg-[#CAFF3C] px-2.5 py-1 text-[0.7rem] font-black uppercase tracking-[0.08em] text-[#09090B]">
-                For growing teams
-              </span>
-              <p className="mb-3 text-xs font-bold uppercase tracking-[0.1em] text-[#CAFF3C]">Citeable Pro</p>
-              <div className="mb-2 text-4xl tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                €49<span className="text-base text-[#9A9AA8]">/month</span>
+          <div className="mt-8 grid gap-4 lg:grid-cols-3">
+            {[
+              {
+                name: "Free",
+                price: "€0",
+                note: "A one-time audit. No card needed.",
+                badge: "Lead magnet",
+                features: [
+                  "Your score out of 100",
+                  "Who AI names instead of you",
+                  "3 simple actions to do this week",
+                ],
+                cta: "Run my free audit",
+                href: "#audit",
+                plan: "free",
+                highlight: false,
+              },
+              {
+                name: "Monitor",
+                price: "€9",
+                suffix: "/month",
+                note: "For owners who want one number to watch.",
+                badge: "Start here",
+                features: [
+                  "Monthly re-check",
+                  "Email alert when your score changes",
+                  "Email alert when a named competitor changes",
+                ],
+                cta: "Start Monitor",
+                href: MONITOR_CHECKOUT_URL,
+                plan: "monitor",
+                highlight: true,
+              },
+              {
+                name: "GEO Agent",
+                price: "€49",
+                suffix: "/month",
+                note: "For owners who want copy-paste assets, not homework.",
+                badge: "Done for you",
+                features: [
+                  "FAQ page copy from the real questions tested",
+                  "/llms.txt draft for your website",
+                  "Weekly action plan and review request templates",
+                  "Includes Monitor re-checks",
+                ],
+                cta: "Start GEO Agent",
+                href: GEO_AGENT_CHECKOUT_URL,
+                plan: "geo_agent",
+                highlight: false,
+              },
+            ].map((tier) => (
+              <div key={tier.name} className={`relative rounded-2xl border p-6 ${tier.highlight ? "border-[#CAFF3C]/35 bg-[#CAFF3C]/[0.055]" : "border-white/[0.08] bg-[#111116]"}`}>
+                <span className={`mb-4 inline-flex rounded-md px-2.5 py-1 text-[0.7rem] font-black uppercase tracking-[0.08em] ${tier.highlight ? "bg-[#CAFF3C] text-[#09090B]" : "bg-white/[0.06] text-[#B8B8C4]"}`}>
+                  {tier.badge}
+                </span>
+                <p className="mb-3 text-xs font-bold uppercase tracking-[0.1em] text-[#CAFF3C]">{tier.name}</p>
+                <div className="mb-2 text-4xl tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
+                  {tier.price}<span className="text-base text-[#9A9AA8]">{tier.suffix}</span>
+                </div>
+                <p className="mb-5 min-h-10 text-sm text-[#A7A7B4]">{tier.note}</p>
+                <ul className="m-0 mb-6 flex list-none flex-col gap-2 p-0 text-sm text-[#B8B8C4]">
+                  {tier.features.map((feature) => (
+                    <li key={feature} className="flex gap-2"><span className="text-[#CAFF3C]">✓</span>{feature}</li>
+                  ))}
+                </ul>
+                <a
+                  href={tier.href}
+                  onClick={() => window.posthog?.capture(tier.plan === "free" ? "audit_cta_clicked" : "purchase_started", { plan: tier.plan, source: "pricing_card" })}
+                  className={`block rounded-xl px-5 py-3 text-center text-sm font-black no-underline transition hover:brightness-110 ${tier.highlight ? "bg-[#CAFF3C] text-[#09090B]" : "bg-white/[0.08] text-[#F0F0EC]"}`}
+                >
+                  {tier.cta}
+                </a>
               </div>
-              <p className="mb-5 text-sm text-[#A7A7B4]">Every week: are you named by AI, who is named instead, and the 3 moves to fix it.</p>
-              <ul className="m-0 mb-6 flex list-none flex-col gap-2 p-0 text-sm text-[#B8B8C4]">
-                {[
-                  "Weekly re-scan stored as score trend",
-                  "Competitor movement flags per buyer prompt",
-                  "Source domains with get-listed actions",
-                ].map((feature) => (
-                  <li key={feature} className="flex gap-2"><span className="text-[#CAFF3C]">✓</span>{feature}</li>
-                ))}
-              </ul>
-              <a
-                href="https://checkout.nanocorp.so/c/xkA3ynsSsBvwhaUaVlZG"
-                onClick={() => window.posthog?.capture("subscribe_clicked", { plan: "pro", source: "pricing_card" })}
-                className="block rounded-xl bg-[#CAFF3C] px-5 py-3 text-center text-sm font-black text-[#09090B] no-underline transition hover:brightness-110"
-              >
-                Start with Pro
-              </a>
-            </div>
+            ))}
           </div>
         </section>
 
         <section className="mx-auto max-w-5xl border-t border-white/[0.06] px-5 py-12 sm:px-6">
           <div className="max-w-2xl rounded-2xl border border-white/[0.07] bg-white/[0.03] p-6">
-            <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-[#777786]">Small technical FAQ</p>
+            <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-[#777786]">Plain English FAQ</p>
             <h2 className="mb-3 text-xl font-bold tracking-[-0.02em]">What do GEO and AEO mean?</h2>
             <p className="m-0 text-sm leading-6 text-[#A7A7B4]">
               They are industry terms for improving how businesses appear in AI answers. You do not need to know them to use Citeable — the audit explains the fixes in plain English.
