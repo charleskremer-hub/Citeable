@@ -390,3 +390,22 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - Check scores: `search_visibility 0/25` (`DuckDuckGo returned HTTP 403`), `structured_data 25/25` (`Schema.org: true, OpenGraph: true`), `wikipedia 0/20` (`Wikipedia returned HTTP 404`), `ai_visibility 5/15` (`DuckDuckGo returned HTTP 403` for both AI-context queries), `technical_seo 15/15` (`robots.txt: true, sitemap.xml: true`).
 - Email was not sent because production has no `RESEND_API_KEY`; stored `email_error` is `No RESEND_API_KEY configured; no token-free email provider is available in this deployment.`
 - `NANOCORP_TOKEN` dependency is removed from the audit flow; source search under `src/` found no `NANOCORP_TOKEN`, `NANOCORP_BACKEND_URL`, worker-task, or NanoCorp internal task API references.
+
+## 2026-07-06 — Real AI-surface visibility and search fallback
+
+### Findings
+- Existing `ai_visibility` in `src/lib/audit-engine.ts` was a DuckDuckGo-based context proxy with a fixed 5-point floor, so HTTP 403s could still produce `5/15` without real AI-answer surface evidence.
+- Existing `search_visibility` queried only DuckDuckGo and returned `0/25` with `reachable=false` on DuckDuckGo HTTP errors, including the observed production `DuckDuckGo returned HTTP 403` for Keyban.
+- Local Next.js docs were unavailable until dependencies were installed; after `npm install`, the relevant Next.js 16.2 route-handler and `maxDuration` docs were read from `node_modules/next/dist/docs/01-app/` before validating the route-backed audit flow.
+
+### Changes made
+- Replaced the old AI-context proxy with live AI-surface probes: Perplexity public search, Bing-backed Google AI Overview proxy queries, and a Bing organic proxy for ChatGPT Browse-style citations.
+- `ai_visibility` now scores real surface evidence on a `0–100` dimension: Perplexity `+40`, Google/Bing snippet evidence `+35`, and ChatGPT/Bing organic evidence `+25`, with pro-rating when some probes fail and `score: null` / `reachable=false` only when all AI probes fail.
+- Added logged source-status summaries for live surface fetches, using an 8-second timeout and `User-Agent: Mozilla/5.0 (compatible; CiteeableBot/1.0)`.
+- Reworked `search_visibility` to try DuckDuckGo HTML first, then Bing, then Google, and return `score: null` / `Unavailable` only if all three providers fail.
+- Search scoring still uses the existing `25/15/8/0` tiers for `>=5`, `2–4`, `1`, or `0` confirmed brand/domain result mentions, now applied to the first responding provider.
+- Overall audit scoring now normalizes across dimensions with non-null scores so unavailable network dimensions are excluded instead of treated as zero.
+
+### Validation
+- `npm run lint` passed after the engine changes.
+- `npm run build` passed on Next.js 16.2.10 after the engine changes.

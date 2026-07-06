@@ -1,7 +1,7 @@
 import { pool } from "./db";
 
-const USER_AGENT = "Mozilla/5.0 (compatible; CiteableAudit/1.0; +https://getciteable.nanocorp.app)";
-const CHECK_TIMEOUT_MS = 10_000;
+const USER_AGENT = "Mozilla/5.0 (compatible; CiteeableBot/1.0)";
+const CHECK_TIMEOUT_MS = 8_000;
 
 export type PromptResult = {
   prompt: string;
@@ -22,7 +22,7 @@ export type EngineResult = {
   rawAnswerSnippet: string;
   promptResults: PromptResult[];
   check?: AuditCheckName;
-  score?: number;
+  score?: number | null;
   maxScore?: number;
   detail?: string;
 };
@@ -31,7 +31,7 @@ export type AuditCheckName = "search_visibility" | "structured_data" | "wikipedi
 
 export type AuditCheckResult = {
   check: AuditCheckName;
-  score: number;
+  score: number | null;
   maxScore: number;
   detail: string;
   found?: boolean;
@@ -164,6 +164,33 @@ function withTimeout(url: string, init: RequestInit = {}) {
   });
 }
 
+type SurfaceFetchResult = {
+  source: string;
+  url: string;
+  ok: boolean;
+  status?: number;
+  html?: string;
+  error?: string;
+};
+
+async function fetchSurface(source: string, url: string): Promise<SurfaceFetchResult> {
+  try {
+    const response = await withTimeout(url);
+    if (!response.ok) {
+      console.log(`[citeable] surface fetch ${source}: HTTP ${response.status}`);
+      return { source, url, ok: false, status: response.status, error: `HTTP ${response.status}` };
+    }
+
+    const html = await response.text();
+    console.log(`[citeable] surface fetch ${source}: ok ${response.status}`);
+    return { source, url, ok: true, status: response.status, html };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown fetch error";
+    console.log(`[citeable] surface fetch ${source}: failed ${message}`);
+    return { source, url, ok: false, error: message };
+  }
+}
+
 function htmlSnippet(html: string, needle: string) {
   const compact = html.replace(/\s+/g, " ").trim();
   const index = compact.toLowerCase().indexOf(needle.toLowerCase());
@@ -171,13 +198,79 @@ function htmlSnippet(html: string, needle: string) {
   return compact.slice(start, start + 320);
 }
 
+function stripHtml(html: string) {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function includesTerm(text: string, term: string) {
+  return text.toLowerCase().includes(term.toLowerCase());
+}
+
+function domainVariants(domain: string) {
+  const bare = domain.replace(/^www\./i, "").toLowerCase();
+  return [bare, `www.${bare}`];
+}
+
+function mentionsBrandOrDomain(text: string, brandName: string, domain: string) {
+  return includesTerm(text, brandName) || domainVariants(domain).some((variant) => includesTerm(text, variant));
+}
+
+function organicResultBlocks(html: string, source: string) {
+  const patterns = source.toLowerCase().includes("bing")
+    ? [/<li[^>]+class=["'][^"']*b_algo[^"']*["'][\s\S]*?<\/li>/gi]
+    : source.toLowerCase().includes("duckduckgo")
+      ? [/<div[^>]+class=["'][^"']*result[^"']*["'][\s\S]*?(?=<div[^>]+class=["'][^"']*result|<\/body>)/gi]
+      : [/<div[^>]+class=["'][^"']*(?:g|MjjYud)[^"']*["'][\s\S]*?(?=<div[^>]+class=["'][^"']*(?:g|MjjYud)|<\/body>)/gi];
+  const blocks = patterns.flatMap((pattern) => html.match(pattern) ?? []).map(stripHtml).filter(Boolean);
+
+  if (blocks.length > 0) return blocks;
+
+  return stripHtml(html)
+    .split(/(?<=[.!?])\s+/)
+    .filter((sentence) => sentence.length > 30)
+    .slice(0, 20);
+}
+
+function countSearchResultMentions(html: string, brandName: string, domain: string, source = "search") {
+  const lowerBrand = brandName.toLowerCase();
+  const variants = domainVariants(domain);
+
+  return organicResultBlocks(html, source).filter((block) => {
+    const lower = block.toLowerCase();
+    return lower.includes(lowerBrand) || variants.some((variant) => lower.includes(variant));
+  }).length;
+}
+
+function hasBrandAlongsideDomain(html: string, brandName: string, domain: string) {
+  const text = stripHtml(html);
+  const lower = text.toLowerCase();
+  const brandIndex = lower.indexOf(brandName.toLowerCase());
+  const domainIndex = domainVariants(domain)
+    .map((variant) => lower.indexOf(variant))
+    .filter((index) => index >= 0)
+    .sort((left, right) => left - right)[0];
+
+  if (brandIndex < 0 || domainIndex === undefined) return false;
+  return Math.abs(brandIndex - domainIndex) <= 1_200;
+}
+
+
 function domainFromWebsite(websiteUrl: string) {
   const normalized = normalizeWebsiteUrl(websiteUrl);
   return new URL(normalized).hostname.replace(/^www\./, "").toLowerCase();
 }
 
 function checkToEngine(result: AuditCheckResult): EngineResult {
-  const mentioned = Boolean(result.found || result.score > 0);
+  const mentioned = Boolean(result.found || (result.score ?? 0) > 0);
 
   return {
     engine: result.check,
@@ -194,7 +287,7 @@ function checkToEngine(result: AuditCheckResult): EngineResult {
         brandMentioned: mentioned,
         competitors: [],
         mentionProminence: mentioned ? "middle" : "not_mentioned",
-        citationPoints: result.score,
+        citationPoints: result.score ?? 0,
       },
     ],
     check: result.check,
@@ -209,12 +302,12 @@ function settledToChecks(checks: PromiseSettledResult<AuditCheckResult>[]) {
     if (result.status === "fulfilled") return result.value;
 
     const names: AuditCheckName[] = ["search_visibility", "structured_data", "wikipedia", "ai_visibility", "technical_seo"];
-    const maxScores = [25, 25, 20, 15, 15];
+    const maxScores = [25, 25, 20, 100, 15];
     const message = result.reason instanceof Error ? result.reason.message : "Unknown check failure";
 
     return {
       check: names[index],
-      score: 0,
+      score: null,
       maxScore: maxScores[index],
       detail: message,
       reachable: false,
@@ -225,7 +318,7 @@ function settledToChecks(checks: PromiseSettledResult<AuditCheckResult>[]) {
 
 function checksFromEngines(engines: EngineResult[]) {
   return engines
-    .filter((engine): engine is EngineResult & { check: AuditCheckName; score: number; maxScore: number; detail: string } => Boolean(engine.check))
+    .filter((engine): engine is EngineResult & { check: AuditCheckName; score: number | null; maxScore: number; detail: string } => Boolean(engine.check))
     .map((engine) => ({
       check: engine.check,
       score: engine.score,
@@ -237,32 +330,45 @@ function checksFromEngines(engines: EngineResult[]) {
 }
 
 async function checkSearchVisibility(brandName: string, domain: string): Promise<AuditCheckResult> {
-  const url = `https://duckduckgo.com/html/?q=${encodeURIComponent(brandName)}`;
-  const response = await withTimeout(url);
+  const query = `${brandName} ${domain}`;
+  const sources = [
+    { source: "DuckDuckGo", url: `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}` },
+    { source: "Bing", url: `https://www.bing.com/search?q=${encodeURIComponent(query)}` },
+    { source: "Google", url: `https://www.google.com/search?q=${encodeURIComponent(query)}&num=10` },
+  ];
+  const failures: string[] = [];
 
-  if (!response.ok) {
+  for (const source of sources) {
+    const result = await fetchSurface(`search_visibility:${source.source}`, source.url);
+
+    if (!result.ok || !result.html) {
+      failures.push(`${source.source}: ${result.error ?? `HTTP ${result.status}`}`);
+      continue;
+    }
+
+    const resultCount = countSearchResultMentions(result.html, brandName, domain, source.source);
+    const score = resultCount >= 5 ? 25 : resultCount >= 2 ? 15 : resultCount === 1 ? 8 : 0;
+    const found = resultCount > 0;
+
     return {
       check: "search_visibility",
-      score: 0,
+      score,
       maxScore: 25,
-      detail: `DuckDuckGo returned HTTP ${response.status}`,
-      reachable: false,
-      evidence: `DuckDuckGo returned HTTP ${response.status}`,
+      detail: `${source.source} returned ${resultCount} brand/domain result mention(s); fallback path: ${[...failures, `${source.source}: ok`].join("; ")}`,
+      found,
+      reachable: true,
+      evidence: htmlSnippet(result.html, found ? domain : brandName),
     };
   }
 
-  const html = await response.text();
-  const lowerHtml = html.toLowerCase();
-  const found = lowerHtml.includes(domain.toLowerCase()) || lowerHtml.includes(`www.${domain.toLowerCase()}`);
-
   return {
     check: "search_visibility",
-    score: found ? 25 : 0,
+    score: null,
     maxScore: 25,
-    detail: found ? "Brand domain found in DuckDuckGo results" : "Brand domain not found in DuckDuckGo top HTML results",
-    found,
-    reachable: true,
-    evidence: htmlSnippet(html, found ? domain : brandName),
+    detail: `Unavailable: all search providers failed (${failures.join("; ")})`,
+    found: false,
+    reachable: false,
+    evidence: failures.join("; "),
   };
 }
 
@@ -314,36 +420,64 @@ async function checkWikiPresence(brandName: string): Promise<AuditCheckResult> {
 }
 
 async function checkAIVisibility(brandName: string, domain: string): Promise<AuditCheckResult> {
-  const queries = [
-    `${brandName} site:reddit.com`,
-    `${brandName} ${domain}`,
+  const exactBrand = `"${brandName}"`;
+  const sources = await Promise.all([
+    fetchSurface("ai_visibility:perplexity", `https://www.perplexity.ai/search?q=${encodeURIComponent(`${brandName} ${domain}`)}`),
+    fetchSurface("ai_visibility:google_ai_overview_proxy", `https://www.bing.com/search?q=${encodeURIComponent(`${exactBrand} site:${domain}`)}`),
+    fetchSurface("ai_visibility:google_ai_overview_query", `https://www.bing.com/search?q=${encodeURIComponent(`${exactBrand} AI overview`)}`),
+    fetchSurface("ai_visibility:chatgpt_bing_proxy", `https://www.bing.com/search?q=${encodeURIComponent(`${exactBrand} ${domain}`)}`),
+  ]);
+
+  const perplexity = sources[0];
+  const googleProxySources = sources.slice(1, 3);
+  const chatgptProxy = sources[3];
+  const respondedBuckets = [
+    perplexity.ok && Boolean(perplexity.html),
+    googleProxySources.some((source) => source.ok && Boolean(source.html)),
+    chatgptProxy.ok && Boolean(chatgptProxy.html),
   ];
+  const respondedCount = respondedBuckets.filter(Boolean).length;
 
-  const results = await Promise.allSettled(
-    queries.map(async (query) => {
-      const response = await withTimeout(`https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`);
-      if (!response.ok) return { ok: false, query, text: `DuckDuckGo returned HTTP ${response.status}` };
-      return { ok: true, query, text: await response.text() };
-    })
-  );
+  if (respondedCount === 0) {
+    const failures = sources.map((source) => `${source.source}: ${source.error ?? `HTTP ${source.status}`}`).join("; ");
 
-  const fulfilled = results.flatMap((result) => (result.status === "fulfilled" ? [result.value] : []));
-  const domainMentions = fulfilled.filter((result) => result.text.toLowerCase().includes(domain.toLowerCase())).length;
-  const brandMentions = fulfilled.filter((result) => result.text.toLowerCase().includes(brandName.toLowerCase())).length;
-  const found = domainMentions > 0 || brandMentions > 0;
+    return {
+      check: "ai_visibility",
+      score: null,
+      maxScore: 100,
+      detail: `Unavailable: all AI-surface probes failed (${failures})`,
+      found: false,
+      reachable: false,
+      evidence: failures,
+    };
+  }
 
-  let score = 5;
-  if (brandMentions > 0) score += 5;
-  if (domainMentions > 0) score += 5;
+  const perplexityFound = Boolean(perplexity.ok && perplexity.html && mentionsBrandOrDomain(perplexity.html, brandName, domain));
+  const googleProxyFound = googleProxySources.some((source) => source.ok && source.html && hasBrandAlongsideDomain(source.html, brandName, domain));
+  const chatgptProxyFound = Boolean(chatgptProxy.ok && chatgptProxy.html && countSearchResultMentions(chatgptProxy.html, brandName, domain, "Bing") >= 1);
+  const rawScore = (perplexityFound ? 40 : 0) + (googleProxyFound ? 35 : 0) + (chatgptProxyFound ? 25 : 0);
+  const totalAvailablePoints = (respondedBuckets[0] ? 40 : 0) + (respondedBuckets[1] ? 35 : 0) + (respondedBuckets[2] ? 25 : 0);
+  const score = totalAvailablePoints > 0 ? Math.min(100, Math.round((rawScore / totalAvailablePoints) * 100)) : null;
+  const found = perplexityFound || googleProxyFound || chatgptProxyFound;
+  const statusSummary = [
+    `Perplexity: ${perplexity.ok ? "ok" : perplexity.error ?? `HTTP ${perplexity.status}`}`,
+    `Google/Bing proxy: ${googleProxySources.some((source) => source.ok) ? "ok" : googleProxySources.map((source) => source.error ?? `HTTP ${source.status}`).join(", ")}`,
+    `ChatGPT/Bing proxy: ${chatgptProxy.ok ? "ok" : chatgptProxy.error ?? `HTTP ${chatgptProxy.status}`}`,
+  ].join("; ");
+  const evidence = [perplexity, ...googleProxySources, chatgptProxy]
+    .filter((source) => source.html)
+    .map((source) => `${source.source}: ${htmlSnippet(source.html ?? "", mentionsBrandOrDomain(source.html ?? "", brandName, domain) ? domain : brandName)}`)
+    .join("\n")
+    .slice(0, 800);
 
   return {
     check: "ai_visibility",
-    score: Math.min(score, 15),
-    maxScore: 15,
-    detail: found ? `Brand/domain surfaced in ${Math.max(domainMentions, brandMentions)} AI-context search result set(s)` : "No AI-context search evidence detected",
+    score,
+    maxScore: 100,
+    detail: `AI surface probes — Perplexity ${perplexityFound ? "+40" : "+0"}, Google/Bing snippets ${googleProxyFound ? "+35" : "+0"}, ChatGPT/Bing proxy ${chatgptProxyFound ? "+25" : "+0"}; ${statusSummary}`,
     found,
-    reachable: fulfilled.some((result) => result.ok),
-    evidence: fulfilled.map((result) => `${result.query}: ${htmlSnippet(result.text, domain)}`).join("\n").slice(0, 500),
+    reachable: true,
+    evidence,
   };
 }
 
@@ -369,11 +503,17 @@ async function checkTechnicalSEO(websiteUrl: string): Promise<AuditCheckResult> 
 }
 
 function computeScore(checks: AuditCheckResult[]) {
-  return Math.max(0, Math.min(100, checks.reduce((total, check) => total + check.score, 0)));
+  const availableChecks = checks.filter((check) => check.score !== null);
+  const availableMaxScore = availableChecks.reduce((total, check) => total + check.maxScore, 0);
+
+  if (availableMaxScore === 0) return 0;
+
+  const rawScore = availableChecks.reduce((total, check) => total + (check.score ?? 0), 0);
+  return Math.max(0, Math.min(100, Math.round((rawScore / availableMaxScore) * 100)));
 }
 
 function formulaText() {
-  return "Score = search visibility (25) + structured data/OpenGraph (25) + Wikipedia exact page (20) + AI-context search visibility (15) + robots/sitemap technical SEO (15). All checks use live HTTP fetches with 10s timeouts and no NanoCorp token.";
+  return "Score = search visibility (25) + structured data/OpenGraph (25) + Wikipedia exact page (20) + real AI-surface visibility (100, normalized) + robots/sitemap technical SEO (15), normalized across available checks. Search falls back from DuckDuckGo to Bing to Google; unavailable dimensions are excluded rather than scored as zero. All checks use live HTTP fetches with 8s timeouts and no NanoCorp token.";
 }
 
 function categoryFromWebsite(websiteHtmlCheck: AuditCheckResult) {
