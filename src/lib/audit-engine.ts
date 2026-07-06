@@ -29,6 +29,37 @@ export type BuyerIntentPromptResult = {
   surfaces: BuyerIntentSurfaceResult[];
 };
 
+export type ScoreTrendPoint = {
+  auditId: string;
+  score: number;
+  createdAt: string;
+  runType: string;
+};
+
+export type CompetitorMovement = {
+  prompt: string;
+  competitor: string;
+  type: "new_competitor" | "overtook_brand";
+  detail: string;
+};
+
+export type SourceCitationReport = {
+  domain: string;
+  sourceType: string;
+  prompts: string[];
+  mentions: number;
+  example: string;
+  action: string;
+};
+
+export type MonitoringSnapshot = {
+  trend: ScoreTrendPoint[];
+  scoreDelta: number | null;
+  competitorMovements: CompetitorMovement[];
+  sources: SourceCitationReport[];
+  previousAuditId?: string;
+};
+
 export type EngineResult = {
   engine: string;
   reachable: boolean;
@@ -69,6 +100,7 @@ export type AuditReport = {
   emailSent: boolean;
   emailError?: string;
   checks: AuditCheckResult[];
+  monitoring: MonitoringSnapshot;
 };
 
 export type QueuedAuditResult =
@@ -86,6 +118,9 @@ type AuditRawResults = {
   emailSent?: boolean;
   emailError?: string;
   checks?: AuditCheckResult[];
+  monitoring?: MonitoringSnapshot;
+  weeklyEmailSent?: boolean;
+  weeklyEmailError?: string;
   startedAt?: string;
   completedAt?: string;
   failedAt?: string;
@@ -101,6 +136,18 @@ type AuditRow = {
   competitors_found: string[] | null;
   fixes: string[] | null;
   raw_results: AuditRawResults | null;
+  monitored_brand_id?: string | null;
+  run_type?: string | null;
+  previous_audit_id?: string | null;
+  created_at?: Date;
+};
+
+type StoredPromptRow = {
+  id: string;
+  score: number | null;
+  raw_results: AuditRawResults | null;
+  created_at: Date;
+  run_type: string | null;
 };
 
 type RunAuditParams = {
@@ -108,6 +155,14 @@ type RunAuditParams = {
   brandName: string;
   websiteUrl: string;
   email: string;
+};
+
+type MonitoredBrandRow = {
+  id: string;
+  email: string;
+  brand_name: string;
+  website_url: string;
+  last_audit_id: string | null;
 };
 
 export function normalizeWebsiteUrl(input: string) {
@@ -155,6 +210,7 @@ export function validateAuditInput(input: Record<string, unknown>) {
 
 function reportFromRow(row: AuditRow): AuditReport {
   const checks = row.raw_results?.checks ?? checksFromEngines(row.engines_checked ?? []);
+  const buyerIntentPrompts = row.raw_results?.buyerIntentPrompts ?? [];
 
   return {
     audit_id: row.id,
@@ -165,10 +221,11 @@ function reportFromRow(row: AuditRow): AuditReport {
     formula: row.raw_results?.formula ?? formulaText(),
     structuredDataFound: Boolean(row.raw_results?.structuredDataFound),
     category: row.raw_results?.category ?? "unknown",
-    buyerIntentPrompts: row.raw_results?.buyerIntentPrompts ?? [],
+    buyerIntentPrompts,
     emailSent: Boolean(row.raw_results?.emailSent),
     emailError: row.raw_results?.emailError,
     checks,
+    monitoring: emptyMonitoringSnapshot(buyerIntentPrompts),
   };
 }
 
@@ -231,9 +288,22 @@ function nanoCorpBackendUrl() {
   return (process.env.NANOCORP_BACKEND_URL ?? "https://phospho-nanocorp-prod--nanocorp-api-fastapi-app.modal.run").replace(/\/$/, "");
 }
 
+function searchResultDomain(value: unknown) {
+  if (typeof value !== "string" || !value) return "";
+
+  try {
+    return new URL(value).hostname.replace(/^www\./i, "").toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
 function searchResultText(results: NanoCorpSearchResult[]) {
   return results
-    .map((result) => [result.snippet, result.title].filter((value): value is string => typeof value === "string" && value.length > 0).join(" — "))
+    .map((result) => {
+      const domain = searchResultDomain(result.url);
+      return [result.snippet, result.title, domain].filter((value): value is string => typeof value === "string" && value.length > 0).join(" — ");
+    })
     .filter(Boolean)
     .join("\n");
 }
@@ -327,6 +397,175 @@ function uniqueInOrder(values: string[], limit = values.length) {
   }
 
   return unique;
+}
+
+function emptyMonitoringSnapshot(currentPrompts: BuyerIntentPromptResult[] = []): MonitoringSnapshot {
+  return {
+    trend: [],
+    scoreDelta: null,
+    competitorMovements: [],
+    sources: extractSourceCitationReports(currentPrompts),
+  };
+}
+
+function normalizePromptKey(prompt: string) {
+  return prompt.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function competitorsByPrompt(prompts: BuyerIntentPromptResult[]) {
+  const byPrompt = new Map<string, Set<string>>();
+
+  for (const prompt of prompts) {
+    byPrompt.set(
+      normalizePromptKey(prompt.prompt),
+      new Set(prompt.competitors.map((competitor) => competitor.toLowerCase()))
+    );
+  }
+
+  return byPrompt;
+}
+
+function brandMentionByPrompt(prompts: BuyerIntentPromptResult[]) {
+  const byPrompt = new Map<string, boolean>();
+
+  for (const prompt of prompts) {
+    byPrompt.set(normalizePromptKey(prompt.prompt), prompt.brandMentioned);
+  }
+
+  return byPrompt;
+}
+
+function compareCompetitorMovement(currentPrompts: BuyerIntentPromptResult[], previousPrompts: BuyerIntentPromptResult[] = []) {
+  const previousCompetitors = competitorsByPrompt(previousPrompts);
+  const previousBrandMentioned = brandMentionByPrompt(previousPrompts);
+  const movements: CompetitorMovement[] = [];
+
+  for (const prompt of currentPrompts) {
+    const promptKey = normalizePromptKey(prompt.prompt);
+    const previousForPrompt = previousCompetitors.get(promptKey) ?? new Set<string>();
+    const brandWasMentioned = previousBrandMentioned.get(promptKey) ?? false;
+
+    for (const competitor of prompt.competitors) {
+      if (!previousForPrompt.has(competitor.toLowerCase())) {
+        movements.push({
+          prompt: prompt.prompt,
+          competitor,
+          type: "new_competitor",
+          detail: `${competitor} appeared in live answers for this prompt this run.`,
+        });
+      }
+    }
+
+    if (brandWasMentioned && !prompt.brandMentioned && prompt.competitors.length > 0) {
+      movements.push({
+        prompt: prompt.prompt,
+        competitor: prompt.competitors[0],
+        type: "overtook_brand",
+        detail: `${prompt.competitors[0]} is named while the brand is no longer named for this prompt.`,
+      });
+    }
+  }
+
+  return uniqueInOrder(
+    movements.map((movement) => JSON.stringify(movement)),
+    12
+  ).map((movement) => JSON.parse(movement) as CompetitorMovement);
+}
+
+function extractDomains(text: string) {
+  const domains = new Set<string>();
+  const domainPattern = /\b(?:https?:\/\/)?(?:www\.)?([a-z0-9][a-z0-9-]*(?:\.[a-z0-9][a-z0-9-]*)+)\b/gi;
+  const blocked = new Set(["keyban.io", "example.com", "localhost"]);
+  let match: RegExpExecArray | null;
+
+  while ((match = domainPattern.exec(text)) !== null) {
+    const domain = match[1].toLowerCase().replace(/^www\./, "");
+    const parts = domain.split(".");
+
+    if (parts.length < 2 || blocked.has(domain) || /\.(js|css|png|jpg|jpeg|svg|gif)$/i.test(domain)) continue;
+    domains.add(domain);
+  }
+
+  return Array.from(domains);
+}
+
+function inferSourceType(domain: string) {
+  if (/(reddit|quora|stackexchange|stackoverflow|hackernews|news\.ycombinator)/i.test(domain)) return "Community discussion";
+  if (/(g2|capterra|getapp|trustradius|softwareadvice|producthunt)/i.test(domain)) return "Review/listing site";
+  if (/(youtube|youtu\.be|tiktok|instagram|linkedin|x\.com|twitter)/i.test(domain)) return "Social/video source";
+  if (/(techcrunch|forbes|wired|theverge|businessinsider|coindesk|decrypt|news|blog)/i.test(domain)) return "Editorial/news";
+  if (/(stripe|coinbase|visa|paypal|mastercard|amazon|openai|adyen|checkout|crossmint|nevermined|skyfire|rye|ramp)/i.test(domain)) return "Vendor/partner site";
+  return "Cited domain";
+}
+
+function sourceAction(domain: string, sourceType: string) {
+  if (sourceType === "Community discussion") return `Join relevant ${domain} threads and answer buyer questions with transparent examples.`;
+  if (sourceType === "Review/listing site") return `Create or update the ${domain} listing, add category copy, screenshots, and customer proof.`;
+  if (sourceType === "Social/video source") return `Publish a concise demo or comparison on ${domain} using the prompts buyers ask.`;
+  if (sourceType === "Editorial/news") return `Pitch ${domain} with a concrete customer story or data point tied to this category.`;
+  if (sourceType === "Vendor/partner site") return `Build an integration, comparison, or partner page that can earn mentions near ${domain}.`;
+  return `Create a credible page or outreach angle that can earn a mention from ${domain}.`;
+}
+
+export function extractSourceCitationReports(prompts: BuyerIntentPromptResult[]) {
+  const sourceMap = new Map<string, { prompts: Set<string>; examples: string[]; mentions: number }>();
+
+  for (const prompt of prompts) {
+    for (const surface of prompt.surfaces) {
+      if (!surface.reachable || !surface.rawAnswerSnippet) continue;
+
+      for (const domain of extractDomains(surface.rawAnswerSnippet)) {
+        const current = sourceMap.get(domain) ?? { prompts: new Set<string>(), examples: [], mentions: 0 };
+        current.prompts.add(prompt.prompt);
+        current.mentions += 1;
+        if (current.examples.length < 2) current.examples.push(surface.rawAnswerSnippet.slice(0, 180));
+        sourceMap.set(domain, current);
+      }
+    }
+  }
+
+  return Array.from(sourceMap.entries())
+    .map(([domain, data]) => {
+      const sourceType = inferSourceType(domain);
+
+      return {
+        domain,
+        sourceType,
+        prompts: Array.from(data.prompts).slice(0, 3),
+        mentions: data.mentions,
+        example: data.examples[0] ?? "",
+        action: sourceAction(domain, sourceType),
+      };
+    })
+    .sort((left, right) => right.mentions - left.mentions || left.domain.localeCompare(right.domain))
+    .slice(0, 8);
+}
+
+function monitoringSnapshotFromRuns(current: StoredPromptRow, runs: StoredPromptRow[]): MonitoringSnapshot {
+  const trend = runs
+    .filter((run) => run.score !== null && run.score !== undefined)
+    .sort((left, right) => left.created_at.getTime() - right.created_at.getTime())
+    .map((run) => ({
+      auditId: run.id,
+      score: run.score ?? 0,
+      createdAt: run.created_at.toISOString(),
+      runType: run.run_type ?? "manual",
+    }));
+  const currentIndex = trend.findIndex((point) => point.auditId === current.id);
+  const previousTrendPoint = currentIndex > 0 ? trend[currentIndex - 1] : trend.length > 1 ? trend[trend.length - 2] : undefined;
+  const currentPrompts = current.raw_results?.buyerIntentPrompts ?? [];
+  const previousRun = runs
+    .filter((run) => run.id !== current.id && run.created_at < current.created_at)
+    .sort((left, right) => right.created_at.getTime() - left.created_at.getTime())[0];
+  const previousPrompts = previousRun?.raw_results?.buyerIntentPrompts ?? [];
+
+  return {
+    trend,
+    scoreDelta: previousTrendPoint && current.score !== null && current.score !== undefined ? current.score - previousTrendPoint.score : null,
+    competitorMovements: compareCompetitorMovement(currentPrompts, previousPrompts),
+    sources: extractSourceCitationReports(currentPrompts),
+    previousAuditId: previousRun?.id,
+  };
 }
 
 function escapedRegex(value: string) {
@@ -1016,6 +1255,191 @@ export async function sendAuditEmail(email: string, brandName: string, report: A
   return { sent: true };
 }
 
+
+export async function getAuditMonitoringSnapshot(auditId: string): Promise<MonitoringSnapshot> {
+  const currentResult = await pool.query<StoredPromptRow & { brand_name: string; website_url: string }>(
+    `SELECT id, score, raw_results, created_at, run_type, brand_name, website_url
+     FROM audits
+     WHERE id = $1`,
+    [auditId]
+  );
+  const current = currentResult.rows[0];
+
+  if (!current) return emptyMonitoringSnapshot();
+
+  const runResult = await pool.query<StoredPromptRow>(
+    `SELECT id, score, raw_results, created_at, COALESCE(run_type, 'manual') AS run_type
+     FROM audits
+     WHERE lower(brand_name) = lower($1)
+       AND website_url = $2
+       AND score IS NOT NULL
+     ORDER BY created_at DESC
+     LIMIT 8`,
+    [current.brand_name, current.website_url]
+  );
+
+  return monitoringSnapshotFromRuns(current, runResult.rows);
+}
+
+export async function upsertMonitoredBrandForAudit(auditId: string) {
+  const auditResult = await pool.query<AuditRow>(`SELECT * FROM audits WHERE id = $1`, [auditId]);
+  const audit = auditResult.rows[0];
+
+  if (!audit) return undefined;
+
+  const monitored = await pool.query<{ id: string }>(
+    `INSERT INTO monitored_brands (email, brand_name, website_url, last_audit_id, last_run_at, next_run_at, updated_at)
+     VALUES ($1, $2, $3, $4, now(), now() + interval '7 days', now())
+     ON CONFLICT (email, brand_name, website_url) DO UPDATE
+     SET last_audit_id = EXCLUDED.last_audit_id,
+         last_run_at = EXCLUDED.last_run_at,
+         next_run_at = EXCLUDED.next_run_at,
+         active = true,
+         updated_at = now()
+     RETURNING id`,
+    [audit.email, audit.brand_name, audit.website_url, auditId]
+  );
+  const monitoredBrandId = monitored.rows[0]?.id;
+
+  if (monitoredBrandId) {
+    await pool.query(
+      `UPDATE audits
+       SET monitored_brand_id = $2,
+           run_type = COALESCE(run_type, 'manual')
+       WHERE id = $1`,
+      [auditId, monitoredBrandId]
+    );
+  }
+
+  return monitoredBrandId;
+}
+
+function monitoringSummaryText(snapshot: MonitoringSnapshot) {
+  const deltaText = snapshot.scoreDelta === null ? "no previous completed run yet" : `${snapshot.scoreDelta >= 0 ? "+" : ""}${snapshot.scoreDelta} points vs previous run`;
+  const movements = snapshot.competitorMovements.length
+    ? snapshot.competitorMovements.slice(0, 5).map((movement) => `- ${movement.competitor}: ${movement.detail} (${movement.prompt})`).join("\n")
+    : "- No competitor changes detected from the previous saved run.";
+  const topSource = snapshot.sources[0]
+    ? `${snapshot.sources[0].domain}: ${snapshot.sources[0].action}`
+    : "No cited source domains were extracted from reachable live answers.";
+
+  return { deltaText, movements, topSource };
+}
+
+export async function sendWeeklyMonitoringEmail(email: string, brandName: string, report: AuditReport) {
+  if (!process.env.RESEND_API_KEY) {
+    return {
+      sent: false,
+      error: "No RESEND_API_KEY configured; weekly monitoring email was stored but not sent.",
+    };
+  }
+
+  const summary = monitoringSummaryText(report.monitoring);
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: process.env.RESEND_FROM_EMAIL ?? "Citeable <onboarding@resend.dev>",
+      to: email,
+      subject: `Weekly Citeable Pro monitoring — ${brandName}`,
+      text: [
+        `Weekly Citeable Pro monitoring for ${brandName}`,
+        "",
+        `Score: ${report.score}/100 (${summary.deltaText})`,
+        "",
+        "Competitor movement:",
+        summary.movements,
+        "",
+        "Top source action:",
+        `- ${summary.topSource}`,
+        "",
+        "Your 3 moves this week:",
+        ...report.fixes.slice(0, 3).map((fix, index) => `${index + 1}. ${fix}`),
+        "",
+        `View the report: https://getciteable.nanocorp.app/audit/${report.audit_id}`,
+      ].join("\n"),
+    }),
+    signal: AbortSignal.timeout(CHECK_TIMEOUT_MS),
+  });
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    return { sent: false, error: `Resend returned HTTP ${response.status}: ${detail.slice(0, 300)}` };
+  }
+
+  return { sent: true };
+}
+
+export async function runDueWeeklyRescans(limit = 3) {
+  const due = await pool.query<MonitoredBrandRow>(
+    `SELECT id, email, brand_name, website_url, last_audit_id
+     FROM monitored_brands
+     WHERE active = true
+       AND next_run_at <= now()
+     ORDER BY next_run_at ASC
+     LIMIT $1`,
+    [limit]
+  );
+  const results: Array<{ monitored_brand_id: string; audit_id?: string; status: string; score?: number; error?: string; email_sent?: boolean }> = [];
+
+  for (const brand of due.rows) {
+    const auditResult = await pool.query<{ id: string }>(
+      `INSERT INTO audits (email, brand_name, website_url, monitored_brand_id, run_type, previous_audit_id, raw_results)
+       VALUES ($1, $2, $3, $4, 'weekly_rescan', $5, $6)
+       RETURNING id`,
+      [
+        brand.email,
+        brand.brand_name,
+        brand.website_url,
+        brand.id,
+        brand.last_audit_id,
+        { status: "queued", queuedAt: new Date().toISOString(), runType: "weekly_rescan" },
+      ]
+    );
+    const auditId = auditResult.rows[0].id;
+    const result = await runQueuedAudit(auditId);
+
+    if (result.status === "complete") {
+      const monitoring = await getAuditMonitoringSnapshot(auditId);
+      const report = { ...result.report, monitoring };
+      const emailResult = await sendWeeklyMonitoringEmail(brand.email, brand.brand_name, report);
+
+      await pool.query(
+        `UPDATE audits
+         SET raw_results = COALESCE(raw_results, '{}'::jsonb) || $2::jsonb
+         WHERE id = $1`,
+        [auditId, { monitoring, weeklyEmailSent: emailResult.sent, weeklyEmailError: emailResult.error }]
+      );
+      await pool.query(
+        `UPDATE monitored_brands
+         SET last_audit_id = $2,
+             last_run_at = now(),
+             next_run_at = now() + interval '7 days',
+             updated_at = now()
+         WHERE id = $1`,
+        [brand.id, auditId]
+      );
+      results.push({ monitored_brand_id: brand.id, audit_id: auditId, status: "complete", score: report.score, email_sent: emailResult.sent });
+    } else if (result.status === "failed") {
+      await pool.query(
+        `UPDATE monitored_brands
+         SET next_run_at = now() + interval '1 day',
+             updated_at = now()
+         WHERE id = $1`,
+        [brand.id]
+      );
+      results.push({ monitored_brand_id: brand.id, audit_id: auditId, status: "failed", error: result.error });
+    } else {
+      results.push({ monitored_brand_id: brand.id, audit_id: auditId, status: "running" });
+    }
+  }
+
+  return results;
+}
+
 export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
   const domain = domainFromWebsite(args.websiteUrl);
   const checks = settledToChecks(
@@ -1046,6 +1470,7 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
     buyerIntentPrompts,
     emailSent: false,
     checks,
+    monitoring: emptyMonitoringSnapshot(buyerIntentPrompts),
   };
   const emailResult = await sendAuditEmail(args.email, args.brandName, reportWithoutEmail);
 
@@ -1117,7 +1542,17 @@ export async function completeQueuedAudit(auditId: string): Promise<QueuedAuditR
       ]
     );
 
-    return { status: "complete", report };
+    await upsertMonitoredBrandForAudit(auditId);
+    const monitoring = await getAuditMonitoringSnapshot(auditId);
+
+    await pool.query(
+      `UPDATE audits
+       SET raw_results = COALESCE(raw_results, '{}'::jsonb) || $2::jsonb
+       WHERE id = $1`,
+      [auditId, { monitoring }]
+    );
+
+    return { status: "complete", report: { ...report, monitoring } };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown audit error";
 

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ensureAuditSchema, pool } from "@/lib/db";
-import type { BuyerIntentPromptResult, EngineResult } from "@/lib/audit-engine";
+import { getAuditMonitoringSnapshot } from "@/lib/audit-engine";
+import type { BuyerIntentPromptResult, EngineResult, MonitoringSnapshot } from "@/lib/audit-engine";
 import AuditPoller from "./AuditPoller";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +25,9 @@ type AuditRow = {
     emailSent?: boolean;
     emailError?: string;
     buyerIntentPrompts?: BuyerIntentPromptResult[];
+    monitoring?: MonitoringSnapshot;
+    weeklyEmailSent?: boolean;
+    weeklyEmailError?: string;
   } | null;
   created_at: Date;
 };
@@ -32,6 +36,16 @@ function scoreColor(score: number) {
   if (score < 30) return "#FF5F5F";
   if (score < 60) return "#FFB84D";
   return "#CAFF3C";
+}
+
+function formatShortDate(value: string) {
+  return new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(new Date(value));
+}
+
+function deltaLabel(delta: number | null) {
+  if (delta === null) return "No previous run yet";
+  if (delta === 0) return "No score change vs last run";
+  return `${delta > 0 ? "+" : ""}${delta} points vs last run`;
 }
 
 function Pill({ children, tone = "muted" }: { children: React.ReactNode; tone?: "green" | "red" | "orange" | "muted" }) {
@@ -80,6 +94,11 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const fixes = audit.fixes ?? [];
   const score = audit.score ?? 0;
   const color = scoreColor(score);
+  const monitoring = complete ? await getAuditMonitoringSnapshot(audit.id) : audit.raw_results?.monitoring;
+  const scoreTrend = monitoring?.trend ?? [];
+  const scoreDelta = monitoring?.scoreDelta ?? null;
+  const competitorMovements = monitoring?.competitorMovements ?? [];
+  const sources = monitoring?.sources ?? [];
 
   return (
     <main style={{ minHeight: "100vh", background: "#09090B", color: "#F0F0EC", fontFamily: "var(--font-sans)" }}>
@@ -146,6 +165,68 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             <section style={{ border: "1px solid rgba(255,255,255,0.08)", borderRadius: "18px", background: "#111116", padding: "1.5rem" }}>
               <h2 style={{ marginTop: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>Transparent formula</h2>
               <p style={{ color: "#BCBCC8", lineHeight: 1.7, marginBottom: 0 }}>{audit.raw_results?.formula ?? "Formula unavailable."}</p>
+            </section>
+
+            <section style={{ border: "1px solid rgba(202,255,60,0.18)", borderRadius: "18px", background: "rgba(202,255,60,0.045)", padding: "1.5rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "start", flexWrap: "wrap" }}>
+                <div>
+                  <h2 style={{ margin: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>Weekly monitoring</h2>
+                  <p style={{ color: "#BCBCC8", lineHeight: 1.7, marginBottom: 0 }}>Every saved run is kept so Pro can answer: are you named this week, who is named instead, and what changed?</p>
+                </div>
+                <Pill tone={scoreDelta !== null && scoreDelta < 0 ? "red" : scoreDelta !== null && scoreDelta > 0 ? "green" : "muted"}>{deltaLabel(scoreDelta)}</Pill>
+              </div>
+
+              <div style={{ marginTop: "1.25rem", display: "flex", alignItems: "end", gap: "0.75rem", minHeight: "118px", overflowX: "auto", paddingBottom: "0.25rem" }}>
+                {scoreTrend.length ? scoreTrend.map((point) => (
+                  <div key={point.auditId} style={{ minWidth: "78px", display: "grid", gap: "0.4rem", alignItems: "end" }}>
+                    <div style={{ height: `${Math.max(10, point.score)}px`, borderRadius: "10px 10px 4px 4px", background: scoreColor(point.score), boxShadow: `0 0 18px ${scoreColor(point.score)}33` }} />
+                    <div style={{ color: "#F0F0EC", fontWeight: 900 }}>{point.score}/100</div>
+                    <div style={{ color: "#777787", fontSize: "0.75rem" }}>{formatShortDate(point.createdAt)}</div>
+                  </div>
+                )) : (
+                  <p style={{ color: "#777787", lineHeight: 1.7, margin: 0 }}>No completed saved run exists yet.</p>
+                )}
+              </div>
+            </section>
+
+            <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.25rem" }}>
+              <div style={{ border: "1px solid rgba(255,255,255,0.08)", borderRadius: "18px", background: "#111116", padding: "1.5rem" }}>
+                <h2 style={{ marginTop: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>Competitor movement</h2>
+                {competitorMovements.length ? (
+                  <div style={{ display: "grid", gap: "0.8rem" }}>
+                    {competitorMovements.map((movement) => (
+                      <div key={`${movement.prompt}-${movement.competitor}-${movement.type}`} style={{ border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "0.9rem", background: "rgba(255,255,255,0.025)" }}>
+                        <Pill tone={movement.type === "overtook_brand" ? "red" : "orange"}>{movement.type === "overtook_brand" ? "Overtook brand" : "New competitor"}</Pill>
+                        <div style={{ color: "#F0F0EC", fontWeight: 900, marginTop: "0.6rem" }}>{movement.competitor}</div>
+                        <div style={{ color: "#BCBCC8", lineHeight: 1.6, marginTop: "0.25rem" }}>{movement.detail}</div>
+                        <div style={{ color: "#777787", fontSize: "0.8rem", marginTop: "0.45rem" }}>{movement.prompt}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ color: "#777787", lineHeight: 1.7, marginBottom: 0 }}>No competitor changes detected versus the previous saved run. New competitors will be flagged here after the next weekly re-scan.</p>
+                )}
+              </div>
+
+              <div style={{ border: "1px solid rgba(255,255,255,0.08)", borderRadius: "18px", background: "#111116", padding: "1.5rem" }}>
+                <h2 style={{ marginTop: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>Sources report</h2>
+                {sources.length ? (
+                  <div style={{ display: "grid", gap: "0.8rem" }}>
+                    {sources.slice(0, 5).map((source) => (
+                      <div key={source.domain} style={{ border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "0.9rem", background: "rgba(255,255,255,0.025)" }}>
+                        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
+                          <strong style={{ color: "#F0F0EC" }}>{source.domain}</strong>
+                          <Pill>{source.sourceType}</Pill>
+                          <Pill tone="green">{source.mentions} mention{source.mentions === 1 ? "" : "s"}</Pill>
+                        </div>
+                        <p style={{ color: "#BCBCC8", lineHeight: 1.6, margin: "0.65rem 0 0" }}>{source.action}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ color: "#777787", lineHeight: 1.7, marginBottom: 0 }}>No source domains were extractable from the live answer snippets stored for this run. Future re-scans store cited result URLs when providers return them.</p>
+                )}
+              </div>
             </section>
 
             <section style={{ border: "1px solid rgba(202,255,60,0.22)", borderRadius: "18px", background: "linear-gradient(135deg, rgba(202,255,60,0.08), #111116 45%)", padding: "1.5rem" }}>

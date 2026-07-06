@@ -172,7 +172,7 @@ export default function Home() {
         <section className="mx-auto max-w-5xl border-t border-white/[0.06] px-5 py-14 sm:px-6 sm:py-20">
           <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">Pricing</p>
           <h2 className="max-w-2xl text-[clamp(2rem,5vw,3rem)] leading-[1.02] tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-            Get found by AI — €49/month.
+            Weekly AI visibility monitoring — €49/month.
           </h2>
 
           <div className="mt-8 grid max-w-3xl gap-4 sm:grid-cols-2">
@@ -199,13 +199,12 @@ export default function Home() {
               <div className="mb-2 text-4xl tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
                 €49<span className="text-base text-[#9A9AA8]">/month</span>
               </div>
-              <p className="mb-5 text-sm text-[#A7A7B4]">Keep improving how often your business is recommended.</p>
+              <p className="mb-5 text-sm text-[#A7A7B4]">Every week: are you named by AI, who is named instead, and the 3 moves to fix it.</p>
               <ul className="m-0 mb-6 flex list-none flex-col gap-2 p-0 text-sm text-[#B8B8C4]">
                 {[
-                  "Weekly checks",
-                  "Competitor tracking",
-                  "Clear next steps",
-                  "Email alerts",
+                  "Weekly re-scan stored as score trend",
+                  "Competitor movement flags per buyer prompt",
+                  "Source domains with get-listed actions",
                 ].map((feature) => (
                   <li key={feature} className="flex gap-2"><span className="text-[#CAFF3C]">✓</span>{feature}</li>
                 ))}

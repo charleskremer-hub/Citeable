@@ -468,3 +468,44 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - `npm run build` passed on Next.js 16.2.10.
 - Local Keyban audit ID `a6c32039-c255-4f6b-b862-5f5e9aa2eb15` completed with score `12/100`, category `agentic commerce infrastructure`, and Keyban named `false` in all 5 buyer-intent prompts.
 - Local Keyban competitors returned from real surfaces included `Stripe`, `Crossmint`, `Coinbase`, `OpenAI`, `Nevermined`, `Visa`, `PayPal`, `Mastercard`, `Amazon`, `Perplexity`, `Eco`, `Adyen`, `Checkout.com`, `Ant International`, `Skyfire`, `Rye`, and `Ramp`.
+
+## 2026-07-06 — Citeable Pro weekly monitoring rebuild
+
+### Findings
+- Existing completed audits already store honest buyer-intent prompt data in `raw_results.buyerIntentPrompts`, aggregate competitors in `competitors_found`, and score/check details per run.
+- Keyban has multiple real completed audits with score `12/100` and real competitor names from live surfaces; no fabricated trend or source data was needed.
+- Email delivery in this deployment still depends on `RESEND_API_KEY`; when it is missing, audit and weekly summary email attempts are stored with an explicit error instead of pretending an email was sent.
+- Per `AGENTS.md`, local Next.js 16.2 docs under `node_modules/next/dist/docs/` were consulted for App Router route handlers/server components before changing routes/pages.
+
+### Changes made
+- Added monitoring schema in `src/lib/db.ts`: `monitored_brands`, audit `monitored_brand_id`, `run_type`, and `previous_audit_id`; existing completed audits are backfilled into saved monitored brands.
+- Added `vercel.json` cron config and `src/app/api/cron/weekly-rescan/route.ts`; the route finds due saved brands, creates a weekly re-scan audit, runs the same live audit engine, stores the run, updates the 7-day next-run date, and records weekly summary email status.
+- Added monitoring helpers in `src/lib/audit-engine.ts`:
+  - score trend from stored completed audits for the same brand/site,
+  - competitor movement flags for new competitors and overtakes versus the previous saved run,
+  - source-domain extraction from live answer/search snippets with concrete get-listed actions,
+  - weekly monitoring email body with score delta, competitor movement, and top source action.
+- Updated live search snippet storage to include returned result domains so future source reports can cite actual domains returned by the live provider.
+- Updated `src/app/audit/[id]/page.tsx` to render Weekly monitoring, Competitor movement, and Sources report sections on completed reports.
+- Updated the landing pricing card in `src/app/page.tsx` to sell Citeable Pro around the live weekly monitoring promise while keeping the price at `€49/month` and the existing checkout URL unchanged.
+
+### Validation
+- `npm run lint` passed.
+- `npm run build` passed with Next.js 16.2.10.
+- Applied the monitoring schema/backfill to production Postgres.
+- Ran a fresh real Keyban audit locally through `/api/capture-email`:
+  - Audit ID: `6e324a39-c62d-44fe-bf3f-c2755fffe0e6`
+  - Score: `12/100`
+  - Trend points stored: `8`
+  - Competitor movements stored: `12`
+  - Source reports stored: `8`
+  - Top extracted source domain: `nevermined.ai`
+  - Email status: `email_sent=false` with explicit missing `RESEND_API_KEY` error.
+
+### Live vs pending
+- LIVE: weekly re-scan route and Vercel cron configuration exist.
+- LIVE: saved-brand score trend renders from real completed audit history.
+- LIVE: competitor movement renders from real prompt-level competitor deltas.
+- LIVE: source report renders domains extracted from live answers/search snippets with concrete actions.
+- LIVE when `RESEND_API_KEY` is configured: weekly summary email send path.
+- PENDING: configure a production `RESEND_API_KEY`/verified sender if founders want actual weekly emails delivered from Vercel; code currently records the missing-provider error honestly.
