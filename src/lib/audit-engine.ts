@@ -2,6 +2,9 @@ import { pool } from "./db";
 
 const USER_AGENT = "Mozilla/5.0 (compatible; CiteeableBot/1.0)";
 const CHECK_TIMEOUT_MS = 8_000;
+const ANSWER_TIMEOUT_MS = 18_000;
+const FREE_AI_ENGINE_NAMES = ["ChatGPT", "Gemini"];
+const PRO_AI_ENGINE_NAMES = ["Claude", "Grok", "Mistral"];
 
 export type PromptResult = {
   prompt: string;
@@ -19,6 +22,8 @@ export type BuyerIntentSurfaceResult = {
   brandMentioned: boolean;
   competitors: string[];
   rawAnswerSnippet: string;
+  kind?: "ai_engine" | "supplementary" | "locked";
+  status?: "checked" | "not_connected" | "locked" | "failed";
 };
 
 export type BuyerIntentPromptResult = {
@@ -295,6 +300,180 @@ type NanoCorpSearchResult = {
   url?: unknown;
   snippet?: unknown;
 };
+
+type OfficialAiEngine = {
+  name: string;
+  envVar: string;
+  modelEnvVar: string;
+  defaultModel: string;
+  tier: "free" | "pro";
+  call: (prompt: string, model: string, apiKey: string) => Promise<string>;
+};
+
+function safeJsonParse<T>(value: string, fallback: T): T {
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function textFromUnknown(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) return value.map(textFromUnknown).filter(Boolean).join("\n");
+  if (!value || typeof value !== "object") return "";
+
+  const record = value as Record<string, unknown>;
+  return [record.text, record.content, record.output_text, record.message]
+    .map(textFromUnknown)
+    .filter(Boolean)
+    .join("\n");
+}
+
+function buyerQuestionSystemPrompt() {
+  return [
+    "Answer the buyer's question naturally and concisely.",
+    "Name real brands or vendors only when you would genuinely recommend them.",
+    "Do not include analysis of this instruction.",
+  ].join(" ");
+}
+
+async function callOpenAIAnswer(prompt: string, model: string, apiKey: string) {
+  const response = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      input: [
+        { role: "system", content: buyerQuestionSystemPrompt() },
+        { role: "user", content: prompt },
+      ],
+      max_output_tokens: 700,
+    }),
+    signal: AbortSignal.timeout(ANSWER_TIMEOUT_MS),
+  });
+  const body = await response.text();
+
+  if (!response.ok) throw new Error(`ChatGPT API returned HTTP ${response.status}: ${body.slice(0, 180)}`);
+
+  const parsed = safeJsonParse<{ output_text?: string; output?: unknown }>(body, {});
+  return (parsed.output_text || textFromUnknown(parsed.output)).trim();
+}
+
+async function callGeminiAnswer(prompt: string, model: string, apiKey: string) {
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: buyerQuestionSystemPrompt() }] },
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: { maxOutputTokens: 700, temperature: 0.2 },
+    }),
+    signal: AbortSignal.timeout(ANSWER_TIMEOUT_MS),
+  });
+  const body = await response.text();
+
+  if (!response.ok) throw new Error(`Gemini API returned HTTP ${response.status}: ${body.slice(0, 180)}`);
+
+  const parsed = safeJsonParse<{ candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> }>(body, {});
+  return (parsed.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("\n") ?? "").trim();
+}
+
+async function callAnthropicAnswer(prompt: string, model: string, apiKey: string) {
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      system: buyerQuestionSystemPrompt(),
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 700,
+    }),
+    signal: AbortSignal.timeout(ANSWER_TIMEOUT_MS),
+  });
+  const body = await response.text();
+
+  if (!response.ok) throw new Error(`Claude API returned HTTP ${response.status}: ${body.slice(0, 180)}`);
+
+  const parsed = safeJsonParse<{ content?: Array<{ text?: string }> }>(body, {});
+  return (parsed.content?.map((part) => part.text ?? "").join("\n") ?? "").trim();
+}
+
+async function callOpenAiCompatibleAnswer(endpoint: string, engineName: string, prompt: string, model: string, apiKey: string) {
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: buyerQuestionSystemPrompt() },
+        { role: "user", content: prompt },
+      ],
+      max_tokens: 700,
+      temperature: 0.2,
+    }),
+    signal: AbortSignal.timeout(ANSWER_TIMEOUT_MS),
+  });
+  const body = await response.text();
+
+  if (!response.ok) throw new Error(`${engineName} API returned HTTP ${response.status}: ${body.slice(0, 180)}`);
+
+  const parsed = safeJsonParse<{ choices?: Array<{ message?: { content?: string } }> }>(body, {});
+  return (parsed.choices?.[0]?.message?.content ?? "").trim();
+}
+
+const OFFICIAL_AI_ENGINES: OfficialAiEngine[] = [
+  {
+    name: "ChatGPT",
+    envVar: "OPENAI_API_KEY",
+    modelEnvVar: "OPENAI_MODEL",
+    defaultModel: "gpt-4.1-mini",
+    tier: "free",
+    call: callOpenAIAnswer,
+  },
+  {
+    name: "Gemini",
+    envVar: "GEMINI_API_KEY",
+    modelEnvVar: "GEMINI_MODEL",
+    defaultModel: "gemini-1.5-flash",
+    tier: "free",
+    call: callGeminiAnswer,
+  },
+  {
+    name: "Claude",
+    envVar: "ANTHROPIC_API_KEY",
+    modelEnvVar: "ANTHROPIC_MODEL",
+    defaultModel: "claude-3-5-haiku-latest",
+    tier: "pro",
+    call: callAnthropicAnswer,
+  },
+  {
+    name: "Grok",
+    envVar: "XAI_API_KEY",
+    modelEnvVar: "XAI_MODEL",
+    defaultModel: "grok-3-mini",
+    tier: "pro",
+    call: (prompt, model, apiKey) => callOpenAiCompatibleAnswer("https://api.x.ai/v1/chat/completions", "Grok", prompt, model, apiKey),
+  },
+  {
+    name: "Mistral",
+    envVar: "MISTRAL_API_KEY",
+    modelEnvVar: "MISTRAL_MODEL",
+    defaultModel: "mistral-small-latest",
+    tier: "pro",
+    call: (prompt, model, apiKey) => callOpenAiCompatibleAnswer("https://api.mistral.ai/v1/chat/completions", "Mistral", prompt, model, apiKey),
+  },
+];
 
 function nanoCorpBackendUrl() {
   return (process.env.NANOCORP_BACKEND_URL ?? "https://phospho-nanocorp-prod--nanocorp-api-fastapi-app.modal.run").replace(/\/$/, "");
@@ -867,19 +1046,6 @@ function countSearchResultMentions(html: string, brandName: string, domain: stri
   }).length;
 }
 
-function hasBrandAlongsideDomain(html: string, brandName: string, domain: string) {
-  const text = stripHtml(html);
-  const lower = text.toLowerCase();
-  const brandIndex = lower.indexOf(brandName.toLowerCase());
-  const domainIndex = domainVariants(domain)
-    .map((variant) => lower.indexOf(variant))
-    .filter((index) => index >= 0)
-    .sort((left, right) => left - right)[0];
-
-  if (brandIndex < 0 || domainIndex === undefined) return false;
-  return Math.abs(brandIndex - domainIndex) <= 1_200;
-}
-
 
 function domainFromWebsite(websiteUrl: string) {
   const normalized = normalizeWebsiteUrl(websiteUrl);
@@ -914,18 +1080,26 @@ function checkToEngine(result: AuditCheckResult): EngineResult {
   };
 }
 
-function settledToChecks(checks: PromiseSettledResult<AuditCheckResult>[]) {
+function settledToChecks(
+  checks: PromiseSettledResult<AuditCheckResult>[],
+  fallbackChecks: Array<{ check: AuditCheckName; maxScore: number }> = [
+    { check: "search_visibility", maxScore: 25 },
+    { check: "structured_data", maxScore: 25 },
+    { check: "wikipedia", maxScore: 20 },
+    { check: "ai_visibility", maxScore: 100 },
+    { check: "technical_seo", maxScore: 15 },
+  ]
+) {
   return checks.map((result, index): AuditCheckResult => {
     if (result.status === "fulfilled") return result.value;
 
-    const names: AuditCheckName[] = ["search_visibility", "structured_data", "wikipedia", "ai_visibility", "technical_seo"];
-    const maxScores = [25, 25, 20, 100, 15];
+    const fallback = fallbackChecks[index] ?? { check: "technical_seo" as const, maxScore: 0 };
     const message = result.reason instanceof Error ? result.reason.message : "Unknown check failure";
 
     return {
-      check: names[index],
+      check: fallback.check,
       score: null,
-      maxScore: maxScores[index],
+      maxScore: fallback.maxScore,
       detail: message,
       reachable: false,
       evidence: message,
@@ -1036,138 +1210,147 @@ async function checkWikiPresence(brandName: string): Promise<AuditCheckResult> {
   };
 }
 
-async function checkAIVisibility(brandName: string, domain: string): Promise<AuditCheckResult> {
-  const exactBrand = `"${brandName}"`;
-  const sources = await Promise.all([
-    fetchSurface("ai_visibility:perplexity", `https://www.perplexity.ai/search?q=${encodeURIComponent(`${brandName} ${domain}`)}`),
-    fetchSurface("ai_visibility:google_ai_overview_proxy", `https://www.bing.com/search?q=${encodeURIComponent(`${exactBrand} site:${domain}`)}`),
-    fetchSurface("ai_visibility:google_ai_overview_query", `https://www.bing.com/search?q=${encodeURIComponent(`${exactBrand} AI overview`)}`),
-    fetchSurface("ai_visibility:chatgpt_bing_proxy", `https://www.bing.com/search?q=${encodeURIComponent(`${exactBrand} ${domain}`)}`),
-  ]);
-
-  const perplexity = sources[0];
-  const googleProxySources = sources.slice(1, 3);
-  const chatgptProxy = sources[3];
-  const respondedBuckets = [
-    perplexity.ok && Boolean(perplexity.html),
-    googleProxySources.some((source) => source.ok && Boolean(source.html)),
-    chatgptProxy.ok && Boolean(chatgptProxy.html),
-  ];
-  const respondedCount = respondedBuckets.filter(Boolean).length;
-
-  if (respondedCount === 0) {
-    const failures = sources.map((source) => `${source.source}: ${source.error ?? `HTTP ${source.status}`}`).join("; ");
-
-    return {
-      check: "ai_visibility",
-      score: null,
-      maxScore: 100,
-      detail: `Unavailable: all AI-surface probes failed (${failures})`,
-      found: false,
-      reachable: false,
-      evidence: failures,
-    };
-  }
-
-  const perplexityFound = Boolean(perplexity.ok && perplexity.html && mentionsBrandOrDomain(perplexity.html, brandName, domain));
-  const googleProxyFound = googleProxySources.some((source) => source.ok && source.html && hasBrandAlongsideDomain(source.html, brandName, domain));
-  const chatgptProxyFound = Boolean(chatgptProxy.ok && chatgptProxy.html && countSearchResultMentions(chatgptProxy.html, brandName, domain, "Bing") >= 1);
-  const rawScore = (perplexityFound ? 40 : 0) + (googleProxyFound ? 35 : 0) + (chatgptProxyFound ? 25 : 0);
-  const totalAvailablePoints = (respondedBuckets[0] ? 40 : 0) + (respondedBuckets[1] ? 35 : 0) + (respondedBuckets[2] ? 25 : 0);
-  const score = totalAvailablePoints > 0 ? Math.min(100, Math.round((rawScore / totalAvailablePoints) * 100)) : null;
-  const found = perplexityFound || googleProxyFound || chatgptProxyFound;
-  const statusSummary = [
-    `Perplexity: ${perplexity.ok ? "ok" : perplexity.error ?? `HTTP ${perplexity.status}`}`,
-    `Google/Bing proxy: ${googleProxySources.some((source) => source.ok) ? "ok" : googleProxySources.map((source) => source.error ?? `HTTP ${source.status}`).join(", ")}`,
-    `ChatGPT/Bing proxy: ${chatgptProxy.ok ? "ok" : chatgptProxy.error ?? `HTTP ${chatgptProxy.status}`}`,
-  ].join("; ");
-  const evidence = [perplexity, ...googleProxySources, chatgptProxy]
-    .filter((source) => source.html)
-    .map((source) => `${source.source}: ${htmlSnippet(source.html ?? "", mentionsBrandOrDomain(source.html ?? "", brandName, domain) ? domain : brandName)}`)
-    .join("\n")
-    .slice(0, 800);
+function checkAIVisibilityFromBuyerPrompts(buyerIntentPrompts: BuyerIntentPromptResult[]): AuditCheckResult {
+  const checkedPrompts = buyerIntentPrompts.filter((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine" && surface.status === "checked"));
+  const namedPrompts = checkedPrompts.filter((prompt) => prompt.brandMentioned).length;
+  const score = buyerIntentPrompts.length > 0 ? Math.round((namedPrompts / buyerIntentPrompts.length) * 100) : null;
+  const notConnected = uniqueInOrder(
+    buyerIntentPrompts.flatMap((prompt) => prompt.surfaces)
+      .filter((surface) => surface.kind === "ai_engine" && surface.status === "not_connected")
+      .map((surface) => surface.surface)
+  );
 
   return {
     check: "ai_visibility",
     score,
     maxScore: 100,
-    detail: `AI surface probes — Perplexity ${perplexityFound ? "+40" : "+0"}, Google/Bing snippets ${googleProxyFound ? "+35" : "+0"}, ChatGPT/Bing proxy ${chatgptProxyFound ? "+25" : "+0"}; ${statusSummary}`,
-    found,
-    reachable: true,
-    evidence,
+    detail: notConnected.length
+      ? `Official AI answers checked where connected. Not connected yet: ${notConnected.join(", ")}.`
+      : "Official AI answers checked from connected engines.",
+    found: namedPrompts > 0,
+    reachable: checkedPrompts.length > 0,
+    evidence: buyerIntentPrompts
+      .map((prompt) => `${prompt.prompt}: ${prompt.brandMentioned ? "brand named" : "brand not named"}; instead: ${prompt.competitors.join(", ") || "none found"}`)
+      .join("\n")
+      .slice(0, 800),
   };
 }
 
-async function probeBuyerIntentSurface(surface: { surface: string; url: string }, prompt: string, brandName: string, domain: string): Promise<BuyerIntentSurfaceResult> {
-  const source = `buyer_intent:${surface.surface}`;
-  const result = surface.url === "nanocorp:web_search"
-    ? await fetchNanoCorpSearch(source, buyerIntentSearchQuery(prompt))
-    : await fetchSurface(source, surface.url);
+async function probeOfficialAiEngine(engine: OfficialAiEngine, prompt: string, brandName: string, domain: string): Promise<BuyerIntentSurfaceResult> {
+  const apiKey = process.env[engine.envVar];
 
-  if (!result.ok || !result.html) {
+  if (!apiKey) {
     return {
-      surface: surface.surface,
+      surface: engine.name,
       reachable: false,
-      unavailableReason: result.error ?? `HTTP ${result.status}`,
+      unavailableReason: "Not connected yet",
       brandMentioned: false,
       competitors: [],
-      rawAnswerSnippet: result.error ?? `HTTP ${result.status ?? "unavailable"}`,
+      rawAnswerSnippet: "Not connected yet",
+      kind: "ai_engine",
+      status: "not_connected",
     };
   }
 
-  const text = surfaceText(result, surface.surface);
+  try {
+    const model = process.env[engine.modelEnvVar] || engine.defaultModel;
+    const answer = await engine.call(prompt, model, apiKey);
+
+    if (!answer) throw new Error(`${engine.name} returned an empty answer`);
+
+    const brandMentioned = mentionsBrandOrDomain(answer, brandName, domain);
+    const competitors = extractCompetitorsFromText(answer, brandName, domain, prompt);
+
+    return {
+      surface: engine.name,
+      reachable: true,
+      brandMentioned,
+      competitors,
+      rawAnswerSnippet: answer.slice(0, 700),
+      kind: "ai_engine",
+      status: "checked",
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : `${engine.name} API failed`;
+    console.log(`[citeable] official AI engine ${engine.name}: ${message}`);
+
+    return {
+      surface: engine.name,
+      reachable: false,
+      unavailableReason: "Not connected yet",
+      brandMentioned: false,
+      competitors: [],
+      rawAnswerSnippet: "Not connected yet",
+      kind: "ai_engine",
+      status: "failed",
+    };
+  }
+}
+
+async function probeSupplementarySearch(prompt: string, brandName: string, domain: string): Promise<BuyerIntentSurfaceResult> {
+  const source = "buyer_intent:NanoCorp web search";
+  const result = await fetchNanoCorpSearch(source, buyerIntentSearchQuery(prompt));
+
+  if (!result.ok || !result.html) {
+    return {
+      surface: "NanoCorp web search",
+      reachable: false,
+      unavailableReason: "Not connected yet",
+      brandMentioned: false,
+      competitors: [],
+      rawAnswerSnippet: "Not connected yet",
+      kind: "supplementary",
+      status: "not_connected",
+    };
+  }
+
+  const text = surfaceText(result, "NanoCorp web search");
   const brandMentioned = mentionsBrandOrDomain(text, brandName, domain);
   const competitors = extractCompetitorsFromText(text, brandName, domain, prompt);
 
   return {
-    surface: surface.surface,
+    surface: "NanoCorp web search",
     reachable: true,
     brandMentioned,
     competitors,
     rawAnswerSnippet: text.slice(0, 700),
+    kind: "supplementary",
+    status: "checked",
+  };
+}
+
+function lockedProEngineSurface(): BuyerIntentSurfaceResult {
+  return {
+    surface: PRO_AI_ENGINE_NAMES.join(", "),
+    reachable: false,
+    unavailableReason: "Unlock with Pro",
+    brandMentioned: false,
+    competitors: [],
+    rawAnswerSnippet: `${PRO_AI_ENGINE_NAMES.join(", ")} — unlock with Pro`,
+    kind: "locked",
+    status: "locked",
   };
 }
 
 async function analyzeBuyerIntentPrompts(brandName: string, domain: string, category: string): Promise<BuyerIntentPromptResult[]> {
   const prompts = generateBuyerIntentPrompts(category);
+  const freeEngines = OFFICIAL_AI_ENGINES.filter((engine) => FREE_AI_ENGINE_NAMES.includes(engine.name));
 
   return Promise.all(prompts.map(async (prompt) => {
-    const query = buyerIntentSearchQuery(prompt);
     const surfaces = await Promise.all([
-      probeBuyerIntentSurface(
-        { surface: "Brave web_search snippets", url: "nanocorp:web_search" },
-        prompt,
-        brandName,
-        domain
-      ),
-      probeBuyerIntentSurface(
-        { surface: "Perplexity", url: `https://www.perplexity.ai/search?q=${encodeURIComponent(prompt)}` },
-        prompt,
-        brandName,
-        domain
-      ),
-      probeBuyerIntentSurface(
-        { surface: "Brave public search", url: `https://search.brave.com/search?q=${encodeURIComponent(query)}` },
-        prompt,
-        brandName,
-        domain
-      ),
-      probeBuyerIntentSurface(
-        { surface: "Yahoo Scout/search", url: `https://search.yahoo.com/search?p=${encodeURIComponent(query)}` },
-        prompt,
-        brandName,
-        domain
-      ),
+      ...freeEngines.map((engine) => probeOfficialAiEngine(engine, prompt, brandName, domain)),
+      probeSupplementarySearch(prompt, brandName, domain),
     ]);
-    const availableSurfaces = surfaces.filter((surface) => surface.reachable);
-    const competitors = uniqueInOrder(availableSurfaces.flatMap((surface) => surface.competitors), 12);
+    const aiSurfaces = surfaces.filter((surface) => surface.kind === "ai_engine");
+    const checkedAiSurfaces = aiSurfaces.filter((surface) => surface.reachable && surface.status === "checked");
+    const competitors = uniqueInOrder(checkedAiSurfaces.flatMap((surface) => surface.competitors), 12);
 
     return {
       prompt,
-      available: availableSurfaces.length > 0,
-      brandMentioned: availableSurfaces.some((surface) => surface.brandMentioned),
+      available: checkedAiSurfaces.length > 0,
+      brandMentioned: checkedAiSurfaces.some((surface) => surface.brandMentioned),
       competitors,
-      surfaces,
+      surfaces: [...surfaces, lockedProEngineSurface()],
     };
   }));
 }
@@ -1209,7 +1392,7 @@ function computeScore(checks: AuditCheckResult[], buyerIntentPrompts: BuyerInten
 }
 
 function formulaText() {
-  return "Your score mostly comes from one question: when buyers ask AI for a business like yours, are you named or are other brands named instead? We also check whether your website is easy to find and understand. Results come from live checks only; no scores, competitors, or actions are invented.";
+  return "Your score mostly comes from one question: when buyers ask AI for a business like yours, are you named or are other brands named instead? Free audits check ChatGPT and Gemini when their API keys are connected. Claude, Grok, and Mistral are part of GEO Agent Pro. Results come from live checks only; nothing is invented.";
 }
 
 function categoryFromWebsite(websiteHtmlCheck: AuditCheckResult) {
@@ -1278,15 +1461,12 @@ export async function sendAuditEmail(email: string, brandName: string, report: A
         "",
         `Score: ${report.score}/100`,
         "",
-        "Checks:",
-        ...report.checks.map((check) => `- ${check.check}: ${check.score}/${check.maxScore} — ${check.detail}`),
-        "",
         "Who AI recommends instead of you:",
         buyerIntentSummaryText(report),
         ...report.buyerIntentPrompts.flatMap((prompt) => [
           `- ${prompt.prompt}`,
-          `  Brand named: ${prompt.brandMentioned ? "yes" : "no"}${prompt.available ? "" : " (Unavailable)"}`,
-          `  Competitors named instead: ${prompt.competitors.length ? prompt.competitors.join(", ") : prompt.available ? "None found" : "Unavailable"}`,
+          `  You: ${prompt.brandMentioned ? "named" : "not named"}`,
+          `  Named instead: ${prompt.competitors.length ? prompt.competitors.join(", ") : "None found"}`,
         ]),
         "",
         "3 things to do this week:",
@@ -1625,20 +1805,26 @@ export async function runDueWeeklyRescans(limit = 3) {
 
 export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
   const domain = domainFromWebsite(args.websiteUrl);
-  const checks = settledToChecks(
+  const foundationChecks = settledToChecks(
     await Promise.allSettled([
       checkSearchVisibility(args.brandName, domain),
       checkSchemaMarkup(args.websiteUrl),
       checkWikiPresence(args.brandName),
-      checkAIVisibility(args.brandName, domain),
       checkTechnicalSEO(args.websiteUrl),
-    ])
+    ]),
+    [
+      { check: "search_visibility", maxScore: 25 },
+      { check: "structured_data", maxScore: 25 },
+      { check: "wikipedia", maxScore: 20 },
+      { check: "technical_seo", maxScore: 15 },
+    ]
   );
-  const engines = checks.map(checkToEngine);
-  const structuredDataFound = (checks.find((check) => check.check === "structured_data")?.score ?? 0) > 0;
-  const fixes = buildFixes(checks);
-  const inferred = await inferCategory(args.websiteUrl, checks.find((check) => check.check === "structured_data") ?? checks[0]);
+  const structuredDataFound = (foundationChecks.find((check) => check.check === "structured_data")?.score ?? 0) > 0;
+  const inferred = await inferCategory(args.websiteUrl, foundationChecks.find((check) => check.check === "structured_data") ?? foundationChecks[0]);
   const buyerIntentPrompts = await analyzeBuyerIntentPrompts(args.brandName, domain, inferred.category);
+  const checks = [...foundationChecks, checkAIVisibilityFromBuyerPrompts(buyerIntentPrompts)];
+  const engines = checks.map(checkToEngine);
+  const fixes = buildFixes(checks);
   const score = computeScore(checks, buyerIntentPrompts);
   const competitors = uniqueInOrder(buyerIntentPrompts.flatMap((prompt) => prompt.competitors), 20);
   const reportWithoutEmail: AuditReport = {

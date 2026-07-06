@@ -80,7 +80,7 @@ export default function Home() {
                 When your customers ask ChatGPT for a business like yours, do you show up?
               </h1>
               <p className="mt-2.5 max-w-2xl text-[0.95rem] leading-[1.32] text-[#B8B8C4] sm:mt-5 sm:text-xl sm:leading-[1.55]">
-                Citeable checks — free — whether AI engines (ChatGPT, Perplexity, Google) mention your business, and shows you exactly how to get recommended. 30-second audit, no card needed.
+                Citeable checks — free — whether ChatGPT and Gemini mention your business, and shows you exactly how to get recommended. 30-second audit, no card needed.
               </p>
             </div>
 
@@ -149,7 +149,7 @@ export default function Home() {
 
         <section className="mx-auto max-w-5xl px-5 py-6 sm:px-6">
           <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] px-5 py-5 text-center text-sm leading-6 text-[#A7A7B4] sm:text-base">
-            Find out whether ChatGPT, Perplexity, and Google mention your business when people are ready to choose.
+            Find out whether ChatGPT and Gemini mention your business when people are ready to choose.
           </div>
         </section>
 
@@ -162,7 +162,7 @@ export default function Home() {
           <div className="mt-8 grid gap-1 overflow-hidden rounded-2xl bg-white/[0.07] sm:grid-cols-3">
             {[
               "1. Enter your brand name and website",
-              "2. We ask ChatGPT, Perplexity & Google about you",
+              "2. We ask ChatGPT and Gemini about you",
               "3. You get a score and 3 fixes in your inbox",
             ].map((step) => (
               <div key={step} className="bg-[#111116] p-6 text-lg font-semibold leading-7 tracking-[-0.02em] text-[#F0F0EC]">
@@ -186,7 +186,7 @@ export default function Home() {
                 note: "A one-time audit. No card needed.",
                 badge: "Lead magnet",
                 features: [
-                  "Your score out of 100",
+                  "ChatGPT + Gemini check",
                   "Who AI names instead of you",
                   "3 simple actions to do this week",
                 ],
@@ -202,7 +202,7 @@ export default function Home() {
                 note: "For owners who want one number to watch.",
                 badge: "Start here",
                 features: [
-                  "Monthly re-check",
+                  "Monthly ChatGPT + Gemini re-check",
                   "Email alert when your score changes",
                   "Email alert when a named competitor changes",
                 ],
@@ -218,9 +218,9 @@ export default function Home() {
                 note: "For owners who want copy-paste assets, not homework.",
                 badge: "Done for you",
                 features: [
-                  "FAQ page copy from the real questions tested",
-                  "/llms.txt draft for your website",
-                  "Weekly action plan and review request templates",
+                  "Adds Claude, Grok, and Mistral",
+                  "Full per-engine detail",
+                  "FAQ page copy and /llms.txt draft",
                   "Includes Monitor re-checks",
                 ],
                 cta: "Start GEO Agent",

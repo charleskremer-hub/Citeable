@@ -542,3 +542,27 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - LIVE after push/deploy: GEO Agent assets endpoint can generate assets from completed audits; it uses real audit prompts/competitors and live `/llms.txt` when available.
 - PENDING: actual paid-customer fulfilment automation after NanoCorp checkout is not wired; product purchases currently need operational follow-up or a future NanoCorp webhook task to trigger asset delivery automatically.
 - PENDING: production email delivery for Monitor alerts still depends on `RESEND_API_KEY` / verified sender configuration, as documented in the previous monitoring task.
+
+## 2026-07-06 — Report v3 official AI engines and simplified customer report
+
+### Findings
+- Previous buyer-question checks used NanoCorp web search plus scraped public pages for Perplexity, Brave, and Yahoo; those public pages can block server-side bots and produced confusing `Unavailable` rows.
+- The customer report page displayed per-prompt engine chips and a visible `Checks we ran` table, which exposed technical check names and provider plumbing to non-technical customers.
+- Current Vercel environment variables listed by `nanocorp site env list`: `NANOCORP_TOKEN`, `NANOCORP_BACKEND_URL`, and `DATABASE_URL`; no official AI engine keys are set yet.
+- Required official AI env vars to set in Vercel via `nanocorp site env set`: `OPENAI_API_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `XAI_API_KEY`, and `MISTRAL_API_KEY`. Optional model overrides are `OPENAI_MODEL`, `GEMINI_MODEL`, `ANTHROPIC_MODEL`, `XAI_MODEL`, and `MISTRAL_MODEL`.
+
+### Changes made
+- Replaced buyer-question scraping of Perplexity/Brave/Yahoo with official API adapters for ChatGPT/OpenAI, Gemini/Google, Claude/Anthropic, Grok/xAI, and Mistral.
+- Free audit runs only ChatGPT and Gemini when `OPENAI_API_KEY` and/or `GEMINI_API_KEY` are set; missing or failed keys are shown as `Not connected yet`.
+- Claude, Grok, and Mistral are not run on the free report and appear only as the locked teaser `Claude, Grok, Mistral — unlock with Pro`.
+- NanoCorp web search remains stored as a supplementary surface but no longer drives the headline buyer-question result or competitor list.
+- Customer report buyer questions now show one clean line: `You: named/not named · Named instead: ...`; per-prompt engine chips were removed.
+- Removed the visible `Checks we ran` table from the customer report page.
+- Updated homepage and metadata copy from ChatGPT/Perplexity/Google to the current split: Free = ChatGPT + Gemini, Monitor = monthly ChatGPT + Gemini re-run, GEO Agent = adds Claude/Grok/Mistral and full per-engine detail.
+- Checkout links were left unchanged.
+
+### Validation
+- `npm install` completed successfully in the fresh worker clone.
+- `npm run lint` passed.
+- `npm run build` passed on Next.js `16.2.10`.
+- Production validation on brand `Keyban` must be run after push/deploy because the live site needs the committed code.
