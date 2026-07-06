@@ -1,29 +1,28 @@
-import { NextRequest, NextResponse, after } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
 import { validateAuditInput } from "@/lib/audit-engine";
 
 export const maxDuration = 60;
 
-function runAuditAfterResponse(auditId: string, requestUrl: string) {
+async function triggerRunAudit(auditId: string, requestUrl: string) {
   const runAuditUrl = new URL("/api/run-audit", requestUrl);
 
-  after(async () => {
-    try {
-      const response = await fetch(runAuditUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ audit_id: auditId }),
-      });
+  try {
+    const response = await fetch(runAuditUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ audit_id: auditId }),
+    });
 
-      if (!response.ok) {
-        const detail = await response.text().catch(() => "");
-        console.error(`[citeable] audit ${auditId} trigger failed with HTTP ${response.status}: ${detail}`);
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown run-audit trigger error";
-      console.error(`[citeable] audit ${auditId} trigger failed: ${message}`);
+    if (!response.ok) {
+      const detail = await response.text().catch(() => "");
+      throw new Error(`run-audit trigger failed with HTTP ${response.status}: ${detail}`);
     }
-  });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown run-audit trigger error";
+    console.error(`[citeable] audit ${auditId} trigger failed: ${message}`);
+    throw new Error(message);
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -49,9 +48,9 @@ export async function POST(req: NextRequest) {
     );
 
     const auditId = audit.rows[0].id;
-    runAuditAfterResponse(auditId, req.url);
+    await triggerRunAudit(auditId, req.url);
 
-    console.log(`[citeable] audit queued: ${auditId} for ${email}; triggering in-process run-audit`);
+    console.log(`[citeable] audit queued: ${auditId} for ${email}; triggered in-process run-audit`);
 
     return NextResponse.json(
       {

@@ -371,3 +371,9 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - `npm run lint` passed.
 - `npm run build` passed on Next.js 16.2.10.
 - Static search over the audit flow found no remaining `NANOCORP_TOKEN`, `NANOCORP_BACKEND_URL`, `NANOCORP_API_BASE_URL`, worker-task, or internal task API references in `src/lib/audit-engine.ts`, `src/app/api/capture-email/route.ts`, `src/app/api/run-audit/route.ts`, or `src/app/api/audit-status/route.ts`.
+
+### Production smoke note and trigger adjustment
+- First live Keyban capture after commit `1519664` returned HTTP 202 and audit ID `c142ee19-c5e1-4e51-a024-2f0872870d17`, but status remained `queued` after 45 seconds because the `/api/capture-email` `after()` callback did not trigger its internal `/api/run-audit` fetch in production.
+- Manual `POST /api/run-audit` for audit `c142ee19-c5e1-4e51-a024-2f0872870d17` proved the token-free in-process engine works in production: status `completed`, score `45/100`, structured data `25/25`, technical SEO `15/15`, Wikipedia `0/20`, DuckDuckGo search `0/25` due HTTP 403, AI-context visibility `5/15` due DuckDuckGo HTTP 403.
+- Email delivery was not sent for that audit because no `RESEND_API_KEY` is configured; stored email error: `No RESEND_API_KEY configured; no token-free email provider is available in this deployment.`
+- Updated `src/app/api/capture-email/route.ts` to synchronously call `/api/run-audit` before returning HTTP 202. `/api/run-audit` still returns quickly and schedules the actual audit with Next.js `after()`, so form responses remain fast while avoiding the dropped capture-level `after()` trigger.
