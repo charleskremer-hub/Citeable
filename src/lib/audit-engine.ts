@@ -830,6 +830,18 @@ function extractHomepageSignals(html: string) {
 function categoryFromHomepageText(text: string, domain: string) {
   const lower = text.toLowerCase();
   const phraseRules: Array<[RegExp, string]> = [
+    [/plombier|plumbing|leak repair|chauffagiste/, "plumber"],
+    [/[ée]lectricien|electrician|electrical contractor/, "electrician"],
+    [/restaurant|bistro|brasserie|traiteur|catering/, "restaurant"],
+    [/dentiste|dental|orthodont/, "dentist"],
+    [/avocat|law firm|lawyer|legal services/, "law firm"],
+    [/expert-?comptable|accountant|bookkeeping/, "accounting firm"],
+    [/agence immobili[èe]re|real estate agency|property agency/, "real estate agency"],
+    [/agence web|site internet|web design|seo agency|marketing agency/, "web agency"],
+    [/salon de coiffure|hair salon|barber/, "hair salon"],
+    [/coach sportif|personal trainer|fitness coach/, "fitness coach"],
+    [/garage auto|auto repair|car repair|mechanic/, "auto repair shop"],
+    [/architecte|architectural studio|architecture firm/, "architecture firm"],
     [/agentic commerce|commerce agentique/, "agentic commerce infrastructure"],
     [/agent wallet|wallets? embarqu[eé]s?|paiements? agentiques?|agentic payments?/, "agentic payments platform"],
     [/digital product passport|product passport|\bdpp\b/, "digital product passport platform"],
@@ -851,6 +863,79 @@ function categoryFromHomepageText(text: string, domain: string) {
   }
 
   return `${displayNameFromDomain(domain)} alternatives`;
+}
+
+function detectBuyerQuestionLanguage(text: string, domain: string) {
+  const lower = text.toLowerCase();
+
+  if (/\b(le|la|les|des|pour|avec|sans|devis|prix|tarif|pas cher|meilleur|agence|entreprise|service|client|contact)\b/.test(lower) || domain.endsWith(".fr")) {
+    return "fr" as const;
+  }
+
+  return "en" as const;
+}
+
+const LOCATION_HINTS = [
+  "Paris", "Lyon", "Marseille", "Toulouse", "Nice", "Nantes", "Montpellier", "Strasbourg", "Bordeaux", "Lille",
+  "Rennes", "Reims", "Saint-Étienne", "Toulon", "Grenoble", "Dijon", "Angers", "Nîmes", "Villeurbanne", "Clermont-Ferrand",
+  "London", "New York", "Los Angeles", "Chicago", "San Francisco", "Austin", "Seattle", "Boston", "Miami", "Toronto",
+];
+
+function inferLocationFromHomepage(text: string, domain: string) {
+  const normalized = text.replace(/\s+/g, " ");
+  const postalMatch = normalized.match(/\b\d{5}\s+([A-ZÀ-Ÿ][A-Za-zÀ-ÿ' -]{2,38})\b/);
+  const nearMatch = normalized.match(/\b(?:à|a|in|near|based in|situ[eé]\s+[aà])\s+([A-ZÀ-Ÿ][A-Za-zÀ-ÿ' -]{2,38})\b/);
+  const knownCity = LOCATION_HINTS.find((city) => new RegExp(`\\b${escapedRegex(city)}\\b`, "i").test(normalized));
+  const city = postalMatch?.[1] ?? nearMatch?.[1] ?? knownCity;
+
+  if (city) {
+    return city
+      .replace(/\b(?:France|Europe|Contact|Accueil|Home|Services|Clients|About|Legal)\b.*$/i, "")
+      .trim()
+      .slice(0, 40);
+  }
+
+  if (domain.endsWith(".fr")) return "France";
+  return "near me";
+}
+
+function inferAudienceFromHomepage(text: string, language: "en" | "fr") {
+  const lower = text.toLowerCase();
+
+  if (/tpe|pme|small business|small businesses|local business|ind[eé]pendants?/.test(lower)) return language === "fr" ? "TPE PME" : "small businesses";
+  if (/startup|scaleup|saas/.test(lower)) return "startups";
+  if (/restaurant|hotel|hospitality|h[ôo]tel/.test(lower)) return language === "fr" ? "restaurants et hôtels" : "restaurants and hotels";
+  if (/e-?commerce|shopify|woocommerce|boutique en ligne/.test(lower)) return "ecommerce brands";
+  if (/families|particuliers|homeowners|propri[eé]taires/.test(lower)) return language === "fr" ? "particuliers" : "homeowners";
+  if (/b2b|enterprise|sales teams|product teams/.test(lower)) return "B2B teams";
+
+  return language === "fr" ? "clients locaux" : "local customers";
+}
+
+function localizedCategoryTerm(categoryTerm: string, language: "en" | "fr") {
+  if (language !== "fr") return categoryTerm;
+
+  const lower = categoryTerm.toLowerCase();
+  const translations: Array<[RegExp, string]> = [
+    [/plumber/, "plombier"],
+    [/electrician/, "électricien"],
+    [/law firm/, "cabinet d'avocat"],
+    [/accounting firm|accounting software/, "expert-comptable"],
+    [/real estate agency/, "agence immobilière"],
+    [/web agency/, "agence web"],
+    [/hair salon/, "salon de coiffure"],
+    [/fitness coach/, "coach sportif"],
+    [/auto repair shop/, "garage auto"],
+    [/architecture firm/, "architecte"],
+    [/software platform/, "logiciel"],
+    [/project management tool/, "outil de gestion de projet"],
+    [/email marketing platform/, "outil email marketing"],
+    [/analytics platform/, "outil analytics"],
+    [/ecommerce platform/, "plateforme ecommerce"],
+    [/developer platform/, "plateforme développeur"],
+  ];
+
+  return translations.find(([pattern]) => pattern.test(lower))?.[1] ?? categoryTerm;
 }
 
 async function inferCategory(websiteUrl: string, fallbackCheck: AuditCheckResult) {
@@ -917,16 +1002,47 @@ function promptCategoryTerms(category: string) {
   return { categoryTerm: category, useCase: "growing companies", leader: "the market leader" };
 }
 
-function generateBuyerIntentPrompts(category: string) {
+function generateBuyerIntentPrompts(brandName: string, websiteUrl: string, category: string, homepageText: string) {
   const { categoryTerm, useCase, leader } = promptCategoryTerms(category);
+  const domain = domainFromWebsite(websiteUrl);
+  const language = detectBuyerQuestionLanguage(homepageText, domain);
+  const location = inferLocationFromHomepage(homepageText, domain);
+  const audience = inferAudienceFromHomepage(homepageText, language);
+  const buyerCategory = localizedCategoryTerm(categoryTerm, language);
+  const englishLocationPhrase = location === "near me" ? "near me" : `in ${location}`;
+
+  if (language === "fr") {
+    return uniqueInOrder([
+      `meilleur ${buyerCategory} à ${location}`,
+      `${buyerCategory} recommandé à ${location}`,
+      `${buyerCategory} pas cher`,
+      `prix ${buyerCategory}`,
+      `avis ${brandName}`,
+      `${brandName} est-il fiable`,
+      `alternative à ${leader}`,
+      `${buyerCategory} pour ${audience}`,
+      `quel ${buyerCategory} choisir`,
+      `comparer ${buyerCategory}`,
+      `${buyerCategory} avec devis rapide`,
+      `${buyerCategory} près de moi`,
+    ], 12);
+  }
 
   return uniqueInOrder([
-    `best ${categoryTerm} for ${useCase}`,
-    `top ${categoryTerm} tools 2026`,
-    `${categoryTerm} alternatives to ${leader}`,
-    `which ${categoryTerm} should I choose`,
-    `compare ${categoryTerm} vendors`,
-  ], 5);
+    `best ${buyerCategory} ${englishLocationPhrase}`,
+    `best ${buyerCategory} for ${useCase}`,
+    `top ${buyerCategory} companies 2026`,
+    `affordable ${buyerCategory}`,
+    `${buyerCategory} pricing`,
+    `${brandName} reviews`,
+    `is ${brandName} reliable`,
+    `${buyerCategory} alternatives to ${leader}`,
+    `${buyerCategory} for ${audience}`,
+    `which ${buyerCategory} should I choose`,
+    `compare ${buyerCategory} vendors`,
+    `${buyerCategory} with fast quote`,
+    `${buyerCategory} near me`,
+  ], 12);
 }
 
 const COMPANY_SUFFIXES = /\b(?:Inc|LLC|Ltd|Limited|GmbH|SAS|SA|AG|BV|Corp|Corporation|Company|Co|Labs|Technologies|Technology|Systems|Software|AI|API)\b\.?/g;
@@ -1332,8 +1448,8 @@ function lockedProEngineSurface(): BuyerIntentSurfaceResult {
   };
 }
 
-async function analyzeBuyerIntentPrompts(brandName: string, domain: string, category: string): Promise<BuyerIntentPromptResult[]> {
-  const prompts = generateBuyerIntentPrompts(category);
+async function analyzeBuyerIntentPrompts(brandName: string, websiteUrl: string, domain: string, category: string, homepageText: string): Promise<BuyerIntentPromptResult[]> {
+  const prompts = generateBuyerIntentPrompts(brandName, websiteUrl, category, homepageText);
   const freeEngines = OFFICIAL_AI_ENGINES.filter((engine) => FREE_AI_ENGINE_NAMES.includes(engine.name));
 
   return Promise.all(prompts.map(async (prompt) => {
@@ -1392,7 +1508,7 @@ function computeScore(checks: AuditCheckResult[], buyerIntentPrompts: BuyerInten
 }
 
 function formulaText() {
-  return "Your score mostly comes from one question: when buyers ask AI for a business like yours, are you named or are other brands named instead? Free audits check ChatGPT and Gemini when their API keys are connected. Claude, Grok, and Mistral are part of GEO Agent Pro. Results come from live checks only; nothing is invented.";
+  return "Your score mostly comes from one question: when buyers ask for a business like yours, are you named or are other brands named instead? Citeable creates the buying questions from your brand and website, then runs live checks only; nothing is invented.";
 }
 
 function categoryFromWebsite(websiteHtmlCheck: AuditCheckResult) {
@@ -1821,7 +1937,7 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
   );
   const structuredDataFound = (foundationChecks.find((check) => check.check === "structured_data")?.score ?? 0) > 0;
   const inferred = await inferCategory(args.websiteUrl, foundationChecks.find((check) => check.check === "structured_data") ?? foundationChecks[0]);
-  const buyerIntentPrompts = await analyzeBuyerIntentPrompts(args.brandName, domain, inferred.category);
+  const buyerIntentPrompts = await analyzeBuyerIntentPrompts(args.brandName, args.websiteUrl, domain, inferred.category, inferred.homepageText);
   const checks = [...foundationChecks, checkAIVisibilityFromBuyerPrompts(buyerIntentPrompts)];
   const engines = checks.map(checkToEngine);
   const fixes = buildFixes(checks);

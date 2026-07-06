@@ -574,3 +574,26 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - Production Keyban audit request returned completed audit ID `3481cb01-981f-48ac-9f8a-96b619efb48a`, but the JSON still contained old scraper surfaces (`Brave web_search snippets`, `Perplexity`, `Brave public search`, `Yahoo Scout/search`).
 - LIVE: homepage served after deploy; Vercel build completed.
 - PENDING: production API/report validation for Keyban on the new official-engine pipeline. The one allowed post-deploy validation still saw stale/old API behavior, likely deployment propagation or function cache lag.
+
+## 2026-07-06 — Zero-setup buyer-question generation
+
+### Findings
+- The homepage already collected only business name, website, and email, and `/api/capture-email` already starts `runQueuedAudit()` immediately after creating the audit row.
+- Buyer-question generation was still a fixed 5-question list based only on inferred category, so it did not satisfy the 10–20 automatically deduced buying-question requirement.
+- Customer-facing homepage/report copy still exposed technical terms such as `GEO`, `AEO`, provider status, and per-engine/package wording.
+- `node_modules/next/dist/docs/` is not present in this worker clone, so no local Next.js 16 docs file could be read despite the repo instruction; changes follow the existing App Router patterns in the repo.
+
+### Changes made
+- Expanded `src/lib/audit-engine.ts` to infer buying-question signals from brand + website homepage text only: language, local city/country fallback, audience, small-business vertical, category translation, brand review/reliability patterns, cheap/price/devis/quote patterns, near-me/local patterns, and alternative-to-leader patterns.
+- `generateBuyerIntentPrompts()` now returns 12 unique buyer questions per audit, within the requested 10–20 range, and `runAudit()` passes the website URL and inferred homepage text into the generator.
+- Added more TPE/PME-friendly category inference for common local-service verticals: plumber, electrician, restaurant, dentist, law firm, accountant, real estate agency, web agency, hair salon, fitness coach, auto repair, and architecture.
+- Kept automatic audit launch unchanged: the landing form still asks only for business name, website, and email, then queues and runs the audit with no visible configuration step.
+- Removed customer-facing `prompt`, `GEO`, `AEO`, provider-status, and per-engine wording from the homepage and report page; the UX now says Citeable finds buying questions automatically and shows who gets recommended instead.
+- Updated metadata and report score explanation to describe the zero-setup recommendation audit in plain English.
+
+### Validation
+- `npm install` completed in the fresh worker clone.
+- `npm run lint` passed.
+- `npm run build` passed on Next.js `16.2.10`.
+- Local browser QA with `agent-browser` opened `http://localhost:3000`; the snapshot showed the zero-setup hero, brand/site/email form, `10–20 buying questions` copy, `Start Done-for-you`, and `Do I need to configure anything?` FAQ with no visible `prompt`, `GEO`, or `AEO` wording.
+- Post-push live validation should use the required single browser check at `https://getciteable.nanocorp.app` after the 90-second wait.

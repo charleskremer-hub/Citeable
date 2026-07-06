@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-const GEO_AGENT_CHECKOUT_URL = "https://checkout.nanocorp.so/c/fzVo0YiuyHM5GStaVrpT";
+const DONE_FOR_YOU_CHECKOUT_URL = "https://checkout.nanocorp.so/c/fzVo0YiuyHM5GStaVrpT";
 const MONITOR_CHECKOUT_URL = "https://checkout.nanocorp.so/c/SQdBFx6vxsKgDB0CUVXV";
 
 const inputStyle = {
@@ -77,10 +77,10 @@ export default function Home() {
                 className="max-w-3xl text-[clamp(1.9rem,8vw,4.65rem)] leading-[0.98] tracking-[-0.045em] text-[#F0F0EC]"
                 style={{ fontFamily: "var(--font-display)" }}
               >
-                When your customers ask ChatGPT for a business like yours, do you show up?
+                When customers ask for a business like yours, do you show up?
               </h1>
               <p className="mt-2.5 max-w-2xl text-[0.95rem] leading-[1.32] text-[#B8B8C4] sm:mt-5 sm:text-xl sm:leading-[1.55]">
-                Citeable checks — free — whether ChatGPT and Gemini mention your business, and shows you exactly how to get recommended. 30-second audit, no card needed.
+                Citeable works out the real buying questions for your business, checks whether you are recommended, and shows exactly what to fix. 30-second audit, no card needed.
               </p>
             </div>
 
@@ -149,7 +149,7 @@ export default function Home() {
 
         <section className="mx-auto max-w-5xl px-5 py-6 sm:px-6">
           <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] px-5 py-5 text-center text-sm leading-6 text-[#A7A7B4] sm:text-base">
-            Find out whether ChatGPT and Gemini mention your business when people are ready to choose.
+            Enter only your business name and website. Citeable finds the questions buyers actually ask and runs the check automatically.
           </div>
         </section>
 
@@ -162,8 +162,8 @@ export default function Home() {
           <div className="mt-8 grid gap-1 overflow-hidden rounded-2xl bg-white/[0.07] sm:grid-cols-3">
             {[
               "1. Enter your brand name and website",
-              "2. We ask ChatGPT and Gemini about you",
-              "3. You get a score and 3 fixes in your inbox",
+              "2. We find 10–20 buying questions automatically",
+              "3. We run the audit and email 3 simple fixes",
             ].map((step) => (
               <div key={step} className="bg-[#111116] p-6 text-lg font-semibold leading-7 tracking-[-0.02em] text-[#F0F0EC]">
                 {step}
@@ -186,8 +186,8 @@ export default function Home() {
                 note: "A one-time audit. No card needed.",
                 badge: "Lead magnet",
                 features: [
-                  "ChatGPT + Gemini check",
-                  "Who AI names instead of you",
+                  "10–20 buying questions found for you",
+                  "Who gets recommended instead of you",
                   "3 simple actions to do this week",
                 ],
                 cta: "Run my free audit",
@@ -202,7 +202,7 @@ export default function Home() {
                 note: "For owners who want one number to watch.",
                 badge: "Start here",
                 features: [
-                  "Monthly ChatGPT + Gemini re-check",
+                  "Monthly recommendation re-check",
                   "Email alert when your score changes",
                   "Email alert when a named competitor changes",
                 ],
@@ -212,19 +212,19 @@ export default function Home() {
                 highlight: true,
               },
               {
-                name: "GEO Agent",
+                name: "Done-for-you",
                 price: "€49",
                 suffix: "/month",
                 note: "For owners who want copy-paste assets, not homework.",
                 badge: "Done for you",
                 features: [
-                  "Adds Claude, Grok, and Mistral",
-                  "Full per-engine detail",
-                  "FAQ page copy and /llms.txt draft",
+                  "Checks more recommendation sources",
+                  "Shows exactly where buyers see competitors",
+                  "FAQ page copy and website-ready snippets",
                   "Includes Monitor re-checks",
                 ],
-                cta: "Start GEO Agent",
-                href: GEO_AGENT_CHECKOUT_URL,
+                cta: "Start Done-for-you",
+                href: DONE_FOR_YOU_CHECKOUT_URL,
                 plan: "geo_agent",
                 highlight: false,
               },
@@ -258,9 +258,9 @@ export default function Home() {
         <section className="mx-auto max-w-5xl border-t border-white/[0.06] px-5 py-12 sm:px-6">
           <div className="max-w-2xl rounded-2xl border border-white/[0.07] bg-white/[0.03] p-6">
             <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-[#777786]">Plain English FAQ</p>
-            <h2 className="mb-3 text-xl font-bold tracking-[-0.02em]">What do GEO and AEO mean?</h2>
+            <h2 className="mb-3 text-xl font-bold tracking-[-0.02em]">Do I need to configure anything?</h2>
             <p className="m-0 text-sm leading-6 text-[#A7A7B4]">
-              They are industry terms for improving how businesses appear in AI answers. You do not need to know them to use Citeable — the audit explains the fixes in plain English.
+              No. Enter your business name, website, and email. Citeable chooses the buying questions, runs the audit, and explains the fixes in plain English.
             </p>
           </div>
         </section>
@@ -269,7 +269,7 @@ export default function Home() {
       <footer className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] px-5 py-8 sm:px-6">
         <div>
           <div className="text-lg tracking-[-0.02em]" style={{ fontFamily: "var(--font-display)" }}>Citeable</div>
-          <p className="m-0 text-sm text-[#686879]">See whether AI recommends your business.</p>
+          <p className="m-0 text-sm text-[#686879]">See whether customers can find and choose your business.</p>
         </div>
         <p className="m-0 text-sm text-[#444454]">© {new Date().getFullYear()} Citeable. All rights reserved.</p>
       </footer>

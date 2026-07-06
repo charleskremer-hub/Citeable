@@ -14,9 +14,9 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Citeable — Free AI Business Visibility Audit",
+  title: "Citeable — Free Business Recommendation Audit",
   description:
-    "Check whether ChatGPT and Gemini mention your business, then get a score and 3 simple fixes by email.",
+    "Enter your business name and website, then get an automatic recommendation score and 3 simple fixes by email.",
 };
 
 export default function RootLayout({

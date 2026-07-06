@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true, assets: generateGeoAgentAssetsFromAudit(enrichedAudit) });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Could not generate GEO Agent assets.";
+    const message = error instanceof Error ? error.message : "Could not generate done-for-you assets.";
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }

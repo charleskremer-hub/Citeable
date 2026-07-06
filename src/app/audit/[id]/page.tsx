@@ -74,14 +74,6 @@ function Pill({ children, tone = "muted" }: { children: React.ReactNode; tone?: 
   );
 }
 
-function engineStatusLabel(prompts: BuyerIntentPromptResult[], engineName: string) {
-  const surfaces = prompts.flatMap((prompt) => prompt.surfaces).filter((surface) => surface.surface === engineName);
-
-  if (!surfaces.length) return "Not connected yet";
-  if (surfaces.some((surface) => surface.status === "checked" && surface.reachable)) return "Checked";
-  return "Not connected yet";
-}
-
 export default async function AuditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   await ensureAuditSchema();
@@ -127,7 +119,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             Citeable
           </Link>
           <a href="https://checkout.nanocorp.so/c/fzVo0YiuyHM5GStaVrpT" style={{ color: "#CAFF3C", fontWeight: 700, textDecoration: "none" }}>
-            Start GEO Agent →
+            Get it done for me →
           </a>
         </nav>
 
@@ -135,10 +127,10 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
           <div>
             <Pill tone={failed ? "red" : complete ? "green" : "orange"}>{failed ? "Audit failed" : complete ? "Audit complete" : "Audit running — refreshing every 3s"}</Pill>
             <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(2.4rem, 6vw, 4.5rem)", lineHeight: 1, margin: "1rem 0", letterSpacing: "-0.03em" }}>
-              AI Visibility Report for {audit.brand_name}
+              Recommendation Report for {audit.brand_name}
             </h1>
             <p style={{ color: "#9999A8", fontSize: "1rem", lineHeight: 1.7, maxWidth: "720px" }}>
-              Live audit for <a href={audit.website_url} style={{ color: "#CAFF3C" }}>{audit.website_url}</a>. We check whether buyers can find you in AI-style answers and search results, using live data only.
+              Live audit for <a href={audit.website_url} style={{ color: "#CAFF3C" }}>{audit.website_url}</a>. We check whether buyers can find and choose you, using live data only.
             </p>
             {failed && (
               <p style={{ marginTop: "1rem", color: "#FF8A8A", fontWeight: 700, lineHeight: 1.6, maxWidth: "720px" }}>
@@ -204,11 +196,11 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
               <div style={{ border: "1px solid rgba(202,255,60,0.22)", borderRadius: "18px", background: "linear-gradient(135deg, rgba(202,255,60,0.08), #111116 45%)", padding: "1.5rem" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "start", flexWrap: "wrap", marginBottom: "1rem" }}>
                   <div>
-                    <h2 style={{ margin: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>Who AI recommends instead of you</h2>
+                    <h2 style={{ margin: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>Who gets recommended instead of you</h2>
                     <p style={{ color: "#BCBCC8", lineHeight: 1.7, margin: "0.6rem 0 0" }}>
                     {aiEngineConnected
                       ? <>In {buyerQuestionCount} buyer questions, you were named {buyerBrandMentionCount} times. Brands named instead: {buyerCompetitorHeadline}.</>
-                      : "ChatGPT and Gemini are not connected yet, so no AI recommendation result is available."}
+                      : "The recommendation check is not connected yet, so no result is available."}
                     </p>
                   </div>
                   <Pill tone={buyerBrandMentionCount > 0 ? "green" : buyerQuestionCount > 0 ? "orange" : "red"}>{buyerQuestionCount > 0 ? `${buyerBrandMentionCount}/${buyerQuestionCount} questions` : "Not connected yet"}</Pill>
@@ -240,18 +232,14 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             <section style={{ border: "1px solid rgba(255,255,255,0.08)", borderRadius: "18px", background: "#111116", padding: "1.5rem" }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "start", flexWrap: "wrap", marginBottom: "1rem" }}>
                 <div>
-                  <h2 style={{ margin: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>Questions we tested</h2>
+                  <h2 style={{ margin: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>Buying questions checked automatically</h2>
                   <p style={{ color: "#BCBCC8", lineHeight: 1.7, margin: "0.6rem 0 0" }}>
-                    Free audit checks ChatGPT and Gemini when connected. We do not invent results.
+                    Citeable creates these from your brand and website only. We do not invent results.
                   </p>
                 </div>
                 <Pill tone={buyerQuestionCount > 0 ? "muted" : "red"}>{buyerQuestionCount > 0 ? `${buyerQuestionCount} questions` : "Not connected yet"}</Pill>
               </div>
 
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem", marginBottom: "1rem" }}>
-                <Pill tone={engineStatusLabel(buyerIntentPrompts, "ChatGPT") === "Checked" ? "green" : "orange"}>ChatGPT: {engineStatusLabel(buyerIntentPrompts, "ChatGPT")}</Pill>
-                <Pill tone={engineStatusLabel(buyerIntentPrompts, "Gemini") === "Checked" ? "green" : "orange"}>Gemini: {engineStatusLabel(buyerIntentPrompts, "Gemini")}</Pill>
-              </div>
 
               {aiEngineConnected && buyerIntentPrompts.length ? (
                 <div style={{ display: "grid", gap: "0.9rem" }}>
@@ -264,14 +252,14 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                     </article>
                   ))}
                   <div style={{ border: "1px dashed rgba(202,255,60,0.3)", borderRadius: "14px", padding: "1rem", background: "rgba(202,255,60,0.045)", color: "#CAFF3C", fontWeight: 900 }}>
-                    Claude, Grok, Mistral — unlock with Pro
+                    More recommendation sources — included in Done-for-you
                   </div>
                 </div>
               ) : (
                 <>
-                  <p style={{ color: "#777787", lineHeight: 1.7, marginBottom: "0.9rem" }}>ChatGPT and Gemini are not connected yet, so no buyer-question result is available.</p>
+                  <p style={{ color: "#777787", lineHeight: 1.7, marginBottom: "0.9rem" }}>The recommendation check is not connected yet, so no buyer-question result is available.</p>
                   <div style={{ border: "1px dashed rgba(202,255,60,0.3)", borderRadius: "14px", padding: "1rem", background: "rgba(202,255,60,0.045)", color: "#CAFF3C", fontWeight: 900 }}>
-                    Claude, Grok, Mistral — unlock with Pro
+                    More recommendation sources — included in Done-for-you
                   </div>
                 </>
               )}
