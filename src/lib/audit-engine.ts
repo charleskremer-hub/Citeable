@@ -194,6 +194,7 @@ type SurfaceFetchResult = {
   ok: boolean;
   status?: number;
   html?: string;
+  text?: string;
   error?: string;
 };
 
@@ -217,6 +218,62 @@ async function fetchSurface(source: string, url: string): Promise<SurfaceFetchRe
     const message = error instanceof Error ? error.message : "Unknown fetch error";
     console.log(`[citeable] surface fetch ${source}: failed ${message}`);
     return { source, url, ok: false, error: message };
+  }
+}
+
+type NanoCorpSearchResult = {
+  title?: unknown;
+  url?: unknown;
+  snippet?: unknown;
+};
+
+function nanoCorpBackendUrl() {
+  return (process.env.NANOCORP_BACKEND_URL ?? "https://phospho-nanocorp-prod--nanocorp-api-fastapi-app.modal.run").replace(/\/$/, "");
+}
+
+function searchResultText(results: NanoCorpSearchResult[]) {
+  return results
+    .map((result) => [result.snippet, result.title].filter((value): value is string => typeof value === "string" && value.length > 0).join(" — "))
+    .filter(Boolean)
+    .join("\n");
+}
+
+async function fetchNanoCorpSearch(source: string, query: string): Promise<SurfaceFetchResult> {
+  if (!process.env.NANOCORP_TOKEN) {
+    return { source, url: "nanocorp:web_search", ok: false, error: "NANOCORP_TOKEN is not configured" };
+  }
+
+  try {
+    const response = await fetch(`${nanoCorpBackendUrl()}/internal/tools/web_search/execute`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.NANOCORP_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ arguments: { query, max_results: 8 } }),
+      signal: AbortSignal.timeout(CHECK_TIMEOUT_MS),
+    });
+    const body = await response.text();
+
+    if (!response.ok) {
+      console.log(`[citeable] surface fetch ${source}: NanoCorp web_search HTTP ${response.status}`);
+      return { source, url: "nanocorp:web_search", ok: false, status: response.status, error: `NanoCorp web_search HTTP ${response.status}: ${body.slice(0, 180)}` };
+    }
+
+    const parsed = JSON.parse(body) as { success?: boolean; result?: { results?: NanoCorpSearchResult[] }; error?: unknown };
+    const results = Array.isArray(parsed.result?.results) ? parsed.result.results : [];
+    const text = searchResultText(results);
+
+    if (!parsed.success || !text) {
+      return { source, url: "nanocorp:web_search", ok: false, error: `NanoCorp web_search returned no usable results${parsed.error ? `: ${String(parsed.error)}` : ""}` };
+    }
+
+    console.log(`[citeable] surface fetch ${source}: NanoCorp web_search ok (${results.length} results)`);
+    return { source, url: "nanocorp:web_search", ok: true, status: response.status, html: text, text };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown NanoCorp web_search error";
+    console.log(`[citeable] surface fetch ${source}: NanoCorp web_search failed ${message}`);
+    return { source, url: "nanocorp:web_search", ok: false, error: message };
   }
 }
 
@@ -405,11 +462,18 @@ function generateBuyerIntentPrompts(category: string) {
 
 const COMPANY_SUFFIXES = /\b(?:Inc|LLC|Ltd|Limited|GmbH|SAS|SA|AG|BV|Corp|Corporation|Company|Co|Labs|Technologies|Technology|Systems|Software|AI|API)\b\.?/g;
 const NON_COMPETITOR_NAMES = new Set([
-  "AI", "API", "B2B", "B2C", "ChatGPT", "Google", "Bing", "Perplexity", "LinkedIn", "Wikipedia", "YouTube", "GitHub", "EU", "US", "UK", "GDPR", "SEO", "JSON", "HTTP", "HTML", "Python", "Java", "C++", "JavaScript", "TypeScript", "Digital Product Passport", "Agentic Commerce", "Agent Wallet",
+  "AI", "API", "B2B", "B2C", "ChatGPT", "Bing", "Bing Trade", "LinkedIn", "Wikipedia", "YouTube", "GitHub", "EU", "US", "UK", "GDPR", "SEO", "JSON", "HTTP", "HTML", "Python", "Java", "C++", "JavaScript", "TypeScript", "Digital Product Passport", "Agentic Commerce", "Agent Wallet", "Brave", "Brave Search", "Yahoo", "Yahoo Search", "Yahoo Scout", "Search", "Search Results", "All", "Images", "Videos", "Maps", "News", "Shopping", "Flights", "Travel", "Tools", "Settings", "Home", "Mail", "Finance", "Sports", "Weather", "Help", "Sign In", "Ask", "Support", "Guide", "Overview", "Field Notes", "Market Leader", "Checkout", "Google's UCP", "Stripe MPP", "AP2", "Visa TAP", "Operator", "Gemini Shopping", "The", "This", "It", "How", "Where", "Whether", "Explore", "Creating", "Loading", "Past", "More", "Anytime", "More Anytime Past", "Industry Leaders",
 ]);
+
+const KNOWN_COMPANY_NAMES = [
+  "Stripe", "Shopify", "Crossmint", "Skyfire", "Coinbase", "Catalog", "Visa", "PayPal", "Mastercard", "Amazon", "Google", "OpenAI", "Perplexity", "Microsoft", "BigCommerce", "Commercetools", "Nevermined", "Mirakl", "Kore.ai", "Kore", "Gorgias", "Envive", "ACI Worldwide", "Eco", "PayOS", "Ramp", "Nekuda", "Basis Theory", "Rye", "Stax Payments", "Helcim", "Clover", "Square", "Adyen", "Worldpay", "Bolt", "Razorpay", "Mollie", "Checkout.com",
+];
 
 function normalizeCompetitorName(name: string) {
   return name
+    .replace(/&trade;?|™/gi, " Trade")
+    .replace(/&amp;/gi, "&")
+    .replace(/&#39;|&apos;/gi, "'")
     .replace(COMPANY_SUFFIXES, "")
     .replace(/^[-–—•\d.\s]+/, "")
     .replace(/[,:;.!?)\]}]+$/, "")
@@ -426,8 +490,10 @@ function looksLikeCompetitorName(name: string, brandName: string, domain: string
   if (normalized.length < 2 || normalized.length > 42) return false;
   if (lower === brandLower || domainVariants(domain).some((variant) => lower === variant || lower.includes(variant))) return false;
   if (NON_COMPETITOR_NAMES.has(normalized)) return false;
+  if (/^(the|this|it|how|where|whether|explore|creating|loading|past|more|anytime)\b/i.test(normalized)) return false;
+  if (/\b(?:all images|all videos|local shopping|past day|past week|past month|open links|skip to content)\b/i.test(normalized)) return false;
   if (/^(best|top|which|compare|alternatives?|tools?|vendors?|platforms?|solutions?|pricing|login|home|privacy|terms)$/i.test(normalized)) return false;
-  if (/\b(?:best|top|which|compare|alternative|vendor|tool|platform|solution|overview|search|result|http|www)\b/i.test(normalized)) return false;
+  if (/\b(?:best|top|which|compare|alternative|vendor|tool|platform|solution|overview|search|result|http|www|guide|support|article|blog|press|news|learn|report|definition|meaning)\b/i.test(normalized)) return false;
   if (/^[A-Z]{2,6}$/.test(normalized) && !/[aeiou]/i.test(normalized)) return false;
 
   return /^[A-Z][A-Za-z0-9&.+'-]*(?:\s+[A-Z][A-Za-z0-9&.+'-]*){0,3}$/.test(normalized);
@@ -439,9 +505,17 @@ function extractCompetitorsFromText(text: string, brandName: string, domain: str
   const brandPattern = new RegExp(escapedRegex(brandName), "ig");
   const withoutBrand = compact.replace(brandPattern, " ");
   const lowerPrompt = prompt.toLowerCase();
+  const lowerText = withoutBrand.toLowerCase();
   const explicitPatterns = [
     /(?:include|includes|including|such as|alternatives? (?:include|are)|competitors? (?:include|are)|vendors? (?:include|are)|tools? (?:include|are)|platforms? (?:include|are)|providers? (?:include|are))\s+([^.;:]{0,240})/gi,
+    /(?:built by|powered by|codeveloped with|developed by|launched by|from|between)\s+([^.;:]{0,180})/gi,
   ];
+
+  for (const company of KNOWN_COMPANY_NAMES) {
+    if (new RegExp(`(^|[^a-z0-9])${escapedRegex(company.toLowerCase())}([^a-z0-9]|$)`, "i").test(lowerText)) {
+      candidates.push(company);
+    }
+  }
 
   for (const pattern of explicitPatterns) {
     for (const match of withoutBrand.matchAll(pattern)) {
@@ -457,6 +531,24 @@ function extractCompetitorsFromText(text: string, brandName: string, domain: str
       .filter((candidate) => !lowerPrompt.includes(candidate.toLowerCase())),
     8
   );
+}
+
+function buyerIntentSearchQuery(prompt: string) {
+  const lower = prompt.toLowerCase();
+  const expansion = lower.includes("agentic commerce")
+    ? "companies vendors platforms payments wallets stablecoin rails agent protocols"
+    : "companies vendors platforms";
+
+  return `${prompt} ${expansion}`.replace(/\s+/g, " ").trim();
+}
+
+function surfaceText(result: SurfaceFetchResult, surfaceName: string) {
+  if (result.text) return result.text;
+  if (!result.html) return "";
+
+  return (surfaceName.includes("Bing") || surfaceName.includes("Yahoo") || surfaceName.includes("Brave") || surfaceName.includes("Google")
+    ? organicResultBlocks(result.html, surfaceName).join(". ")
+    : stripHtml(result.html)).slice(0, 18_000);
 }
 
 function organicResultBlocks(html: string, source: string) {
@@ -717,7 +809,10 @@ async function checkAIVisibility(brandName: string, domain: string): Promise<Aud
 }
 
 async function probeBuyerIntentSurface(surface: { surface: string; url: string }, prompt: string, brandName: string, domain: string): Promise<BuyerIntentSurfaceResult> {
-  const result = await fetchSurface(`buyer_intent:${surface.surface}`, surface.url);
+  const source = `buyer_intent:${surface.surface}`;
+  const result = surface.url === "nanocorp:web_search"
+    ? await fetchNanoCorpSearch(source, buyerIntentSearchQuery(prompt))
+    : await fetchSurface(source, surface.url);
 
   if (!result.ok || !result.html) {
     return {
@@ -730,9 +825,7 @@ async function probeBuyerIntentSurface(surface: { surface: string; url: string }
     };
   }
 
-  const text = (surface.surface.includes("Bing") || surface.surface.includes("Google")
-    ? organicResultBlocks(result.html, "Bing").join(". ")
-    : stripHtml(result.html)).slice(0, 18_000);
+  const text = surfaceText(result, surface.surface);
   const brandMentioned = mentionsBrandOrDomain(text, brandName, domain);
   const competitors = extractCompetitorsFromText(text, brandName, domain, prompt);
 
@@ -749,7 +842,14 @@ async function analyzeBuyerIntentPrompts(brandName: string, domain: string, cate
   const prompts = generateBuyerIntentPrompts(category);
 
   return Promise.all(prompts.map(async (prompt) => {
+    const query = buyerIntentSearchQuery(prompt);
     const surfaces = await Promise.all([
+      probeBuyerIntentSurface(
+        { surface: "Brave web_search snippets", url: "nanocorp:web_search" },
+        prompt,
+        brandName,
+        domain
+      ),
       probeBuyerIntentSurface(
         { surface: "Perplexity", url: `https://www.perplexity.ai/search?q=${encodeURIComponent(prompt)}` },
         prompt,
@@ -757,13 +857,13 @@ async function analyzeBuyerIntentPrompts(brandName: string, domain: string, cate
         domain
       ),
       probeBuyerIntentSurface(
-        { surface: "Google AI Overview proxy", url: `https://www.bing.com/search?q=${encodeURIComponent(`${prompt} AI Overview`)}` },
+        { surface: "Brave public search", url: `https://search.brave.com/search?q=${encodeURIComponent(query)}` },
         prompt,
         brandName,
         domain
       ),
       probeBuyerIntentSurface(
-        { surface: "ChatGPT/Bing proxy", url: `https://www.bing.com/search?q=${encodeURIComponent(prompt)}` },
+        { surface: "Yahoo Scout/search", url: `https://search.yahoo.com/search?p=${encodeURIComponent(query)}` },
         prompt,
         brandName,
         domain
@@ -803,18 +903,23 @@ async function checkTechnicalSEO(websiteUrl: string): Promise<AuditCheckResult> 
   };
 }
 
-function computeScore(checks: AuditCheckResult[]) {
-  const availableChecks = checks.filter((check) => check.score !== null);
-  const availableMaxScore = availableChecks.reduce((total, check) => total + check.maxScore, 0);
+function computeScore(checks: AuditCheckResult[], buyerIntentPrompts: BuyerIntentPromptResult[] = []) {
+  const foundationChecks = checks.filter((check) => check.check !== "ai_visibility");
+  const foundationMaxScore = foundationChecks.reduce((total, check) => total + check.maxScore, 0);
+  const foundationRawScore = foundationChecks.reduce((total, check) => total + (check.score ?? 0), 0);
+  const foundationScore = foundationMaxScore > 0 ? (foundationRawScore / foundationMaxScore) * 100 : 0;
+  const aiSurfaceScore = checks.find((check) => check.check === "ai_visibility")?.score ?? 0;
+  const availableBuyerPrompts = buyerIntentPrompts.filter((prompt) => prompt.available);
+  const buyerIntentScore = buyerIntentPrompts.length > 0
+    ? (availableBuyerPrompts.filter((prompt) => prompt.brandMentioned).length / buyerIntentPrompts.length) * 100
+    : aiSurfaceScore;
+  const rawScore = (buyerIntentScore * 0.6) + (aiSurfaceScore * 0.15) + (foundationScore * 0.25);
 
-  if (availableMaxScore === 0) return 0;
-
-  const rawScore = availableChecks.reduce((total, check) => total + (check.score ?? 0), 0);
-  return Math.max(0, Math.min(100, Math.round((rawScore / availableMaxScore) * 100)));
+  return Math.max(0, Math.min(100, Math.round(rawScore)));
 }
 
 function formulaText() {
-  return "Score = search visibility (25) + structured data/OpenGraph (25) + Wikipedia exact page (20) + real AI-surface visibility (100, normalized) + robots/sitemap technical SEO (15), normalized across available checks. Search falls back from DuckDuckGo to Bing to Google; unavailable dimensions are excluded rather than scored as zero. All checks use live HTTP fetches with 8s timeouts and no NanoCorp token.";
+  return "Score = buyer-intent AI/search prompt coverage (60%) + direct AI-surface brand visibility (15%) + supporting search/metadata/Wikipedia/technical SEO evidence (25%). Buyer-intent absence is scored as zero, not excluded, so a brand named in 0/5 prompts stays low even when metadata is strong. Probes use live NanoCorp web_search when configured, plus public Perplexity/Brave/Yahoo fallbacks with 8s timeouts; competitors are extracted only from returned answer/search text.";
 }
 
 function categoryFromWebsite(websiteHtmlCheck: AuditCheckResult) {
@@ -922,12 +1027,12 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
       checkTechnicalSEO(args.websiteUrl),
     ])
   );
-  const score = computeScore(checks);
   const engines = checks.map(checkToEngine);
   const structuredDataFound = (checks.find((check) => check.check === "structured_data")?.score ?? 0) > 0;
   const fixes = buildFixes(checks);
   const inferred = await inferCategory(args.websiteUrl, checks.find((check) => check.check === "structured_data") ?? checks[0]);
   const buyerIntentPrompts = await analyzeBuyerIntentPrompts(args.brandName, domain, inferred.category);
+  const score = computeScore(checks, buyerIntentPrompts);
   const competitors = uniqueInOrder(buyerIntentPrompts.flatMap((prompt) => prompt.competitors), 20);
   const reportWithoutEmail: AuditReport = {
     audit_id: args.auditId,

@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
         status: result.status === "complete" ? "completed" : "running",
         score: result.status === "complete" ? result.report.score : null,
         checks: result.status === "complete" ? result.report.checks : [],
+        competitors: result.status === "complete" ? result.report.competitors : [],
         buyer_intent_prompts: result.status === "complete" ? result.report.buyerIntentPrompts : [],
         category: result.status === "complete" ? result.report.category : undefined,
         email_sent: result.status === "complete" ? result.report.emailSent : false,

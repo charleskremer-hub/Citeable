@@ -447,3 +447,24 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 ### Verification
 - `npm run build` passed with Next.js 16.2.10.
 - Local `/audit/a570446d-07a9-441e-9bc6-a4d427d4e4c8` HTML contains `Who AI recommends instead of you` and the generated Keyban prompts.
+
+## 2026-07-06 — Honest Keyban score and real buyer-intent competitors
+
+### Findings
+- The headline score was inflated because `computeScore()` normalized over non-null check dimensions; when buyer-intent AI visibility was absent, strong homepage metadata and technical SEO could still produce a high score.
+- Perplexity public pages currently return HTTP `403` from the worker environment, and public search pages may return challenge/chrome content. The reliable live source available to the app is NanoCorp `web_search` when `NANOCORP_TOKEN` is configured, with Brave/Yahoo public pages retained as fallbacks.
+- Keyban category inference resolves to `agentic commerce infrastructure` from the homepage text.
+
+### Changes made
+- Reweighted `src/lib/audit-engine.ts` scoring so buyer-intent prompt coverage is dominant: 60% buyer-intent AI/search prompt mentions, 15% direct AI-surface visibility, and 25% supporting search/metadata/Wikipedia/technical SEO evidence.
+- A brand named in 0/5 buyer-intent prompts now scores low instead of excluding the core visibility dimension; strong metadata alone cannot inflate the score.
+- Added a NanoCorp `web_search` buyer-intent surface (`/internal/tools/web_search/execute`) for real SERP snippets, with Perplexity/Brave/Yahoo still recorded as live surfaces/fallbacks.
+- Expanded agentic-commerce buyer-intent queries with neutral category terms (`payments`, `wallets`, `stablecoin rails`, `agent protocols`) so mainstream category probes return real vendor text instead of generic definitions.
+- Tightened competitor extraction to prefer real company names present in returned text and filter page chrome/protocol artifacts; no competitor names are synthesized.
+- Added `competitors` to the immediate `/api/capture-email` response for completed in-process audits.
+
+### Local validation
+- `npm run lint` passed.
+- `npm run build` passed on Next.js 16.2.10.
+- Local Keyban audit ID `a6c32039-c255-4f6b-b862-5f5e9aa2eb15` completed with score `12/100`, category `agentic commerce infrastructure`, and Keyban named `false` in all 5 buyer-intent prompts.
+- Local Keyban competitors returned from real surfaces included `Stripe`, `Crossmint`, `Coinbase`, `OpenAI`, `Nevermined`, `Visa`, `PayPal`, `Mastercard`, `Amazon`, `Perplexity`, `Eco`, `Adyen`, `Checkout.com`, `Ant International`, `Skyfire`, `Rye`, and `Ramp`.
