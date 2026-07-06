@@ -164,6 +164,10 @@ function withTimeout(url: string, init: RequestInit = {}) {
   });
 }
 
+function isBotChallenge(html: string) {
+  return /anomaly\.js|challenge-form|captcha|unusual traffic|verify you are human/i.test(html);
+}
+
 type SurfaceFetchResult = {
   source: string;
   url: string;
@@ -182,6 +186,11 @@ async function fetchSurface(source: string, url: string): Promise<SurfaceFetchRe
     }
 
     const html = await response.text();
+    if (isBotChallenge(html)) {
+      console.log(`[citeable] surface fetch ${source}: blocked by challenge page`);
+      return { source, url, ok: false, status: response.status, error: `HTTP ${response.status} challenge page` };
+    }
+
     console.log(`[citeable] surface fetch ${source}: ok ${response.status}`);
     return { source, url, ok: true, status: response.status, html };
   } catch (error) {

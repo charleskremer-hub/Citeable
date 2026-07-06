@@ -409,3 +409,8 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 ### Validation
 - `npm run lint` passed after the engine changes.
 - `npm run build` passed on Next.js 16.2.10 after the engine changes.
+
+### Follow-up adjustment from first production smoke
+- First production smoke after commit `0696813` completed for Keyban with audit ID `bfb8fe4a-3768-46b4-b5aa-84cf4d08505c` and score `76`, proving the new `ai_visibility` path was not the old `5/15` DuckDuckGo proxy: Perplexity was blocked with HTTP `403`, Bing-backed Google/ChatGPT probes responded, and `ai_visibility` scored `100/100` after pro-rating.
+- That same smoke revealed DuckDuckGo can return HTTP `200` with an `anomaly.js` / `challenge-form` page instead of organic results; `search_visibility` treated it as a successful zero-result response.
+- Added challenge-page detection so bot/challenge HTML is treated as a provider failure and triggers the Bing/Google fallback path rather than silently scoring `0` from a blocked DuckDuckGo page.
