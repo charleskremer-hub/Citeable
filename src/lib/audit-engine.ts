@@ -12,6 +12,23 @@ export type PromptResult = {
   citationPoints: number;
 };
 
+export type BuyerIntentSurfaceResult = {
+  surface: string;
+  reachable: boolean;
+  unavailableReason?: string;
+  brandMentioned: boolean;
+  competitors: string[];
+  rawAnswerSnippet: string;
+};
+
+export type BuyerIntentPromptResult = {
+  prompt: string;
+  available: boolean;
+  brandMentioned: boolean;
+  competitors: string[];
+  surfaces: BuyerIntentSurfaceResult[];
+};
+
 export type EngineResult = {
   engine: string;
   reachable: boolean;
@@ -48,6 +65,7 @@ export type AuditReport = {
   formula: string;
   structuredDataFound: boolean;
   category: string;
+  buyerIntentPrompts: BuyerIntentPromptResult[];
   emailSent: boolean;
   emailError?: string;
   checks: AuditCheckResult[];
@@ -63,6 +81,7 @@ type AuditRawResults = {
   error?: string;
   formula?: string;
   category?: string;
+  buyerIntentPrompts?: BuyerIntentPromptResult[];
   structuredDataFound?: boolean;
   emailSent?: boolean;
   emailError?: string;
@@ -146,6 +165,7 @@ function reportFromRow(row: AuditRow): AuditReport {
     formula: row.raw_results?.formula ?? formulaText(),
     structuredDataFound: Boolean(row.raw_results?.structuredDataFound),
     category: row.raw_results?.category ?? "unknown",
+    buyerIntentPrompts: row.raw_results?.buyerIntentPrompts ?? [],
     emailSent: Boolean(row.raw_results?.emailSent),
     emailError: row.raw_results?.emailError,
     checks,
@@ -231,6 +251,212 @@ function domainVariants(domain: string) {
 
 function mentionsBrandOrDomain(text: string, brandName: string, domain: string) {
   return includesTerm(text, brandName) || domainVariants(domain).some((variant) => includesTerm(text, variant));
+}
+
+function uniqueInOrder(values: string[], limit = values.length) {
+  const seen = new Set<string>();
+  const unique: string[] = [];
+
+  for (const value of values) {
+    const normalized = value.trim().replace(/\s+/g, " ");
+    const key = normalized.toLowerCase();
+
+    if (!normalized || seen.has(key)) continue;
+
+    seen.add(key);
+    unique.push(normalized);
+
+    if (unique.length >= limit) break;
+  }
+
+  return unique;
+}
+
+function escapedRegex(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function displayNameFromDomain(domain: string) {
+  return domain
+    .replace(/^www\./i, "")
+    .split(".")[0]
+    .split(/[-_]/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function extractHomepageSignals(html: string) {
+  const metaDescription = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i)?.[1]
+    ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i)?.[1]
+    ?? "";
+  const ogDescription = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i)?.[1]
+    ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:description["']/i)?.[1]
+    ?? "";
+  const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  const jsonLd = (html.match(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi) ?? [])
+    .map((script) => stripHtml(script))
+    .join(" ");
+
+  return stripHtml([title, metaDescription, ogDescription, jsonLd, html].join(" ")).slice(0, 12_000);
+}
+
+function categoryFromHomepageText(text: string, domain: string) {
+  const lower = text.toLowerCase();
+  const phraseRules: Array<[RegExp, string]> = [
+    [/agentic commerce|commerce agentique/, "agentic commerce infrastructure"],
+    [/agent wallet|wallets? embarqu[eé]s?|paiements? agentiques?|agentic payments?/, "agentic payments platform"],
+    [/digital product passport|product passport|\bdpp\b/, "digital product passport platform"],
+    [/project management|gestion de projet/, "project management tool"],
+    [/customer relationship management|\bcrm\b/, "CRM for startups"],
+    [/running shoes?|chaussures? de running/, "running shoes"],
+    [/analytics|business intelligence|\bbi\b/, "analytics platform"],
+    [/email marketing|newsletter/, "email marketing platform"],
+    [/cybersecurity|security platform/, "cybersecurity platform"],
+    [/accounting|bookkeeping/, "accounting software"],
+    [/e-?commerce|online store/, "ecommerce platform"],
+    [/blockchain|crypto|web3/, "blockchain infrastructure"],
+    [/api|developer platform|sdk/, "developer platform"],
+    [/software|saas|logiciel/, "software platform"],
+  ];
+
+  for (const [pattern, category] of phraseRules) {
+    if (pattern.test(lower)) return category;
+  }
+
+  return `${displayNameFromDomain(domain)} alternatives`;
+}
+
+async function inferCategory(websiteUrl: string, fallbackCheck: AuditCheckResult) {
+  const domain = domainFromWebsite(websiteUrl);
+
+  try {
+    const response = await withTimeout(normalizeWebsiteUrl(websiteUrl));
+
+    if (response.ok) {
+      const html = await response.text();
+      const signals = extractHomepageSignals(html);
+      const category = categoryFromHomepageText(signals, domain);
+
+      return { category, homepageText: signals };
+    }
+  } catch (error) {
+    console.log(`[citeable] category homepage fetch failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+  }
+
+  return { category: categoryFromWebsite(fallbackCheck), homepageText: `${fallbackCheck.detail} ${fallbackCheck.evidence ?? ""}` };
+}
+
+function promptCategoryTerms(category: string) {
+  const lower = category.toLowerCase();
+
+  if (lower.includes("digital product passport")) {
+    return {
+      categoryTerm: "digital product passport platform",
+      useCase: "EU product compliance",
+      leader: "Scantrust",
+    };
+  }
+
+  if (lower.includes("agentic commerce")) {
+    return {
+      categoryTerm: "agentic commerce infrastructure",
+      useCase: "autonomous AI shopping agents",
+      leader: "Stripe",
+    };
+  }
+
+  if (lower.includes("agentic payments")) {
+    return {
+      categoryTerm: "agentic payments platform",
+      useCase: "AI agent wallets",
+      leader: "Stripe",
+    };
+  }
+
+  if (lower.includes("blockchain")) {
+    return {
+      categoryTerm: "blockchain infrastructure platform",
+      useCase: "commerce applications",
+      leader: "Polygon",
+    };
+  }
+
+  if (lower.includes("crm")) return { categoryTerm: category, useCase: "early-stage startups", leader: "HubSpot" };
+  if (lower.includes("project management")) return { categoryTerm: category, useCase: "small teams", leader: "Asana" };
+  if (lower.includes("email marketing")) return { categoryTerm: category, useCase: "B2B startups", leader: "Mailchimp" };
+  if (lower.includes("analytics")) return { categoryTerm: category, useCase: "SaaS teams", leader: "Google Analytics" };
+  if (lower.includes("developer")) return { categoryTerm: category, useCase: "product teams", leader: "Twilio" };
+
+  return { categoryTerm: category, useCase: "growing companies", leader: "the market leader" };
+}
+
+function generateBuyerIntentPrompts(category: string) {
+  const { categoryTerm, useCase, leader } = promptCategoryTerms(category);
+
+  return uniqueInOrder([
+    `best ${categoryTerm} for ${useCase}`,
+    `top ${categoryTerm} tools 2026`,
+    `${categoryTerm} alternatives to ${leader}`,
+    `which ${categoryTerm} should I choose`,
+    `compare ${categoryTerm} vendors`,
+  ], 5);
+}
+
+const COMPANY_SUFFIXES = /\b(?:Inc|LLC|Ltd|Limited|GmbH|SAS|SA|AG|BV|Corp|Corporation|Company|Co|Labs|Technologies|Technology|Systems|Software|AI|API)\b\.?/g;
+const NON_COMPETITOR_NAMES = new Set([
+  "AI", "API", "B2B", "B2C", "ChatGPT", "Google", "Bing", "Perplexity", "LinkedIn", "Wikipedia", "YouTube", "GitHub", "EU", "US", "UK", "GDPR", "SEO", "JSON", "HTTP", "HTML", "Python", "Java", "C++", "JavaScript", "TypeScript", "Digital Product Passport", "Agentic Commerce", "Agent Wallet",
+]);
+
+function normalizeCompetitorName(name: string) {
+  return name
+    .replace(COMPANY_SUFFIXES, "")
+    .replace(/^[-–—•\d.\s]+/, "")
+    .replace(/[,:;.!?)\]}]+$/, "")
+    .replace(/^[({\[]+/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function looksLikeCompetitorName(name: string, brandName: string, domain: string) {
+  const normalized = normalizeCompetitorName(name);
+  const lower = normalized.toLowerCase();
+  const brandLower = brandName.toLowerCase();
+
+  if (normalized.length < 2 || normalized.length > 42) return false;
+  if (lower === brandLower || domainVariants(domain).some((variant) => lower === variant || lower.includes(variant))) return false;
+  if (NON_COMPETITOR_NAMES.has(normalized)) return false;
+  if (/^(best|top|which|compare|alternatives?|tools?|vendors?|platforms?|solutions?|pricing|login|home|privacy|terms)$/i.test(normalized)) return false;
+  if (/\b(?:best|top|which|compare|alternative|vendor|tool|platform|solution|overview|search|result|http|www)\b/i.test(normalized)) return false;
+  if (/^[A-Z]{2,6}$/.test(normalized) && !/[aeiou]/i.test(normalized)) return false;
+
+  return /^[A-Z][A-Za-z0-9&.+'-]*(?:\s+[A-Z][A-Za-z0-9&.+'-]*){0,3}$/.test(normalized);
+}
+
+function extractCompetitorsFromText(text: string, brandName: string, domain: string, prompt = "") {
+  const compact = text.replace(/\s+/g, " ");
+  const candidates: string[] = [];
+  const brandPattern = new RegExp(escapedRegex(brandName), "ig");
+  const withoutBrand = compact.replace(brandPattern, " ");
+  const lowerPrompt = prompt.toLowerCase();
+  const explicitPatterns = [
+    /(?:include|includes|including|such as|alternatives? (?:include|are)|competitors? (?:include|are)|vendors? (?:include|are)|tools? (?:include|are)|platforms? (?:include|are)|providers? (?:include|are))\s+([^.;:]{0,240})/gi,
+  ];
+
+  for (const pattern of explicitPatterns) {
+    for (const match of withoutBrand.matchAll(pattern)) {
+      const group = match[1] ?? "";
+      group.split(/,|\bor\b|\band\b|\/|\||·/i).forEach((part) => candidates.push(part));
+    }
+  }
+
+  return uniqueInOrder(
+    candidates
+      .map(normalizeCompetitorName)
+      .filter((candidate) => looksLikeCompetitorName(candidate, brandName, domain))
+      .filter((candidate) => !lowerPrompt.includes(candidate.toLowerCase())),
+    8
+  );
 }
 
 function organicResultBlocks(html: string, source: string) {
@@ -490,6 +716,72 @@ async function checkAIVisibility(brandName: string, domain: string): Promise<Aud
   };
 }
 
+async function probeBuyerIntentSurface(surface: { surface: string; url: string }, prompt: string, brandName: string, domain: string): Promise<BuyerIntentSurfaceResult> {
+  const result = await fetchSurface(`buyer_intent:${surface.surface}`, surface.url);
+
+  if (!result.ok || !result.html) {
+    return {
+      surface: surface.surface,
+      reachable: false,
+      unavailableReason: result.error ?? `HTTP ${result.status}`,
+      brandMentioned: false,
+      competitors: [],
+      rawAnswerSnippet: result.error ?? `HTTP ${result.status ?? "unavailable"}`,
+    };
+  }
+
+  const text = (surface.surface.includes("Bing") || surface.surface.includes("Google")
+    ? organicResultBlocks(result.html, "Bing").join(". ")
+    : stripHtml(result.html)).slice(0, 18_000);
+  const brandMentioned = mentionsBrandOrDomain(text, brandName, domain);
+  const competitors = extractCompetitorsFromText(text, brandName, domain, prompt);
+
+  return {
+    surface: surface.surface,
+    reachable: true,
+    brandMentioned,
+    competitors,
+    rawAnswerSnippet: text.slice(0, 700),
+  };
+}
+
+async function analyzeBuyerIntentPrompts(brandName: string, domain: string, category: string): Promise<BuyerIntentPromptResult[]> {
+  const prompts = generateBuyerIntentPrompts(category);
+
+  return Promise.all(prompts.map(async (prompt) => {
+    const surfaces = await Promise.all([
+      probeBuyerIntentSurface(
+        { surface: "Perplexity", url: `https://www.perplexity.ai/search?q=${encodeURIComponent(prompt)}` },
+        prompt,
+        brandName,
+        domain
+      ),
+      probeBuyerIntentSurface(
+        { surface: "Google AI Overview proxy", url: `https://www.bing.com/search?q=${encodeURIComponent(`${prompt} AI Overview`)}` },
+        prompt,
+        brandName,
+        domain
+      ),
+      probeBuyerIntentSurface(
+        { surface: "ChatGPT/Bing proxy", url: `https://www.bing.com/search?q=${encodeURIComponent(prompt)}` },
+        prompt,
+        brandName,
+        domain
+      ),
+    ]);
+    const availableSurfaces = surfaces.filter((surface) => surface.reachable);
+    const competitors = uniqueInOrder(availableSurfaces.flatMap((surface) => surface.competitors), 12);
+
+    return {
+      prompt,
+      available: availableSurfaces.length > 0,
+      brandMentioned: availableSurfaces.some((surface) => surface.brandMentioned),
+      competitors,
+      surfaces,
+    };
+  }));
+}
+
 async function checkTechnicalSEO(websiteUrl: string): Promise<AuditCheckResult> {
   const base = normalizeWebsiteUrl(websiteUrl).replace(/\/$/, "");
   const [robotsResult, sitemapResult] = await Promise.allSettled([
@@ -531,6 +823,14 @@ function categoryFromWebsite(websiteHtmlCheck: AuditCheckResult) {
   if (evidence.includes("bank") || evidence.includes("finance")) return "financial services";
   if (evidence.includes("software") || evidence.includes("api") || evidence.includes("saas")) return "software";
   return "general business";
+}
+
+function buyerIntentSummaryText(report: Pick<AuditReport, "buyerIntentPrompts" | "competitors">) {
+  const total = report.buyerIntentPrompts.length;
+  const namedCount = report.buyerIntentPrompts.filter((prompt) => prompt.brandMentioned).length;
+  const brands = report.competitors.length ? report.competitors.join(", ") : "None found";
+
+  return `In ${total} buyer questions, you were named ${namedCount} times. Brands named instead: ${brands}.`;
 }
 
 function buildFixes(checks: AuditCheckResult[]) {
@@ -586,6 +886,14 @@ export async function sendAuditEmail(email: string, brandName: string, report: A
         "Checks:",
         ...report.checks.map((check) => `- ${check.check}: ${check.score}/${check.maxScore} — ${check.detail}`),
         "",
+        "Who AI recommends instead of you:",
+        buyerIntentSummaryText(report),
+        ...report.buyerIntentPrompts.flatMap((prompt) => [
+          `- ${prompt.prompt}`,
+          `  Brand named: ${prompt.brandMentioned ? "yes" : "no"}${prompt.available ? "" : " (Unavailable)"}`,
+          `  Competitors named instead: ${prompt.competitors.length ? prompt.competitors.join(", ") : prompt.available ? "None found" : "Unavailable"}`,
+        ]),
+        "",
         "Priority fixes:",
         ...report.fixes.map((fix, index) => `${index + 1}. ${fix}`),
         "",
@@ -618,15 +926,19 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
   const engines = checks.map(checkToEngine);
   const structuredDataFound = (checks.find((check) => check.check === "structured_data")?.score ?? 0) > 0;
   const fixes = buildFixes(checks);
+  const inferred = await inferCategory(args.websiteUrl, checks.find((check) => check.check === "structured_data") ?? checks[0]);
+  const buyerIntentPrompts = await analyzeBuyerIntentPrompts(args.brandName, domain, inferred.category);
+  const competitors = uniqueInOrder(buyerIntentPrompts.flatMap((prompt) => prompt.competitors), 20);
   const reportWithoutEmail: AuditReport = {
     audit_id: args.auditId,
     score,
     engines,
-    competitors: [],
+    competitors,
     fixes,
     formula: formulaText(),
     structuredDataFound,
-    category: categoryFromWebsite(checks.find((check) => check.check === "structured_data") ?? checks[0]),
+    category: inferred.category,
+    buyerIntentPrompts,
     emailSent: false,
     checks,
   };
@@ -690,6 +1002,7 @@ export async function completeQueuedAudit(auditId: string): Promise<QueuedAuditR
           status: "completed",
           formula: report.formula,
           category: report.category,
+          buyerIntentPrompts: report.buyerIntentPrompts,
           structuredDataFound: report.structuredDataFound,
           emailSent: report.emailSent,
           emailError: report.emailError,

@@ -13,7 +13,7 @@ type AuditRow = {
   engines_checked: unknown;
   competitors_found: unknown;
   fixes: unknown;
-  raw_results: { status?: string; error?: string; checks?: unknown; emailSent?: boolean; emailError?: string } | null;
+  raw_results: { status?: string; error?: string; checks?: unknown; emailSent?: boolean; emailError?: string; category?: string; buyerIntentPrompts?: unknown } | null;
 };
 
 function runAuditAfterResponse(auditId: string) {
@@ -46,6 +46,8 @@ export async function POST(req: NextRequest) {
           score: row.score,
           engines: row.engines_checked ?? [],
           competitors: row.competitors_found ?? [],
+          buyer_intent_prompts: row.raw_results?.buyerIntentPrompts ?? [],
+          category: row.raw_results?.category,
           fixes: row.fixes ?? [],
           checks: row.raw_results?.checks ?? [],
           email_sent: Boolean(row.raw_results?.emailSent),

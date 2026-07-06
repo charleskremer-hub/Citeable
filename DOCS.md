@@ -414,3 +414,36 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - First production smoke after commit `0696813` completed for Keyban with audit ID `bfb8fe4a-3768-46b4-b5aa-84cf4d08505c` and score `76`, proving the new `ai_visibility` path was not the old `5/15` DuckDuckGo proxy: Perplexity was blocked with HTTP `403`, Bing-backed Google/ChatGPT probes responded, and `ai_visibility` scored `100/100` after pro-rating.
 - That same smoke revealed DuckDuckGo can return HTTP `200` with an `anomaly.js` / `challenge-form` page instead of organic results; `search_visibility` treated it as a successful zero-result response.
 - Added challenge-page detection so bot/challenge HTML is treated as a provider failure and triggers the Bing/Google fallback path rather than silently scoring `0` from a blocked DuckDuckGo page.
+
+## 2026-07-06 — Report v2 buyer-intent competitor section
+
+### Findings
+- Existing audit storage already had `competitors_found` JSONB and per-engine prompt result types, but the completed report was not generating buyer-intent prompts or persisting prompt-level competitor evidence.
+- The current AI visibility score plumbing in `src/lib/audit-engine.ts` remains unchanged: search visibility, structured data, Wikipedia, AI-surface visibility, and technical SEO still feed the score via `computeScore()`.
+- Per `AGENTS.md`, dependencies were installed and local Next.js 16.2 route/component docs were consulted before changing App Router routes/pages.
+
+### Changes made
+- Added homepage-content category inference in `src/lib/audit-engine.ts` using the submitted website homepage content; Keyban resolves to `agentic commerce infrastructure` from `https://www.keyban.io`.
+- Added 5 generated buyer-intent prompts per audit and probes across the same existing surface families: Perplexity, Bing-backed Google AI Overview proxy, and ChatGPT/Bing proxy.
+- Added prompt-level real-data capture: `available`, brand mention status, competitor names extracted from reachable surface text, surface-level availability, and raw snippets. Failed surfaces are marked unavailable; no competitors are synthesized.
+- Persisted buyer-intent prompt results in `raw_results.buyerIntentPrompts` and aggregate competitor names in `competitors_found`.
+- Added the report section `Who AI recommends instead of you` to `src/app/audit/[id]/page.tsx`, including the headline stat and per-prompt rows.
+- Added the same section to the plain-text audit email body in `sendAuditEmail()`.
+- Exposed `buyer_intent_prompts` and `category` from audit status/run/capture API responses.
+
+### Local Keyban smoke test
+- Local audit id: `a570446d-07a9-441e-9bc6-a4d427d4e4c8`
+- Submitted brand/site: `Keyban` / `www.keyban.io`
+- Inferred category: `agentic commerce infrastructure`
+- Score from this run: `76/100`
+- Prompt results:
+  - `best agentic commerce infrastructure for autonomous AI shopping agents` — Keyban named: no; competitors returned: none
+  - `top agentic commerce infrastructure tools 2026` — Keyban named: no; competitors returned: none
+  - `agentic commerce infrastructure alternatives to Stripe` — Keyban named: no; competitors returned: none
+  - `which agentic commerce infrastructure should I choose` — Keyban named: no; competitors returned: none
+  - `compare agentic commerce infrastructure vendors` — Keyban named: no; competitors returned: none
+- Perplexity returned HTTP 403 during local smoke runs; Bing-backed proxy surfaces were available. Because no reliable competitor names were extracted from reachable surfaces, the report correctly renders `None found` instead of inventing brands.
+
+### Verification
+- `npm run build` passed with Next.js 16.2.10.
+- Local `/audit/a570446d-07a9-441e-9bc6-a4d427d4e4c8` HTML contains `Who AI recommends instead of you` and the generated Keyban prompts.

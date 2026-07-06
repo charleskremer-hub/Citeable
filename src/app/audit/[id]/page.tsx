@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ensureAuditSchema, pool } from "@/lib/db";
-import type { EngineResult } from "@/lib/audit-engine";
+import type { BuyerIntentPromptResult, EngineResult } from "@/lib/audit-engine";
 import AuditPoller from "./AuditPoller";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +23,7 @@ type AuditRow = {
     category?: string;
     emailSent?: boolean;
     emailError?: string;
+    buyerIntentPrompts?: BuyerIntentPromptResult[];
   } | null;
   created_at: Date;
 };
@@ -72,6 +73,10 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const complete = audit.score !== null;
   const engines = audit.engines_checked ?? [];
   const competitors = audit.competitors_found ?? [];
+  const buyerIntentPrompts = audit.raw_results?.buyerIntentPrompts ?? [];
+  const buyerQuestionCount = buyerIntentPrompts.length;
+  const buyerBrandMentionCount = buyerIntentPrompts.filter((prompt) => prompt.brandMentioned).length;
+  const buyerCompetitorHeadline = competitors.length ? competitors.join(", ") : "None found";
   const fixes = audit.fixes ?? [];
   const score = audit.score ?? 0;
   const color = scoreColor(score);
@@ -141,6 +146,43 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             <section style={{ border: "1px solid rgba(255,255,255,0.08)", borderRadius: "18px", background: "#111116", padding: "1.5rem" }}>
               <h2 style={{ marginTop: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>Transparent formula</h2>
               <p style={{ color: "#BCBCC8", lineHeight: 1.7, marginBottom: 0 }}>{audit.raw_results?.formula ?? "Formula unavailable."}</p>
+            </section>
+
+            <section style={{ border: "1px solid rgba(202,255,60,0.22)", borderRadius: "18px", background: "linear-gradient(135deg, rgba(202,255,60,0.08), #111116 45%)", padding: "1.5rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "start", flexWrap: "wrap", marginBottom: "1rem" }}>
+                <div>
+                  <h2 style={{ margin: 0, fontFamily: "var(--font-display)", fontSize: "1.75rem" }}>Who AI recommends instead of you</h2>
+                  <p style={{ color: "#BCBCC8", lineHeight: 1.7, margin: "0.6rem 0 0" }}>
+                    In {buyerQuestionCount} buyer questions, you were named {buyerBrandMentionCount} times. Brands named instead: {buyerCompetitorHeadline}.
+                  </p>
+                </div>
+                <Pill tone={buyerBrandMentionCount > 0 ? "green" : buyerQuestionCount > 0 ? "orange" : "red"}>{buyerQuestionCount > 0 ? `${buyerBrandMentionCount}/${buyerQuestionCount} prompts` : "Unavailable"}</Pill>
+              </div>
+
+              {buyerIntentPrompts.length ? (
+                <div style={{ display: "grid", gap: "0.9rem" }}>
+                  {buyerIntentPrompts.map((prompt) => (
+                    <article key={prompt.prompt} style={{ border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", background: "rgba(0,0,0,0.18)", padding: "1rem" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem", alignItems: "start", flexWrap: "wrap" }}>
+                        <div style={{ fontWeight: 800, lineHeight: 1.5, maxWidth: "780px" }}>“{prompt.prompt}”</div>
+                        <Pill tone={!prompt.available ? "red" : prompt.brandMentioned ? "green" : "muted"}>{!prompt.available ? "Unavailable" : prompt.brandMentioned ? "Brand named" : "Brand not named"}</Pill>
+                      </div>
+                      <div style={{ color: "#BCBCC8", lineHeight: 1.6, marginTop: "0.75rem" }}>
+                        <strong style={{ color: "#F0F0EC" }}>Competitors named instead:</strong> {prompt.competitors.length ? prompt.competitors.join(", ") : prompt.available ? "None found" : "Unavailable"}
+                      </div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.45rem", marginTop: "0.8rem" }}>
+                        {prompt.surfaces.map((surface) => (
+                          <Pill key={`${prompt.prompt}-${surface.surface}`} tone={!surface.reachable ? "red" : surface.brandMentioned ? "green" : "muted"}>
+                            {surface.surface}: {!surface.reachable ? "Unavailable" : surface.brandMentioned ? "named" : "not named"}
+                          </Pill>
+                        ))}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <p style={{ color: "#777787", lineHeight: 1.7, marginBottom: 0 }}>Buyer-intent prompt analysis is unavailable for this report.</p>
+              )}
             </section>
 
             <section style={{ border: "1px solid rgba(255,255,255,0.08)", borderRadius: "18px", background: "#111116", padding: "1.5rem", overflowX: "auto" }}>

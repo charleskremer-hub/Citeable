@@ -12,7 +12,7 @@ type AuditRow = {
   engines_checked: unknown;
   competitors_found: unknown;
   fixes: unknown;
-  raw_results: { status?: string; error?: string; checks?: unknown; emailSent?: boolean; emailError?: string } | null;
+  raw_results: { status?: string; error?: string; checks?: unknown; emailSent?: boolean; emailError?: string; category?: string; buyerIntentPrompts?: unknown } | null;
 };
 
 export async function GET(req: NextRequest) {
@@ -41,6 +41,8 @@ export async function GET(req: NextRequest) {
     checks: audit.raw_results?.checks ?? [],
     engines: audit.engines_checked ?? [],
     competitors: audit.competitors_found ?? [],
+    buyer_intent_prompts: audit.raw_results?.buyerIntentPrompts ?? [],
+    category: audit.raw_results?.category,
     fixes: audit.fixes ?? [],
     email_sent: Boolean(audit.raw_results?.emailSent),
     email_error: audit.raw_results?.emailError,
