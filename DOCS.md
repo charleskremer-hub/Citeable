@@ -566,3 +566,11 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - `npm run lint` passed.
 - `npm run build` passed on Next.js `16.2.10`.
 - Production validation on brand `Keyban` must be run after push/deploy because the live site needs the committed code.
+
+### Production validation after push
+- Code commit pushed: `6800b44` (`Simplify report and use official AI engines`).
+- Vercel build logs after push showed `Build Completed in /vercel/output [11s]` for deployment `dpl_DsuSTNwzNuwyvPsDBcvdb2ecAMzm`.
+- Single browser verification after the required 90-second wait opened `https://getciteable.nanocorp.app?bust=6800b44` successfully; the homepage loaded.
+- Production Keyban audit request returned completed audit ID `3481cb01-981f-48ac-9f8a-96b619efb48a`, but the JSON still contained old scraper surfaces (`Brave web_search snippets`, `Perplexity`, `Brave public search`, `Yahoo Scout/search`).
+- LIVE: homepage served after deploy; Vercel build completed.
+- PENDING: production API/report validation for Keyban on the new official-engine pipeline. The one allowed post-deploy validation still saw stale/old API behavior, likely deployment propagation or function cache lag.
