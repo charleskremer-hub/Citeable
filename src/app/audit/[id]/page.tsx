@@ -103,11 +103,11 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
               AI Visibility Report for {audit.brand_name}
             </h1>
             <p style={{ color: "#9999A8", fontSize: "1rem", lineHeight: 1.7, maxWidth: "720px" }}>
-              Live audit for <a href={audit.website_url} style={{ color: "#CAFF3C" }}>{audit.website_url}</a>. Results use only reachable NanoCorp web_search/web_fetch data; unavailable engines are listed honestly.
+              Live audit for <a href={audit.website_url} style={{ color: "#CAFF3C" }}>{audit.website_url}</a>. Results use direct HTTP checks for search visibility, metadata, entity presence, and technical SEO.
             </p>
             {failed && (
               <p style={{ marginTop: "1rem", color: "#FF8A8A", fontWeight: 700, lineHeight: 1.6, maxWidth: "720px" }}>
-                The audit could not run because worker task creation or execution failed: {audit.raw_results?.error ?? "Unknown error"}
+                The audit could not run: {audit.raw_results?.error ?? "Unknown error"}
               </p>
             )}
           </div>
@@ -134,7 +134,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
 
         {!complete ? (
           <div style={{ border: "1px solid rgba(202,255,60,0.25)", background: "rgba(202,255,60,0.06)", borderRadius: "18px", padding: "1.5rem", color: "#CAFF3C" }}>
-            Running real prompts now. This can take 20–60 seconds because each engine is queried live and no results are fabricated.
+            Running live HTTP checks now. This can take 20–60 seconds because each source is queried live and no results are fabricated.
           </div>
         ) : (
           <div style={{ display: "grid", gap: "1.25rem" }}>

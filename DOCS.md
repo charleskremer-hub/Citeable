@@ -344,3 +344,30 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - The root code fix is deployed: the app no longer calls `/internal/tools/{web_search|web_fetch|send_email}/execute` from Next.js.
 - The live smoke is blocked at task creation because the existing production `NANOCORP_TOKEN` secret is expired for the task-management API.
 - Follow-up needs a valid production task-management token in the site `NANOCORP_TOKEN` secret or a tokenless first-party task enqueue mechanism from NanoCorp.
+
+## 2026-07-06 — Token-free in-process audit engine
+
+### Findings
+- Current `src/lib/audit-engine.ts` still created NanoCorp worker tasks through `/internal/companies/{company_id}/tasks`, requiring `process.env.NANOCORP_TOKEN`; production smoke tests failed with `NanoCorp task creation failed with HTTP 401: API key expired`.
+- `src/app/api/capture-email/route.ts` inserted the lead/audit row and awaited `runQueuedAudit()`, so the form surfaced the worker-task 401 instead of returning quickly.
+- `src/app/api/run-audit/route.ts` delegated queued audits to worker-task creation and returned `worker_task_id` when successful.
+- No `.env.example`, `src/lib/email.ts`, Resend, SendGrid, or SMTP config exists in the repo; prior email delivery depended on NanoCorp worker/CLI email tools.
+- Per `AGENTS.md`, dependencies were installed and local Next.js 16.2 docs were read before editing route/audit code:
+  - `node_modules/next/dist/docs/01-app/01-getting-started/15-route-handlers.md`
+  - `node_modules/next/dist/docs/01-app/03-api-reference/04-functions/after.md`
+  - `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/02-route-segment-config/maxDuration.md`
+
+### Changes made
+- Rewrote `src/lib/audit-engine.ts` as a self-contained in-process audit runner with no `NANOCORP_TOKEN`, `NANOCORP_BACKEND_URL`, worker-task, or NanoCorp internal API dependency.
+- Implemented five live HTTP checks with `AbortSignal.timeout(10000)`: DuckDuckGo search visibility (25), homepage schema/OpenGraph (25), Wikipedia exact page presence (20), DuckDuckGo AI-context visibility (15), and robots/sitemap technical SEO (15).
+- Added scoring, check-to-report mapping, prioritized fixes, DB completion/failure updates, and a Postgres advisory lock via `hashtextextended(audit_id, 0)` to prevent duplicate concurrent runs.
+- Added optional token-free Resend email delivery in `sendAuditEmail()` when `RESEND_API_KEY` is present; otherwise the audit still completes with `emailSent=false` and an explicit provider configuration error.
+- Updated `/api/capture-email` to store the lead/audit, return HTTP 202 quickly, and use Next.js `after()` to trigger `/api/run-audit` internally.
+- Updated `/api/run-audit` to start the in-process audit via `after()` and return `status: running` without worker task creation.
+- Added `/api/audit-status?audit_id=...` for JSON smoke-test/status checks.
+- Updated `/audit/[id]` copy so it describes direct HTTP checks rather than NanoCorp worker/web_search execution.
+
+### Validation
+- `npm run lint` passed.
+- `npm run build` passed on Next.js 16.2.10.
+- Static search over the audit flow found no remaining `NANOCORP_TOKEN`, `NANOCORP_BACKEND_URL`, `NANOCORP_API_BASE_URL`, worker-task, or internal task API references in `src/lib/audit-engine.ts`, `src/app/api/capture-email/route.ts`, `src/app/api/run-audit/route.ts`, or `src/app/api/audit-status/route.ts`.

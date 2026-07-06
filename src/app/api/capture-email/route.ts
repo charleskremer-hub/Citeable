@@ -1,8 +1,30 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
-import { runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
+import { validateAuditInput } from "@/lib/audit-engine";
 
 export const maxDuration = 60;
+
+function runAuditAfterResponse(auditId: string, requestUrl: string) {
+  const runAuditUrl = new URL("/api/run-audit", requestUrl);
+
+  after(async () => {
+    try {
+      const response = await fetch(runAuditUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ audit_id: auditId }),
+      });
+
+      if (!response.ok) {
+        const detail = await response.text().catch(() => "");
+        console.error(`[citeable] audit ${auditId} trigger failed with HTTP ${response.status}: ${detail}`);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown run-audit trigger error";
+      console.error(`[citeable] audit ${auditId} trigger failed: ${message}`);
+    }
+  });
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,21 +49,19 @@ export async function POST(req: NextRequest) {
     );
 
     const auditId = audit.rows[0].id;
-    const launch = await runQueuedAudit(auditId);
+    runAuditAfterResponse(auditId, req.url);
 
-    console.log(`[citeable] audit queued: ${auditId} for ${email}; worker status: ${launch.status}`);
+    console.log(`[citeable] audit queued: ${auditId} for ${email}; triggering in-process run-audit`);
 
-    if (launch.status === "failed") {
-      return NextResponse.json({ ok: false, audit_id: auditId, error: launch.error }, { status: 500 });
-    }
-
-    return NextResponse.json({
-      ok: true,
-      audit_id: auditId,
-      website_url: websiteUrl,
-      status: launch.status,
-      worker_task_id: launch.status === "running" ? launch.taskId : undefined,
-    });
+    return NextResponse.json(
+      {
+        ok: true,
+        audit_id: auditId,
+        website_url: websiteUrl,
+        status: "running",
+      },
+      { status: 202 }
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Invalid request";
     return NextResponse.json({ error: message }, { status: 400 });
