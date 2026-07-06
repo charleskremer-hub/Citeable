@@ -382,3 +382,11 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - A second live Keyban capture after commit `b35899c` returned HTTP 202 and audit ID `2b0277d6-2eb5-4f5b-87f1-5e7bad641cf2`, but still remained `queued`; runtime logs showed `/api/capture-email` logged `triggered in-process run-audit`, but there was no corresponding `/api/run-audit` invocation from the server-side self-fetch.
 - To make production deterministic, `src/app/api/capture-email/route.ts` now calls `runQueuedAudit(auditId)` directly in the same Next.js request process. This keeps the audit self-contained and token-free; it may hold the response until the live checks finish, but avoids dropped background work and satisfies the live smoke requirement.
 - `npm run lint` and `npm run build` passed after this final adjustment.
+
+### Final production smoke result
+- Final deployed capture smoke used `brand_name: "Keyban"`, `website_url: "www.keyban.io"`, `email: "charles.kremer@gmail.com"`.
+- Endpoint `POST https://getciteable.nanocorp.app/api/capture-email` returned HTTP 202 with audit ID `48edd8f8-c180-4b10-aabe-2fc2e907c679`, `status: completed`, and `score: 45`.
+- `/api/audit-status?audit_id=48edd8f8-c180-4b10-aabe-2fc2e907c679` confirmed status `completed`, score `45`, and non-null real check results.
+- Check scores: `search_visibility 0/25` (`DuckDuckGo returned HTTP 403`), `structured_data 25/25` (`Schema.org: true, OpenGraph: true`), `wikipedia 0/20` (`Wikipedia returned HTTP 404`), `ai_visibility 5/15` (`DuckDuckGo returned HTTP 403` for both AI-context queries), `technical_seo 15/15` (`robots.txt: true, sitemap.xml: true`).
+- Email was not sent because production has no `RESEND_API_KEY`; stored `email_error` is `No RESEND_API_KEY configured; no token-free email provider is available in this deployment.`
+- `NANOCORP_TOKEN` dependency is removed from the audit flow; source search under `src/` found no `NANOCORP_TOKEN`, `NANOCORP_BACKEND_URL`, worker-task, or NanoCorp internal task API references.
