@@ -793,3 +793,19 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - Persisted competitor/name counts extracted from Gemini answers: `Pour` 4, `Voici` 4, then one each for `Bien`, `Brand`, `Cons`, `Elle`, `Extremely`, `Lifestyle`, `Ma`, `MoE`, `MoEa. Let's`, `Piana`, `Product`, `Pros`, `Recommendation`, `Response`, `Saye`, `Street`, `Structure`, `Travelers`, `Who`, `Wool Runner`, and `Yacht Loafer`.
 - Public report URL `https://getciteable.nanocorp.app/audit/e1df92c6-d96f-482b-8cab-4e4d416f8812` returned HTTP `200` and included Allbirds/Gemini/report content.
 - `emailSent=false` because NanoCorp `send_email` returned `HTTP 401: {"detail":"API key expired"}`; the Gemini call itself succeeded, so no Gemini HTTP error was present in this smoke.
+
+## 2026-07-07 — Gemini structured competitor extraction fix
+
+### Findings
+- `src/lib/audit-engine.ts` used `extractNamedCompetitorsFromLlmAnswer()` for Gemini answers, which combined explicit phrase extraction with a fallback regex over capitalized prose tokens.
+- That fallback could treat headings/prose words such as `Pour`, `Voici`, `Who`, `Brand`, `Lifestyle`, `Street`, and `Travelers` as competitors when Gemini produced narrative text.
+- The native `web_search` competitor path still uses `extractCompetitorsFromText()` and was left separate; the bug was in the Gemini answer-engine path.
+- First public-form smoke after the code push created audit `c9d3fad2-a216-4bbd-ae45-cfc59cece787` for Brooks Running with `answerEngine.realLlmCall = true`, but email failed with `NanoCorp send_email HTTP 401: {"detail":"API key expired"}` because the production `NANOCORP_TOKEN` was stale.
+
+### Changes made
+- Changed the Gemini provider contract to request JSON-only responses with `{ "answer": string, "mentioned_brand": boolean, "brands": string[] }`.
+- Gemini competitor extraction now uses only the structured `brands` array, then normalizes/deduplicates/filter-validates those names.
+- Removed the Gemini capitalized-word regex fallback so prose tokens are no longer scraped as competitor names.
+- Expanded the competitor stoplist with the observed junk terms and made stoplist matching case-insensitive.
+- Refreshed the production `NANOCORP_TOKEN` Vercel env var from the worker token via `nanocorp site env set` after the expired-token smoke failure.
+- Local validation passed: `npm run lint` and `npm run build`.
