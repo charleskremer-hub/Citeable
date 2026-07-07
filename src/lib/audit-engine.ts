@@ -5,6 +5,9 @@ const CHECK_TIMEOUT_MS = 8_000;
 const ANSWER_TIMEOUT_MS = 18_000;
 const WEB_SEARCH_UNAVAILABLE = "Native NanoCorp web_search unavailable; this report uses only checks that completed.";
 const GEMINI_UNAVAILABLE = "Gemini indisponible, réessaie.";
+const FREE_AUDIT_CACHE_HOURS = 24;
+const FREE_AUDIT_EMAIL_DAILY_LIMIT = 3;
+const FREE_AUDIT_DOMAIN_DAILY_LIMIT = 10;
 
 export type AuditTier = "free" | "agent_49eur";
 
@@ -198,6 +201,16 @@ type MonitoredBrandRow = {
   last_audit_id: string | null;
 };
 
+type CachedFreeAuditRow = {
+  id: string;
+  website_url: string;
+  created_at: Date;
+};
+
+export type FreeAuditQuotaResult =
+  | { allowed: true }
+  | { allowed: false; error: string; limitType: "email" | "domain"; retryAfterHours: number };
+
 export function normalizeWebsiteUrl(input: string) {
   const raw = input.trim();
 
@@ -225,6 +238,58 @@ export function auditTierFromPayload(input: Record<string, unknown>): AuditTier 
   return input.audit_tier === "agent_49eur" || input.tier === "agent_49eur" || input.paid_tier === "agent_49eur" || input.agent_49eur === true
     ? "agent_49eur"
     : "free";
+}
+
+export async function findFreshFreeGeminiAudit(brandName: string, websiteUrl: string) {
+  const domain = domainFromWebsite(websiteUrl);
+  const cached = await pool.query<CachedFreeAuditRow>(
+    `SELECT id, website_url, created_at
+     FROM audits
+     WHERE lower(brand_name) = lower($1)
+       AND score IS NOT NULL
+       AND created_at >= now() - ($2::text || ' hours')::interval
+       AND COALESCE(raw_results->>'auditTier', 'free') = 'free'
+       AND COALESCE((raw_results->'answerEngine'->>'realLlmCall')::boolean, false) = true
+       AND raw_results->'answerEngine'->>'engine' = 'Gemini'
+     ORDER BY created_at DESC
+     LIMIT 20`,
+    [brandName.trim(), String(FREE_AUDIT_CACHE_HOURS)]
+  );
+
+  return cached.rows.find((row) => safeDomainFromWebsite(row.website_url) === domain) ?? null;
+}
+
+export async function checkFreeAuditQuota(email: string, websiteUrl: string): Promise<FreeAuditQuotaResult> {
+  const normalizedEmail = email.trim().toLowerCase();
+  const domain = domainFromWebsite(websiteUrl);
+  const result = await pool.query<{ email: string; website_url: string }>(
+    `SELECT email, website_url
+     FROM audits
+     WHERE created_at >= date_trunc('day', now())
+       AND COALESCE(raw_results->>'auditTier', 'free') = 'free'`
+  );
+  const emailCount = result.rows.filter((row) => row.email.trim().toLowerCase() === normalizedEmail).length;
+  const domainCount = result.rows.filter((row) => safeDomainFromWebsite(row.website_url) === domain).length;
+
+  if (emailCount >= FREE_AUDIT_EMAIL_DAILY_LIMIT) {
+    return {
+      allowed: false,
+      error: "Limite d'audits gratuits atteinte pour cet email aujourd'hui. Réessaie demain.",
+      limitType: "email",
+      retryAfterHours: 24,
+    };
+  }
+
+  if (domainCount >= FREE_AUDIT_DOMAIN_DAILY_LIMIT) {
+    return {
+      allowed: false,
+      error: "Limite d'audits gratuits atteinte pour ce domaine aujourd'hui. Réessaie demain.",
+      limitType: "domain",
+      retryAfterHours: 24,
+    };
+  }
+
+  return { allowed: true };
 }
 
 export function validateAuditInput(input: Record<string, unknown>) {
@@ -470,7 +535,7 @@ function createGeminiProvider(): AnswerEngineProvider {
 }
 
 function answerEngineForTier(tier: AuditTier): AnswerEngineProvider | null {
-  if (tier === "agent_49eur") return createGeminiProvider();
+  if (tier === "free" || tier === "agent_49eur") return createGeminiProvider();
 
   return null;
 }
@@ -1215,6 +1280,14 @@ function domainFromWebsite(websiteUrl: string) {
   return new URL(normalized).hostname.replace(/^www\./, "").toLowerCase();
 }
 
+function safeDomainFromWebsite(websiteUrl: string) {
+  try {
+    return domainFromWebsite(websiteUrl);
+  } catch {
+    return "";
+  }
+}
+
 function checkToEngine(result: AuditCheckResult): EngineResult {
   const mentioned = Boolean(result.found || (result.score ?? 0) > 0);
 
@@ -1509,6 +1582,8 @@ async function analyzeBuyerIntentPrompts(brandName: string, websiteUrl: string, 
       competitors,
       surfaces: answerEngine ? [searchSurface] : [searchSurface, lockedProEngineSurface()],
     });
+
+    if (answerEngine && searchSurface.status !== "checked") break;
   }
 
   return results;
@@ -1551,7 +1626,7 @@ function computeScore(checks: AuditCheckResult[], buyerIntentPrompts: BuyerInten
 }
 
 function formulaText() {
-  return "Your score mostly comes from one question: when buyers search for a business like yours, does your brand/domain appear in native web_search snippets or do other brands appear instead? Citeable creates the buying questions from your brand and website, then runs live checks only; nothing is invented.";
+  return "Your free score comes from real Gemini recommendation calls for buyer questions: does Gemini recommend your brand/domain, or does it cite competitors instead? If Gemini is unavailable, Citeable asks you to retry and never fabricates data or scores empty checks.";
 }
 
 function formulaTextForTier(tier: AuditTier) {
@@ -1667,7 +1742,7 @@ export async function sendAuditEmail(email: string, brandName: string, report: A
       ]),
       "",
       isGeminiReport
-        ? "Note: this Agent €49 audit uses real Gemini LLM calls for buyer questions; if Gemini is unavailable, Citeable says so and does not invent data."
+        ? "Note: this audit uses real Gemini LLM calls for buyer questions; if Gemini is unavailable, Citeable says so and does not invent data."
         : "Note: this audit uses native NanoCorp web_search result snippets and direct site checks; it does not invent answer-engine responses.",
       `View the report: https://getciteable.nanocorp.app/audit/${report.audit_id}`,
     ].join("\n")
@@ -1986,8 +2061,9 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
   const inferred = await inferCategory(args.brandName, args.websiteUrl, foundationChecks.find((check) => check.check === "structured_data") ?? foundationChecks[0]);
   const buyerIntentPrompts = await analyzeBuyerIntentPrompts(args.brandName, args.websiteUrl, domain, inferred.category, inferred.homepageText, auditTier);
   const checkedGeminiPrompts = buyerIntentPrompts.filter((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine" && surface.status === "checked"));
+  const failedGeminiPrompts = buyerIntentPrompts.filter((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine" && surface.status !== "checked"));
 
-  if (auditTier === "agent_49eur" && checkedGeminiPrompts.length === 0) {
+  if (answerEngineForTier(auditTier) && (checkedGeminiPrompts.length === 0 || failedGeminiPrompts.length > 0)) {
     throw new Error(GEMINI_UNAVAILABLE);
   }
 

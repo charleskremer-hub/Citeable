@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
-import { auditTierFromPayload, runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
+import { auditTierFromPayload, checkFreeAuditQuota, findFreshFreeGeminiAudit, runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
 
 export const maxDuration = 60;
 
@@ -19,6 +19,31 @@ export async function POST(req: NextRequest) {
            website_url = EXCLUDED.website_url`,
       [email, brandName, websiteUrl]
     );
+
+    if (auditTier === "free") {
+      const cachedAudit = await findFreshFreeGeminiAudit(brandName, websiteUrl);
+
+      if (cachedAudit) {
+        return NextResponse.json(
+          {
+            ok: true,
+            audit_id: cachedAudit.id,
+            website_url: cachedAudit.website_url,
+            redirect_url: `/audit/${cachedAudit.id}`,
+            status: "completed",
+            audit_tier: auditTier,
+            cached: true,
+          },
+          { status: 200 }
+        );
+      }
+
+      const quota = await checkFreeAuditQuota(email, websiteUrl);
+
+      if (!quota.allowed) {
+        return NextResponse.json({ error: quota.error, limit_type: quota.limitType, retry_after_hours: quota.retryAfterHours }, { status: 429 });
+      }
+    }
 
     const audit = await pool.query<{ id: string }>(
       `INSERT INTO audits (email, brand_name, website_url, raw_results)

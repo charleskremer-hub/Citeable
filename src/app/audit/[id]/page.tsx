@@ -248,7 +248,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6">
               <div className="mb-4 flex items-end justify-between gap-4">
                 <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                  {isGeminiReport ? "Questions d'achat vérifiées par Gemini" : "Buyer web searches checked"}
+                  {isGeminiReport ? "Questions posées à Gemini" : "Buyer web searches checked"}
                 </h2>
                 <span className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-black text-[#BCBCC8]">
                   {isGeminiReport ? `${answerEngine?.engine ?? "Gemini"} · ${answerEngine?.model ?? "gemini-2.0-flash"}` : "Native web_search"}

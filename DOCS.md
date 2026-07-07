@@ -1,3 +1,22 @@
+## 2026-07-07 — Free audit Gemini coherence fix
+
+### Findings
+- The current free audit path still fell back to native NanoCorp `web_search` because `answerEngineForTier()` returned the Gemini adapter only for `agent_49eur`.
+- The existing report UI already had Gemini-specific labels, but free reports could not reach them because free buyer questions produced supplementary `web_search` surfaces instead of `ai_engine` surfaces.
+- Per `AGENTS.md`, `node_modules` was initially absent; `npm install` restored dependencies and the relevant Next.js 16.2.10 docs read were `node_modules/next/dist/docs/01-app/01-getting-started/15-route-handlers.md` and `node_modules/next/dist/docs/01-app/01-getting-started/05-server-and-client-components.md`.
+
+### Changes made
+- Free audits now use the real Gemini adapter (`gemini-2.0-flash` by default) for buyer-intent prompts instead of treating `web_search` as the primary answer signal.
+- Free reports now score only completed Gemini answer-engine calls; if Gemini is missing, quota-limited, or otherwise unavailable, the audit fails honestly with `Gemini indisponible, réessaie.` and no score is stored.
+- Added free-audit guardrails in `src/lib/audit-engine.ts`: 24-hour cache reuse by brand/domain, daily caps of 3 free audits per email and 10 free audits per domain, and no cache reuse unless the cached report has `answerEngine.engine = Gemini` with `realLlmCall = true`.
+- Wired those guardrails into both `/api/capture-email` and `/api/run-audit` so direct API calls cannot bypass the free quota/cache behavior.
+- Updated report/email copy so Gemini reports say `Questions posées à Gemini`, `Gemini te recommande` / `Gemini ne te cite pas`, and no longer frame a Gemini report as native `web_search`.
+
+### Validation
+- `npm run lint` passed.
+- `npm run build` passed with Next.js 16.2.10 / Turbopack.
+- Pending at this point: push to main and run the required live free-audit smoke test against production.
+
 ## 2026-07-07 — Agent €49 Gemini premium audit adapter
 
 ### Findings
