@@ -725,4 +725,8 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - Kept the free 30-second audit/no-card hook and preserved the existing 3-field hero form and checkout URLs.
 
 ### Validation
-- Pending in this task: run `npm run build`, commit, push, and perform the single 90-second live verification with a hero screenshot.
+- `npm run build` passed on Next.js 16.2.10 / Turbopack.
+- `npm run lint` passed.
+- Pushed homepage rewrite commit `b0c559e` to `main`.
+- Waited 90 seconds after push, then verified `https://getciteable.nanocorp.app/` with `agent-browser`; the live page showed the new hero and 3-field form.
+- Hero screenshot saved at `/tmp/citeable-new-hero-b0c559e.png`.
