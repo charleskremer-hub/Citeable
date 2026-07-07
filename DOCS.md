@@ -783,3 +783,13 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - Direct local execution via the repo's `runQueuedAudit()` inserted audit `de6c1545-6840-40fc-9a64-c2cb0b8b2629` with `raw_results.auditTier=agent_49eur`, `raw_results.execution=direct_runQueuedAudit`, and `raw_results.smokeProof=true`.
 - The direct run captured the real Gemini API failure from `generativelanguage.googleapis.com`: HTTP `429`, status `RESOURCE_EXHAUSTED`, quota metric `generativelanguage.googleapis.com/generate_content_free_tier_requests`, quota id `GenerateRequestsPerDayPerProjectPerModel-FreeTier`, quota value `20`, model dimension `gemini-3.5-flash`.
 - No score, competitor counts, or completion email were produced because the audit stopped before any successful Gemini answer; per stop rules, no further Gemini retries were made after the quota signal.
+
+## 2026-07-07 — Gemini billing-corrected re-smoke
+
+### Findings
+- Re-ran the requested real Allbirds smoke against production `POST /api/run-audit` with `audit_tier=agent_49eur` to bypass the public/free cap.
+- Production API returned HTTP `202` and created audit `e1df92c6-d96f-482b-8cab-4e4d416f8812`; the audit completed at `2026-07-07T12:20:34.447Z`.
+- The completed DB row and follow-up API response agree: score `18/100`, Gemini cited Allbirds/domain `0` times over `12` questions, `answerEngine.engine=Gemini`, `answerEngine.model=gemini-flash-latest`, and `answerEngine.realLlmCall=true`.
+- Persisted competitor/name counts extracted from Gemini answers: `Pour` 4, `Voici` 4, then one each for `Bien`, `Brand`, `Cons`, `Elle`, `Extremely`, `Lifestyle`, `Ma`, `MoE`, `MoEa. Let's`, `Piana`, `Product`, `Pros`, `Recommendation`, `Response`, `Saye`, `Street`, `Structure`, `Travelers`, `Who`, `Wool Runner`, and `Yacht Loafer`.
+- Public report URL `https://getciteable.nanocorp.app/audit/e1df92c6-d96f-482b-8cab-4e4d416f8812` returned HTTP `200` and included Allbirds/Gemini/report content.
+- `emailSent=false` because NanoCorp `send_email` returned `HTTP 401: {"detail":"API key expired"}`; the Gemini call itself succeeded, so no Gemini HTTP error was present in this smoke.
