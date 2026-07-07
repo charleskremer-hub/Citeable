@@ -13,7 +13,7 @@ type AuditRow = {
   engines_checked: unknown;
   competitors_found: unknown;
   fixes: unknown;
-  raw_results: { status?: string; error?: string; checks?: unknown; emailSent?: boolean; emailError?: string; category?: string; buyerIntentPrompts?: unknown; auditTier?: string; answerEngine?: unknown } | null;
+  raw_results: { status?: string; error?: string; checks?: unknown; emailSent?: boolean; emailError?: string; category?: string; buyerIntentPrompts?: unknown; auditTier?: string; answerEngine?: unknown; startedAt?: string } | null;
 };
 
 function runAuditAfterResponse(auditId: string) {
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      if (row.raw_results?.status === "running") {
+      if (row.raw_results?.status === "running" && row.raw_results?.startedAt) {
         return NextResponse.json({ audit_id: auditId, status: "running" }, { status: 202 });
       }
 

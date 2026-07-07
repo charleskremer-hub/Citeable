@@ -10,6 +10,7 @@
 - Free reports now score only completed Gemini answer-engine calls; if Gemini is missing, quota-limited, or otherwise unavailable, the audit fails honestly with `Gemini indisponible, réessaie.` and no score is stored.
 - Added free-audit guardrails in `src/lib/audit-engine.ts`: 24-hour cache reuse by brand/domain, daily caps of 3 free audits per email and 10 free audits per domain, and no cache reuse unless the cached report has `answerEngine.engine = Gemini` with `realLlmCall = true`.
 - Wired those guardrails into both `/api/capture-email` and `/api/run-audit` so direct API calls cannot bypass the free quota/cache behavior.
+- Updated `/api/run-audit` so capture-created rows marked `running` but missing `startedAt` can be safely rescheduled; the existing PostgreSQL advisory lock still prevents duplicate execution.
 - Updated report/email copy so Gemini reports say `Questions posées à Gemini`, `Gemini te recommande` / `Gemini ne te cite pas`, and no longer frame a Gemini report as native `web_search`.
 
 ### Validation
