@@ -9,6 +9,7 @@ const FREE_AUDIT_CACHE_HOURS = 24;
 const FREE_AUDIT_EMAIL_DAILY_LIMIT = 3;
 const FREE_AUDIT_DOMAIN_DAILY_LIMIT = 10;
 const DEFAULT_GEMINI_MODEL = "gemini-flash-latest";
+const COMPETITOR_EXTRACTION_VERSION = "gemini_json_v1";
 
 export type AuditTier = "free" | "agent_49eur";
 
@@ -155,6 +156,7 @@ type AuditRawResults = {
     realLlmCall: boolean;
   };
   geoAgentDescription?: string;
+  competitorExtractionVersion?: string;
   weeklyEmailSent?: boolean;
   weeklyEmailError?: string;
   startedAt?: string;
@@ -252,9 +254,10 @@ export async function findFreshFreeGeminiAudit(brandName: string, websiteUrl: st
        AND COALESCE(raw_results->>'auditTier', 'free') = 'free'
        AND COALESCE((raw_results->'answerEngine'->>'realLlmCall')::boolean, false) = true
        AND raw_results->'answerEngine'->>'engine' = 'Gemini'
+       AND raw_results->>'competitorExtractionVersion' = $3
      ORDER BY created_at DESC
      LIMIT 20`,
-    [brandName.trim(), String(FREE_AUDIT_CACHE_HOURS)]
+    [brandName.trim(), String(FREE_AUDIT_CACHE_HOURS), COMPETITOR_EXTRACTION_VERSION]
   );
 
   return cached.rows.find((row) => safeDomainFromWebsite(row.website_url) === domain) ?? null;
@@ -2236,6 +2239,7 @@ export async function completeQueuedAudit(auditId: string): Promise<QueuedAuditR
           buyerIntentPrompts: report.buyerIntentPrompts,
           auditTier: report.auditTier,
           answerEngine: report.answerEngine,
+          competitorExtractionVersion: COMPETITOR_EXTRACTION_VERSION,
           structuredDataFound: report.structuredDataFound,
           emailSent: report.emailSent,
           emailError: report.emailError,
