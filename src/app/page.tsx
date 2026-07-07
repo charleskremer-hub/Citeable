@@ -74,16 +74,16 @@ export default function Home() {
             <div>
               <div className="mb-1.5 inline-flex items-center gap-2 rounded-full border border-[#CAFF3C]/20 bg-[#CAFF3C]/10 px-3 py-1 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[#CAFF3C] sm:mb-4">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#CAFF3C] shadow-[0_0_10px_#CAFF3C]" />
-                Free Gemini diagnostic
+                FREE AI VISIBILITY AUDIT
               </div>
               <h1
                 className="max-w-3xl text-[clamp(1.9rem,8vw,4.65rem)] leading-[0.98] tracking-[-0.045em] text-[#F0F0EC]"
                 style={{ fontFamily: "var(--font-display)" }}
               >
-                Your customers ask AI now — not just Google. Start with Gemini, then scale to ChatGPT gpt-4o-mini when you want the Agent.
+                Does AI recommend your business?
               </h1>
               <p className="mt-2.5 max-w-2xl text-[0.95rem] leading-[1.32] text-[#B8B8C4] sm:mt-5 sm:text-xl sm:leading-[1.55]">
-                Citeable checks whether Gemini recommends you and names who it picks instead. Free = diagnostic only; Monitor adds actions; Agent runs ChatGPT gpt-4o-mini.
+                When your customers ask AI for a recommendation, Citeable shows whether it names you - and who it picks instead. Free audit, no setup.
               </p>
             </div>
 

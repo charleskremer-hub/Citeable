@@ -939,3 +939,16 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - Report capture artifacts committed at `artifacts/audit-captures/osprey-report-2026-07-07.png` and `artifacts/audit-captures/allbirds-report-2026-07-07.png`.
 - Text proof captured from Osprey report: `Écart détecté : Gemini cite aussi Gregory, Deuter, REI Co-op pour “What are the best hiking backpacks?”`; generated FAQ/page draft follows directly below it.
 - Text proof captured from Allbirds report: `Écart détecté : Gemini cite aussi Veja, Cariuma, Rothy's pour “What are the best sustainable sneakers?”`; generated FAQ/page draft follows directly below it.
+
+## 2026-07-07 — Simplified non-technical hero copy
+
+### Findings
+- Per `AGENTS.md`, dependencies were installed and the local Next.js 16 App Router docs were read from `node_modules/next/dist/docs/01-app/01-getting-started/03-layouts-and-pages.md` and `05-server-and-client-components.md` before editing.
+- The homepage hero copy lives in `src/app/page.tsx` inside the `section` with `id="hero"`; the engine ladder, pricing, and FAQ are lower in the same file and still contain the Gemini/ChatGPT detail.
+
+### Changes made
+- Updated only the hero eyebrow, H1, and subtitle in `src/app/page.tsx` to remove model names and lead with the free AI visibility audit benefit.
+- Left the CTA text (`Run my free audit`) and all lower sections unchanged.
+
+### Validation
+- `npm run build` passed on Next.js 16.2.10 / Turbopack after the hero copy update.
