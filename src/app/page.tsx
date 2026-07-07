@@ -36,9 +36,12 @@ export default function Home() {
         body: JSON.stringify({ email, brand_name: brandName, website_url: websiteUrl }),
       });
       const data = await res.json();
-      if (!res.ok || !data.audit_id) throw new Error(data.error ?? "Failed");
-      window.posthog?.capture("audit_requested", { source: "hero_cta", brand_name: brandName });
-      window.location.href = `/audit/${data.audit_id}`;
+      const redirectUrl = typeof data.redirect_url === "string" ? data.redirect_url : data.audit_id ? `/audit/${data.audit_id}` : "";
+
+      if (!res.ok || !redirectUrl) throw new Error(data.error ?? "Failed");
+
+      window.posthog?.capture("audit_requested", { source: "hero_cta", brand_name: brandName, audit_id: data.audit_id });
+      window.location.assign(redirectUrl);
     } catch {
       setStatus("error");
       setErrorMsg("Something went wrong. Please try again.");
@@ -211,7 +214,7 @@ export default function Home() {
                 <div className="rounded-2xl border border-white/[0.08] bg-[#111116] p-5">
                   <p className="m-0 text-lg font-bold tracking-[-0.02em] text-[#F0F0EC]">Done to 80%. You validate and paste.</p>
                   <p className="mt-2 text-sm leading-6 text-[#A7A7B4]">
-                    Each weekly batch is drafted from checks on paid answer engines like ChatGPT, Claude, and Grok, then written in plain language so the owner only reviews the facts and publishes.
+                    Each weekly batch is drafted from native web_search checks and direct site checks, then written in plain language so the owner only reviews the facts and publishes.
                   </p>
                 </div>
               </div>
@@ -234,7 +237,7 @@ export default function Home() {
                 badge: "Lead magnet",
                 features: [
                   "10–20 buying questions found for you",
-                  "Who gets recommended instead of you",
+                  "Who appears in buyer searches",
                   "3 simple actions to do this week",
                 ],
                 cta: "Run my free audit",

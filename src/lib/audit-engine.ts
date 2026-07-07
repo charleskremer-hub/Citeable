@@ -3,9 +3,7 @@ import { pool } from "./db";
 const USER_AGENT = "Mozilla/5.0 (compatible; CiteeableBot/1.0)";
 const CHECK_TIMEOUT_MS = 8_000;
 const ANSWER_TIMEOUT_MS = 18_000;
-const AI_ENGINE_UNAVAILABLE = "AI engine unavailable — GEMINI_API_KEY not configured. Contact us for your full analysis.";
-const FREE_AI_ENGINE_NAMES = ["Gemini"];
-const PRO_AI_ENGINE_NAMES = ["ChatGPT", "Claude", "Grok", "Mistral"];
+const WEB_SEARCH_UNAVAILABLE = "Native NanoCorp web_search unavailable; this report uses only checks that completed.";
 
 export type PromptResult = {
   prompt: string;
@@ -259,10 +257,6 @@ function withTimeout(url: string, init: RequestInit = {}) {
   });
 }
 
-function isBotChallenge(html: string) {
-  return /anomaly\.js|challenge-form|captcha|unusual traffic|verify you are human/i.test(html);
-}
-
 type SurfaceFetchResult = {
   source: string;
   url: string;
@@ -273,51 +267,17 @@ type SurfaceFetchResult = {
   error?: string;
 };
 
-async function fetchSurface(source: string, url: string): Promise<SurfaceFetchResult> {
-  try {
-    const response = await withTimeout(url);
-    if (!response.ok) {
-      console.log(`[citeable] surface fetch ${source}: HTTP ${response.status}`);
-      return { source, url, ok: false, status: response.status, error: `HTTP ${response.status}` };
-    }
-
-    const html = await response.text();
-    if (isBotChallenge(html)) {
-      console.log(`[citeable] surface fetch ${source}: blocked by challenge page`);
-      return { source, url, ok: false, status: response.status, error: `HTTP ${response.status} challenge page` };
-    }
-
-    console.log(`[citeable] surface fetch ${source}: ok ${response.status}`);
-    return { source, url, ok: true, status: response.status, html };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown fetch error";
-    console.log(`[citeable] surface fetch ${source}: failed ${message}`);
-    return { source, url, ok: false, error: message };
-  }
-}
-
 type NanoCorpSearchResult = {
   title?: unknown;
   url?: unknown;
   snippet?: unknown;
 };
 
-type OfficialAiEngine = {
-  name: string;
-  envVar: string;
-  envAliases?: string[];
-  modelEnvVar: string;
-  modelEnvAliases?: string[];
-  defaultModel: string;
-  tier: "free" | "pro";
-  call: (prompt: string, model: string, apiKey: string) => Promise<string>;
+type NanoCorpToolResponse<T> = {
+  success?: boolean;
+  result?: T;
+  error?: unknown;
 };
-
-function envValue(primary: string, aliases: string[] = []) {
-  return [primary, ...aliases]
-    .map((name) => process.env[name])
-    .find((value): value is string => Boolean(value));
-}
 
 function safeJsonParse<T>(value: string, fallback: T): T {
   try {
@@ -327,207 +287,37 @@ function safeJsonParse<T>(value: string, fallback: T): T {
   }
 }
 
-function textFromUnknown(value: unknown): string {
-  if (typeof value === "string") return value;
-  if (Array.isArray(value)) return value.map(textFromUnknown).filter(Boolean).join("\n");
-  if (!value || typeof value !== "object") return "";
-
-  const record = value as Record<string, unknown>;
-  return [record.text, record.content, record.output_text, record.message]
-    .map(textFromUnknown)
-    .filter(Boolean)
-    .join("\n");
-}
-
-function buyerQuestionSystemPrompt() {
-  return [
-    "Answer the buyer's question naturally and concisely.",
-    "Name real brands or vendors only when you would genuinely recommend them.",
-    "Do not include analysis of this instruction.",
-  ].join(" ");
-}
-
-async function callOpenAIAnswer(prompt: string, model: string, apiKey: string) {
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      input: [
-        { role: "system", content: buyerQuestionSystemPrompt() },
-        { role: "user", content: prompt },
-      ],
-      max_output_tokens: 700,
-    }),
-    signal: AbortSignal.timeout(ANSWER_TIMEOUT_MS),
-  });
-  const body = await response.text();
-
-  if (!response.ok) throw new Error(`ChatGPT API returned HTTP ${response.status}: ${body.slice(0, 180)}`);
-
-  const parsed = safeJsonParse<{ output_text?: string; output?: unknown }>(body, {});
-  return (parsed.output_text || textFromUnknown(parsed.output)).trim();
-}
-
-const GEMINI_MODEL_FALLBACKS = ["gemini-flash-latest"];
-
-type GeminiGenerationOptions = {
-  maxOutputTokens: number;
-  temperature: number;
-};
-
-async function callGeminiGenerateContent(prompt: string, model: string, apiKey: string, options: GeminiGenerationOptions) {
-  const modelsToTry = uniqueInOrder([model, ...GEMINI_MODEL_FALLBACKS]);
-  let lastError = "Gemini API failed";
-
-  for (const modelToTry of modelsToTry) {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelToTry)}:generateContent?key=${encodeURIComponent(apiKey)}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: options,
-      }),
-      signal: AbortSignal.timeout(ANSWER_TIMEOUT_MS),
-    });
-    const body = await response.text();
-
-    if (response.ok) {
-      const parsed = safeJsonParse<{ candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> }>(body, {});
-      return (parsed.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("\n") ?? "").trim();
-    }
-
-    lastError = `Gemini API returned HTTP ${response.status}: ${body.slice(0, 180)}`;
-
-    if (response.status !== 404 || !body.includes("is not found")) {
-      break;
-    }
-  }
-
-  throw new Error(lastError);
-}
-
-async function callGeminiAnswer(prompt: string, model: string, apiKey: string) {
-  return callGeminiGenerateContent(
-    `A user asks: '${prompt}'. Give your honest recommendation. Name specific brands, products, or services you would recommend. Be specific. If the question asks about a specific brand, include a clear answer about that brand.`,
-    model,
-    apiKey,
-    { maxOutputTokens: 700, temperature: 0.2 }
-  );
-}
-
-async function callGeminiCategoryInference(brandName: string, websiteContent: string, model: string, apiKey: string) {
-  const content = websiteContent.replace(/\s+/g, " ").slice(0, 10_000);
-  const answer = await callGeminiGenerateContent(
-    `Based on this website content for ${brandName}: ${content}. What category/industry is this brand? Give only a 2-4 word label like 'DTC footwear brand', 'SaaS tool', 'food & beverage', etc. Focus on what the brand sells, not the site's ecommerce or technology stack.`,
-    model,
-    apiKey,
-    { maxOutputTokens: 30, temperature: 0 }
-  );
-
-  return cleanCategoryLabel(answer);
-}
-
-async function callAnthropicAnswer(prompt: string, model: string, apiKey: string) {
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      system: buyerQuestionSystemPrompt(),
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 700,
-    }),
-    signal: AbortSignal.timeout(ANSWER_TIMEOUT_MS),
-  });
-  const body = await response.text();
-
-  if (!response.ok) throw new Error(`Claude API returned HTTP ${response.status}: ${body.slice(0, 180)}`);
-
-  const parsed = safeJsonParse<{ content?: Array<{ text?: string }> }>(body, {});
-  return (parsed.content?.map((part) => part.text ?? "").join("\n") ?? "").trim();
-}
-
-async function callOpenAiCompatibleAnswer(endpoint: string, engineName: string, prompt: string, model: string, apiKey: string) {
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: "system", content: buyerQuestionSystemPrompt() },
-        { role: "user", content: prompt },
-      ],
-      max_tokens: 700,
-      temperature: 0.2,
-    }),
-    signal: AbortSignal.timeout(ANSWER_TIMEOUT_MS),
-  });
-  const body = await response.text();
-
-  if (!response.ok) throw new Error(`${engineName} API returned HTTP ${response.status}: ${body.slice(0, 180)}`);
-
-  const parsed = safeJsonParse<{ choices?: Array<{ message?: { content?: string } }> }>(body, {});
-  return (parsed.choices?.[0]?.message?.content ?? "").trim();
-}
-
-const OFFICIAL_AI_ENGINES: OfficialAiEngine[] = [
-  {
-    name: "ChatGPT",
-    envVar: "OPENAI_API_KEY",
-    modelEnvVar: "OPENAI_MODEL",
-    defaultModel: "gpt-4.1-mini",
-    tier: "free",
-    call: callOpenAIAnswer,
-  },
-  {
-    name: "Gemini",
-    envVar: "GEMINI_API_KEY",
-    envAliases: ["NANO_USER_GEMINI_API_KEY"],
-    modelEnvVar: "GEMINI_MODEL",
-    modelEnvAliases: ["NANO_USER_GEMINI_MODEL"],
-    defaultModel: "gemini-1.5-flash",
-    tier: "free",
-    call: callGeminiAnswer,
-  },
-  {
-    name: "Claude",
-    envVar: "ANTHROPIC_API_KEY",
-    modelEnvVar: "ANTHROPIC_MODEL",
-    defaultModel: "claude-3-5-haiku-latest",
-    tier: "pro",
-    call: callAnthropicAnswer,
-  },
-  {
-    name: "Grok",
-    envVar: "XAI_API_KEY",
-    modelEnvVar: "XAI_MODEL",
-    defaultModel: "grok-3-mini",
-    tier: "pro",
-    call: (prompt, model, apiKey) => callOpenAiCompatibleAnswer("https://api.x.ai/v1/chat/completions", "Grok", prompt, model, apiKey),
-  },
-  {
-    name: "Mistral",
-    envVar: "MISTRAL_API_KEY",
-    modelEnvVar: "MISTRAL_MODEL",
-    defaultModel: "mistral-small-latest",
-    tier: "pro",
-    call: (prompt, model, apiKey) => callOpenAiCompatibleAnswer("https://api.mistral.ai/v1/chat/completions", "Mistral", prompt, model, apiKey),
-  },
-];
-
 function nanoCorpBackendUrl() {
   return (process.env.NANOCORP_BACKEND_URL ?? "https://phospho-nanocorp-prod--nanocorp-api-fastapi-app.modal.run").replace(/\/$/, "");
+}
+
+async function executeNanoCorpTool<T>(tool: string, args: Record<string, unknown>, timeoutMs = CHECK_TIMEOUT_MS) {
+  if (!process.env.NANOCORP_TOKEN) {
+    return { ok: false, error: "NANOCORP_TOKEN is not configured" } as const;
+  }
+
+  const response = await fetch(`${nanoCorpBackendUrl()}/internal/tools/${tool}/execute`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.NANOCORP_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ arguments: args }),
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+  const body = await response.text();
+
+  if (!response.ok) {
+    return { ok: false, status: response.status, error: `NanoCorp ${tool} HTTP ${response.status}: ${body.slice(0, 300)}` } as const;
+  }
+
+  const parsed = safeJsonParse<NanoCorpToolResponse<T>>(body, {});
+
+  if (parsed.success === false || parsed.error) {
+    return { ok: false, status: response.status, error: `NanoCorp ${tool} failed: ${String(parsed.error ?? "unknown error")}` } as const;
+  }
+
+  return { ok: true, status: response.status, result: parsed.result } as const;
 }
 
 function searchResultDomain(value: unknown) {
@@ -551,37 +341,23 @@ function searchResultText(results: NanoCorpSearchResult[]) {
 }
 
 async function fetchNanoCorpSearch(source: string, query: string): Promise<SurfaceFetchResult> {
-  if (!process.env.NANOCORP_TOKEN) {
-    return { source, url: "nanocorp:web_search", ok: false, error: "NANOCORP_TOKEN is not configured" };
-  }
-
   try {
-    const response = await fetch(`${nanoCorpBackendUrl()}/internal/tools/web_search/execute`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.NANOCORP_TOKEN}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ arguments: { query, max_results: 8 } }),
-      signal: AbortSignal.timeout(CHECK_TIMEOUT_MS),
-    });
-    const body = await response.text();
+    const toolResult = await executeNanoCorpTool<{ results?: NanoCorpSearchResult[] }>("web_search", { query, max_results: 8 }, ANSWER_TIMEOUT_MS);
 
-    if (!response.ok) {
-      console.log(`[citeable] surface fetch ${source}: NanoCorp web_search HTTP ${response.status}`);
-      return { source, url: "nanocorp:web_search", ok: false, status: response.status, error: `NanoCorp web_search HTTP ${response.status}: ${body.slice(0, 180)}` };
+    if (!toolResult.ok) {
+      console.log(`[citeable] surface fetch ${source}: ${toolResult.error}`);
+      return { source, url: "nanocorp:web_search", ok: false, status: toolResult.status, error: toolResult.error };
     }
 
-    const parsed = JSON.parse(body) as { success?: boolean; result?: { results?: NanoCorpSearchResult[] }; error?: unknown };
-    const results = Array.isArray(parsed.result?.results) ? parsed.result.results : [];
+    const results = Array.isArray(toolResult.result?.results) ? toolResult.result.results : [];
     const text = searchResultText(results);
 
-    if (!parsed.success || !text) {
-      return { source, url: "nanocorp:web_search", ok: false, error: `NanoCorp web_search returned no usable results${parsed.error ? `: ${String(parsed.error)}` : ""}` };
+    if (!text) {
+      return { source, url: "nanocorp:web_search", ok: false, error: "NanoCorp web_search returned no usable results" };
     }
 
     console.log(`[citeable] surface fetch ${source}: NanoCorp web_search ok (${results.length} results)`);
-    return { source, url: "nanocorp:web_search", ok: true, status: response.status, html: text, text };
+    return { source, url: "nanocorp:web_search", ok: true, status: toolResult.status, html: text, text };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown NanoCorp web_search error";
     console.log(`[citeable] surface fetch ${source}: NanoCorp web_search failed ${message}`);
@@ -688,12 +464,12 @@ export function buildPlainActions(
     ? testedQuestions.map((prompt) => `“${prompt}”`).join("; ")
     : "the buyer questions in this audit";
   const compareText = competitorExamples.length
-    ? `Use the real names AI already shows buyers: ${competitorExamples.join(", ")}.`
+    ? `Use the real names native web_search already surfaces: ${competitorExamples.join(", ")}.`
     : "Use the names buyers already compare you with, if any appear in future audits.";
 
   return [
     {
-      title: "Add a FAQ page for the questions buyers ask AI",
+      title: "Add a FAQ page for the questions buyers search",
       doThis: `Create one page that answers these exact tested questions in simple words: ${questionText}.`,
       where: "On your own website, linked from the homepage and main navigation.",
       basedOn: testedQuestions,
@@ -754,7 +530,7 @@ function compareCompetitorMovement(currentPrompts: BuyerIntentPromptResult[], pr
           prompt: prompt.prompt,
           competitor,
           type: "new_competitor",
-          detail: `${competitor} appeared in live answers for this prompt this run.`,
+          detail: `${competitor} appeared in native web_search snippets for this prompt this run.`,
         });
       }
     }
@@ -764,7 +540,7 @@ function compareCompetitorMovement(currentPrompts: BuyerIntentPromptResult[], pr
         prompt: prompt.prompt,
         competitor: prompt.competitors[0],
         type: "overtook_brand",
-        detail: `${prompt.competitors[0]} is named while the brand is no longer named for this prompt.`,
+        detail: `${prompt.competitors[0]} appears while the brand/domain no longer appears for this prompt.`,
       });
     }
   }
@@ -943,16 +719,6 @@ function categoryFromHomepageText(text: string, domain: string) {
   return `${displayNameFromDomain(domain)} alternatives`;
 }
 
-function cleanCategoryLabel(value: string) {
-  return value
-    .replace(/^category\s*:\s*/i, "")
-    .replace(/["'`]/g, "")
-    .replace(/[.。]+$/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 80);
-}
-
 function categoryLooksLikeTechStack(category: string, homepageText: string) {
   const lowerCategory = category.toLowerCase();
   const lowerText = homepageText.toLowerCase();
@@ -1044,21 +810,6 @@ async function inferCategory(brandName: string, websiteUrl: string, fallbackChec
       const html = await response.text();
       const signals = extractHomepageSignals(html);
       const fallbackCategory = categoryFromHomepageText(signals, domain);
-      const apiKey = envValue("GEMINI_API_KEY", ["NANO_USER_GEMINI_API_KEY"]);
-      const model = envValue("GEMINI_MODEL", ["NANO_USER_GEMINI_MODEL"]) ?? "gemini-1.5-flash";
-
-      if (apiKey) {
-        try {
-          const geminiCategory = await callGeminiCategoryInference(brandName, signals, model, apiKey);
-
-          if (geminiCategory && !categoryLooksLikeTechStack(geminiCategory, signals)) {
-            return { category: geminiCategory, homepageText: signals };
-          }
-        } catch (error) {
-          console.log(`[citeable] Gemini category inference failed: ${error instanceof Error ? error.message : "Unknown error"}`);
-        }
-      }
-
       const category = categoryLooksLikeTechStack(fallbackCategory, signals) ? "DTC footwear brand" : fallbackCategory;
 
       return { category, homepageText: signals };
@@ -1381,47 +1132,34 @@ function checksFromEngines(engines: EngineResult[]) {
 
 async function checkSearchVisibility(brandName: string, domain: string): Promise<AuditCheckResult> {
   const query = `${brandName} ${domain}`;
-  const sources = [
-    { source: "DuckDuckGo", url: `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}` },
-    { source: "Bing", url: `https://www.bing.com/search?q=${encodeURIComponent(query)}` },
-    { source: "Google", url: `https://www.google.com/search?q=${encodeURIComponent(query)}&num=10` },
-  ];
-  const failures: string[] = [];
+  const result = await fetchNanoCorpSearch("search_visibility:NanoCorp web_search", query);
 
-  for (const source of sources) {
-    const result = await fetchSurface(`search_visibility:${source.source}`, source.url);
-
-    if (!result.ok || !result.html) {
-      failures.push(`${source.source}: ${result.error ?? `HTTP ${result.status}`}`);
-      continue;
-    }
-
-    const resultCount = countSearchResultMentions(result.html, brandName, domain, source.source);
-    const score = resultCount >= 5 ? 25 : resultCount >= 2 ? 15 : resultCount === 1 ? 8 : 0;
-    const found = resultCount > 0;
-
+  if (!result.ok || !result.html) {
     return {
       check: "search_visibility",
-      score,
+      score: null,
       maxScore: 25,
-      detail: `${source.source} returned ${resultCount} brand/domain result mention(s); fallback path: ${[...failures, `${source.source}: ok`].join("; ")}`,
-      found,
-      reachable: true,
-      evidence: htmlSnippet(result.html, found ? domain : brandName),
+      detail: `Unavailable: native NanoCorp web_search failed (${result.error ?? `HTTP ${result.status}`})`,
+      found: false,
+      reachable: false,
+      evidence: result.error ?? "NanoCorp web_search unavailable",
     };
   }
 
+  const resultCount = countSearchResultMentions(result.html, brandName, domain, "NanoCorp web_search");
+  const score = resultCount >= 5 ? 25 : resultCount >= 2 ? 15 : resultCount === 1 ? 8 : 0;
+  const found = resultCount > 0;
+
   return {
     check: "search_visibility",
-    score: null,
+    score,
     maxScore: 25,
-    detail: `Unavailable: all search providers failed (${failures.join("; ")})`,
-    found: false,
-    reachable: false,
-    evidence: failures.join("; "),
+    detail: `Native NanoCorp web_search returned ${resultCount} brand/domain result mention(s).`,
+    found,
+    reachable: true,
+    evidence: htmlSnippet(result.html, found ? domain : brandName),
   };
 }
-
 async function checkSchemaMarkup(websiteUrl: string): Promise<AuditCheckResult> {
   const response = await withTimeout(normalizeWebsiteUrl(websiteUrl));
 
@@ -1470,12 +1208,12 @@ async function checkWikiPresence(brandName: string): Promise<AuditCheckResult> {
 }
 
 function checkAIVisibilityFromBuyerPrompts(buyerIntentPrompts: BuyerIntentPromptResult[]): AuditCheckResult {
-  const checkedPrompts = buyerIntentPrompts.filter((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine" && surface.status === "checked"));
+  const checkedPrompts = buyerIntentPrompts.filter((prompt) => prompt.surfaces.some((surface) => surface.kind === "supplementary" && surface.status === "checked"));
   const namedPrompts = checkedPrompts.filter((prompt) => prompt.brandMentioned).length;
   const score = buyerIntentPrompts.length > 0 ? Math.round((namedPrompts / buyerIntentPrompts.length) * 100) : null;
   const unavailable = uniqueInOrder(
     buyerIntentPrompts.flatMap((prompt) => prompt.surfaces)
-      .filter((surface) => surface.kind === "ai_engine" && surface.status !== "checked")
+      .filter((surface) => surface.kind === "supplementary" && surface.status !== "checked")
       .map((surface) => surface.surface)
   );
 
@@ -1484,8 +1222,8 @@ function checkAIVisibilityFromBuyerPrompts(buyerIntentPrompts: BuyerIntentPrompt
     score,
     maxScore: 100,
     detail: unavailable.length
-      ? `${AI_ENGINE_UNAVAILABLE} Unavailable engine(s): ${unavailable.join(", ")}.`
-      : "Official AI answers checked from Gemini 1.5 Flash.",
+      ? `${WEB_SEARCH_UNAVAILABLE} Unavailable native surface(s): ${unavailable.join(", ")}.`
+      : "Native NanoCorp web_search checked buyer-intent result snippets.",
     found: namedPrompts > 0,
     reachable: checkedPrompts.length > 0,
     evidence: buyerIntentPrompts
@@ -1495,80 +1233,29 @@ function checkAIVisibilityFromBuyerPrompts(buyerIntentPrompts: BuyerIntentPrompt
   };
 }
 
-async function probeOfficialAiEngine(engine: OfficialAiEngine, prompt: string, brandName: string, domain: string): Promise<BuyerIntentSurfaceResult> {
-  const apiKey = envValue(engine.envVar, engine.envAliases);
-
-  if (!apiKey) {
-    return {
-      surface: engine.name,
-      reachable: false,
-      unavailableReason: AI_ENGINE_UNAVAILABLE,
-      brandMentioned: false,
-      competitors: [],
-      rawAnswerSnippet: AI_ENGINE_UNAVAILABLE,
-      kind: "ai_engine",
-      status: "not_connected",
-    };
-  }
-
-  try {
-    const model = envValue(engine.modelEnvVar, engine.modelEnvAliases) || engine.defaultModel;
-    const answer = await engine.call(prompt, model, apiKey);
-
-    if (!answer) throw new Error(`${engine.name} returned an empty answer`);
-
-    const brandMentioned = mentionsBrandOrDomain(answer, brandName, domain);
-    const competitors = extractCompetitorsFromText(answer, brandName, domain, prompt);
-
-    return {
-      surface: engine.name,
-      reachable: true,
-      brandMentioned,
-      competitors,
-      rawAnswerSnippet: answer.slice(0, 700),
-      kind: "ai_engine",
-      status: "checked",
-    };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : `${engine.name} API failed`;
-    console.log(`[citeable] official AI engine ${engine.name}: ${message}`);
-
-    return {
-      surface: engine.name,
-      reachable: false,
-      unavailableReason: message,
-      brandMentioned: false,
-      competitors: [],
-      rawAnswerSnippet: `${engine.name} unavailable: ${message}`,
-      kind: "ai_engine",
-      status: "failed",
-    };
-  }
-}
-
 async function probeSupplementarySearch(prompt: string, brandName: string, domain: string): Promise<BuyerIntentSurfaceResult> {
-  const source = "buyer_intent:NanoCorp web search";
+  const source = "buyer_intent:NanoCorp web_search";
   const result = await fetchNanoCorpSearch(source, buyerIntentSearchQuery(prompt));
 
   if (!result.ok || !result.html) {
     return {
-      surface: "NanoCorp web search",
+      surface: "NanoCorp web_search",
       reachable: false,
-      unavailableReason: "Supplementary search unavailable",
+      unavailableReason: WEB_SEARCH_UNAVAILABLE,
       brandMentioned: false,
       competitors: [],
-      rawAnswerSnippet: "Supplementary search unavailable",
+      rawAnswerSnippet: WEB_SEARCH_UNAVAILABLE,
       kind: "supplementary",
       status: "not_connected",
     };
   }
 
-  const text = surfaceText(result, "NanoCorp web search");
+  const text = surfaceText(result, "NanoCorp web_search");
   const brandMentioned = mentionsBrandOrDomain(text, brandName, domain);
   const competitors = extractCompetitorsFromText(text, brandName, domain, prompt);
 
   return {
-    surface: "NanoCorp web search",
+    surface: "NanoCorp web_search",
     reachable: true,
     brandMentioned,
     competitors,
@@ -1580,12 +1267,12 @@ async function probeSupplementarySearch(prompt: string, brandName: string, domai
 
 function lockedProEngineSurface(): BuyerIntentSurfaceResult {
   return {
-    surface: PRO_AI_ENGINE_NAMES.join(", "),
+    surface: "AI answer engines",
     reachable: false,
     unavailableReason: "Unlock with Pro",
     brandMentioned: false,
     competitors: [],
-    rawAnswerSnippet: `${PRO_AI_ENGINE_NAMES.join(", ")} — unlock with Pro`,
+    rawAnswerSnippet: "AI answer engines — unlock with Pro",
     kind: "locked",
     status: "locked",
   };
@@ -1593,25 +1280,19 @@ function lockedProEngineSurface(): BuyerIntentSurfaceResult {
 
 async function analyzeBuyerIntentPrompts(brandName: string, websiteUrl: string, domain: string, category: string, homepageText: string): Promise<BuyerIntentPromptResult[]> {
   const prompts = generateBuyerIntentPrompts(brandName, websiteUrl, category, homepageText);
-  const freeEngines = OFFICIAL_AI_ENGINES.filter((engine) => FREE_AI_ENGINE_NAMES.includes(engine.name));
-
   const results: BuyerIntentPromptResult[] = [];
 
   for (const prompt of prompts) {
-    const surfaces = await Promise.all([
-      ...freeEngines.map((engine) => probeOfficialAiEngine(engine, prompt, brandName, domain)),
-      probeSupplementarySearch(prompt, brandName, domain),
-    ]);
-    const aiSurfaces = surfaces.filter((surface) => surface.kind === "ai_engine");
-    const checkedAiSurfaces = aiSurfaces.filter((surface) => surface.reachable && surface.status === "checked");
-    const competitors = uniqueInOrder(checkedAiSurfaces.flatMap((surface) => surface.competitors), 12);
+    const searchSurface = await probeSupplementarySearch(prompt, brandName, domain);
+    const checkedSurfaces = searchSurface.reachable && searchSurface.status === "checked" ? [searchSurface] : [];
+    const competitors = uniqueInOrder(checkedSurfaces.flatMap((surface) => surface.competitors), 12);
 
     results.push({
       prompt,
-      available: checkedAiSurfaces.length > 0,
-      brandMentioned: checkedAiSurfaces.some((surface) => surface.brandMentioned),
+      available: checkedSurfaces.length > 0,
+      brandMentioned: checkedSurfaces.some((surface) => surface.brandMentioned),
       competitors,
-      surfaces: [...surfaces, lockedProEngineSurface()],
+      surfaces: [searchSurface, lockedProEngineSurface()],
     });
   }
 
@@ -1655,7 +1336,7 @@ function computeScore(checks: AuditCheckResult[], buyerIntentPrompts: BuyerInten
 }
 
 function formulaText() {
-  return "Your score mostly comes from one question: when buyers ask for a business like yours, are you named or are other brands named instead? Citeable creates the buying questions from your brand and website, then runs live checks only; nothing is invented.";
+  return "Your score mostly comes from one question: when buyers search for a business like yours, does your brand/domain appear in native web_search snippets or do other brands appear instead? Citeable creates the buying questions from your brand and website, then runs live checks only; nothing is invented.";
 }
 
 function categoryFromWebsite(websiteHtmlCheck: AuditCheckResult) {
@@ -1671,7 +1352,7 @@ function buyerIntentSummaryText(report: Pick<AuditReport, "buyerIntentPrompts" |
   const namedCount = report.buyerIntentPrompts.filter((prompt) => prompt.brandMentioned).length;
   const brands = report.competitors.length ? report.competitors.join(", ") : "None found";
 
-  return `In ${total} buyer questions, you were named ${namedCount} times. Brands named instead: ${brands}.`;
+  return `In ${total} buyer-intent web searches, your brand/domain appeared ${namedCount} times. Other brands found in the same result snippets: ${brands}.`;
 }
 
 function buildFixes(checks: AuditCheckResult[]) {
@@ -1691,7 +1372,7 @@ function buildFixes(checks: AuditCheckResult[]) {
   }
 
   if ((byName.get("ai_visibility")?.score ?? 0) < 15) {
-    fixes.push("Earn mentions on trusted community, review, and industry pages that answer engines can cite.");
+    fixes.push("Earn mentions on trusted community, review, and industry pages that web search and answer engines can cite.");
   }
 
   if ((byName.get("wikipedia")?.score ?? 0) < 20) {
@@ -1701,56 +1382,48 @@ function buildFixes(checks: AuditCheckResult[]) {
   return fixes.slice(0, 5);
 }
 
+async function sendNativeEmail(to: string, subject: string, body: string) {
+  try {
+    const result = await executeNanoCorpTool<{ id?: string; status?: string }>("send_email", { to, subject, body }, ANSWER_TIMEOUT_MS);
+
+    if (!result.ok) {
+      return { sent: false, error: result.error };
+    }
+
+    return { sent: true, id: result.result?.id, status: result.result?.status };
+  } catch (error) {
+    return { sent: false, error: error instanceof Error ? error.message : "Native send_email failed" };
+  }
+}
+
 export async function sendAuditEmail(email: string, brandName: string, report: AuditReport) {
-  if (!process.env.RESEND_API_KEY) {
-    return {
-      sent: false,
-      error: "No RESEND_API_KEY configured; no token-free email provider is available in this deployment.",
-    };
-  }
-
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: process.env.RESEND_FROM_EMAIL ?? "Citeable <onboarding@resend.dev>",
-      to: email,
-      subject: `Your Citeable AI visibility audit for ${brandName}`,
-      text: [
-        `Your Citeable AI visibility audit for ${brandName}`,
-        "",
-        `Score: ${report.score}/100`,
-        "",
-        "Who AI recommends instead of you:",
-        buyerIntentSummaryText(report),
-        ...report.buyerIntentPrompts.flatMap((prompt) => [
-          `- ${prompt.prompt}`,
-          `  You: ${prompt.brandMentioned ? "named" : "not named"}`,
-          `  Named instead: ${prompt.competitors.length ? prompt.competitors.join(", ") : "None found"}`,
-        ]),
-        "",
-        "3 things to do this week:",
-        ...report.monitoring.actions.slice(0, 3).flatMap((action, index) => [
-          `${index + 1}. ${action.title}`,
-          `   What to do: ${action.doThis}`,
-          `   Where: ${action.where}`,
-        ]),
-        "",
-        `View the report: https://getciteable.nanocorp.app/audit/${report.audit_id}`,
-      ].join("\n"),
-    }),
-    signal: AbortSignal.timeout(CHECK_TIMEOUT_MS),
-  });
-
-  if (!response.ok) {
-    const detail = await response.text().catch(() => "");
-    return { sent: false, error: `Resend returned HTTP ${response.status}: ${detail.slice(0, 300)}` };
-  }
-
-  return { sent: true };
+  return sendNativeEmail(
+    email,
+    `Your Citeable visibility audit for ${brandName}`,
+    [
+      `Your Citeable visibility audit for ${brandName}`,
+      "",
+      `Score: ${report.score}/100`,
+      "",
+      "What native web_search found:",
+      buyerIntentSummaryText(report),
+      ...report.buyerIntentPrompts.flatMap((prompt) => [
+        `- ${prompt.prompt}`,
+        `  Your brand/domain in snippets: ${prompt.brandMentioned ? "yes" : "no"}`,
+        `  Other brands found: ${prompt.competitors.length ? prompt.competitors.join(", ") : "None found"}`,
+      ]),
+      "",
+      "3 things to do this week:",
+      ...report.monitoring.actions.slice(0, 3).flatMap((action, index) => [
+        `${index + 1}. ${action.title}`,
+        `   What to do: ${action.doThis}`,
+        `   Where: ${action.where}`,
+      ]),
+      "",
+      "Note: this audit uses native NanoCorp web_search result snippets and direct site checks; it does not invent answer-engine responses.",
+      `View the report: https://getciteable.nanocorp.app/audit/${report.audit_id}`,
+    ].join("\n")
+  );
 }
 
 
@@ -1834,7 +1507,7 @@ function llmsTxtForBrand(brandName: string, websiteUrl: string, category: string
     "",
     "## Pages",
     `- [Home](${baseUrl}/): Main description, products, proof, and contact path.`,
-    `- [FAQ](${baseUrl}/faq): Answers to the buyer questions AI systems are being asked.`,
+    `- [FAQ](${baseUrl}/faq): Answers to the buyer questions people search before choosing a provider.`,
     `- [Reviews](${baseUrl}/reviews): Customer proof and short outcomes when available.`,
     `- [Contact](${baseUrl}/contact): Contact details for sales or partnership questions.`,
   ].join("\n");
@@ -1949,54 +1622,32 @@ function monitoringSummaryText(snapshot: MonitoringSnapshot) {
 }
 
 export async function sendWeeklyMonitoringEmail(email: string, brandName: string, report: AuditReport) {
-  if (!process.env.RESEND_API_KEY) {
-    return {
-      sent: false,
-      error: "No RESEND_API_KEY configured; monthly monitoring email was stored but not sent.",
-    };
-  }
-
   const summary = monitoringSummaryText(report.monitoring);
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: process.env.RESEND_FROM_EMAIL ?? "Citeable <onboarding@resend.dev>",
-      to: email,
-      subject: `Monthly Citeable Monitor — ${brandName}`,
-      text: [
-        `Monthly Citeable Monitor for ${brandName}`,
-        "",
-        `Score: ${report.score}/100 (${summary.deltaText})`,
-        "",
-        "Competitor movement:",
-        summary.movements,
-        "",
-        "First action to take:",
-        `- ${summary.topAction}`,
-        "",
-        "Your 3 things to do this week:",
-        ...report.monitoring.actions.slice(0, 3).flatMap((action, index) => [
-          `${index + 1}. ${action.title}`,
-          `   What to do: ${action.doThis}`,
-          `   Where: ${action.where}`,
-        ]),
-        "",
-        `View the report: https://getciteable.nanocorp.app/audit/${report.audit_id}`,
-      ].join("\n"),
-    }),
-    signal: AbortSignal.timeout(CHECK_TIMEOUT_MS),
-  });
 
-  if (!response.ok) {
-    const detail = await response.text().catch(() => "");
-    return { sent: false, error: `Resend returned HTTP ${response.status}: ${detail.slice(0, 300)}` };
-  }
-
-  return { sent: true };
+  return sendNativeEmail(
+    email,
+    `Monthly Citeable Monitor — ${brandName}`,
+    [
+      `Monthly Citeable Monitor for ${brandName}`,
+      "",
+      `Score: ${report.score}/100 (${summary.deltaText})`,
+      "",
+      "Competitor movement from native web_search checks:",
+      summary.movements,
+      "",
+      "First action to take:",
+      `- ${summary.topAction}`,
+      "",
+      "Your 3 things to do this week:",
+      ...report.monitoring.actions.slice(0, 3).flatMap((action, index) => [
+        `${index + 1}. ${action.title}`,
+        `   What to do: ${action.doThis}`,
+        `   Where: ${action.where}`,
+      ]),
+      "",
+      `View the report: https://getciteable.nanocorp.app/audit/${report.audit_id}`,
+    ].join("\n")
+  );
 }
 
 export async function runDueWeeklyRescans(limit = 3) {

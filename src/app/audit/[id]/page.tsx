@@ -65,14 +65,14 @@ function competitorCounts(names: string[]) {
 }
 
 function questionEngineSummary(question: BuyerIntentPromptResult) {
-  const checked = question.surfaces.filter((surface) => surface.kind === "ai_engine" && surface.status === "checked");
-  const unavailable = question.surfaces.filter((surface) => surface.kind === "ai_engine" && surface.status !== "checked");
+  const checked = question.surfaces.filter((surface) => surface.kind === "supplementary" && surface.status === "checked");
+  const unavailable = question.surfaces.filter((surface) => surface.kind === "supplementary" && surface.status !== "checked");
 
   if (checked.length > 0) {
-    return checked.map((surface) => `${surface.surface}: ${surface.brandMentioned ? "mentioned" : "not mentioned"}`).join(" · ");
+    return checked.map((surface) => `${surface.surface}: ${surface.brandMentioned ? "brand/domain found" : "brand/domain not found"}`).join(" · ");
   }
 
-  return unavailable[0]?.unavailableReason ?? "AI engine unavailable — GEMINI_API_KEY not configured. Contact us for your full analysis.";
+  return unavailable[0]?.unavailableReason ?? "Native web_search unavailable; this report uses only checks that completed.";
 }
 
 function checkedQuestions(questions: BuyerIntentPromptResult[]) {
@@ -209,7 +209,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6">
               <div className="mb-4 flex items-end justify-between gap-4">
                 <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                  Who gets recommended instead of you
+                  Brands found in web_search results
                 </h2>
                 <span className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-black text-[#BCBCC8]">{rankedCompetitors.length || competitors.length}</span>
               </div>
@@ -234,9 +234,9 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6">
               <div className="mb-4 flex items-end justify-between gap-4">
                 <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                  Buying questions checked
+                  Buyer web searches checked
                 </h2>
-                <span className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-black text-[#BCBCC8]">Gemini</span>
+                <span className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-black text-[#BCBCC8]">Native web_search</span>
               </div>
 
               {questions.length ? (
@@ -250,7 +250,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                 </ol>
               ) : (
                 <div className="rounded-2xl border border-[#FF8A8A]/20 bg-[#FF5F5F]/10 p-4 text-sm font-bold text-[#FFB1B1]">
-                  AI engine unavailable — GEMINI_API_KEY not configured. Contact us for your full analysis.
+                  Native web_search unavailable; this report uses only checks that completed.
                 </div>
               )}
             </section>

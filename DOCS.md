@@ -662,3 +662,23 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - `npm run lint` passed.
 - `npm run build` passed on Next.js 16.2.10 / Turbopack.
 - Pending at time of note: commit, push, and perform the single required live browser verification.
+
+## 2026-07-07 — Root fix for audit redirect and native NanoCorp worker
+
+### Findings
+- The homepage submit path posted to `/api/capture-email` and waited for `runQueuedAudit()` to finish before returning an `audit_id`; slow provider calls could leave the form cleared with no `/audit/[id]` redirect.
+- The audit engine still depended on Gemini-style answer probes and Resend email delivery paths, which made production reports and emails depend on external keys/quotas.
+- Report UI copy still labeled buyer checks as `Gemini`/AI-engine output even when the reliable available source was NanoCorp web search.
+- Per `AGENTS.md`, dependencies were installed and local Next.js 16.2 docs were read before route changes: `node_modules/next/dist/docs/01-app/01-getting-started/15-route-handlers.md` and `node_modules/next/dist/docs/01-app/03-api-reference/04-functions/after.md`.
+
+### Changes made
+- `/api/capture-email` now inserts the audit row, schedules `runQueuedAudit()` with Next `after()`, and immediately returns `audit_id` plus `redirect_url` with HTTP 201.
+- Homepage submit now redirects with `window.location.assign(redirect_url)` as soon as the audit row is created, with `audit_id` included in the analytics event.
+- `src/lib/audit-engine.ts` now uses native NanoCorp internal tools through `NANOCORP_TOKEN`: `web_search` for search visibility and buyer-intent checks, and `send_email` for audit and monitoring emails.
+- Removed direct Gemini/OpenAI/Claude/Grok/Mistral probing code and Resend email sending from the audit path.
+- Updated audit report and email copy to honestly describe native `web_search` snippets and direct site checks instead of claiming Gemini/AI-engine answers.
+- `npm run lint` and `npm run build` pass locally on Next.js 16.2.10.
+
+### Deployment note
+- Attempted to mint a durable NanoCorp token with `nanocorp token create --name citeable-prod-native-tools --json`, but the backend returned `403: Cannot access this conglomerate`.
+- Updated Vercel `NANOCORP_TOKEN` with the service token available in the worker environment so the native-tool smoke test can run; a platform/CEO follow-up may be needed to provide a non-expiring production service token if this worker token expires.

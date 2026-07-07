@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
 import { runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
 
@@ -27,29 +27,26 @@ export async function POST(req: NextRequest) {
     );
 
     const auditId = audit.rows[0].id;
-    const result = await runQueuedAudit(auditId);
 
-    console.log(`[citeable] audit queued: ${auditId} for ${email}; in-process status: ${result.status}`);
+    after(async () => {
+      const result = await runQueuedAudit(auditId);
 
-    if (result.status === "failed") {
-      return NextResponse.json({ ok: false, audit_id: auditId, error: result.error }, { status: 500 });
-    }
+      if (result.status === "failed") {
+        console.error(`[citeable] audit ${auditId} failed after capture: ${result.error}`);
+      }
+    });
+
+    console.log(`[citeable] audit queued immediately: ${auditId} for ${email}`);
 
     return NextResponse.json(
       {
         ok: true,
         audit_id: auditId,
         website_url: websiteUrl,
-        status: result.status === "complete" ? "completed" : "running",
-        score: result.status === "complete" ? result.report.score : null,
-        checks: result.status === "complete" ? result.report.checks : [],
-        competitors: result.status === "complete" ? result.report.competitors : [],
-        buyer_intent_prompts: result.status === "complete" ? result.report.buyerIntentPrompts : [],
-        category: result.status === "complete" ? result.report.category : undefined,
-        email_sent: result.status === "complete" ? result.report.emailSent : false,
-        email_error: result.status === "complete" ? result.report.emailError : undefined,
+        redirect_url: `/audit/${auditId}`,
+        status: "queued",
       },
-      { status: 202 }
+      { status: 201 }
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Invalid request";
