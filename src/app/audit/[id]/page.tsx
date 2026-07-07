@@ -251,7 +251,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                   {isGeminiReport ? "Questions posées à Gemini" : "Buyer web searches checked"}
                 </h2>
                 <span className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-black text-[#BCBCC8]">
-                  {isGeminiReport ? `${answerEngine?.engine ?? "Gemini"} · ${answerEngine?.model ?? "gemini-2.0-flash"}` : "Native web_search"}
+                  {isGeminiReport ? `${answerEngine?.engine ?? "Gemini"} · ${answerEngine?.model ?? "gemini-flash-latest"}` : "Native web_search"}
                 </span>
               </div>
 

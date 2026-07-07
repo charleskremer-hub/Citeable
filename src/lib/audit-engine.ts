@@ -8,6 +8,7 @@ const GEMINI_UNAVAILABLE = "Gemini indisponible, réessaie.";
 const FREE_AUDIT_CACHE_HOURS = 24;
 const FREE_AUDIT_EMAIL_DAILY_LIMIT = 3;
 const FREE_AUDIT_DOMAIN_DAILY_LIMIT = 10;
+const DEFAULT_GEMINI_MODEL = "gemini-flash-latest";
 
 export type AuditTier = "free" | "agent_49eur";
 
@@ -455,9 +456,9 @@ type GeminiGenerateContentResponse = {
 };
 
 function currentGeminiModel() {
-  const configured = process.env.GEMINI_MODEL ?? process.env.GOOGLE_GEMINI_MODEL;
-  if (configured && !/gemini-1\.5/i.test(configured)) return configured;
-  return "gemini-2.0-flash";
+  const configured = (process.env.GEMINI_MODEL ?? process.env.GOOGLE_GEMINI_MODEL)?.trim();
+  if (configured && !/^gemini-(?:1\.5|2\.0)(?:-|$)/i.test(configured)) return configured;
+  return DEFAULT_GEMINI_MODEL;
 }
 
 function geminiApiKey() {

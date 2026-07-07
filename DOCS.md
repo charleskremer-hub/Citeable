@@ -1,3 +1,20 @@
+## 2026-07-07 — Gemini current-model migration
+
+### Codebase findings
+- `src/lib/audit-engine.ts` owns the shared Gemini answer-engine adapter used by both `free` and `agent_49eur` tiers through `answerEngineForTier()`.
+- `GEMINI_MODEL` had previously been set to `gemini-2.0-flash`, so the adapter needed to ignore legacy `gemini-1.5-*` and `gemini-2.0-*` overrides instead of trusting a stale production env var.
+- After `npm ci`, the AGENTS-requested Next docs path existed; `node_modules/next/dist/docs/01-app/index.md` was read before validation. The earlier checkout had no `node_modules`, so the path was initially absent.
+
+### Changes made
+- Changed the Gemini default model in `src/lib/audit-engine.ts` to `gemini-flash-latest`.
+- Hardened `currentGeminiModel()` so stale `GEMINI_MODEL` / `GOOGLE_GEMINI_MODEL` values matching `gemini-1.5-*` or `gemini-2.0-*` fall back to `gemini-flash-latest`.
+- Updated the report UI fallback label in `src/app/audit/[id]/page.tsx` from `gemini-2.0-flash` to `gemini-flash-latest`.
+- Updated the Vercel `GEMINI_MODEL` env var to `gemini-flash-latest` with `nanocorp site env set` (`updated: 1`).
+
+### Validation results
+- Direct Gemini API health check against `generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent` returned HTTP `200` with non-empty text (`text_length = 6`) before deploy.
+- `npm run build` passes with Next.js `16.2.10`.
+
 ## 2026-07-07 — Free audit Gemini coherence fix
 
 ### Findings
