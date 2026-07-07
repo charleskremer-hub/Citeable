@@ -9,7 +9,7 @@ const FREE_AUDIT_CACHE_HOURS = 24;
 const FREE_AUDIT_EMAIL_DAILY_LIMIT = 3;
 const FREE_AUDIT_DOMAIN_DAILY_LIMIT = 10;
 const DEFAULT_GEMINI_MODEL = "gemini-flash-latest";
-const COMPETITOR_EXTRACTION_VERSION = "gemini_json_v1";
+const COMPETITOR_EXTRACTION_VERSION = "gemini_json_v2";
 
 export type AuditTier = "free" | "agent_49eur";
 
