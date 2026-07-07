@@ -74,16 +74,16 @@ export default function Home() {
             <div>
               <div className="mb-1.5 inline-flex items-center gap-2 rounded-full border border-[#CAFF3C]/20 bg-[#CAFF3C]/10 px-3 py-1 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[#CAFF3C] sm:mb-4">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#CAFF3C] shadow-[0_0_10px_#CAFF3C]" />
-                Free 30-second check
+                Free Gemini diagnostic
               </div>
               <h1
                 className="max-w-3xl text-[clamp(1.9rem,8vw,4.65rem)] leading-[0.98] tracking-[-0.045em] text-[#F0F0EC]"
                 style={{ fontFamily: "var(--font-display)" }}
               >
-                Your customers ask Gemini now - not just Google. When Gemini recommends a business like yours, is it you?
+                Your customers ask AI now — not just Google. Start with Gemini, then scale to ChatGPT when you want the Agent.
               </h1>
               <p className="mt-2.5 max-w-2xl text-[0.95rem] leading-[1.32] text-[#B8B8C4] sm:mt-5 sm:text-xl sm:leading-[1.55]">
-                Citeable checks whether Gemini recommends you, names who it picks instead, and hands you the fixes. Free 30-second check - no card. llms.txt is a small bonus, not the whole strategy.
+                Citeable checks whether Gemini recommends you, names who it picks instead, and hands you the fixes. Free Gemini diagnostic - no card. llms.txt is a small bonus, not the whole strategy.
               </p>
             </div>
 
@@ -143,7 +143,7 @@ export default function Home() {
                     {status === "loading" ? "Running…" : "Run my free audit"}
                   </button>
                   {errorMsg && <p className="m-0 text-sm text-[#FF6B6B]">{errorMsg}</p>}
-                  <p className="m-0 text-xs leading-5 text-[#6F6F80]">No card needed. See if Gemini chooses you, plus 3 fixes by email.</p>
+                  <p className="m-0 text-xs leading-5 text-[#6F6F80]">No card needed. Free = diagnostic only: score, Gemini choice, competitors.</p>
                 </form>
               )}
             </div>
@@ -152,21 +152,21 @@ export default function Home() {
 
         <section className="mx-auto max-w-5xl px-5 py-6 sm:px-6">
           <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] px-5 py-5 text-center text-sm leading-6 text-[#A7A7B4] sm:text-base">
-            Enter your business name, website, and email. Citeable checks if Gemini picks you when customers ask for a business like yours.
+            Engine ladder: Free and Monitor use Gemini. Agent uses ChatGPT/OpenAI today, with Claude, Grok, and Mistral ready to activate when keys are connected.
           </div>
         </section>
 
         <section className="mx-auto max-w-5xl border-t border-white/[0.06] px-5 py-14 sm:px-6 sm:py-20">
           <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">How it works</p>
           <h2 className="max-w-2xl text-[clamp(2rem,5vw,3rem)] leading-[1.02] tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-            See who Gemini chooses, and what to fix.
+            See who Gemini chooses. Upgrade when you want actions.
           </h2>
 
           <div className="mt-8 grid gap-1 overflow-hidden rounded-2xl bg-white/[0.07] sm:grid-cols-3">
             {[
               "1. Tell us your business name and website",
               "2. We ask Gemini like a real customer would",
-              "3. You get who was picked and 3 fixes by email",
+              "3. Free shows score, Gemini choice, and competitors",
             ].map((step) => (
               <div key={step} className="bg-[#111116] p-6 text-lg font-semibold leading-7 tracking-[-0.02em] text-[#F0F0EC]">
                 {step}
@@ -180,10 +180,10 @@ export default function Home() {
             <div>
               <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">Agent €49 treatment</p>
               <h2 className="max-w-2xl text-[clamp(2rem,5vw,3rem)] leading-[1.02] tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                Help Gemini choose you more often.
+                Use ChatGPT to find what to fix next.
               </h2>
               <p className="mt-5 max-w-xl text-base leading-7 text-[#A7A7B4] sm:text-lg">
-                Agent turns the audit into 1–3 concrete fixes you can paste into your business profiles, FAQ, and website — based on actual missing answers from the audit.
+                Agent runs deeper ChatGPT/OpenAI recommendation checks, then turns real gaps into 1–3 concrete fixes you can paste into your profiles, FAQ, and website.
               </p>
             </div>
 
@@ -214,7 +214,7 @@ export default function Home() {
                 <div className="rounded-2xl border border-white/[0.08] bg-[#111116] p-5">
                   <p className="m-0 text-lg font-bold tracking-[-0.02em] text-[#F0F0EC]">Done to 80%. You validate and paste.</p>
                   <p className="mt-2 text-sm leading-6 text-[#A7A7B4]">
-                    Each weekly batch starts with fresh Gemini recommendation checks, then gets written in plain language so the owner only reviews the facts and publishes.
+                    Each weekly batch starts with fresh ChatGPT/OpenAI recommendation checks. Claude, Grok, and Mistral are not promised until their keys are activated.
                   </p>
                 </div>
               </div>
@@ -225,7 +225,7 @@ export default function Home() {
         <section className="mx-auto max-w-5xl border-t border-white/[0.06] px-5 py-14 sm:px-6 sm:py-20">
           <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">Pricing</p>
           <h2 className="max-w-2xl text-[clamp(2rem,5vw,3rem)] leading-[1.02] tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-            Start free. See if Gemini picks you. Get the work done for you when you are ready.
+            Start with Gemini. Add actions at €9. Add ChatGPT treatment at €49.
           </h2>
 
           <div className="mt-8 grid gap-4 lg:grid-cols-3">
@@ -236,9 +236,9 @@ export default function Home() {
                 note: "A one-time audit. No card needed.",
                 badge: "Lead magnet",
                 features: [
-                  "10–20 buying questions found for you",
+                  "Diagnostic score from Gemini",
                   "Who Gemini picks instead of you",
-                  "3 simple actions to do this week",
+                  "Competitors Gemini names",
                 ],
                 cta: "Run my free audit",
                 href: "#audit",
@@ -249,12 +249,12 @@ export default function Home() {
                 name: "Monitor",
                 price: "€9",
                 suffix: "/month",
-                note: "For owners who want one number to watch.",
+                note: "For owners who want Gemini monitoring plus actions.",
                 badge: "Start here",
                 features: [
                   "Monthly Gemini recommendation re-check",
-                  "Email alert when your score changes",
-                  "Email alert when a named competitor changes",
+                  "3 simple actions to do this week",
+                  "Email alerts when score or competitors change",
                 ],
                 cta: "Start Monitor",
                 href: MONITOR_CHECKOUT_URL,
@@ -268,11 +268,11 @@ export default function Home() {
                 note: "For owners who want weekly copy-paste fixes, not another report.",
                 badge: "Treatment",
                 features: [
+                  "Fresh ChatGPT/OpenAI checks before each batch",
                   "1–3 fixes drafted for you every week",
                   "FAQ, Google Business, website, and page copy",
                   "Third-party mention plan: directory, Reddit/Quora, listicle",
-                  "Fresh Gemini checks before each batch",
-                  "Includes Monitor re-checks",
+                  "Claude/Grok/Mistral-ready when keys are activated",
                 ],
                 cta: "Start Agent",
                 href: DONE_FOR_YOU_CHECKOUT_URL,
@@ -311,7 +311,7 @@ export default function Home() {
             <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-[#777786]">Plain English FAQ</p>
             <h2 className="mb-3 text-xl font-bold tracking-[-0.02em]">Do I need to configure anything?</h2>
             <p className="m-0 text-sm leading-6 text-[#A7A7B4]">
-              No. Enter your business name, website, and email. Citeable checks who Gemini recommends and explains the fixes in plain English.
+              No. Enter your business name, website, and email. Free and Monitor use Gemini today; Agent uses ChatGPT/OpenAI today. Claude, Grok, and Mistral are activation-ready, not live promises yet.
             </p>
           </div>
         </section>
@@ -320,7 +320,7 @@ export default function Home() {
       <footer className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] px-5 py-8 sm:px-6">
         <div>
           <div className="text-lg tracking-[-0.02em]" style={{ fontFamily: "var(--font-display)" }}>Citeable</div>
-          <p className="m-0 text-sm text-[#686879]">See whether Gemini recommends and chooses your business.</p>
+          <p className="m-0 text-sm text-[#686879]">See whether AI recommends and chooses your business.</p>
         </div>
         <p className="m-0 text-sm text-[#444454]">© {new Date().getFullYear()} Citeable. All rights reserved.</p>
       </footer>

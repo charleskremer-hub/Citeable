@@ -5,10 +5,12 @@ const CHECK_TIMEOUT_MS = 8_000;
 const ANSWER_TIMEOUT_MS = 18_000;
 const WEB_SEARCH_UNAVAILABLE = "Native NanoCorp web_search unavailable; this report uses only checks that completed.";
 const GEMINI_UNAVAILABLE = "Gemini indisponible, réessaie.";
+const OPENAI_UNAVAILABLE = "ChatGPT/OpenAI indisponible, réessaie.";
 const FREE_AUDIT_CACHE_HOURS = 24;
 const FREE_AUDIT_EMAIL_DAILY_LIMIT = 3;
 const FREE_AUDIT_DOMAIN_DAILY_LIMIT = 10;
 const DEFAULT_GEMINI_MODEL = "gemini-flash-latest";
+const DEFAULT_OPENAI_MODEL = "gpt-4.1-mini";
 const COMPETITOR_EXTRACTION_VERSION = "gemini_recommended_brands_v3";
 
 export type AuditTier = "free" | "agent_49eur";
@@ -33,7 +35,7 @@ export type BuyerIntentSurfaceResult = {
   status?: "checked" | "not_connected" | "locked" | "failed";
   engine?: string;
   model?: string;
-  recommendationLabel?: "Gemini te recommande" | "Gemini ne te cite pas";
+  recommendationLabel?: string;
   realLlmCall?: boolean;
 };
 
@@ -442,7 +444,21 @@ type AnswerEngineProvider = {
   engine: string;
   model: string;
   configured: boolean;
+  unavailableMessage: string;
+  positiveLabel: string;
+  negativeLabel: string;
   ask: (question: string, context: AnswerEngineQuestionContext) => Promise<AnswerEngineAnswer>;
+};
+
+type AnswerEngineProviderKey = "gemini" | "openai" | "anthropic" | "xai" | "mistral";
+
+type AnswerEngineProviderConfig = {
+  key: AnswerEngineProviderKey;
+  engine: string;
+  apiKeyEnv: string;
+  modelEnv: string;
+  defaultModel: string;
+  enabled: boolean;
 };
 
 type AnswerEngineQuestionContext = {
@@ -473,6 +489,67 @@ type GeminiStructuredBrandResponse = {
   recommended_brands?: unknown;
 };
 
+type OpenAIChatCompletionResponse = {
+  choices?: Array<{
+    message?: {
+      content?: string | null;
+    };
+  }>;
+  error?: {
+    message?: string;
+    type?: string;
+    code?: string | number | null;
+  };
+};
+
+const ANSWER_ENGINE_PROVIDER_CONFIGS: Record<AnswerEngineProviderKey, AnswerEngineProviderConfig> = {
+  gemini: {
+    key: "gemini",
+    engine: "Gemini",
+    apiKeyEnv: "GEMINI_API_KEY",
+    modelEnv: "GEMINI_MODEL",
+    defaultModel: DEFAULT_GEMINI_MODEL,
+    enabled: true,
+  },
+  openai: {
+    key: "openai",
+    engine: "ChatGPT",
+    apiKeyEnv: "OPENAI_API_KEY",
+    modelEnv: "OPENAI_MODEL",
+    defaultModel: DEFAULT_OPENAI_MODEL,
+    enabled: true,
+  },
+  anthropic: {
+    key: "anthropic",
+    engine: "Claude",
+    apiKeyEnv: "ANTHROPIC_API_KEY",
+    modelEnv: "ANTHROPIC_MODEL",
+    defaultModel: "claude-sonnet-4",
+    enabled: false,
+  },
+  xai: {
+    key: "xai",
+    engine: "Grok",
+    apiKeyEnv: "XAI_API_KEY",
+    modelEnv: "XAI_MODEL",
+    defaultModel: "grok-4",
+    enabled: false,
+  },
+  mistral: {
+    key: "mistral",
+    engine: "Mistral",
+    apiKeyEnv: "MISTRAL_API_KEY",
+    modelEnv: "MISTRAL_MODEL",
+    defaultModel: "mistral-large-latest",
+    enabled: false,
+  },
+};
+
+const ANSWER_ENGINE_BY_TIER: Record<AuditTier, AnswerEngineProviderKey> = {
+  free: "gemini",
+  agent_49eur: "openai",
+};
+
 function currentGeminiModel() {
   const configured = (process.env.GEMINI_MODEL ?? process.env.GOOGLE_GEMINI_MODEL)?.trim();
   if (configured && !/^gemini-(?:1\.5|2\.0)(?:-|$)/i.test(configured)) return configured;
@@ -483,6 +560,14 @@ function geminiApiKey() {
   return process.env.GEMINI_API_KEY ?? process.env.NANO_USER_GEMINI_API_KEY ?? "";
 }
 
+function currentOpenAIModel() {
+  return (process.env.OPENAI_MODEL ?? process.env.CHATGPT_MODEL ?? DEFAULT_OPENAI_MODEL).trim() || DEFAULT_OPENAI_MODEL;
+}
+
+function openAIApiKey() {
+  return process.env.OPENAI_API_KEY ?? process.env.NANO_USER_CHATGPT_API_KEY ?? "";
+}
+
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -491,6 +576,14 @@ function geminiAnswerText(body: GeminiGenerateContentResponse) {
   return body.candidates
     ?.flatMap((candidate) => candidate.content?.parts ?? [])
     .map((part) => part.text)
+    .filter((text): text is string => Boolean(text?.trim()))
+    .join("\n")
+    .trim() ?? "";
+}
+
+function openAIAnswerText(body: OpenAIChatCompletionResponse) {
+  return body.choices
+    ?.map((choice) => choice.message?.content)
     .filter((text): text is string => Boolean(text?.trim()))
     .join("\n")
     .trim() ?? "";
@@ -558,7 +651,7 @@ function extractRecommendedBrandsFromLooseJson(text: string) {
   return Array.from(match[1].matchAll(/"([^"\n]{2,80})"/g), (brandMatch) => brandMatch[1]);
 }
 
-function parseGeminiStructuredBrandResponse(text: string): AnswerEngineAnswer {
+function parseStructuredBrandResponse(text: string): AnswerEngineAnswer {
   const parsed = safeJsonParse<GeminiStructuredBrandResponse | null>(jsonObjectFromText(text), null);
   const brands = parsed && typeof parsed === "object" && Array.isArray(parsed.recommended_brands)
     ? parsed.recommended_brands.map(brandNameFromUnknown)
@@ -581,6 +674,9 @@ function createGeminiProvider(): AnswerEngineProvider {
     engine: "Gemini",
     model,
     configured: Boolean(apiKey),
+    unavailableMessage: GEMINI_UNAVAILABLE,
+    positiveLabel: "Gemini te recommande",
+    negativeLabel: "Gemini ne te cite pas",
     async ask(question: string, context: AnswerEngineQuestionContext) {
       if (!apiKey) throw new Error(GEMINI_UNAVAILABLE);
 
@@ -626,10 +722,10 @@ function createGeminiProvider(): AnswerEngineProvider {
 
           if (response.ok) {
             const answer = geminiAnswerText(parsed);
-            if (answer) return parseGeminiStructuredBrandResponse(answer);
+            if (answer) return parseStructuredBrandResponse(answer);
             lastError = GEMINI_UNAVAILABLE;
           } else {
-            lastError = parsed.error?.message ? `${GEMINI_UNAVAILABLE} ${parsed.error.message}` : GEMINI_UNAVAILABLE;
+            lastError = parsed.error?.message ? `${GEMINI_UNAVAILABLE} HTTP ${response.status}: ${parsed.error.message}` : `${GEMINI_UNAVAILABLE} HTTP ${response.status}`;
             if (response.status !== 429 && response.status < 500) break;
           }
         } catch (error) {
@@ -644,10 +740,101 @@ function createGeminiProvider(): AnswerEngineProvider {
   };
 }
 
-function answerEngineForTier(tier: AuditTier): AnswerEngineProvider | null {
-  if (tier === "free" || tier === "agent_49eur") return createGeminiProvider();
+function createOpenAIProvider(): AnswerEngineProvider {
+  const model = currentOpenAIModel();
+  const apiKey = openAIApiKey();
+
+  return {
+    engine: "ChatGPT",
+    model,
+    configured: Boolean(apiKey),
+    unavailableMessage: OPENAI_UNAVAILABLE,
+    positiveLabel: "ChatGPT te recommande",
+    negativeLabel: "ChatGPT ne te cite pas",
+    async ask(question: string, context: AnswerEngineQuestionContext) {
+      if (!apiKey) throw new Error(OPENAI_UNAVAILABLE);
+
+      const prompt = [
+        "You are answering a real buyer-intent recommendation question for a visibility audit.",
+        `Buyer question: ${question}`,
+        `Audited brand: ${context.brandName}`,
+        `Audited domain: ${context.domain}`,
+        "Return ONLY valid JSON with this exact shape:",
+        '{"recommended_brands":["On","Hoka","Veja"]}',
+        "Rules:",
+        "- recommended_brands must contain only real brand/company/product names that answer the buyer question.",
+        `- Include ${context.brandName} only if you would genuinely recommend or cite it for this question.`,
+        `- Do not include ${context.domain} unless it is itself the brand name.`,
+        "- Do not include generic words, categories, adjectives, personas, locations, headings, explanations, URLs, or prose tokens.",
+        "- If you cannot name any recommended brands, return an empty recommended_brands array.",
+      ].join("\n");
+      let lastError = OPENAI_UNAVAILABLE;
+
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        try {
+          const response = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${apiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model,
+              messages: [
+                {
+                  role: "system",
+                  content: "Return compact JSON only. Do not include prose outside JSON.",
+                },
+                {
+                  role: "user",
+                  content: prompt,
+                },
+              ],
+              temperature: 0.2,
+              max_tokens: 700,
+              response_format: { type: "json_object" },
+            }),
+            signal: AbortSignal.timeout(ANSWER_TIMEOUT_MS),
+          });
+          const responseText = await response.text();
+          const parsed = safeJsonParse<OpenAIChatCompletionResponse>(responseText, {});
+
+          if (response.ok) {
+            const answer = openAIAnswerText(parsed);
+            if (answer) return parseStructuredBrandResponse(answer);
+            lastError = OPENAI_UNAVAILABLE;
+          } else {
+            lastError = parsed.error?.message ? `${OPENAI_UNAVAILABLE} HTTP ${response.status}: ${parsed.error.message}` : `${OPENAI_UNAVAILABLE} HTTP ${response.status}`;
+            if (response.status !== 429 && response.status < 500) break;
+          }
+        } catch (error) {
+          lastError = error instanceof Error ? `${OPENAI_UNAVAILABLE} ${error.message}` : OPENAI_UNAVAILABLE;
+        }
+
+        if (attempt < 2) await delay(500 * 2 ** attempt);
+      }
+
+      throw new Error(lastError);
+    },
+  };
+}
+
+function providerForKey(key: AnswerEngineProviderKey): AnswerEngineProvider | null {
+  const config = ANSWER_ENGINE_PROVIDER_CONFIGS[key];
+
+  if (!config.enabled) return null;
+  if (key === "gemini") return createGeminiProvider();
+  if (key === "openai") return createOpenAIProvider();
 
   return null;
+}
+
+function answerEngineForTier(tier: AuditTier): AnswerEngineProvider | null {
+  return providerForKey(ANSWER_ENGINE_BY_TIER[tier]);
+}
+
+function unavailableMessageForTier(tier: AuditTier) {
+  return answerEngineForTier(tier)?.unavailableMessage ?? GEMINI_UNAVAILABLE;
 }
 
 async function fetchNanoCorpSearch(source: string, query: string): Promise<SurfaceFetchResult> {
@@ -1592,7 +1779,8 @@ function checkAIVisibilityFromBuyerPrompts(buyerIntentPrompts: BuyerIntentPrompt
   const checkedPrompts = buyerIntentPrompts.filter((prompt) => prompt.surfaces.some((surface) => (surface.kind === "supplementary" || surface.kind === "ai_engine") && surface.status === "checked"));
   const namedPrompts = checkedPrompts.filter((prompt) => prompt.brandMentioned).length;
   const score = buyerIntentPrompts.length > 0 ? Math.round((namedPrompts / buyerIntentPrompts.length) * 100) : null;
-  const checkedAnswerEngine = buyerIntentPrompts.some((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine" && surface.status === "checked"));
+  const checkedAnswerEngineSurface = buyerIntentPrompts.flatMap((prompt) => prompt.surfaces).find((surface) => surface.kind === "ai_engine" && surface.status === "checked");
+  const failedAnswerEngineReason = buyerIntentPrompts.flatMap((prompt) => prompt.surfaces).find((surface) => surface.kind === "ai_engine" && surface.status !== "checked")?.unavailableReason;
   const unavailable = uniqueInOrder(
     buyerIntentPrompts.flatMap((prompt) => prompt.surfaces)
       .filter((surface) => (surface.kind === "supplementary" || surface.kind === "ai_engine") && surface.status !== "checked")
@@ -1604,9 +1792,9 @@ function checkAIVisibilityFromBuyerPrompts(buyerIntentPrompts: BuyerIntentPrompt
     score,
     maxScore: 100,
     detail: unavailable.length
-      ? `${checkedAnswerEngine ? GEMINI_UNAVAILABLE : WEB_SEARCH_UNAVAILABLE} Unavailable surface(s): ${unavailable.join(", ")}.`
-      : checkedAnswerEngine
-        ? "Gemini checked buyer-intent recommendation answers with real LLM calls."
+      ? `${failedAnswerEngineReason ?? WEB_SEARCH_UNAVAILABLE} Unavailable surface(s): ${unavailable.join(", ")}.`
+      : checkedAnswerEngineSurface
+        ? `${checkedAnswerEngineSurface.engine ?? "Answer engine"} checked buyer-intent recommendation answers with real LLM calls.`
         : "Native NanoCorp web_search checked buyer-intent result snippets.",
     found: namedPrompts > 0,
     reachable: checkedPrompts.length > 0,
@@ -1654,15 +1842,15 @@ async function probeAnswerEngine(prompt: string, brandName: string, domain: stri
     return {
       surface: provider.engine,
       reachable: false,
-      unavailableReason: GEMINI_UNAVAILABLE,
+      unavailableReason: provider.unavailableMessage,
       brandMentioned: false,
       competitors: [],
-      rawAnswerSnippet: GEMINI_UNAVAILABLE,
+      rawAnswerSnippet: provider.unavailableMessage,
       kind: "ai_engine",
       status: "failed",
       engine: provider.engine,
       model: provider.model,
-      recommendationLabel: "Gemini ne te cite pas",
+      recommendationLabel: provider.negativeLabel,
       realLlmCall: false,
     };
   }
@@ -1682,24 +1870,24 @@ async function probeAnswerEngine(prompt: string, brandName: string, domain: stri
       status: "checked",
       engine: provider.engine,
       model: provider.model,
-      recommendationLabel: brandMentioned ? "Gemini te recommande" : "Gemini ne te cite pas",
+      recommendationLabel: brandMentioned ? provider.positiveLabel : provider.negativeLabel,
       realLlmCall: true,
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : GEMINI_UNAVAILABLE;
+    const message = error instanceof Error ? error.message : provider.unavailableMessage;
 
     return {
       surface: provider.engine,
       reachable: false,
-      unavailableReason: message.includes(GEMINI_UNAVAILABLE) ? message : GEMINI_UNAVAILABLE,
+      unavailableReason: message.includes(provider.unavailableMessage) ? message : provider.unavailableMessage,
       brandMentioned: false,
       competitors: [],
-      rawAnswerSnippet: GEMINI_UNAVAILABLE,
+      rawAnswerSnippet: provider.unavailableMessage,
       kind: "ai_engine",
       status: "failed",
       engine: provider.engine,
       model: provider.model,
-      recommendationLabel: "Gemini ne te cite pas",
+      recommendationLabel: provider.negativeLabel,
       realLlmCall: false,
     };
   }
@@ -1786,7 +1974,7 @@ function formulaText() {
 
 function formulaTextForTier(tier: AuditTier) {
   if (tier === "agent_49eur") {
-    return "Your Agent €49 score comes from real Gemini recommendation calls for each buying question: does Gemini recommend your brand/domain, or does it cite competitors instead? If Gemini is unavailable, Citeable reports that honestly and never fabricates data.";
+    return "Your Agent €49 score comes from real ChatGPT/OpenAI recommendation calls for each buying question: does ChatGPT recommend your brand/domain, or does it cite competitors instead? If ChatGPT/OpenAI is unavailable, Citeable reports that honestly and never fabricates data.";
   }
 
   return formulaText();
@@ -1804,10 +1992,10 @@ function buyerIntentSummaryText(report: Pick<AuditReport, "buyerIntentPrompts" |
   const total = report.buyerIntentPrompts.length;
   const namedCount = report.buyerIntentPrompts.filter((prompt) => prompt.brandMentioned).length;
   const brands = report.competitors.length ? report.competitors.join(", ") : "None found";
-  const checkedGemini = report.buyerIntentPrompts.some((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine"));
+  const answerEngine = report.buyerIntentPrompts.flatMap((prompt) => prompt.surfaces).find((surface) => surface.kind === "ai_engine")?.engine;
 
-  if (checkedGemini) {
-    return `In ${total} buyer-intent Gemini prompts, Gemini cited your brand/domain ${namedCount} times. Other brands Gemini named: ${brands}.`;
+  if (answerEngine) {
+    return `In ${total} buyer-intent ${answerEngine} prompts, ${answerEngine} cited your brand/domain ${namedCount} times. Other brands ${answerEngine} named: ${brands}.`;
   }
 
   return `In ${total} buyer-intent web searches, your brand/domain appeared ${namedCount} times. Other brands found in the same result snippets: ${brands}.`;
@@ -1869,7 +2057,8 @@ export async function sendAuditEmail(email: string, brandName: string, report: A
     return { sent: true, error: undefined };
   }
 
-  const isGeminiReport = report.auditTier === "agent_49eur" || report.buyerIntentPrompts.some((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine"));
+  const answerEngineName = report.answerEngine?.engine ?? report.buyerIntentPrompts.flatMap((prompt) => prompt.surfaces).find((surface) => surface.kind === "ai_engine")?.engine;
+  const isAnswerEngineReport = Boolean(answerEngineName);
 
   return sendNativeEmail(
     email,
@@ -1879,12 +2068,12 @@ export async function sendAuditEmail(email: string, brandName: string, report: A
       "",
       `Score: ${report.score}/100`,
       "",
-      isGeminiReport ? "What Gemini found:" : "What native web_search found:",
+      isAnswerEngineReport ? `What ${answerEngineName} found:` : "What native web_search found:",
       buyerIntentSummaryText(report),
       ...report.buyerIntentPrompts.flatMap((prompt) => [
         `- ${prompt.prompt}`,
-        isGeminiReport
-          ? `  ${prompt.brandMentioned ? "Gemini te recommande" : "Gemini ne te cite pas"}`
+        isAnswerEngineReport
+          ? `  ${prompt.surfaces.find((surface) => surface.kind === "ai_engine")?.recommendationLabel ?? (prompt.brandMentioned ? `${answerEngineName} te recommande` : `${answerEngineName} ne te cite pas`)}`
           : `  Your brand/domain in snippets: ${prompt.brandMentioned ? "yes" : "no"}`,
         `  Other brands found: ${prompt.competitors.length ? prompt.competitors.join(", ") : "None found"}`,
       ]),
@@ -1896,8 +2085,8 @@ export async function sendAuditEmail(email: string, brandName: string, report: A
         `   Where: ${action.where}`,
       ]),
       "",
-      isGeminiReport
-        ? "Note: this audit uses real Gemini LLM calls for buyer questions; if Gemini is unavailable, Citeable says so and does not invent data."
+      isAnswerEngineReport
+        ? `Note: this audit uses real ${answerEngineName} LLM calls for buyer questions; if ${answerEngineName} is unavailable, Citeable says so and does not invent data.`
         : "Note: this audit uses native NanoCorp web_search result snippets and direct site checks; it does not invent answer-engine responses.",
       `View the report: https://getciteable.nanocorp.app/audit/${report.audit_id}`,
     ].join("\n")
@@ -2215,11 +2404,12 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
   const structuredDataFound = (foundationChecks.find((check) => check.check === "structured_data")?.score ?? 0) > 0;
   const inferred = await inferCategory(args.brandName, args.websiteUrl, foundationChecks.find((check) => check.check === "structured_data") ?? foundationChecks[0]);
   const buyerIntentPrompts = await analyzeBuyerIntentPrompts(args.brandName, args.websiteUrl, domain, inferred.category, inferred.homepageText, auditTier);
-  const checkedGeminiPrompts = buyerIntentPrompts.filter((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine" && surface.status === "checked"));
-  const failedGeminiPrompts = buyerIntentPrompts.filter((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine" && surface.status !== "checked"));
+  const checkedAnswerEnginePrompts = buyerIntentPrompts.filter((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine" && surface.status === "checked"));
+  const failedAnswerEnginePrompts = buyerIntentPrompts.filter((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine" && surface.status !== "checked"));
 
-  if (answerEngineForTier(auditTier) && (checkedGeminiPrompts.length === 0 || failedGeminiPrompts.length > 0)) {
-    throw new Error(GEMINI_UNAVAILABLE);
+  if (answerEngineForTier(auditTier) && (checkedAnswerEnginePrompts.length === 0 || failedAnswerEnginePrompts.length > 0)) {
+    const failedReason = failedAnswerEnginePrompts.flatMap((prompt) => prompt.surfaces).find((surface) => surface.kind === "ai_engine" && surface.status !== "checked")?.unavailableReason;
+    throw new Error(failedReason ?? unavailableMessageForTier(auditTier));
   }
 
   const checks = [...foundationChecks, checkAIVisibilityFromBuyerPrompts(buyerIntentPrompts)];

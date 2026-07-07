@@ -70,9 +70,10 @@ function questionEngineSummary(question: BuyerIntentPromptResult) {
   const aiSurface = question.surfaces.find((surface) => surface.kind === "ai_engine");
 
   if (aiSurface) {
-    const label = aiSurface.recommendationLabel ?? (aiSurface.brandMentioned ? "Gemini te recommande" : "Gemini ne te cite pas");
+    const engine = aiSurface.engine ?? "Gemini";
+    const label = aiSurface.recommendationLabel ?? (aiSurface.brandMentioned ? `${engine} te recommande` : `${engine} ne te cite pas`);
     const competitors = question.competitors.length ? ` · Concurrents cités: ${question.competitors.join(", ")}` : " · Aucun concurrent cité clairement";
-    return aiSurface.status === "checked" ? `${label}${competitors}` : (aiSurface.unavailableReason ?? "Gemini indisponible, réessaie.");
+    return aiSurface.status === "checked" ? `${label}${competitors}` : (aiSurface.unavailableReason ?? `${engine} indisponible, réessaie.`);
   }
 
   const checked = question.surfaces.filter((surface) => surface.kind === "supplementary" && surface.status === "checked");
@@ -100,7 +101,7 @@ function fixSentence(category: string | undefined, hasCompetitors: boolean) {
   return `Voici quoi corriger : rends ton site plus clair sur ${business}, tes preuves et les raisons de te choisir.`;
 }
 
-function treatmentProof(brandName: string, category: string | undefined, questions: BuyerIntentPromptResult[], competitors: string[]) {
+function treatmentProof(brandName: string, category: string | undefined, questions: BuyerIntentPromptResult[], competitors: string[], engine: string) {
   const question = questions.find((item) => item.available && !item.brandMentioned)
     ?? questions.find((item) => item.available && item.competitors.length > 0)
     ?? questions.find((item) => item.available)
@@ -111,15 +112,15 @@ function treatmentProof(brandName: string, category: string | undefined, questio
   const business = category && category !== "your type of business" ? category : "ton activité";
   const citedCompetitors = uniqueNames([...question.competitors, ...competitors]).slice(0, 3);
   const competitorText = citedCompetitors.length
-    ? `Gemini cite déjà ${citedCompetitors.join(", ")} sur ce sujet : la page doit expliquer pourquoi choisir ${brandName}, sans les attaquer.`
+    ? `${engine} cite déjà ${citedCompetitors.join(", ")} sur ce sujet : la page doit expliquer pourquoi choisir ${brandName}, sans les attaquer.`
     : `Aucun concurrent clair n'est cité sur ce sujet : la page doit rendre ${brandName} plus facile à recommander.`;
 
   return {
     gap: question.brandMentioned
       ? citedCompetitors.length
-        ? `Écart détecté : Gemini cite aussi ${citedCompetitors.join(", ")} pour “${question.prompt}”.`
+        ? `Écart détecté : ${engine} cite aussi ${citedCompetitors.join(", ")} pour “${question.prompt}”.`
         : `Question vérifiée : “${question.prompt}”.`
-      : `Manque détecté : Gemini ne cite pas ${brandName} pour “${question.prompt}”.`,
+      : `Manque détecté : ${engine} ne cite pas ${brandName} pour “${question.prompt}”.`,
     title: `FAQ/page à créer : “${question.prompt}”`,
     draft: `Réponse brouillon à publier après validation : “Si vous comparez ${business}, commencez par votre cas d'usage, les preuves disponibles et l'étape suivante. ${brandName} doit présenter ici ses cas d'usage, ses avis ou preuves vérifiables, et une réponse directe à cette question. ${competitorText}”`,
   };
@@ -159,22 +160,24 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
     ...questions.flatMap((question) => question.competitors),
   ]).slice(0, 12);
   const rankedCompetitors = competitorCounts(questions.flatMap((question) => question.competitors));
-  const isGeminiReport = audit.raw_results?.auditTier === "agent_49eur" || questions.some((question) => question.surfaces.some((surface) => surface.kind === "ai_engine"));
   const answerEngine = audit.raw_results?.answerEngine;
+  const answerEngineName = answerEngine?.engine ?? questions.flatMap((question) => question.surfaces).find((surface) => surface.kind === "ai_engine")?.engine ?? "Gemini";
+  const isAnswerEngineReport = questions.some((question) => question.surfaces.some((surface) => surface.kind === "ai_engine"));
+  const isAgentReport = audit.raw_results?.auditTier === "agent_49eur";
   const topCompetitor = rankedCompetitors[0]?.name ?? competitors[0];
   const score = audit.score ?? 0;
   const color = scoreColor(score);
-  const proof = complete && !failed ? treatmentProof(audit.brand_name, audit.raw_results?.category, questions, competitors) : null;
+  const proof = complete && !failed && isAgentReport ? treatmentProof(audit.brand_name, audit.raw_results?.category, questions, competitors, answerEngineName) : null;
   const phrases = [
     questionCount > 0
-      ? isGeminiReport
-        ? `${brandMentionCount > 0 ? "Gemini te recommande" : "Gemini ne te cite pas"} (${brandMentionCount}/${questionCount} questions).`
+      ? isAnswerEngineReport
+        ? `${brandMentionCount > 0 ? `${answerEngineName} te recommande` : `${answerEngineName} ne te cite pas`} (${brandMentionCount}/${questionCount} questions).`
         : `Tu es cité ${brandMentionCount} fois sur ${questionCount} questions.`
       : "Aucune question client n'a pu être vérifiée pour l'instant.",
     topCompetitor
       ? `Le concurrent ${topCompetitor} sort à ta place.`
       : "Aucun concurrent ne sort clairement à ta place.",
-    fixSentence(audit.raw_results?.category, competitors.length > 0),
+    isAgentReport ? fixSentence(audit.raw_results?.category, competitors.length > 0) : "Diagnostic gratuit : score, moteur utilisé et concurrents cités — les 3 actions sont dans Monitor.",
   ];
 
   return (
@@ -249,7 +252,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6">
               <div className="mb-4 flex items-end justify-between gap-4">
                 <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                  {isGeminiReport ? "Concurrents cités par Gemini" : "Brands found in web_search results"}
+                  {isAnswerEngineReport ? `Concurrents cités par ${answerEngineName}` : "Brands found in web_search results"}
                 </h2>
                 <span className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-black text-[#BCBCC8]">{rankedCompetitors.length || competitors.length}</span>
               </div>
@@ -274,10 +277,10 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6">
               <div className="mb-4 flex items-end justify-between gap-4">
                 <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                  {isGeminiReport ? "Questions posées à Gemini" : "Buyer web searches checked"}
+                  {isAnswerEngineReport ? `Questions posées à ${answerEngineName}` : "Buyer web searches checked"}
                 </h2>
                 <span className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-black text-[#BCBCC8]">
-                  {isGeminiReport ? `${answerEngine?.engine ?? "Gemini"} · ${answerEngine?.model ?? "gemini-flash-latest"}` : "Native web_search"}
+                  {isAnswerEngineReport ? `${answerEngineName} · ${answerEngine?.model ?? questions.flatMap((question) => question.surfaces).find((surface) => surface.kind === "ai_engine")?.model ?? "model unknown"}` : "Native web_search"}
                 </span>
               </div>
 
@@ -292,7 +295,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                 </ol>
               ) : (
                 <div className="rounded-2xl border border-[#FF8A8A]/20 bg-[#FF5F5F]/10 p-4 text-sm font-bold text-[#FFB1B1]">
-                  {isGeminiReport ? "Gemini indisponible, réessaie." : "Native web_search unavailable; this report uses only checks that completed."}
+                  {isAnswerEngineReport ? `${answerEngineName} indisponible, réessaie.` : "Native web_search unavailable; this report uses only checks that completed."}
                 </div>
               )}
             </section>
