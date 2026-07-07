@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ensureAuditSchema, pool } from "@/lib/db";
-import type { BuyerIntentPromptResult } from "@/lib/audit-engine";
+import type { BuyerIntentPromptResult, PlainAction } from "@/lib/audit-engine";
 import AuditPoller from "./AuditPoller";
 
 export const dynamic = "force-dynamic";
 
 const DONE_FOR_YOU_CHECKOUT_URL = "https://checkout.nanocorp.so/c/fzVo0YiuyHM5GStaVrpT";
+const MONITOR_CHECKOUT_URL = "https://checkout.nanocorp.so/c/SQdBFx6vxsKgDB0CUVXV";
 
 type AuditRow = {
   id: string;
@@ -22,6 +23,7 @@ type AuditRow = {
     auditTier?: string;
     answerEngine?: { engine?: string; model?: string; realLlmCall?: boolean };
     buyerIntentPrompts?: BuyerIntentPromptResult[];
+    monitoring?: { actions?: PlainAction[] };
   } | null;
 };
 
@@ -164,10 +166,13 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const answerEngineName = answerEngine?.engine ?? questions.flatMap((question) => question.surfaces).find((surface) => surface.kind === "ai_engine")?.engine ?? "Gemini";
   const isAnswerEngineReport = questions.some((question) => question.surfaces.some((surface) => surface.kind === "ai_engine"));
   const isAgentReport = audit.raw_results?.auditTier === "agent_49eur";
+  const isMonitorReport = audit.raw_results?.auditTier === "monitor_9eur";
+  const isFreeReport = !isAgentReport && !isMonitorReport;
   const topCompetitor = rankedCompetitors[0]?.name ?? competitors[0];
   const score = audit.score ?? 0;
   const color = scoreColor(score);
   const proof = complete && !failed && isAgentReport ? treatmentProof(audit.brand_name, audit.raw_results?.category, questions, competitors, answerEngineName) : null;
+  const monitorActions = audit.raw_results?.monitoring?.actions?.slice(0, 3) ?? [];
   const phrases = [
     questionCount > 0
       ? isAnswerEngineReport
@@ -177,7 +182,11 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
     topCompetitor
       ? `Le concurrent ${topCompetitor} sort à ta place.`
       : "Aucun concurrent ne sort clairement à ta place.",
-    isAgentReport ? fixSentence(audit.raw_results?.category, competitors.length > 0) : "Diagnostic gratuit : score, moteur utilisé et concurrents cités — les 3 actions sont dans Monitor.",
+    isAgentReport
+      ? fixSentence(audit.raw_results?.category, competitors.length > 0)
+      : isMonitorReport
+        ? "Monitor ajoute 3 actions prioritaires à faire cette semaine."
+        : "Diagnostic gratuit : score, choix Gemini et concurrents cités.",
   ];
 
   return (
@@ -273,7 +282,44 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             </section>
           ) : null}
 
-          {complete && !failed ? (
+          {complete && !failed && isFreeReport ? (
+            <section className="rounded-[1.5rem] border border-[#CAFF3C]/20 bg-[#CAFF3C]/[0.055] p-5 sm:p-6">
+              <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">Monitor 9€</p>
+              <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
+                Débloque les 3 actions à faire cette semaine
+              </h2>
+              <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#D6D6DF]">
+                Le gratuit s&apos;arrête au score, au choix Gemini et aux concurrents cités. Monitor ajoute les 3 priorités concrètes et le suivi mensuel Gemini.
+              </p>
+              <a href={MONITOR_CHECKOUT_URL} className="mt-5 inline-flex rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110" data-ph-capture-attribute-plan="monitor_9eur" data-ph-capture-attribute-source="free_audit_report">
+                Passer au Monitor — 9€ →
+              </a>
+            </section>
+          ) : null}
+
+          {complete && !failed && isMonitorReport ? (
+            <section className="rounded-[1.5rem] border border-[#CAFF3C]/20 bg-[#CAFF3C]/[0.055] p-5 sm:p-6">
+              <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">Monitor 9€</p>
+              <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
+                3 actions prioritaires à faire cette semaine
+              </h2>
+              {monitorActions.length ? (
+                <ol className="m-0 mt-4 grid list-none gap-3 p-0">
+                  {monitorActions.map((action, index) => (
+                    <li key={`${action.title}-${index}`} className="rounded-2xl border border-white/[0.08] bg-black/20 p-4">
+                      <p className="m-0 text-sm font-black text-[#CAFF3C]">{index + 1}. {action.title}</p>
+                      <p className="m-0 mt-2 text-sm font-bold leading-6 text-[#F0F0EC]">{action.doThis}</p>
+                      <p className="m-0 mt-2 text-xs font-bold uppercase tracking-[0.08em] text-[#8E8E9A]">Où : {action.where}</p>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#D6D6DF]">Les actions seront générées dès que le rapport Monitor est terminé.</p>
+              )}
+            </section>
+          ) : null}
+
+          {complete && !failed && !isFreeReport ? (
             <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6">
               <div className="mb-4 flex items-end justify-between gap-4">
                 <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>

@@ -80,10 +80,10 @@ export default function Home() {
                 className="max-w-3xl text-[clamp(1.9rem,8vw,4.65rem)] leading-[0.98] tracking-[-0.045em] text-[#F0F0EC]"
                 style={{ fontFamily: "var(--font-display)" }}
               >
-                Your customers ask AI now — not just Google. Start with Gemini, then scale to ChatGPT when you want the Agent.
+                Your customers ask AI now — not just Google. Start with Gemini, then scale to ChatGPT gpt-4o-mini when you want the Agent.
               </h1>
               <p className="mt-2.5 max-w-2xl text-[0.95rem] leading-[1.32] text-[#B8B8C4] sm:mt-5 sm:text-xl sm:leading-[1.55]">
-                Citeable checks whether Gemini recommends you, names who it picks instead, and hands you the fixes. Free Gemini diagnostic - no card. llms.txt is a small bonus, not the whole strategy.
+                Citeable checks whether Gemini recommends you and names who it picks instead. Free = diagnostic only; Monitor adds actions; Agent runs ChatGPT gpt-4o-mini.
               </p>
             </div>
 
@@ -152,14 +152,14 @@ export default function Home() {
 
         <section className="mx-auto max-w-5xl px-5 py-6 sm:px-6">
           <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] px-5 py-5 text-center text-sm leading-6 text-[#A7A7B4] sm:text-base">
-            Engine ladder: Free and Monitor use Gemini. Agent uses ChatGPT/OpenAI today, with Claude, Grok, and Mistral ready to activate when keys are connected.
+            Engine ladder: Free and Monitor use Gemini. Agent uses ChatGPT (gpt-4o-mini) today. Claude, Grok, and Mistral are available only when their keys are activated.
           </div>
         </section>
 
         <section className="mx-auto max-w-5xl border-t border-white/[0.06] px-5 py-14 sm:px-6 sm:py-20">
           <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">How it works</p>
           <h2 className="max-w-2xl text-[clamp(2rem,5vw,3rem)] leading-[1.02] tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-            See who Gemini chooses. Upgrade when you want actions.
+            See who Gemini chooses. Upgrade to Monitor for actions.
           </h2>
 
           <div className="mt-8 grid gap-1 overflow-hidden rounded-2xl bg-white/[0.07] sm:grid-cols-3">
@@ -180,10 +180,10 @@ export default function Home() {
             <div>
               <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">Agent €49 treatment</p>
               <h2 className="max-w-2xl text-[clamp(2rem,5vw,3rem)] leading-[1.02] tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                Use ChatGPT to find what to fix next.
+                Use ChatGPT gpt-4o-mini to find what to fix next.
               </h2>
               <p className="mt-5 max-w-xl text-base leading-7 text-[#A7A7B4] sm:text-lg">
-                Agent runs deeper ChatGPT/OpenAI recommendation checks, then turns real gaps into 1–3 concrete fixes you can paste into your profiles, FAQ, and website.
+                Agent runs deeper ChatGPT (gpt-4o-mini) recommendation checks, then turns real gaps into 1–3 concrete fixes you can paste into your profiles, FAQ, and website.
               </p>
             </div>
 
@@ -214,7 +214,7 @@ export default function Home() {
                 <div className="rounded-2xl border border-white/[0.08] bg-[#111116] p-5">
                   <p className="m-0 text-lg font-bold tracking-[-0.02em] text-[#F0F0EC]">Done to 80%. You validate and paste.</p>
                   <p className="mt-2 text-sm leading-6 text-[#A7A7B4]">
-                    Each weekly batch starts with fresh ChatGPT/OpenAI recommendation checks. Claude, Grok, and Mistral are not promised until their keys are activated.
+                    Each weekly batch starts with fresh ChatGPT (gpt-4o-mini) recommendation checks. Claude, Grok, and Mistral are not active until their keys are activated.
                   </p>
                 </div>
               </div>
@@ -225,7 +225,7 @@ export default function Home() {
         <section className="mx-auto max-w-5xl border-t border-white/[0.06] px-5 py-14 sm:px-6 sm:py-20">
           <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">Pricing</p>
           <h2 className="max-w-2xl text-[clamp(2rem,5vw,3rem)] leading-[1.02] tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-            Start with Gemini. Add actions at €9. Add ChatGPT treatment at €49.
+            Start with Gemini. Add actions at €9. Add ChatGPT gpt-4o-mini treatment at €49.
           </h2>
 
           <div className="mt-8 grid gap-4 lg:grid-cols-3">
@@ -268,7 +268,7 @@ export default function Home() {
                 note: "For owners who want weekly copy-paste fixes, not another report.",
                 badge: "Treatment",
                 features: [
-                  "Fresh ChatGPT/OpenAI checks before each batch",
+                  "Fresh ChatGPT (gpt-4o-mini) checks before each batch",
                   "1–3 fixes drafted for you every week",
                   "FAQ, Google Business, website, and page copy",
                   "Third-party mention plan: directory, Reddit/Quora, listicle",
@@ -311,7 +311,7 @@ export default function Home() {
             <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-[#777786]">Plain English FAQ</p>
             <h2 className="mb-3 text-xl font-bold tracking-[-0.02em]">Do I need to configure anything?</h2>
             <p className="m-0 text-sm leading-6 text-[#A7A7B4]">
-              No. Enter your business name, website, and email. Free and Monitor use Gemini today; Agent uses ChatGPT/OpenAI today. Claude, Grok, and Mistral are activation-ready, not live promises yet.
+              No. Enter your business name, website, and email. Free and Monitor use Gemini today; Agent uses ChatGPT (gpt-4o-mini) today. Claude, Grok, and Mistral are à venir dès activation de la clé, not live promises yet.
             </p>
           </div>
         </section>

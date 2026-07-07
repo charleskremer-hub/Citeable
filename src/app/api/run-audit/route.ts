@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ audit_id: row.id, status: "failed", error: row.raw_results.error }, { status: 500 });
       }
 
-      if (auditTier === "agent_49eur" && row.raw_results?.auditTier !== "agent_49eur") {
+      if (auditTier !== "free" && row.raw_results?.auditTier !== auditTier) {
         await pool.query(
           `UPDATE audits
            SET raw_results = COALESCE(raw_results, '{}'::jsonb) || $2::jsonb

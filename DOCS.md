@@ -1,3 +1,25 @@
+## 2026-07-07 — CRITIQUE ChatGPT 49EUR, honest engine ladder, Monitor actions
+
+### Findings
+- `node_modules/next/dist/docs/` was absent before `npm install`; after install, the App Router docs were available and confirm this app uses App Router Server Components and Route Handlers.
+- Existing code already had a Gemini-style answer-engine structure, but the OpenAI default model was `gpt-4.1-mini` and `AuditTier` did not include `monitor_9eur`.
+- The free report still displayed detailed question rows; this task requires free to keep only score, Gemini choice, and cited competitors, with 3 actions moved to Monitor 9EUR.
+
+### Changes made
+- Updated `src/lib/audit-engine.ts` so Free and Monitor 9EUR use Gemini, while Agent 49EUR uses ChatGPT via OpenAI Chat Completions with model `gpt-4o-mini` and JSON-only `{ "recommended_brands": [...] }` parsing.
+- OpenAI error handling now returns honest structured failures: HTTP 429 retries exactly once after 5 seconds, then returns `{ "error": "rate_limit", "status": 429, "message": <raw API message> }`; all other OpenAI failures return `{ "error": "openai_error", "status": <HTTP>, "message": <raw API message> }`.
+- Added `monitor_9eur` to the audit tier parser/gating and made free audits stop creating monitored-brand subscriptions; non-free tiers can still persist monitoring.
+- Updated `src/app/page.tsx` hero, engine ladder, how-it-works, Agent section, pricing cards, and FAQ: Free/Monitor = Gemini; Agent = ChatGPT `gpt-4o-mini`; Claude/Grok/Mistral are only described as future activation once keys exist.
+- Updated `src/app/audit/[id]/page.tsx`: free reports show score, Gemini recommendation status, competitors, and a Monitor 9EUR CTA; Monitor reports show the 3 priority actions; Agent reports keep the 49EUR treatment proof.
+- Updated audit email copy so free emails do not include the 3 action details; paid tiers keep the action details.
+
+### Validation
+- `npm run lint` passed with two pre-existing warnings only: unused `isAuditedBrandName` and `categoryFromWebsite` in `src/lib/audit-engine.ts`.
+- `npm run build` passed on Next.js 16.2.10 / Turbopack.
+- Local smoke POST to `/api/run-audit` for Allbirds with `audit_tier=agent_49eur` completed successfully: audit `c4852658-de06-4027-b360-2156d3e8e108`, `realLlmCall=true`, OpenAI response model `gpt-4o-mini-2024-07-18`, score `81`, email sent `true`.
+- Smoke UI string is `ChatGPT te cite 9/12 fois`; Allbirds was recommended in 9 of 12 ChatGPT questions.
+- Smoke competitors cited by ChatGPT: `On`, `Veja`, `Hoka`.
+
 # 2026-07-07 — ChatGPT Agent €49 wiring and pricing ladder
 
 ### Findings

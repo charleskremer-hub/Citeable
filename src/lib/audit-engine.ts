@@ -10,10 +10,10 @@ const FREE_AUDIT_CACHE_HOURS = 24;
 const FREE_AUDIT_EMAIL_DAILY_LIMIT = 3;
 const FREE_AUDIT_DOMAIN_DAILY_LIMIT = 10;
 const DEFAULT_GEMINI_MODEL = "gemini-flash-latest";
-const DEFAULT_OPENAI_MODEL = "gpt-4.1-mini";
+const DEFAULT_OPENAI_MODEL = "gpt-4o-mini";
 const COMPETITOR_EXTRACTION_VERSION = "gemini_recommended_brands_v3";
 
-export type AuditTier = "free" | "agent_49eur";
+export type AuditTier = "free" | "monitor_9eur" | "agent_49eur";
 
 export type PromptResult = {
   prompt: string;
@@ -240,9 +240,15 @@ export function normalizeWebsiteUrl(input: string) {
 }
 
 export function auditTierFromPayload(input: Record<string, unknown>): AuditTier {
-  return input.audit_tier === "agent_49eur" || input.tier === "agent_49eur" || input.paid_tier === "agent_49eur" || input.agent_49eur === true
-    ? "agent_49eur"
-    : "free";
+  if (input.audit_tier === "agent_49eur" || input.tier === "agent_49eur" || input.paid_tier === "agent_49eur" || input.agent_49eur === true) {
+    return "agent_49eur";
+  }
+
+  if (input.audit_tier === "monitor_9eur" || input.tier === "monitor_9eur" || input.paid_tier === "monitor_9eur" || input.monitor_9eur === true) {
+    return "monitor_9eur";
+  }
+
+  return "free";
 }
 
 export async function findFreshFreeGeminiAudit(brandName: string, websiteUrl: string) {
@@ -447,7 +453,7 @@ type AnswerEngineProvider = {
   unavailableMessage: string;
   positiveLabel: string;
   negativeLabel: string;
-  ask: (question: string, context: AnswerEngineQuestionContext) => Promise<AnswerEngineAnswer>;
+  ask: (question: string, context: AnswerEngineQuestionContext) => Promise<AnswerEngineResponse>;
 };
 
 type AnswerEngineProviderKey = "gemini" | "openai" | "anthropic" | "xai" | "mistral";
@@ -470,7 +476,16 @@ type AnswerEngineAnswer = {
   answer: string;
   competitorBrands: string[];
   brandMentioned?: boolean;
+  model?: string;
 };
+
+type AnswerEngineError = {
+  error: "rate_limit" | "openai_error";
+  status: number;
+  message: string;
+};
+
+type AnswerEngineResponse = AnswerEngineAnswer | AnswerEngineError;
 
 type GeminiGenerateContentResponse = {
   candidates?: Array<{
@@ -490,6 +505,7 @@ type GeminiStructuredBrandResponse = {
 };
 
 type OpenAIChatCompletionResponse = {
+  model?: string;
   choices?: Array<{
     message?: {
       content?: string | null;
@@ -545,8 +561,12 @@ const ANSWER_ENGINE_PROVIDER_CONFIGS: Record<AnswerEngineProviderKey, AnswerEngi
   },
 };
 
+// To activate Claude/Grok/Mistral later, add an adapter matching createGeminiProvider/createOpenAIProvider,
+// wire it in providerForKey(), and flip that provider's enabled flag only after its API key is configured.
+
 const ANSWER_ENGINE_BY_TIER: Record<AuditTier, AnswerEngineProviderKey> = {
   free: "gemini",
+  monitor_9eur: "gemini",
   agent_49eur: "openai",
 };
 
@@ -561,7 +581,7 @@ function geminiApiKey() {
 }
 
 function currentOpenAIModel() {
-  return (process.env.OPENAI_MODEL ?? process.env.CHATGPT_MODEL ?? DEFAULT_OPENAI_MODEL).trim() || DEFAULT_OPENAI_MODEL;
+  return DEFAULT_OPENAI_MODEL;
 }
 
 function openAIApiKey() {
@@ -666,6 +686,14 @@ function parseStructuredBrandResponse(text: string): AnswerEngineAnswer {
   };
 }
 
+function answerEngineErrorBody(error: AnswerEngineError) {
+  return JSON.stringify(error);
+}
+
+function isAnswerEngineError(response: AnswerEngineResponse): response is AnswerEngineError {
+  return "error" in response;
+}
+
 function createGeminiProvider(): AnswerEngineProvider {
   const model = currentGeminiModel();
   const apiKey = geminiApiKey();
@@ -768,9 +796,9 @@ function createOpenAIProvider(): AnswerEngineProvider {
         "- Do not include generic words, categories, adjectives, personas, locations, headings, explanations, URLs, or prose tokens.",
         "- If you cannot name any recommended brands, return an empty recommended_brands array.",
       ].join("\n");
-      let lastError = OPENAI_UNAVAILABLE;
+      let lastRateLimitError: AnswerEngineError | null = null;
 
-      for (let attempt = 0; attempt < 3; attempt += 1) {
+      for (let attempt = 0; attempt < 2; attempt += 1) {
         try {
           const response = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
@@ -798,23 +826,38 @@ function createOpenAIProvider(): AnswerEngineProvider {
           });
           const responseText = await response.text();
           const parsed = safeJsonParse<OpenAIChatCompletionResponse>(responseText, {});
+          const rawMessage = parsed.error?.message || responseText || `HTTP ${response.status}`;
 
           if (response.ok) {
             const answer = openAIAnswerText(parsed);
-            if (answer) return parseStructuredBrandResponse(answer);
-            lastError = OPENAI_UNAVAILABLE;
+            if (answer) {
+              return {
+                ...parseStructuredBrandResponse(answer),
+                model: parsed.model || model,
+              };
+            }
+
+            return { error: "openai_error", status: response.status, message: rawMessage };
+          }
+
+          if (response.status === 429) {
+            lastRateLimitError = { error: "rate_limit", status: 429, message: rawMessage };
+
+            if (attempt === 0) {
+              await delay(5_000);
+              continue;
+            }
+
+            return lastRateLimitError;
           } else {
-            lastError = parsed.error?.message ? `${OPENAI_UNAVAILABLE} HTTP ${response.status}: ${parsed.error.message}` : `${OPENAI_UNAVAILABLE} HTTP ${response.status}`;
-            if (response.status !== 429 && response.status < 500) break;
+            return { error: "openai_error", status: response.status, message: rawMessage };
           }
         } catch (error) {
-          lastError = error instanceof Error ? `${OPENAI_UNAVAILABLE} ${error.message}` : OPENAI_UNAVAILABLE;
+          return { error: "openai_error", status: 0, message: error instanceof Error ? error.message : OPENAI_UNAVAILABLE };
         }
-
-        if (attempt < 2) await delay(500 * 2 ** attempt);
       }
 
-      throw new Error(lastError);
+      return lastRateLimitError ?? { error: "openai_error", status: 0, message: OPENAI_UNAVAILABLE };
     },
   };
 }
@@ -1857,6 +1900,26 @@ async function probeAnswerEngine(prompt: string, brandName: string, domain: stri
 
   try {
     const structuredAnswer = await provider.ask(prompt, { brandName, domain });
+
+    if (isAnswerEngineError(structuredAnswer)) {
+      const errorBody = answerEngineErrorBody(structuredAnswer);
+
+      return {
+        surface: provider.engine,
+        reachable: false,
+        unavailableReason: errorBody,
+        brandMentioned: false,
+        competitors: [],
+        rawAnswerSnippet: errorBody,
+        kind: "ai_engine",
+        status: "failed",
+        engine: provider.engine,
+        model: provider.model,
+        recommendationLabel: provider.negativeLabel,
+        realLlmCall: false,
+      };
+    }
+
     const brandMentioned = structuredAnswer.brandMentioned ?? mentionsBrandOrDomain(structuredAnswer.answer, brandName, domain);
     const competitors = filterStructuredCompetitorBrands(structuredAnswer.competitorBrands, brandName, domain, prompt);
 
@@ -1869,7 +1932,7 @@ async function probeAnswerEngine(prompt: string, brandName: string, domain: stri
       kind: "ai_engine",
       status: "checked",
       engine: provider.engine,
-      model: provider.model,
+      model: structuredAnswer.model ?? provider.model,
       recommendationLabel: brandMentioned ? provider.positiveLabel : provider.negativeLabel,
       realLlmCall: true,
     };
@@ -1977,6 +2040,10 @@ function formulaTextForTier(tier: AuditTier) {
     return "Your Agent €49 score comes from real ChatGPT/OpenAI recommendation calls for each buying question: does ChatGPT recommend your brand/domain, or does it cite competitors instead? If ChatGPT/OpenAI is unavailable, Citeable reports that honestly and never fabricates data.";
   }
 
+  if (tier === "monitor_9eur") {
+    return "Your Monitor €9 score comes from real Gemini recommendation calls for buyer questions: does Gemini recommend your brand/domain, or does it cite competitors instead? Monitor adds 3 priority actions to do this week and monthly re-checks.";
+  }
+
   return formulaText();
 }
 
@@ -2059,6 +2126,20 @@ export async function sendAuditEmail(email: string, brandName: string, report: A
 
   const answerEngineName = report.answerEngine?.engine ?? report.buyerIntentPrompts.flatMap((prompt) => prompt.surfaces).find((surface) => surface.kind === "ai_engine")?.engine;
   const isAnswerEngineReport = Boolean(answerEngineName);
+  const actionLines = report.auditTier === "free"
+    ? [
+        "",
+        "3 actions to do this week: included in Monitor €9.",
+      ]
+    : [
+        "",
+        "3 things to do this week:",
+        ...report.monitoring.actions.slice(0, 3).flatMap((action, index) => [
+          `${index + 1}. ${action.title}`,
+          `   What to do: ${action.doThis}`,
+          `   Where: ${action.where}`,
+        ]),
+      ];
 
   return sendNativeEmail(
     email,
@@ -2077,13 +2158,7 @@ export async function sendAuditEmail(email: string, brandName: string, report: A
           : `  Your brand/domain in snippets: ${prompt.brandMentioned ? "yes" : "no"}`,
         `  Other brands found: ${prompt.competitors.length ? prompt.competitors.join(", ") : "None found"}`,
       ]),
-      "",
-      "3 things to do this week:",
-      ...report.monitoring.actions.slice(0, 3).flatMap((action, index) => [
-        `${index + 1}. ${action.title}`,
-        `   What to do: ${action.doThis}`,
-        `   Where: ${action.where}`,
-      ]),
+      ...actionLines,
       "",
       isAnswerEngineReport
         ? `Note: this audit uses real ${answerEngineName} LLM calls for buyer questions; if ${answerEngineName} is unavailable, Citeable says so and does not invent data.`
@@ -2299,7 +2374,7 @@ export async function sendWeeklyMonitoringEmail(email: string, brandName: string
       "",
       `Score: ${report.score}/100 (${summary.deltaText})`,
       "",
-      "Competitor movement from native web_search checks:",
+      "Competitor movement from Gemini recommendation checks:",
       summary.movements,
       "",
       "First action to take:",
@@ -2480,12 +2555,13 @@ export async function completeQueuedAudit(auditId: string): Promise<QueuedAuditR
   );
 
   try {
+    const auditTier = row.raw_results?.auditTier ?? "free";
     const report = await runAudit({
       auditId: row.id,
       brandName: row.brand_name,
       websiteUrl: row.website_url,
       email: row.email,
-      auditTier: row.raw_results?.auditTier ?? "free",
+      auditTier,
     });
 
     await pool.query(
@@ -2519,7 +2595,10 @@ export async function completeQueuedAudit(auditId: string): Promise<QueuedAuditR
       ]
     );
 
-    await upsertMonitoredBrandForAudit(auditId);
+    if (auditTier !== "free") {
+      await upsertMonitoredBrandForAudit(auditId);
+    }
+
     const monitoring = await getAuditMonitoringSnapshot(auditId);
 
     await pool.query(
