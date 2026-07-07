@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
-import { runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
+import { auditTierFromPayload, runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
 
 export const maxDuration = 60;
 
@@ -13,7 +13,7 @@ type AuditRow = {
   engines_checked: unknown;
   competitors_found: unknown;
   fixes: unknown;
-  raw_results: { status?: string; error?: string; checks?: unknown; emailSent?: boolean; emailError?: string; category?: string; buyerIntentPrompts?: unknown } | null;
+  raw_results: { status?: string; error?: string; checks?: unknown; emailSent?: boolean; emailError?: string; category?: string; buyerIntentPrompts?: unknown; auditTier?: string; answerEngine?: unknown } | null;
 };
 
 function runAuditAfterResponse(auditId: string) {
@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
   try {
     await ensureAuditSchema();
     const payload = await req.json();
+    const auditTier = auditTierFromPayload(payload);
     const auditId = typeof payload.audit_id === "string" ? payload.audit_id : undefined;
 
     if (auditId) {
@@ -48,6 +49,8 @@ export async function POST(req: NextRequest) {
           competitors: row.competitors_found ?? [],
           buyer_intent_prompts: row.raw_results?.buyerIntentPrompts ?? [],
           category: row.raw_results?.category,
+          audit_tier: row.raw_results?.auditTier ?? "free",
+          answer_engine: row.raw_results?.answerEngine,
           fixes: row.fixes ?? [],
           checks: row.raw_results?.checks ?? [],
           email_sent: Boolean(row.raw_results?.emailSent),
@@ -57,6 +60,15 @@ export async function POST(req: NextRequest) {
 
       if (row.raw_results?.status === "failed") {
         return NextResponse.json({ audit_id: row.id, status: "failed", error: row.raw_results.error }, { status: 500 });
+      }
+
+      if (auditTier === "agent_49eur" && row.raw_results?.auditTier !== "agent_49eur") {
+        await pool.query(
+          `UPDATE audits
+           SET raw_results = COALESCE(raw_results, '{}'::jsonb) || $2::jsonb
+           WHERE id = $1`,
+          [auditId, { auditTier }]
+        );
       }
 
       if (row.raw_results?.status === "running") {
@@ -72,13 +84,13 @@ export async function POST(req: NextRequest) {
       `INSERT INTO audits (email, brand_name, website_url, raw_results)
        VALUES ($1, $2, $3, $4)
        RETURNING id`,
-      [email, brandName, websiteUrl, { status: "queued", queuedAt: new Date().toISOString() }]
+      [email, brandName, websiteUrl, { status: "queued", queuedAt: new Date().toISOString(), auditTier }]
     );
     const createdAuditId = audit.rows[0].id;
 
     runAuditAfterResponse(createdAuditId);
 
-    return NextResponse.json({ audit_id: createdAuditId, status: "running" }, { status: 202 });
+    return NextResponse.json({ audit_id: createdAuditId, status: "running", audit_tier: auditTier }, { status: 202 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Audit failed";
     return NextResponse.json({ error: message }, { status: 500 });

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
-import { runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
+import { auditTierFromPayload, runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
 
 export const maxDuration = 60;
 
@@ -9,6 +9,7 @@ export async function POST(req: NextRequest) {
     await ensureAuditSchema();
     const payload = await req.json();
     const { email, brandName, websiteUrl } = validateAuditInput(payload);
+    const auditTier = auditTierFromPayload(payload);
 
     await pool.query(
       `INSERT INTO email_captures (email, brand_name, website_url)
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
       `INSERT INTO audits (email, brand_name, website_url, raw_results)
        VALUES ($1, $2, $3, $4)
        RETURNING id`,
-      [email, brandName, websiteUrl, { status: "running", queuedAt: new Date().toISOString() }]
+      [email, brandName, websiteUrl, { status: "running", queuedAt: new Date().toISOString(), auditTier }]
     );
 
     const auditId = audit.rows[0].id;
@@ -45,6 +46,7 @@ export async function POST(req: NextRequest) {
         website_url: websiteUrl,
         redirect_url: `/audit/${auditId}`,
         status: "queued",
+        audit_tier: auditTier,
       },
       { status: 201 }
     );

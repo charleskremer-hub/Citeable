@@ -1,3 +1,25 @@
+## 2026-07-07 — Agent €49 Gemini premium audit adapter
+
+### Findings
+- Next.js package note: `node_modules/next/dist/docs/` is absent even after `npm install`; validation used the existing App Router route-handler patterns plus `npm run build`.
+- Production site env already has `GEMINI_API_KEY` and `GEMINI_MODEL` configured via `nanocorp site env list`; secret values were not printed.
+- Worker-local Gemini probe against `generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent` reached the real API but returned HTTP `429` quota exceeded for the worker-owned key, so local Gemini retries were stopped per stop-condition policy.
+
+### Changes made
+- Added a paid audit tier flag parser in `src/lib/audit-engine.ts`: free audits remain on native NanoCorp `web_search`; `audit_tier: "agent_49eur"` routes buyer-intent questions to the new answer-engine adapter.
+- Added a Gemini provider adapter using `gemini-2.0-flash` by default, with `GEMINI_MODEL` override guarded against `gemini-1.5-*`; it calls the official `generativelanguage` `v1beta` `generateContent` endpoint and supports future providers by adding another provider config.
+- For every paid buyer question, the prompt sent is `Un client demande: {question}. Donne ta recommandation honnete, cite des marques/produits precis.`
+- Gemini answers are parsed into per-question `Gemini te recommande` / `Gemini ne te cite pas`, named competitors, `model`, and `realLlmCall`; no fallback data is fabricated.
+- Premium reports and emails now label Gemini honestly, show per-question cited/non-cited status, and count competitors cited by Gemini.
+- If Gemini is unavailable for a paid audit, the audit fails honestly with `Gemini indisponible, réessaie.` rather than completing a fake score.
+- API routes now persist and return `audit_tier` and `answer_engine` metadata from `raw_results`.
+
+### Validation
+- `npm install` completed successfully.
+- `npm run build` passed.
+- `npm run lint` passed.
+- Local paid smoke attempt: audit ID `62fbe656-18ef-4d0e-b8f7-cbb5556bc012`, tier `agent_49eur`, intended engine `Gemini`, model `gemini-2.0-flash`, status `failed`, error `Gemini indisponible, réessaie.` because the worker-local Gemini key returned HTTP `429` quota exceeded. This confirms the attempted path was a real Gemini LLM API call, not `web_search`, but quota prevented a completed local premium report.
+
 ## 2026-07-05 — Ads-off guardrail enforcement check
 
 ### Findings
