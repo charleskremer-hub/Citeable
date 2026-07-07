@@ -682,3 +682,8 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 ### Deployment note
 - Attempted to mint a durable NanoCorp token with `nanocorp token create --name citeable-prod-native-tools --json`, but the backend returned `403: Cannot access this conglomerate`.
 - Updated Vercel `NANOCORP_TOKEN` with the service token available in the worker environment so the native-tool smoke test can run; a platform/CEO follow-up may be needed to provide a non-expiring production service token if this worker token expires.
+
+### Follow-up in same task: duplicate email guard
+- Live smoke after commit `8c788aa` completed the Allbirds audit and `emailSent=true`, but outbound logs showed two audit emails for the same submitted audit.
+- Added an idempotent `emailSendStartedAt` claim in `sendAuditEmail()` so only one process can call native `send_email` for a given audit id.
+- Marked capture-created audits as `running` immediately and updated `/api/run-audit` to avoid scheduling a duplicate worker when a capture worker is already running.

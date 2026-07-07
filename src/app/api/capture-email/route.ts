@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       `INSERT INTO audits (email, brand_name, website_url, raw_results)
        VALUES ($1, $2, $3, $4)
        RETURNING id`,
-      [email, brandName, websiteUrl, { status: "queued", queuedAt: new Date().toISOString() }]
+      [email, brandName, websiteUrl, { status: "running", queuedAt: new Date().toISOString() }]
     );
 
     const auditId = audit.rows[0].id;

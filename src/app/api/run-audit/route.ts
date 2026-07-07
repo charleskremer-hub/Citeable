@@ -59,6 +59,10 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ audit_id: row.id, status: "failed", error: row.raw_results.error }, { status: 500 });
       }
 
+      if (row.raw_results?.status === "running") {
+        return NextResponse.json({ audit_id: auditId, status: "running" }, { status: 202 });
+      }
+
       runAuditAfterResponse(auditId);
       return NextResponse.json({ audit_id: auditId, status: "running" }, { status: 202 });
     }

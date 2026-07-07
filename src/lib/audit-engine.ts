@@ -1397,6 +1397,20 @@ async function sendNativeEmail(to: string, subject: string, body: string) {
 }
 
 export async function sendAuditEmail(email: string, brandName: string, report: AuditReport) {
+  const claim = await pool.query<{ id: string }>(
+    `UPDATE audits
+     SET raw_results = COALESCE(raw_results, '{}'::jsonb) || $2::jsonb
+     WHERE id = $1
+       AND COALESCE((raw_results->>'emailSent')::boolean, false) = false
+       AND raw_results->>'emailSendStartedAt' IS NULL
+     RETURNING id`,
+    [report.audit_id, { emailSendStartedAt: new Date().toISOString() }]
+  );
+
+  if (claim.rowCount === 0) {
+    return { sent: true, error: undefined };
+  }
+
   return sendNativeEmail(
     email,
     `Your Citeable visibility audit for ${brandName}`,
