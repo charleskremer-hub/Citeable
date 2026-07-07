@@ -439,7 +439,18 @@ type AnswerEngineProvider = {
   engine: string;
   model: string;
   configured: boolean;
-  ask: (question: string) => Promise<string>;
+  ask: (question: string, context: AnswerEngineQuestionContext) => Promise<AnswerEngineAnswer>;
+};
+
+type AnswerEngineQuestionContext = {
+  brandName: string;
+  domain: string;
+};
+
+type AnswerEngineAnswer = {
+  answer: string;
+  competitorBrands: string[];
+  brandMentioned?: boolean;
 };
 
 type GeminiGenerateContentResponse = {
@@ -453,6 +464,13 @@ type GeminiGenerateContentResponse = {
     message?: string;
     status?: string;
   };
+};
+
+type GeminiStructuredBrandResponse = {
+  answer?: unknown;
+  mentioned_brand?: unknown;
+  brandMentioned?: unknown;
+  brands?: unknown;
 };
 
 function currentGeminiModel() {
@@ -478,6 +496,52 @@ function geminiAnswerText(body: GeminiGenerateContentResponse) {
     .trim() ?? "";
 }
 
+function jsonObjectFromText(text: string) {
+  const trimmed = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+  const start = trimmed.indexOf("{");
+  const end = trimmed.lastIndexOf("}");
+
+  if (start === -1 || end === -1 || end <= start) return trimmed;
+
+  return trimmed.slice(start, end + 1);
+}
+
+function stringFromUnknown(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function brandNameFromUnknown(value: unknown) {
+  if (typeof value === "string") return value;
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    return stringFromUnknown(record.name) || stringFromUnknown(record.brand);
+  }
+
+  return "";
+}
+
+function parseGeminiStructuredBrandResponse(text: string): AnswerEngineAnswer {
+  const parsed = safeJsonParse<GeminiStructuredBrandResponse | null>(jsonObjectFromText(text), null);
+
+  if (!parsed || typeof parsed !== "object") {
+    return { answer: text, competitorBrands: [] };
+  }
+
+  const brands = Array.isArray(parsed.brands) ? parsed.brands.map(brandNameFromUnknown) : [];
+  const answer = stringFromUnknown(parsed.answer) || text;
+  const mentionedBrand = typeof parsed.mentioned_brand === "boolean"
+    ? parsed.mentioned_brand
+    : typeof parsed.brandMentioned === "boolean"
+      ? parsed.brandMentioned
+      : undefined;
+
+  return {
+    answer,
+    competitorBrands: brands,
+    brandMentioned: mentionedBrand,
+  };
+}
+
 function createGeminiProvider(): AnswerEngineProvider {
   const model = currentGeminiModel();
   const apiKey = geminiApiKey();
@@ -486,10 +550,22 @@ function createGeminiProvider(): AnswerEngineProvider {
     engine: "Gemini",
     model,
     configured: Boolean(apiKey),
-    async ask(question: string) {
+    async ask(question: string, context: AnswerEngineQuestionContext) {
       if (!apiKey) throw new Error(GEMINI_UNAVAILABLE);
 
-      const prompt = `Un client demande: ${question}. Donne ta recommandation honnete, cite des marques/produits precis.`;
+      const prompt = [
+        "You are answering a real buyer-intent question for a visibility audit.",
+        `Buyer question: ${question}`,
+        `Audited brand: ${context.brandName}`,
+        `Audited domain: ${context.domain}`,
+        "Return ONLY valid JSON with this exact shape:",
+        '{"answer":"short honest recommendation in the buyer question language","mentioned_brand":false,"brands":["On","Hoka","Veja"]}',
+        "Rules for brands:",
+        `- brands must contain only real competing brand/company/product names you cite or recommend for this question, excluding ${context.brandName} and ${context.domain}.`,
+        "- Do not include generic words, categories, adjectives, personas, locations, headings, or prose tokens.",
+        "- If you cite no competitor brands, return an empty brands array.",
+        `- mentioned_brand is true only if your answer explicitly recommends or names ${context.brandName} or ${context.domain}.`,
+      ].join("\n");
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
       let lastError = GEMINI_UNAVAILABLE;
 
@@ -508,6 +584,7 @@ function createGeminiProvider(): AnswerEngineProvider {
               generationConfig: {
                 temperature: 0.2,
                 maxOutputTokens: 700,
+                responseMimeType: "application/json",
               },
             }),
             signal: AbortSignal.timeout(ANSWER_TIMEOUT_MS),
@@ -517,7 +594,7 @@ function createGeminiProvider(): AnswerEngineProvider {
 
           if (response.ok) {
             const answer = geminiAnswerText(parsed);
-            if (answer) return answer;
+            if (answer) return parseGeminiStructuredBrandResponse(answer);
             lastError = GEMINI_UNAVAILABLE;
           } else {
             lastError = parsed.error?.message ? `${GEMINI_UNAVAILABLE} ${parsed.error.message}` : GEMINI_UNAVAILABLE;
@@ -1141,7 +1218,9 @@ function generateBuyerIntentPrompts(brandName: string, websiteUrl: string, categ
 const COMPANY_SUFFIXES = /\b(?:Inc|LLC|Ltd|Limited|GmbH|SAS|SA|AG|BV|Corp|Corporation|Company|Co|Labs|Technologies|Technology|Systems|Software|AI|API)\b\.?/g;
 const NON_COMPETITOR_NAMES = new Set([
   "AI", "API", "B2B", "B2C", "ChatGPT", "Bing", "Bing Trade", "LinkedIn", "Wikipedia", "YouTube", "GitHub", "EU", "US", "UK", "GDPR", "SEO", "JSON", "HTTP", "HTML", "Python", "Java", "C++", "JavaScript", "TypeScript", "Digital Product Passport", "Agentic Commerce", "Agent Wallet", "Brave", "Brave Search", "Yahoo", "Yahoo Search", "Yahoo Scout", "Search", "Search Results", "All", "Images", "Videos", "Maps", "News", "Shopping", "Flights", "Travel", "Tools", "Settings", "Home", "Mail", "Finance", "Sports", "Weather", "Help", "Sign In", "Ask", "Support", "Guide", "Overview", "Field Notes", "Market Leader", "Checkout", "Google's UCP", "Stripe MPP", "AP2", "Visa TAP", "Operator", "Gemini Shopping", "The", "This", "It", "How", "Where", "Whether", "Explore", "Creating", "Loading", "Past", "More", "Anytime", "More Anytime Past", "Industry Leaders",
+  "Pour", "Voici", "Who", "Ma", "Recommendation", "Brand", "Lifestyle", "Street", "Travelers", "Here", "For", "Customer", "Client", "Question", "Answer", "Brands", "Products", "Examples", "Options", "Recommendation Honnete", "Honest Recommendation",
 ]);
+const NON_COMPETITOR_NAME_KEYS = new Set(Array.from(NON_COMPETITOR_NAMES, (name) => name.toLowerCase()));
 
 const KNOWN_COMPANY_NAMES = [
   "Nike", "New Balance", "Veja", "Hoka", "On", "Brooks", "Adidas", "Reebok", "Saucony", "Asics", "Puma", "Vans", "Converse", "Rothy's", "Vivobarefoot", "Cariuma", "Atoms", "Greats", "Toms", "Ecco", "Merrell", "Salomon", "Altra", "Keen", "Merinos", "Xero Shoes", "Nisolo",
@@ -1168,7 +1247,7 @@ function looksLikeCompetitorName(name: string, brandName: string, domain: string
 
   if (normalized.length < 2 || normalized.length > 42) return false;
   if (lower === brandLower || domainVariants(domain).some((variant) => lower === variant || lower.includes(variant))) return false;
-  if (NON_COMPETITOR_NAMES.has(normalized)) return false;
+  if (NON_COMPETITOR_NAME_KEYS.has(lower)) return false;
   if (/^(the|this|it|how|where|whether|explore|creating|loading|past|more|anytime)\b/i.test(normalized)) return false;
   if (/\b(?:all images|all videos|local shopping|past day|past week|past month|open links|skip to content)\b/i.test(normalized)) return false;
   if (/^(best|top|which|compare|alternatives?|tools?|vendors?|platforms?|solutions?|pricing|login|home|privacy|terms)$/i.test(normalized)) return false;
@@ -1213,17 +1292,9 @@ function extractCompetitorsFromText(text: string, brandName: string, domain: str
   );
 }
 
-function extractNamedCompetitorsFromLlmAnswer(text: string, brandName: string, domain: string, prompt = "") {
-  const withoutBullets = text
-    .split(/\n+/)
-    .map((line) => line.replace(/^\s*(?:[-*•]|\d+[.)])\s+/, ""))
-    .join(". ");
-
+function filterStructuredCompetitorBrands(brands: string[], brandName: string, domain: string, prompt = "") {
   return uniqueInOrder(
-    [
-      ...extractCompetitorsFromText(withoutBullets, brandName, domain, prompt),
-      ...Array.from(withoutBullets.matchAll(/\b[A-Z][A-Za-z0-9&.+'-]*(?:\s+[A-Z][A-Za-z0-9&.+'-]*){0,3}\b/g)).map((match) => match[0]),
-    ]
+    brands
       .map(normalizeCompetitorName)
       .filter((candidate) => looksLikeCompetitorName(candidate, brandName, domain))
       .filter((candidate) => !prompt.toLowerCase().includes(candidate.toLowerCase())),
@@ -1514,16 +1585,16 @@ async function probeAnswerEngine(prompt: string, brandName: string, domain: stri
   }
 
   try {
-    const answer = await provider.ask(prompt);
-    const brandMentioned = mentionsBrandOrDomain(answer, brandName, domain);
-    const competitors = extractNamedCompetitorsFromLlmAnswer(answer, brandName, domain, prompt);
+    const structuredAnswer = await provider.ask(prompt, { brandName, domain });
+    const brandMentioned = structuredAnswer.brandMentioned ?? mentionsBrandOrDomain(structuredAnswer.answer, brandName, domain);
+    const competitors = filterStructuredCompetitorBrands(structuredAnswer.competitorBrands, brandName, domain, prompt);
 
     return {
       surface: provider.engine,
       reachable: true,
       brandMentioned,
       competitors,
-      rawAnswerSnippet: answer.slice(0, 900),
+      rawAnswerSnippet: structuredAnswer.answer.slice(0, 900),
       kind: "ai_engine",
       status: "checked",
       engine: provider.engine,
