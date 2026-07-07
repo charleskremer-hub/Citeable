@@ -809,3 +809,19 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - Expanded the competitor stoplist with the observed junk terms and made stoplist matching case-insensitive.
 - Refreshed the production `NANOCORP_TOKEN` Vercel env var from the worker token via `nanocorp site env set` after the expired-token smoke failure.
 - Local validation passed: `npm run lint` and `npm run build`.
+
+## 2026-07-07 — Final Gemini JSON competitor smoke
+
+### Changes made after initial smoke
+- Added `competitorExtractionVersion` cache gating so old free Gemini audits produced by the prose/capitalized-word extractor are not reused by the public form.
+- Hardened Gemini JSON recovery to read the first balanced JSON object if Gemini appends stray braces or text, without falling back to capitalized prose-word extraction.
+- Bumped the extraction version to `gemini_json_v2` after parser hardening so the final Allbirds public-form smoke forced a fresh audit instead of returning the `gemini_json_v1` cache.
+
+### Final public-form verification
+- Final pushed commit: `a45e3b4`.
+- Public form submission used brand `Allbirds`, website `https://www.allbirds.com`, and email `charles+allbirds-v2-20260707125825@getciteable.nanocorp.app`.
+- Fresh audit ID: `f3f80e63-ce8d-4e3e-a729-ef36b55dae91`.
+- DB result: `score = 100`, `raw_results.status = completed`, `raw_results.emailSent = true`, `raw_results.emailError` empty, `raw_results.answerEngine.realLlmCall = true`, `raw_results.competitorExtractionVersion = gemini_json_v2`.
+- Clean competitors stored in `competitors_found`: `Veja`, `Cariuma`, `Hylo Athletics`, `On`.
+- Per-question Gemini competitors: sustainable sneakers => `Veja`, `Cariuma`; eco-friendly running shoes => `Veja`, `Hylo Athletics`, `On`; sustainable shoe brand => `Veja`, `Cariuma`.
+- Outbound email verification: NanoCorp email ID `6eb4eb97-5712-418f-aae3-b4ad26d726d1`, subject `Your Citeable visibility audit for Allbirds`, sent at `2026-07-07T12:58:41.243700`.
