@@ -976,3 +976,16 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 
 ### Pending live proof
 - Configure production with the non-expiring runtime fallback credential, push the commit, run three live public audits against `https://getciteable.nanocorp.app`, verify `email_sent=true`, confirm outbound email records, and capture runtime logs showing the 401/403 refresh + one retry path.
+
+### Live proof after deploy
+- Code commit pushed to `main`: `3d633f0`.
+- Production env was configured with `AGENT_SECRET` as a non-expiring runtime fallback and an intentionally invalid `NANOCORP_TOKEN` value (`expired-force-retry-20260707`) so live requests exercised the HTTP 401 refresh/retry path.
+- One post-push browser verification was performed after the required wait; `agent-browser` opened `https://getciteable.nanocorp.app/` and the public audit form was visible.
+- Live public audit 1: Cotopaxi, `https://www.cotopaxi.com/`, recipient `durable-email-1-20260707180210@getciteable.nanocorp.app`, audit `0a65d68f-5608-4dba-9811-cd249aed7f67`, score `93`, status `completed`, `email_sent=true`, `email_error=null`, Gemini `realLlmCall=true`.
+- Live public audit 2: Bombas, `https://bombas.com/`, recipient `durable-email-2-20260707180210@nanocorp.app`, audit `61eba6bd-6cd7-47ab-bb5e-e56f0aceae0d`, score `13`, status `completed`, `email_sent=true`, `email_error=null`, Gemini `realLlmCall=true`.
+- Live public audit 3: Away Travel, `https://www.awaytravel.com/`, recipient `durable-email-3-20260707180210@example.org`, audit `b12127e8-0ddb-44c6-b7ac-b79040053b37`, score `68`, status `completed`, `email_sent=true`, `email_error=null`, Gemini `realLlmCall=true`.
+- Outbound email confirmation 1: NanoCorp email `ef274c0c-c89b-4867-864b-4b379f52f2d1`, to `durable-email-1-20260707180210@getciteable.nanocorp.app`, subject `Your Citeable visibility audit for Cotopaxi`, sent at `2026-07-07T18:02:39.789039`.
+- Outbound email confirmation 2: NanoCorp email `efeb96c1-e5a3-4dfc-9c20-ac4c226139d2`, to `durable-email-2-20260707180210@nanocorp.app`, subject `Your Citeable visibility audit for Bombas`, sent at `2026-07-07T18:02:39.726611`.
+- Outbound email confirmation 3: NanoCorp email `c5a7f9ed-a97f-4b17-8edb-de927211f7ae`, to `durable-email-3-20260707180210@example.org`, subject `Your Citeable visibility audit for Away Travel`, sent at `2026-07-07T18:02:38.667330`.
+- Runtime log proof for each audit included `NanoCorp send_email auth failed; refreshing runtime token once { status: 401, message: 'Invalid credentials' }` followed by `NanoCorp send_email retry succeeded after runtime token refresh { status: 200 }` on the same `/api/capture-email` request.
+- No final email failure/401 was stored for the three proof audits: all public `/api/audit-status` responses returned `email_sent=true` and `email_error=null`.
