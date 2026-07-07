@@ -502,11 +502,41 @@ function geminiAnswerText(body: GeminiGenerateContentResponse) {
 function jsonObjectFromText(text: string) {
   const trimmed = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
   const start = trimmed.indexOf("{");
+
+  if (start === -1) return trimmed;
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let index = start; index < trimmed.length; index += 1) {
+    const char = trimmed[index];
+
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+
+    if (char === "\\") {
+      escaped = inString;
+      continue;
+    }
+
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+
+    if (inString) continue;
+
+    if (char === "{") depth += 1;
+    if (char === "}") depth -= 1;
+
+    if (depth === 0) return trimmed.slice(start, index + 1);
+  }
+
   const end = trimmed.lastIndexOf("}");
-
-  if (start === -1 || end === -1 || end <= start) return trimmed;
-
-  return trimmed.slice(start, end + 1);
+  return end > start ? trimmed.slice(start, end + 1) : trimmed;
 }
 
 function stringFromUnknown(value: unknown) {
