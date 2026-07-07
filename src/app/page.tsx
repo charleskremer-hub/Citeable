@@ -173,6 +173,53 @@ export default function Home() {
         </section>
 
         <section className="mx-auto max-w-5xl border-t border-white/[0.06] px-5 py-14 sm:px-6 sm:py-20">
+          <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+            <div>
+              <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">Agent €49 treatment</p>
+              <h2 className="max-w-2xl text-[clamp(2rem,5vw,3rem)] leading-[1.02] tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
+                Not just a diagnosis. The actual fixes, every week.
+              </h2>
+              <p className="mt-5 max-w-xl text-base leading-7 text-[#A7A7B4] sm:text-lg">
+                A review tells you what is missing. Agent turns that into 1–3 concrete fixes you can paste into your business profiles, FAQ, and website.
+              </p>
+            </div>
+
+            <div className="relative overflow-hidden rounded-[1.6rem] border border-[#CAFF3C]/25 bg-[#CAFF3C]/[0.055] p-5 shadow-2xl shadow-[#CAFF3C]/5 sm:p-7">
+              <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-[#CAFF3C]/10 blur-3xl" />
+              <div className="relative flex flex-col gap-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <span className="rounded-full bg-[#CAFF3C] px-3 py-1 text-xs font-black uppercase tracking-[0.08em] text-[#09090B]">
+                    Reserved for Agent subscribers
+                  </span>
+                  <span className="text-sm font-bold text-[#CAFF3C]">€49/month</span>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {[
+                    "FAQ paragraph to add this week",
+                    "Google Business Profile text",
+                    "Website answer ready to publish",
+                    "New page brief and first draft",
+                  ].map((fix) => (
+                    <div key={fix} className="rounded-2xl border border-white/[0.08] bg-[#09090B]/70 p-4">
+                      <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-full bg-[#CAFF3C]/15 text-sm font-black text-[#CAFF3C]">✓</div>
+                      <p className="m-0 text-sm font-bold leading-6 text-[#F0F0EC]">{fix}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="rounded-2xl border border-white/[0.08] bg-[#111116] p-5">
+                  <p className="m-0 text-lg font-bold tracking-[-0.02em] text-[#F0F0EC]">Done to 80%. You validate and paste.</p>
+                  <p className="mt-2 text-sm leading-6 text-[#A7A7B4]">
+                    Each weekly batch is drafted from checks on paid answer engines like ChatGPT, Claude, and Grok, then written in plain language so the owner only reviews the facts and publishes.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-5xl border-t border-white/[0.06] px-5 py-14 sm:px-6 sm:py-20">
           <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">Pricing</p>
           <h2 className="max-w-2xl text-[clamp(2rem,5vw,3rem)] leading-[1.02] tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
             Start free. Watch one number. Get the work done for you when you are ready.
@@ -212,18 +259,18 @@ export default function Home() {
                 highlight: true,
               },
               {
-                name: "Done-for-you",
+                name: "Agent",
                 price: "€49",
                 suffix: "/month",
-                note: "For owners who want copy-paste assets, not homework.",
-                badge: "Done for you",
+                note: "For owners who want weekly copy-paste fixes, not another report.",
+                badge: "Treatment",
                 features: [
-                  "Checks more recommendation sources",
-                  "Shows exactly where buyers see competitors",
-                  "FAQ page copy and website-ready snippets",
+                  "1–3 fixes drafted for you every week",
+                  "FAQ, Google Business, website, and page copy",
+                  "Paid-engine checks before each batch",
                   "Includes Monitor re-checks",
                 ],
-                cta: "Start Done-for-you",
+                cta: "Start Agent",
                 href: DONE_FOR_YOU_CHECKOUT_URL,
                 plan: "geo_agent",
                 highlight: false,

@@ -642,3 +642,23 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - First production Allbirds audit after the initial deploy correctly detected `DTC footwear brand` and generated 12 footwear questions, but Google returned HTTP 404 for `gemini-1.5-flash`; the follow-up patch adds a 404-only fallback to the available `gemini-flash-latest` model.
 - Follow-up production Allbirds audit `e5e1b35e-91d7-450a-bbe6-b5f9829f9020` reached Gemini for 7 questions and found real competitors `On` and `Hoka`, then Google returned quota HTTP 429; per worker stop rules no further Gemini calls were made in this run.
 - To reduce repeat 429s, buyer-question checks now run sequentially, production `GEMINI_MODEL` is set to `gemini-flash-latest` because the configured key no longer serves `gemini-1.5-flash`, and the first footwear prompts include explicit Allbirds review/worth-it questions.
+
+## 2026-07-07 — Agent €49 weekly fixes treatment module
+
+### Findings
+- Root `AGENTS.md` requires checking local Next.js docs before App Router changes; this fresh clone had no `node_modules` initially, so `npm install` was run once.
+- Relevant Next.js 16.2.10 docs read after install: `node_modules/next/dist/docs/01-app/01-getting-started/03-layouts-and-pages.md`, `05-server-and-client-components.md`, and `11-css.md`.
+- The homepage already had the Free / Monitor / €49 tier structure and the live €49 checkout URL wired through `DONE_FOR_YOU_CHECKOUT_URL`.
+- Recent positioning notes say customer-facing copy should stay plain-language and avoid technical acronyms; this update keeps the offer framed as weekly fixes/treatment rather than dashboard jargon.
+
+### Changes made
+- Added a new homepage section in `src/app/page.tsx` titled `Agent €49 treatment` that contrasts diagnosis-only reviews with weekly copy-paste fixes.
+- The new module promises 1–3 concrete weekly fixes: FAQ paragraph, Google Business Profile text, website answer, or new-page brief/draft.
+- The module states the work is `Done to 80%` so the owner validates facts and pastes, and reserves the capability for Agent subscribers at `€49/month`.
+- Updated the €49 pricing card from `Done-for-you` to `Agent`, with features focused on weekly copy-paste fixes and paid-engine checks before each batch.
+- Checkout URLs and payment plumbing were left unchanged.
+
+### Validation
+- `npm run lint` passed.
+- `npm run build` passed on Next.js 16.2.10 / Turbopack.
+- Pending at time of note: commit, push, and perform the single required live browser verification.
