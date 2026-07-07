@@ -13,9 +13,14 @@
 - Updated Vercel env var `NANOCORP_TOKEN` with the current worker `NANOCORP_TOKEN` via `nanocorp site env set` (`updated: 1`). The secret value was not printed or committed.
 - This remains a temporary worker-token replacement. Charles/platform admin should provision a durable company/server NanoCorp token before the current worker token expires again.
 
-### Validation status
+### Validation results
 - Local internal-tool auth check using the replacement token returned HTTP `200` before redeploy.
-- Production smoke via the public form is pending until Vercel redeploys with the refreshed env var.
+- `npm run build` passed locally with Next.js `16.2.10`.
+- Pushed commit `dc06f97` to `main` to trigger a Vercel rebuild with the refreshed `NANOCORP_TOKEN`.
+- Production public-form smoke used real brand `Osprey Packs`, website `https://www.osprey.com`, and recipient `charles@getciteable.nanocorp.app`.
+- Smoke audit ID `a537f755-b4ff-42a4-ab05-301b10e03802` completed with score `15`, `raw_results.status = completed`, `raw_results.emailSent = true`, and no `emailError`.
+- Public `/api/audit-status` returned `email_sent: true`, answer engine `Gemini`, model `gemini-flash-latest`, and `realLlmCall: true` for audit `a537f755-b4ff-42a4-ab05-301b10e03802`.
+- Outbound email verification found NanoCorp email ID `1c480a6d-349a-459d-b3cd-e9b91640b261` sent to `charles@getciteable.nanocorp.app` with subject `Your Citeable visibility audit for Osprey Packs` at `2026-07-07T13:11:48.819686`.
 
 ## 2026-07-07 — Gemini current-model migration
 
