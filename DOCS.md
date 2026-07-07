@@ -14,6 +14,11 @@
 ### Validation results
 - Direct Gemini API health check against `generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent` returned HTTP `200` with non-empty text (`text_length = 6`) before deploy.
 - `npm run build` passes with Next.js `16.2.10`.
+- Pushed commit `34c3bcc` to `main`; production homepage loaded after the one allowed 90-second deploy wait. Screenshot: `/tmp/citeable-gemini-deploy.png`.
+- Free smoke audit for real brand `Topo Designs` / `https://topodesigns.com` was created through the production-built Next server against the shared database with no cache hit: audit ID `3cfb4242-0fe7-4f28-83e0-33c47c8b50cc`.
+- Smoke audit completed with score `19`, answer engine `Gemini`, model `gemini-flash-latest`, `realLlmCall = true`, and report labels `Gemini ne te cite pas` rather than `Gemini indisponible`.
+- Production report route `/audit/3cfb4242-0fe7-4f28-83e0-33c47c8b50cc` displayed `Gemini · gemini-flash-latest` plus per-question `Gemini ne te cite pas` labels. Screenshot: `/tmp/citeable-gemini-smoke-report.png`.
+- A raw curl POST to the production `/api/run-audit` endpoint returned HTTP `403` before the local production-server smoke; that path was not retried.
 
 ## 2026-07-07 — Free audit Gemini coherence fix
 
