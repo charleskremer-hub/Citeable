@@ -1,3 +1,22 @@
+## 2026-07-07 — NANOCORP_TOKEN email 401 refresh
+
+### Findings
+- Email delivery for completed audits is sent in `src/lib/audit-engine.ts` via `sendAuditEmail()` -> `sendNativeEmail()` -> `executeNanoCorpTool("send_email", ...)`.
+- The production email path reads `process.env.NANOCORP_TOKEN` and sends it as `Authorization: Bearer ${process.env.NANOCORP_TOKEN}` to `${NANOCORP_BACKEND_URL}/internal/tools/send_email/execute`.
+- `NANOCORP_BACKEND_URL` falls back to `https://phospho-nanocorp-prod--nanocorp-api-fastapi-app.modal.run` when unset.
+- Vercel had `NANOCORP_TOKEN` configured for production/preview, but the hidden value was stale/expired per the latest smoke failure.
+- Checked NanoCorp docs index at `https://docs.nanocorp.so/llms.txt`; available auth-related guidance points to CLI/token and secrets docs, not a site-runtime token auto-rotation endpoint.
+- `nanocorp token list` is not available to this worker for durable token inspection/rotation: `backend returned status 403: {"detail":"Cannot access this conglomerate"}`.
+- The current worker environment `NANOCORP_TOKEN` authenticated successfully against the same internal NanoCorp tools backend via `web_fetch` with HTTP `200`.
+
+### Changes made
+- Updated Vercel env var `NANOCORP_TOKEN` with the current worker `NANOCORP_TOKEN` via `nanocorp site env set` (`updated: 1`). The secret value was not printed or committed.
+- This remains a temporary worker-token replacement. Charles/platform admin should provision a durable company/server NanoCorp token before the current worker token expires again.
+
+### Validation status
+- Local internal-tool auth check using the replacement token returned HTTP `200` before redeploy.
+- Production smoke via the public form is pending until Vercel redeploys with the refreshed env var.
+
 ## 2026-07-07 — Gemini current-model migration
 
 ### Codebase findings
