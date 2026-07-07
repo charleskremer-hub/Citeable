@@ -18,6 +18,7 @@
 - `npm run build` passed with Next.js 16.2.10 / Turbopack.
 - First production smoke created Cariuma audit `8133c85f-3b35-47b8-848e-9dc33a020217`, but the previous 12-question free flow hit Vercel's 60s runtime timeout before any prompts persisted; the free teaser was reduced to 3 Gemini questions and stale-run rescheduling was added before rerunning the smoke.
 - Production `GEMINI_MODEL` was reset to the required `gemini-2.0-flash` through `nanocorp site env set`; secret values were not printed.
+- Final production smoke created Cariuma free audit `d214d3cc-67e3-4a10-bf46-99a69e5c1a97`; it failed honestly with `Gemini indisponible, réessaie.` and stored no score/prompts because the available Gemini key returned HTTP 429 quota exceeded on a direct health check (`You exceeded your current quota...`). The live report page showed the Gemini unavailable message and did not show a fabricated web_search score.
 
 ## 2026-07-07 — Agent €49 Gemini premium audit adapter
 
