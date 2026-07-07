@@ -1564,7 +1564,7 @@ function lockedProEngineSurface(): BuyerIntentSurfaceResult {
 }
 
 async function analyzeBuyerIntentPrompts(brandName: string, websiteUrl: string, domain: string, category: string, homepageText: string, tier: AuditTier): Promise<BuyerIntentPromptResult[]> {
-  const prompts = generateBuyerIntentPrompts(brandName, websiteUrl, category, homepageText);
+  const prompts = generateBuyerIntentPrompts(brandName, websiteUrl, category, homepageText).slice(0, tier === "free" ? 3 : 12);
   const results: BuyerIntentPromptResult[] = [];
   const answerEngine = answerEngineForTier(tier);
 

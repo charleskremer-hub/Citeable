@@ -6,17 +6,17 @@
 - Per `AGENTS.md`, `node_modules` was initially absent; `npm install` restored dependencies and the relevant Next.js 16.2.10 docs read were `node_modules/next/dist/docs/01-app/01-getting-started/15-route-handlers.md` and `node_modules/next/dist/docs/01-app/01-getting-started/05-server-and-client-components.md`.
 
 ### Changes made
-- Free audits now use the real Gemini adapter (`gemini-2.0-flash` by default) for buyer-intent prompts instead of treating `web_search` as the primary answer signal.
+- Free audits now use the real Gemini adapter (`gemini-2.0-flash` by default) for a 3-question buyer-intent teaser instead of treating `web_search` as the primary answer signal.
 - Free reports now score only completed Gemini answer-engine calls; if Gemini is missing, quota-limited, or otherwise unavailable, the audit fails honestly with `Gemini indisponible, réessaie.` and no score is stored.
 - Added free-audit guardrails in `src/lib/audit-engine.ts`: 24-hour cache reuse by brand/domain, daily caps of 3 free audits per email and 10 free audits per domain, and no cache reuse unless the cached report has `answerEngine.engine = Gemini` with `realLlmCall = true`.
 - Wired those guardrails into both `/api/capture-email` and `/api/run-audit` so direct API calls cannot bypass the free quota/cache behavior.
-- Updated `/api/run-audit` so capture-created rows marked `running` but missing `startedAt` can be safely rescheduled; the existing PostgreSQL advisory lock still prevents duplicate execution.
+- Updated `/api/run-audit` so capture-created rows marked `running` but missing a fresh `startedAt` can be safely rescheduled; the existing PostgreSQL advisory lock still prevents duplicate execution.
 - Updated report/email copy so Gemini reports say `Questions posées à Gemini`, `Gemini te recommande` / `Gemini ne te cite pas`, and no longer frame a Gemini report as native `web_search`.
 
 ### Validation
 - `npm run lint` passed.
 - `npm run build` passed with Next.js 16.2.10 / Turbopack.
-- Pending at this point: push to main and run the required live free-audit smoke test against production.
+- First production smoke created Cariuma audit `8133c85f-3b35-47b8-848e-9dc33a020217`, but the previous 12-question free flow hit Vercel's 60s runtime timeout before any prompts persisted; the free teaser was reduced to 3 Gemini questions and stale-run rescheduling was added before rerunning the smoke.
 
 ## 2026-07-07 — Agent €49 Gemini premium audit adapter
 

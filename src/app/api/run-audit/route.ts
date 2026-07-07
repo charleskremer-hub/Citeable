@@ -16,6 +16,13 @@ type AuditRow = {
   raw_results: { status?: string; error?: string; checks?: unknown; emailSent?: boolean; emailError?: string; category?: string; buyerIntentPrompts?: unknown; auditTier?: string; answerEngine?: unknown; startedAt?: string } | null;
 };
 
+function isFreshStartedAt(value: string | undefined) {
+  if (!value) return false;
+
+  const startedAt = Date.parse(value);
+  return Number.isFinite(startedAt) && Date.now() - startedAt < 2 * 60 * 1000;
+}
+
 function runAuditAfterResponse(auditId: string) {
   after(async () => {
     const result = await runQueuedAudit(auditId);
@@ -71,7 +78,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      if (row.raw_results?.status === "running" && row.raw_results?.startedAt) {
+      if (row.raw_results?.status === "running" && isFreshStartedAt(row.raw_results?.startedAt)) {
         return NextResponse.json({ audit_id: auditId, status: "running" }, { status: 202 });
       }
 
