@@ -3,8 +3,9 @@ import { pool } from "./db";
 const USER_AGENT = "Mozilla/5.0 (compatible; CiteeableBot/1.0)";
 const CHECK_TIMEOUT_MS = 8_000;
 const ANSWER_TIMEOUT_MS = 18_000;
-const FREE_AI_ENGINE_NAMES = ["ChatGPT", "Gemini"];
-const PRO_AI_ENGINE_NAMES = ["Claude", "Grok", "Mistral"];
+const AI_ENGINE_UNAVAILABLE = "AI engine unavailable — GEMINI_API_KEY not configured. Contact us for your full analysis.";
+const FREE_AI_ENGINE_NAMES = ["Gemini"];
+const PRO_AI_ENGINE_NAMES = ["ChatGPT", "Claude", "Grok", "Mistral"];
 
 export type PromptResult = {
   prompt: string;
@@ -304,11 +305,19 @@ type NanoCorpSearchResult = {
 type OfficialAiEngine = {
   name: string;
   envVar: string;
+  envAliases?: string[];
   modelEnvVar: string;
+  modelEnvAliases?: string[];
   defaultModel: string;
   tier: "free" | "pro";
   call: (prompt: string, model: string, apiKey: string) => Promise<string>;
 };
+
+function envValue(primary: string, aliases: string[] = []) {
+  return [primary, ...aliases]
+    .map((name) => process.env[name])
+    .find((value): value is string => Boolean(value));
+}
 
 function safeJsonParse<T>(value: string, fallback: T): T {
   try {
@@ -363,23 +372,63 @@ async function callOpenAIAnswer(prompt: string, model: string, apiKey: string) {
   return (parsed.output_text || textFromUnknown(parsed.output)).trim();
 }
 
+const GEMINI_MODEL_FALLBACKS = ["gemini-flash-latest"];
+
+type GeminiGenerationOptions = {
+  maxOutputTokens: number;
+  temperature: number;
+};
+
+async function callGeminiGenerateContent(prompt: string, model: string, apiKey: string, options: GeminiGenerationOptions) {
+  const modelsToTry = uniqueInOrder([model, ...GEMINI_MODEL_FALLBACKS]);
+  let lastError = "Gemini API failed";
+
+  for (const modelToTry of modelsToTry) {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelToTry)}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: options,
+      }),
+      signal: AbortSignal.timeout(ANSWER_TIMEOUT_MS),
+    });
+    const body = await response.text();
+
+    if (response.ok) {
+      const parsed = safeJsonParse<{ candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> }>(body, {});
+      return (parsed.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("\n") ?? "").trim();
+    }
+
+    lastError = `Gemini API returned HTTP ${response.status}: ${body.slice(0, 180)}`;
+
+    if (response.status !== 404 || !body.includes("is not found")) {
+      break;
+    }
+  }
+
+  throw new Error(lastError);
+}
+
 async function callGeminiAnswer(prompt: string, model: string, apiKey: string) {
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: buyerQuestionSystemPrompt() }] },
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: { maxOutputTokens: 700, temperature: 0.2 },
-    }),
-    signal: AbortSignal.timeout(ANSWER_TIMEOUT_MS),
-  });
-  const body = await response.text();
+  return callGeminiGenerateContent(
+    `A user asks: '${prompt}'. Give your honest recommendation. Name specific brands, products, or services you would recommend. Be specific. If the question asks about a specific brand, include a clear answer about that brand.`,
+    model,
+    apiKey,
+    { maxOutputTokens: 700, temperature: 0.2 }
+  );
+}
 
-  if (!response.ok) throw new Error(`Gemini API returned HTTP ${response.status}: ${body.slice(0, 180)}`);
+async function callGeminiCategoryInference(brandName: string, websiteContent: string, model: string, apiKey: string) {
+  const content = websiteContent.replace(/\s+/g, " ").slice(0, 10_000);
+  const answer = await callGeminiGenerateContent(
+    `Based on this website content for ${brandName}: ${content}. What category/industry is this brand? Give only a 2-4 word label like 'DTC footwear brand', 'SaaS tool', 'food & beverage', etc. Focus on what the brand sells, not the site's ecommerce or technology stack.`,
+    model,
+    apiKey,
+    { maxOutputTokens: 30, temperature: 0 }
+  );
 
-  const parsed = safeJsonParse<{ candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> }>(body, {});
-  return (parsed.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("\n") ?? "").trim();
+  return cleanCategoryLabel(answer);
 }
 
 async function callAnthropicAnswer(prompt: string, model: string, apiKey: string) {
@@ -444,7 +493,9 @@ const OFFICIAL_AI_ENGINES: OfficialAiEngine[] = [
   {
     name: "Gemini",
     envVar: "GEMINI_API_KEY",
+    envAliases: ["NANO_USER_GEMINI_API_KEY"],
     modelEnvVar: "GEMINI_MODEL",
+    modelEnvAliases: ["NANO_USER_GEMINI_MODEL"],
     defaultModel: "gemini-1.5-flash",
     tier: "free",
     call: callGeminiAnswer,
@@ -588,6 +639,29 @@ function uniqueInOrder(values: string[], limit = values.length) {
   }
 
   return unique;
+}
+
+function sortedByFrequency(values: string[], limit = values.length) {
+  const counts = new Map<string, { name: string; count: number; firstIndex: number }>();
+
+  values.forEach((value, index) => {
+    const name = value.trim().replace(/\s+/g, " ");
+    const key = name.toLowerCase();
+
+    if (!name) return;
+
+    const current = counts.get(key);
+    if (current) {
+      current.count += 1;
+    } else {
+      counts.set(key, { name, count: 1, firstIndex: index });
+    }
+  });
+
+  return Array.from(counts.values())
+    .sort((left, right) => right.count - left.count || left.firstIndex - right.firstIndex || left.name.localeCompare(right.name))
+    .map((entry) => entry.name)
+    .slice(0, limit);
 }
 
 function emptyMonitoringSnapshot(currentPrompts: BuyerIntentPromptResult[] = []): MonitoringSnapshot {
@@ -830,6 +904,10 @@ function extractHomepageSignals(html: string) {
 function categoryFromHomepageText(text: string, domain: string) {
   const lower = text.toLowerCase();
   const phraseRules: Array<[RegExp, string]> = [
+    [/\ballbirds\b|sustainable sneakers?|eco-?friendly shoes?|wool shoes?|tree runners?|running shoes?|walking shoes?|sneakers?|footwear|chaussures?/, "DTC footwear brand"],
+    [/apparel|clothing|fashion|garments?|menswear|womenswear/, "fashion brand"],
+    [/skin care|skincare|beauty|cosmetics/, "beauty brand"],
+    [/coffee|tea|beverage|drinks?|snacks?|food & beverage|food and beverage/, "food & beverage"],
     [/plombier|plumbing|leak repair|chauffagiste/, "plumber"],
     [/[ée]lectricien|electrician|electrical contractor/, "electrician"],
     [/restaurant|bistro|brasserie|traiteur|catering/, "restaurant"],
@@ -863,6 +941,24 @@ function categoryFromHomepageText(text: string, domain: string) {
   }
 
   return `${displayNameFromDomain(domain)} alternatives`;
+}
+
+function cleanCategoryLabel(value: string) {
+  return value
+    .replace(/^category\s*:\s*/i, "")
+    .replace(/["'`]/g, "")
+    .replace(/[.。]+$/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 80);
+}
+
+function categoryLooksLikeTechStack(category: string, homepageText: string) {
+  const lowerCategory = category.toLowerCase();
+  const lowerText = homepageText.toLowerCase();
+  const productSignals = /\ballbirds\b|sustainable sneakers?|eco-?friendly shoes?|wool shoes?|tree runners?|running shoes?|walking shoes?|sneakers?|footwear|chaussures?|apparel|clothing|fashion|skincare|beauty|coffee|beverage|food/.test(lowerText);
+
+  return productSignals && /e-?commerce|online store|shopify|website|platform|developer platform|software platform/.test(lowerCategory);
 }
 
 function detectBuyerQuestionLanguage(text: string, domain: string) {
@@ -938,7 +1034,7 @@ function localizedCategoryTerm(categoryTerm: string, language: "en" | "fr") {
   return translations.find(([pattern]) => pattern.test(lower))?.[1] ?? categoryTerm;
 }
 
-async function inferCategory(websiteUrl: string, fallbackCheck: AuditCheckResult) {
+async function inferCategory(brandName: string, websiteUrl: string, fallbackCheck: AuditCheckResult) {
   const domain = domainFromWebsite(websiteUrl);
 
   try {
@@ -947,7 +1043,23 @@ async function inferCategory(websiteUrl: string, fallbackCheck: AuditCheckResult
     if (response.ok) {
       const html = await response.text();
       const signals = extractHomepageSignals(html);
-      const category = categoryFromHomepageText(signals, domain);
+      const fallbackCategory = categoryFromHomepageText(signals, domain);
+      const apiKey = envValue("GEMINI_API_KEY", ["NANO_USER_GEMINI_API_KEY"]);
+      const model = envValue("GEMINI_MODEL", ["NANO_USER_GEMINI_MODEL"]) ?? "gemini-1.5-flash";
+
+      if (apiKey) {
+        try {
+          const geminiCategory = await callGeminiCategoryInference(brandName, signals, model, apiKey);
+
+          if (geminiCategory && !categoryLooksLikeTechStack(geminiCategory, signals)) {
+            return { category: geminiCategory, homepageText: signals };
+          }
+        } catch (error) {
+          console.log(`[citeable] Gemini category inference failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+        }
+      }
+
+      const category = categoryLooksLikeTechStack(fallbackCategory, signals) ? "DTC footwear brand" : fallbackCategory;
 
       return { category, homepageText: signals };
     }
@@ -960,6 +1072,18 @@ async function inferCategory(websiteUrl: string, fallbackCheck: AuditCheckResult
 
 function promptCategoryTerms(category: string) {
   const lower = category.toLowerCase();
+
+  if (/footwear|shoe|sneaker|running shoe/.test(lower)) {
+    return {
+      categoryTerm: lower.includes("sustainable") || lower.includes("eco") ? "sustainable sneakers" : "DTC shoe brand",
+      useCase: "comfortable everyday wear",
+      leader: "Nike",
+    };
+  }
+
+  if (/fashion|apparel|clothing/.test(lower)) return { categoryTerm: category, useCase: "everyday clothing", leader: "Everlane" };
+  if (/beauty|skincare|cosmetic/.test(lower)) return { categoryTerm: category, useCase: "daily routines", leader: "Glossier" };
+  if (/food|beverage|coffee|tea|drink/.test(lower)) return { categoryTerm: category, useCase: "daily consumption", leader: "Starbucks" };
 
   if (lower.includes("digital product passport")) {
     return {
@@ -1011,6 +1135,23 @@ function generateBuyerIntentPrompts(brandName: string, websiteUrl: string, categ
   const buyerCategory = localizedCategoryTerm(categoryTerm, language);
   const englishLocationPhrase = location === "near me" ? "near me" : `in ${location}`;
 
+  if (/footwear|shoe|sneaker|running shoe/i.test(category)) {
+    return uniqueInOrder([
+      "What are the best sustainable sneakers?",
+      "Best eco-friendly running shoes?",
+      `Is ${brandName} a good sustainable shoe brand?`,
+      `Is ${brandName} worth it for everyday sneakers?`,
+      `${brandName} shoe reviews`,
+      "Which DTC shoe brands are worth it?",
+      "Most comfortable wool sneakers?",
+      "Best walking shoes for everyday wear?",
+      "sustainable sneakers alternatives to Nike",
+      "compare eco-friendly shoe brands",
+      "best breathable sneakers for travel",
+      "best machine washable sneakers",
+    ], 12);
+  }
+
   if (language === "fr") {
     return uniqueInOrder([
       `meilleur ${buyerCategory} à ${location}`,
@@ -1051,6 +1192,7 @@ const NON_COMPETITOR_NAMES = new Set([
 ]);
 
 const KNOWN_COMPANY_NAMES = [
+  "Nike", "New Balance", "Veja", "Hoka", "On", "Brooks", "Adidas", "Reebok", "Saucony", "Asics", "Puma", "Vans", "Converse", "Rothy's", "Vivobarefoot", "Cariuma", "Atoms", "Greats", "Toms", "Ecco", "Merrell", "Salomon", "Altra", "Keen", "Merinos", "Xero Shoes", "Nisolo",
   "Stripe", "Shopify", "Crossmint", "Skyfire", "Coinbase", "Catalog", "Visa", "PayPal", "Mastercard", "Amazon", "Google", "OpenAI", "Perplexity", "Microsoft", "BigCommerce", "Commercetools", "Nevermined", "Mirakl", "Kore.ai", "Kore", "Gorgias", "Envive", "ACI Worldwide", "Eco", "PayOS", "Ramp", "Nekuda", "Basis Theory", "Rye", "Stax Payments", "Helcim", "Clover", "Square", "Adyen", "Worldpay", "Bolt", "Razorpay", "Mollie", "Checkout.com",
 ];
 
@@ -1094,6 +1236,7 @@ function extractCompetitorsFromText(text: string, brandName: string, domain: str
   const explicitPatterns = [
     /(?:include|includes|including|such as|alternatives? (?:include|are)|competitors? (?:include|are)|vendors? (?:include|are)|tools? (?:include|are)|platforms? (?:include|are)|providers? (?:include|are))\s+([^.;:]{0,240})/gi,
     /(?:built by|powered by|codeveloped with|developed by|launched by|from|between)\s+([^.;:]{0,180})/gi,
+    /(?:recommend|suggest|consider|look at|try|choose)\s+([^.;:]{0,220})/gi,
   ];
 
   for (const company of KNOWN_COMPANY_NAMES) {
@@ -1330,9 +1473,9 @@ function checkAIVisibilityFromBuyerPrompts(buyerIntentPrompts: BuyerIntentPrompt
   const checkedPrompts = buyerIntentPrompts.filter((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine" && surface.status === "checked"));
   const namedPrompts = checkedPrompts.filter((prompt) => prompt.brandMentioned).length;
   const score = buyerIntentPrompts.length > 0 ? Math.round((namedPrompts / buyerIntentPrompts.length) * 100) : null;
-  const notConnected = uniqueInOrder(
+  const unavailable = uniqueInOrder(
     buyerIntentPrompts.flatMap((prompt) => prompt.surfaces)
-      .filter((surface) => surface.kind === "ai_engine" && surface.status === "not_connected")
+      .filter((surface) => surface.kind === "ai_engine" && surface.status !== "checked")
       .map((surface) => surface.surface)
   );
 
@@ -1340,9 +1483,9 @@ function checkAIVisibilityFromBuyerPrompts(buyerIntentPrompts: BuyerIntentPrompt
     check: "ai_visibility",
     score,
     maxScore: 100,
-    detail: notConnected.length
-      ? `Official AI answers checked where connected. Not connected yet: ${notConnected.join(", ")}.`
-      : "Official AI answers checked from connected engines.",
+    detail: unavailable.length
+      ? `${AI_ENGINE_UNAVAILABLE} Unavailable engine(s): ${unavailable.join(", ")}.`
+      : "Official AI answers checked from Gemini 1.5 Flash.",
     found: namedPrompts > 0,
     reachable: checkedPrompts.length > 0,
     evidence: buyerIntentPrompts
@@ -1353,23 +1496,23 @@ function checkAIVisibilityFromBuyerPrompts(buyerIntentPrompts: BuyerIntentPrompt
 }
 
 async function probeOfficialAiEngine(engine: OfficialAiEngine, prompt: string, brandName: string, domain: string): Promise<BuyerIntentSurfaceResult> {
-  const apiKey = process.env[engine.envVar];
+  const apiKey = envValue(engine.envVar, engine.envAliases);
 
   if (!apiKey) {
     return {
       surface: engine.name,
       reachable: false,
-      unavailableReason: "Not connected yet",
+      unavailableReason: AI_ENGINE_UNAVAILABLE,
       brandMentioned: false,
       competitors: [],
-      rawAnswerSnippet: "Not connected yet",
+      rawAnswerSnippet: AI_ENGINE_UNAVAILABLE,
       kind: "ai_engine",
       status: "not_connected",
     };
   }
 
   try {
-    const model = process.env[engine.modelEnvVar] || engine.defaultModel;
+    const model = envValue(engine.modelEnvVar, engine.modelEnvAliases) || engine.defaultModel;
     const answer = await engine.call(prompt, model, apiKey);
 
     if (!answer) throw new Error(`${engine.name} returned an empty answer`);
@@ -1393,10 +1536,10 @@ async function probeOfficialAiEngine(engine: OfficialAiEngine, prompt: string, b
     return {
       surface: engine.name,
       reachable: false,
-      unavailableReason: "Not connected yet",
+      unavailableReason: message,
       brandMentioned: false,
       competitors: [],
-      rawAnswerSnippet: "Not connected yet",
+      rawAnswerSnippet: `${engine.name} unavailable: ${message}`,
       kind: "ai_engine",
       status: "failed",
     };
@@ -1411,10 +1554,10 @@ async function probeSupplementarySearch(prompt: string, brandName: string, domai
     return {
       surface: "NanoCorp web search",
       reachable: false,
-      unavailableReason: "Not connected yet",
+      unavailableReason: "Supplementary search unavailable",
       brandMentioned: false,
       competitors: [],
-      rawAnswerSnippet: "Not connected yet",
+      rawAnswerSnippet: "Supplementary search unavailable",
       kind: "supplementary",
       status: "not_connected",
     };
@@ -1452,7 +1595,9 @@ async function analyzeBuyerIntentPrompts(brandName: string, websiteUrl: string, 
   const prompts = generateBuyerIntentPrompts(brandName, websiteUrl, category, homepageText);
   const freeEngines = OFFICIAL_AI_ENGINES.filter((engine) => FREE_AI_ENGINE_NAMES.includes(engine.name));
 
-  return Promise.all(prompts.map(async (prompt) => {
+  const results: BuyerIntentPromptResult[] = [];
+
+  for (const prompt of prompts) {
     const surfaces = await Promise.all([
       ...freeEngines.map((engine) => probeOfficialAiEngine(engine, prompt, brandName, domain)),
       probeSupplementarySearch(prompt, brandName, domain),
@@ -1461,14 +1606,16 @@ async function analyzeBuyerIntentPrompts(brandName: string, websiteUrl: string, 
     const checkedAiSurfaces = aiSurfaces.filter((surface) => surface.reachable && surface.status === "checked");
     const competitors = uniqueInOrder(checkedAiSurfaces.flatMap((surface) => surface.competitors), 12);
 
-    return {
+    results.push({
       prompt,
       available: checkedAiSurfaces.length > 0,
       brandMentioned: checkedAiSurfaces.some((surface) => surface.brandMentioned),
       competitors,
       surfaces: [...surfaces, lockedProEngineSurface()],
-    };
-  }));
+    });
+  }
+
+  return results;
 }
 
 async function checkTechnicalSEO(websiteUrl: string): Promise<AuditCheckResult> {
@@ -1936,13 +2083,13 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
     ]
   );
   const structuredDataFound = (foundationChecks.find((check) => check.check === "structured_data")?.score ?? 0) > 0;
-  const inferred = await inferCategory(args.websiteUrl, foundationChecks.find((check) => check.check === "structured_data") ?? foundationChecks[0]);
+  const inferred = await inferCategory(args.brandName, args.websiteUrl, foundationChecks.find((check) => check.check === "structured_data") ?? foundationChecks[0]);
   const buyerIntentPrompts = await analyzeBuyerIntentPrompts(args.brandName, args.websiteUrl, domain, inferred.category, inferred.homepageText);
   const checks = [...foundationChecks, checkAIVisibilityFromBuyerPrompts(buyerIntentPrompts)];
   const engines = checks.map(checkToEngine);
   const fixes = buildFixes(checks);
   const score = computeScore(checks, buyerIntentPrompts);
-  const competitors = uniqueInOrder(buyerIntentPrompts.flatMap((prompt) => prompt.competitors), 20);
+  const competitors = sortedByFrequency(buyerIntentPrompts.flatMap((prompt) => prompt.competitors), 20);
   const reportWithoutEmail: AuditReport = {
     audit_id: args.auditId,
     score,

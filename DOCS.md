@@ -618,3 +618,27 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - `npm run build` passed on Next.js `16.2.10`; post-push live verification still needs to run in this task.
 - Local rendered HTML for completed Keyban audit `6e324a39-c62d-44fe-bf3f-c2755fffe0e6` contained the required markers: `Rapport simple`, `/100`, `Tu es cité`, `Le concurrent`, `Voici quoi corriger`, and `Concurrents qui prennent ta place`; it did not contain old report labels `Monthly monitoring`, `How your score is calculated`, or `Buying questions checked automatically`.
 - `agent-browser` was installed once after the sandbox reported `Chrome not found`, but local loopback navigation returned `ERR_CONNECTION_REFUSED`; curl against the same rendered report succeeded before browser navigation.
+
+## 2026-07-07 — Gemini recommendation engine and category inference
+
+### Findings
+- Local worker secrets expose Gemini and Resend as `NANO_USER_GEMINI_API_KEY` and `NANO_USER_RESEND_API_KEY`; production Vercel env originally had `DATABASE_URL`, `NANOCORP_TOKEN`, and `NANOCORP_BACKEND_URL` only.
+- Added production env aliases via `nanocorp site env set`: `GEMINI_API_KEY` and `RESEND_API_KEY`, sourced from the configured user secrets without logging values.
+- Root cause for the Allbirds misclassification was homepage keyword rules that could classify commerce tooling (`ecommerce platform`) instead of the actual product category when product signals were weaker than store/platform signals.
+- The free audit path also treated both ChatGPT and Gemini as free AI engines and showed generic `Not connected yet` copy on API/key failures.
+
+### Changes made
+- Free-tier AI recommendation checks now use Gemini only (`gemini-1.5-flash`), with `GEMINI_API_KEY` plus `NANO_USER_GEMINI_API_KEY` fallback.
+- Category inference now fetches homepage content, extracts title/meta/OG/schema/body signals, asks Gemini for a 2-4 word product-category label, and falls back to product-first rules if Gemini is unavailable.
+- Added product-category guards for footwear/shoes/sneakers so Allbirds-style sites produce DTC footwear/sustainable sneaker questions instead of ecommerce platform questions.
+- Buying questions for footwear brands now include sustainable sneakers, eco-friendly running shoes, DTC shoe brands, walking shoes, wool sneakers, and Allbirds-specific review/worth-it prompts.
+- Recommendation calls use the direct Gemini REST `generateContent` endpoint and parse live answers for brand mentions plus competitor names; no fabricated results are generated. The code tries the requested `gemini-1.5-flash` model first and falls back to `gemini-flash-latest` only when Google returns a model-unsupported 404 for the configured key.
+- Competitors are aggregated by frequency and shown in the report UI as `Name (Nx)` under `Who gets recommended instead of you`.
+- Report UI now includes `Buying questions checked` with Gemini mentioned/non-mentioned status per question and no longer presents AI failures as `not connected yet`.
+
+### Validation
+- `npm install` restored local dependencies for the sandbox.
+- `npm run build` passes with Next.js 16.2.10 / Turbopack.
+- First production Allbirds audit after the initial deploy correctly detected `DTC footwear brand` and generated 12 footwear questions, but Google returned HTTP 404 for `gemini-1.5-flash`; the follow-up patch adds a 404-only fallback to the available `gemini-flash-latest` model.
+- Follow-up production Allbirds audit `e5e1b35e-91d7-450a-bbe6-b5f9829f9020` reached Gemini for 7 questions and found real competitors `On` and `Hoka`, then Google returned quota HTTP 429; per worker stop rules no further Gemini calls were made in this run.
+- To reduce repeat 429s, buyer-question checks now run sequentially, production `GEMINI_MODEL` is set to `gemini-flash-latest` because the configured key no longer serves `gemini-1.5-flash`, and the first footwear prompts include explicit Allbirds review/worth-it questions.

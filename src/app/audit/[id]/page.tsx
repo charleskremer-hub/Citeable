@@ -42,6 +42,39 @@ function uniqueNames(names: string[]) {
   });
 }
 
+function competitorCounts(names: string[]) {
+  const counts = new Map<string, { name: string; count: number; firstIndex: number }>();
+
+  names.forEach((name, index) => {
+    const cleaned = name.trim().replace(/\s+/g, " ");
+    const key = cleaned.toLowerCase();
+
+    if (!cleaned) return;
+
+    const current = counts.get(key);
+    if (current) {
+      current.count += 1;
+    } else {
+      counts.set(key, { name: cleaned, count: 1, firstIndex: index });
+    }
+  });
+
+  return Array.from(counts.values())
+    .sort((left, right) => right.count - left.count || left.firstIndex - right.firstIndex || left.name.localeCompare(right.name))
+    .slice(0, 12);
+}
+
+function questionEngineSummary(question: BuyerIntentPromptResult) {
+  const checked = question.surfaces.filter((surface) => surface.kind === "ai_engine" && surface.status === "checked");
+  const unavailable = question.surfaces.filter((surface) => surface.kind === "ai_engine" && surface.status !== "checked");
+
+  if (checked.length > 0) {
+    return checked.map((surface) => `${surface.surface}: ${surface.brandMentioned ? "mentioned" : "not mentioned"}`).join(" · ");
+  }
+
+  return unavailable[0]?.unavailableReason ?? "AI engine unavailable — GEMINI_API_KEY not configured. Contact us for your full analysis.";
+}
+
 function checkedQuestions(questions: BuyerIntentPromptResult[]) {
   const available = questions.filter((question) => question.available);
   return available.length ? available : questions;
@@ -90,7 +123,8 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
     ...(audit.competitors_found ?? []),
     ...questions.flatMap((question) => question.competitors),
   ]).slice(0, 12);
-  const topCompetitor = competitors[0];
+  const rankedCompetitors = competitorCounts(questions.flatMap((question) => question.competitors));
+  const topCompetitor = rankedCompetitors[0]?.name ?? competitors[0];
   const score = audit.score ?? 0;
   const color = scoreColor(score);
   const phrases = [
@@ -175,22 +209,48 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6">
               <div className="mb-4 flex items-end justify-between gap-4">
                 <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                  Concurrents qui prennent ta place
+                  Who gets recommended instead of you
                 </h2>
-                <span className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-black text-[#BCBCC8]">{competitors.length}</span>
+                <span className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-black text-[#BCBCC8]">{rankedCompetitors.length || competitors.length}</span>
               </div>
 
-              {competitors.length ? (
+              {rankedCompetitors.length ? (
                 <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
-                  {competitors.map((competitor) => (
-                    <li key={competitor} className="rounded-full border border-[#CAFF3C]/20 bg-[#CAFF3C]/10 px-3 py-2 text-sm font-black text-[#CAFF3C]">
-                      {competitor}
+                  {rankedCompetitors.map((competitor) => (
+                    <li key={competitor.name} className="rounded-full border border-[#CAFF3C]/20 bg-[#CAFF3C]/10 px-3 py-2 text-sm font-black text-[#CAFF3C]">
+                      {competitor.name} <span className="text-[#F0F0EC]/70">({competitor.count}x)</span>
                     </li>
                   ))}
                 </ul>
               ) : (
                 <div className="rounded-2xl border border-white/[0.07] bg-black/20 p-4 text-sm font-bold text-[#8E8E9A]">
-                  Aucun nom trouvé.
+                  Aucun nom trouvé dans les réponses disponibles.
+                </div>
+              )}
+            </section>
+          ) : null}
+
+          {complete && !failed ? (
+            <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6">
+              <div className="mb-4 flex items-end justify-between gap-4">
+                <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
+                  Buying questions checked
+                </h2>
+                <span className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-black text-[#BCBCC8]">Gemini</span>
+              </div>
+
+              {questions.length ? (
+                <ol className="m-0 grid list-none gap-2 p-0">
+                  {questions.map((question) => (
+                    <li key={question.prompt} className="rounded-2xl border border-white/[0.07] bg-black/20 p-4">
+                      <p className="m-0 text-sm font-black text-[#F0F0EC]">{question.prompt}</p>
+                      <p className="m-0 mt-2 text-sm font-bold text-[#BCBCC8]">{questionEngineSummary(question)}</p>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <div className="rounded-2xl border border-[#FF8A8A]/20 bg-[#FF5F5F]/10 p-4 text-sm font-bold text-[#FFB1B1]">
+                  AI engine unavailable — GEMINI_API_KEY not configured. Contact us for your full analysis.
                 </div>
               )}
             </section>
