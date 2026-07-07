@@ -1,3 +1,46 @@
+# 2026-07-07 — ChatGPT Agent €49 wiring and pricing ladder
+
+### Findings
+- `src/lib/audit-engine.ts` is the shared audit runner; `answerEngineForTier()` now gates Free to Gemini and `agent_49eur` to ChatGPT/OpenAI.
+- Vercel envs now include `OPENAI_API_KEY` and `OPENAI_MODEL=gpt-4.1-mini`; `OPENAI_API_KEY` was populated from the owner-provided `NANO_USER_CHATGPT_API_KEY` without printing the secret.
+- Vercel `NANOCORP_TOKEN` was refreshed from the current worker token after the first ChatGPT smoke exposed an expired production token for send_email.
+- `node_modules/next/dist/docs/` is absent in this worker clone; changes follow existing App Router patterns in the repo.
+
+### Changes made
+- Added a ChatGPT/OpenAI answer-engine adapter using the OpenAI Chat Completions endpoint with JSON-only `recommended_brands` output, model default `gpt-4.1-mini`, env override `OPENAI_MODEL`, and real HTTP status/message propagation on API errors.
+- Added provider scaffolding for future Claude/Grok/Mistral activation by key while keeping them disabled/not promised until keys are connected.
+- Changed tier routing: Free remains Gemini; Agent €49 uses ChatGPT/OpenAI; failed answer-engine calls stop honestly rather than fabricating scores.
+- Updated report/email labels to use the actual engine name (`Gemini` or `ChatGPT`) instead of hardcoded Gemini copy.
+- Updated landing/pricing copy: Free = diagnostic only (score, Gemini choice, competitors); Monitor €9 = Gemini monitoring plus `3 simple actions to do this week`; Agent €49 = ChatGPT/OpenAI treatment with Claude/Grok/Mistral described as activation-ready, not live.
+- Free report page no longer shows the Agent treatment proof block; the diagnostic now states that the 3 actions are in Monitor.
+
+### Validation
+- `npm install` completed in the fresh worker clone.
+- `npm exec -- tsc --noEmit --pretty false` passed.
+- `npm run build` passed on Next.js 16.2.10 / Turbopack.
+- `npm run lint` passed with two pre-existing warnings only: `isAuditedBrandName` and `categoryFromWebsite` are unused in `src/lib/audit-engine.ts`.
+- Code commit pushed: `2c295b6` (`Wire ChatGPT agent tier and update pricing`).
+
+### Live deploy verification and captures
+- Waited 90 seconds after push, then opened `https://getciteable.nanocorp.app?bust=2c295b6` with `agent-browser` after installing Chrome once because the sandbox initially returned `Chrome not found`.
+- Live homepage showed the new hero: `Your customers ask AI now — not just Google. Start with Gemini, then scale to ChatGPT when you want the Agent.`
+- Live pricing text verified by browser grep: `Diagnostic score from Gemini`, `3 simple actions to do this week`, `Fresh ChatGPT/OpenAI checks before each batch`, and `Claude/Grok/Mistral-ready when keys are activated`.
+- Screenshots saved: `artifacts/live-captures/landing-2c295b6.png`, `artifacts/live-captures/pricing-2c295b6.png`, and `artifacts/live-captures/chatgpt-smoke-report-8c52f968.png`.
+
+### ChatGPT smoke proof
+- Production smoke request: `POST /api/run-audit` with `audit_tier=agent_49eur`, brand `Allbirds`, website `https://www.allbirds.com`, unique email `charles+chatgpt-smoke-2026070714...@getciteable.nanocorp.app`.
+- Create response: HTTP `202`, audit ID `8c52f968-b271-49c9-aa90-8f7847500ed7`.
+- Final status after five polls: `completed`, score `93`, `audit_tier=agent_49eur`, 12 buyer prompts.
+- Answer engine proof: `engine=ChatGPT`, `model=gpt-4.1-mini`, `realLlmCall=true`.
+- Real ChatGPT-named competitors stored: `Veja`, `On`, `Rothy's`, `Hoka`, `Nike Space Hippie`, `Adidas Parley`, `Nike`, `Adidas`, `Wool Runner`, `Vivobarefoot`, `Cariuma`, `Everlane`.
+- Email proof: `email_sent=false`; exact error surfaced by the app was `NanoCorp send_email HTTP 401: {"detail":"API key expired"}`. The Vercel `NANOCORP_TOKEN` was refreshed afterward, but this smoke result intentionally records the actual live response and does not fabricate `emailSent=true`.
+- Live report page for the smoke showed `Concurrents cités par ChatGPT` and `Questions posées à ChatGPT`.
+
+### Follow-up tasks
+- Re-run one Agent €49 smoke after the next Vercel deploy to confirm refreshed `NANOCORP_TOKEN` makes `email_sent=true`.
+- Remove or re-use the pre-existing unused helpers `isAuditedBrandName` and `categoryFromWebsite` to make lint warning-free.
+- When Claude/Grok/Mistral keys are available, implement and enable their provider adapters one at a time with matching smoke proof.
+
 ## 2026-07-07 — NANOCORP_TOKEN email 401 refresh
 
 ### Findings
