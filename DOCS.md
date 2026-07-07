@@ -774,3 +774,12 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - Pushed homepage rewrite commit `b0c559e` to `main`.
 - Waited 90 seconds after push, then verified `https://getciteable.nanocorp.app/` with `agent-browser`; the live page showed the new hero and 3-field form.
 - Hero screenshot saved at `/tmp/citeable-new-hero-b0c559e.png`.
+
+## 2026-07-07 — Gemini smoke proof execution attempt
+
+### Findings
+- Requested smoke used Allbirds with the internal/paid bypass flag `audit_tier=agent_49eur`.
+- Production API attempt: `POST /api/run-audit` returned HTTP `202` with audit `f8759513-82d6-49a1-9e8c-379e59f7baec`, then the DB row moved to `status=failed`, `score=NULL`, `emailSent=false`, error `Gemini indisponible, réessaie.`.
+- Direct local execution via the repo's `runQueuedAudit()` inserted audit `de6c1545-6840-40fc-9a64-c2cb0b8b2629` with `raw_results.auditTier=agent_49eur`, `raw_results.execution=direct_runQueuedAudit`, and `raw_results.smokeProof=true`.
+- The direct run captured the real Gemini API failure from `generativelanguage.googleapis.com`: HTTP `429`, status `RESOURCE_EXHAUSTED`, quota metric `generativelanguage.googleapis.com/generate_content_free_tier_requests`, quota id `GenerateRequestsPerDayPerProjectPerModel-FreeTier`, quota value `20`, model dimension `gemini-3.5-flash`.
+- No score, competitor counts, or completion email were produced because the audit stopped before any successful Gemini answer; per stop rules, no further Gemini retries were made after the quota signal.
