@@ -597,3 +597,24 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - `npm run build` passed on Next.js `16.2.10`.
 - Local browser QA with `agent-browser` opened `http://localhost:3000`; the snapshot showed the zero-setup hero, brand/site/email form, `10–20 buying questions` copy, `Start Done-for-you`, and `Do I need to configure anything?` FAQ with no visible `prompt`, `GEO`, or `AEO` wording.
 - Post-push live validation should use the required single browser check at `https://getciteable.nanocorp.app` after the 90-second wait.
+
+## 2026-07-07 — Simple TPE audit report
+
+### Findings
+- Next.js local docs are available after `npm install`; relevant App Router docs read: `node_modules/next/dist/docs/01-app/01-getting-started/03-layouts-and-pages.md` and `node_modules/next/dist/docs/01-app/01-getting-started/05-server-and-client-components.md`.
+- The previous customer report at `src/app/audit/[id]/page.tsx` showed marketer-style detail: formula text, monthly monitoring trend bars, per-question rows, changed-competitor cards, and multiple explanatory sections.
+- Existing audit rows already provide the needed simple report data: `score`, `competitors_found`, and `raw_results.buyerIntentPrompts` with brand mention counts and competitor names.
+
+### Changes made
+- Replaced the detailed report page with a mobile-first TPE report: one `/100` score, exactly three numbered plain-language phrases for completed reports, and a compact competitor list.
+- Removed the visible score-formula section, monthly monitoring chart, per-question rows, changed-competitor section, and marketer-style dashboard layout from the report page.
+- Kept the polling behavior for running audits and the Done-for-you checkout CTA, but rewrote visible report copy in simple French and avoided customer-facing `GEO`, `AEO`, `prompt`, and `share-of-voice` wording.
+- Added competitor de-duplication so the list combines stored `competitors_found` with competitor names found inside buyer-question results, capped at 12 names for mobile readability.
+
+### Validation
+- `npm install` completed successfully in this worker clone.
+- `npm run lint` passed after the report rewrite.
+- A source scan of `src/app` found no customer-facing banned terms in page components; remaining `buyer_intent_prompts` matches are API JSON fields, not on-screen copy.
+- `npm run build` passed on Next.js `16.2.10`; post-push live verification still needs to run in this task.
+- Local rendered HTML for completed Keyban audit `6e324a39-c62d-44fe-bf3f-c2755fffe0e6` contained the required markers: `Rapport simple`, `/100`, `Tu es cité`, `Le concurrent`, `Voici quoi corriger`, and `Concurrents qui prennent ta place`; it did not contain old report labels `Monthly monitoring`, `How your score is calculated`, or `Buying questions checked automatically`.
+- `agent-browser` was installed once after the sandbox reported `Chrome not found`, but local loopback navigation returned `ERR_CONNECTION_REFUSED`; curl against the same rendered report succeeded before browser navigation.
