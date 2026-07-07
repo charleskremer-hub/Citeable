@@ -952,3 +952,27 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 
 ### Validation
 - `npm run build` passed on Next.js 16.2.10 / Turbopack after the hero copy update.
+
+## 2026-07-07 — Durable NanoCorp email token retry
+
+### Findings
+- Per `AGENTS.md`, dependencies were installed and the local Next.js 16.2.10 App Router docs were read before route/runtime-adjacent work: `node_modules/next/dist/docs/01-app/01-getting-started/15-route-handlers.md`, `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/route.md`, and `node_modules/next/dist/docs/01-app/03-api-reference/04-functions/fetch.md`.
+- The recurring email failure path is `sendAuditEmail()` -> `sendNativeEmail()` -> `executeNanoCorpTool("send_email", ...)` in `src/lib/audit-engine.ts`.
+- Before this change, `executeNanoCorpTool()` read only `process.env.NANOCORP_TOKEN` and used that single bearer for `/internal/tools/{tool}/execute`; when production `NANOCORP_TOKEN` expired the HTTP 401 propagated and no automatic retry existed.
+- `nanocorp whoami` shows the current worker `NANOCORP_TOKEN` expires on `2026-07-07T19:51:10.558976Z`, confirming that simply refreshing the site secret by hand is temporary.
+- `nanocorp token list` / `nanocorp token create` are not available from this worker credential: `backend returned status 403: {"detail":"Cannot access this conglomerate"}`.
+- The worker also has `AGENT_SECRET`; `nanocorp whoami` with `NANOCORP_TOKEN` unset reports it as a company-scoped web-session credential with `Expires: never`, and a direct internal-tool `list_emails` call authenticated with that credential successfully.
+
+### Changes made
+- `src/lib/audit-engine.ts` now resolves the NanoCorp credential at call time, not module boot time, using a runtime chain: `NANOCORP_TOKEN_RUNTIME`, `NANOCORP_TOKEN`, `AGENT_SECRET`, `NANOCORP_API_TOKEN`, then `NANOCORP_TOKEN_FALLBACK`.
+- `executeNanoCorpTool()` now records real HTTP status/message details and, on HTTP `401` or `403`, refreshes to the next available runtime credential and retries exactly once.
+- Retry logging is explicit: first auth failure logs `{status, message}`, retry success logs the successful status, and retry failure logs the real final `{status, message}`.
+- `sendNativeEmail()` now returns `sent: true` only after a successful 2xx NanoCorp tool response; non-2xx/tool failures return `sent: false` with the real error.
+- The duplicate-send claim in `sendAuditEmail()` no longer pretends `sent: true` just because another process claimed the send. It now reads stored `emailSent`; if the email is only in-progress/unconfirmed it returns `sent: false` with an explicit reason.
+
+### Validation so far
+- `npm run lint` passed with two pre-existing warnings: unused `isAuditedBrandName` and `categoryFromWebsite` in `src/lib/audit-engine.ts`.
+- `npm run build` passed on Next.js 16.2.10 / Turbopack.
+
+### Pending live proof
+- Configure production with the non-expiring runtime fallback credential, push the commit, run three live public audits against `https://getciteable.nanocorp.app`, verify `email_sent=true`, confirm outbound email records, and capture runtime logs showing the 401/403 refresh + one retry path.

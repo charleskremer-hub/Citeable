@@ -385,6 +385,33 @@ type NanoCorpToolResponse<T> = {
   error?: unknown;
 };
 
+type NanoCorpRuntimeCredential = {
+  token: string;
+  source: string;
+};
+
+type NanoCorpToolAttempt = {
+  attempt: number;
+  status?: number;
+  message: string;
+  tokenSource?: string;
+};
+
+type NanoCorpToolFailure = {
+  ok: false;
+  status?: number;
+  error: string;
+  message: string;
+  attempts: NanoCorpToolAttempt[];
+};
+
+type NanoCorpToolSuccess<T> = {
+  ok: true;
+  status: number;
+  result?: T;
+  attempts: NanoCorpToolAttempt[];
+};
+
 function safeJsonParse<T>(value: string, fallback: T): T {
   try {
     return JSON.parse(value) as T;
@@ -397,33 +424,156 @@ function nanoCorpBackendUrl() {
   return (process.env.NANOCORP_BACKEND_URL ?? "https://phospho-nanocorp-prod--nanocorp-api-fastapi-app.modal.run").replace(/\/$/, "");
 }
 
-async function executeNanoCorpTool<T>(tool: string, args: Record<string, unknown>, timeoutMs = CHECK_TIMEOUT_MS) {
-  if (!process.env.NANOCORP_TOKEN) {
-    return { ok: false, error: "NANOCORP_TOKEN is not configured" } as const;
+function envValue(key: string) {
+  const value = (process.env as Record<string, string | undefined>)[key];
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+function nanoCorpCompanyId() {
+  return envValue("NANOCORP_COMPANY") ?? envValue("NANOCORP_COMPANY_ID");
+}
+
+function nanoCorpRuntimeCredential(excludeToken?: string): NanoCorpRuntimeCredential | undefined {
+  const candidates: NanoCorpRuntimeCredential[] = [
+    { source: "NANOCORP_TOKEN_RUNTIME", token: envValue("NANOCORP_TOKEN_RUNTIME") ?? "" },
+    { source: "NANOCORP_TOKEN", token: envValue("NANOCORP_TOKEN") ?? "" },
+    { source: "AGENT_SECRET", token: envValue("AGENT_SECRET") ?? "" },
+    { source: "NANOCORP_API_TOKEN", token: envValue("NANOCORP_API_TOKEN") ?? "" },
+    { source: "NANOCORP_TOKEN_FALLBACK", token: envValue("NANOCORP_TOKEN_FALLBACK") ?? "" },
+  ].filter((candidate) => candidate.token);
+
+  return candidates.find((candidate) => candidate.token !== excludeToken) ?? candidates[0];
+}
+
+function nanoCorpHeaders(credential: NanoCorpRuntimeCredential) {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${credential.token}`,
+    "Content-Type": "application/json",
+  };
+  const companyId = nanoCorpCompanyId();
+
+  if (companyId) {
+    headers["Nanocorp-Company"] = companyId;
   }
+
+  return headers;
+}
+
+function responseMessage(body: string) {
+  const parsed = safeJsonParse<Record<string, unknown> | null>(body, null);
+  const message = parsed?.detail ?? parsed?.message ?? parsed?.error;
+
+  if (typeof message === "string" && message.trim()) return message.trim();
+  if (message !== undefined) return String(message);
+
+  return body.slice(0, 300) || "empty response";
+}
+
+function isAuthStatus(status?: number) {
+  return status === 401 || status === 403;
+}
+
+function nanoCorpToolError(tool: string, status: number | undefined, message: string) {
+  return status
+    ? `NanoCorp ${tool} HTTP ${status}: ${message}`
+    : `NanoCorp ${tool}: ${message}`;
+}
+
+async function executeNanoCorpToolAttempt<T>(
+  tool: string,
+  args: Record<string, unknown>,
+  timeoutMs: number,
+  credential: NanoCorpRuntimeCredential,
+  attempt: number
+): Promise<NanoCorpToolSuccess<T> | NanoCorpToolFailure> {
+  const attempts: NanoCorpToolAttempt[] = [];
 
   const response = await fetch(`${nanoCorpBackendUrl()}/internal/tools/${tool}/execute`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.NANOCORP_TOKEN}`,
-      "Content-Type": "application/json",
-    },
+    headers: nanoCorpHeaders(credential),
     body: JSON.stringify({ arguments: args }),
     signal: AbortSignal.timeout(timeoutMs),
   });
   const body = await response.text();
 
   if (!response.ok) {
-    return { ok: false, status: response.status, error: `NanoCorp ${tool} HTTP ${response.status}: ${body.slice(0, 300)}` } as const;
+    const message = responseMessage(body);
+    return {
+      ok: false,
+      status: response.status,
+      message,
+      error: nanoCorpToolError(tool, response.status, message),
+      attempts: [{ attempt, status: response.status, message, tokenSource: credential.source }],
+    };
   }
 
   const parsed = safeJsonParse<NanoCorpToolResponse<T>>(body, {});
 
   if (parsed.success === false || parsed.error) {
-    return { ok: false, status: response.status, error: `NanoCorp ${tool} failed: ${String(parsed.error ?? "unknown error")}` } as const;
+    const message = String(parsed.error ?? "unknown error");
+    return {
+      ok: false,
+      status: response.status,
+      message,
+      error: `NanoCorp ${tool} failed: ${message}`,
+      attempts: [{ attempt, status: response.status, message, tokenSource: credential.source }],
+    };
   }
 
-  return { ok: true, status: response.status, result: parsed.result } as const;
+  attempts.push({ attempt, status: response.status, message: "ok", tokenSource: credential.source });
+
+  return { ok: true, status: response.status, result: parsed.result, attempts };
+}
+
+async function executeNanoCorpTool<T>(tool: string, args: Record<string, unknown>, timeoutMs = CHECK_TIMEOUT_MS) {
+  const firstCredential = nanoCorpRuntimeCredential();
+
+  if (!firstCredential) {
+    return {
+      ok: false,
+      error: "NANOCORP_TOKEN is not configured",
+      message: "NANOCORP_TOKEN is not configured",
+      attempts: [],
+    } as NanoCorpToolFailure;
+  }
+
+  const firstResult = await executeNanoCorpToolAttempt<T>(tool, args, timeoutMs, firstCredential, 1);
+
+  if (firstResult.ok || !isAuthStatus(firstResult.status)) {
+    return firstResult;
+  }
+
+  console.warn(`[citeable] NanoCorp ${tool} auth failed; refreshing runtime token once`, {
+    status: firstResult.status,
+    message: firstResult.message,
+  });
+
+  const refreshedCredential = nanoCorpRuntimeCredential(firstCredential.token);
+
+  if (!refreshedCredential || refreshedCredential.token === firstCredential.token) {
+    console.error(`[citeable] NanoCorp ${tool} auth retry skipped; no fresh runtime token available`, {
+      status: firstResult.status,
+      message: firstResult.message,
+    });
+    return firstResult;
+  }
+
+  const retryResult = await executeNanoCorpToolAttempt<T>(tool, args, timeoutMs, refreshedCredential, 2);
+  const attempts = [...firstResult.attempts, ...retryResult.attempts];
+
+  if (retryResult.ok) {
+    console.info(`[citeable] NanoCorp ${tool} retry succeeded after runtime token refresh`, {
+      status: retryResult.status,
+    });
+    return { ...retryResult, attempts };
+  }
+
+  console.error(`[citeable] NanoCorp ${tool} retry failed after runtime token refresh`, {
+    status: retryResult.status,
+    message: retryResult.message,
+  });
+
+  return { ...retryResult, attempts };
 }
 
 function searchResultDomain(value: unknown) {
@@ -2100,10 +2250,10 @@ async function sendNativeEmail(to: string, subject: string, body: string) {
     const result = await executeNanoCorpTool<{ id?: string; status?: string }>("send_email", { to, subject, body }, ANSWER_TIMEOUT_MS);
 
     if (!result.ok) {
-      return { sent: false, error: result.error };
+      return { sent: false, error: result.error, status: result.status, attempts: result.attempts };
     }
 
-    return { sent: true, id: result.result?.id, status: result.result?.status };
+    return { sent: true, id: result.result?.id, status: result.status, providerStatus: result.result?.status, attempts: result.attempts };
   } catch (error) {
     return { sent: false, error: error instanceof Error ? error.message : "Native send_email failed" };
   }
@@ -2121,7 +2271,17 @@ export async function sendAuditEmail(email: string, brandName: string, report: A
   );
 
   if (claim.rowCount === 0) {
-    return { sent: true, error: undefined };
+    const existing = await pool.query<{ raw_results: AuditRawResults | null }>(`SELECT raw_results FROM audits WHERE id = $1`, [report.audit_id]);
+    const rawResults = existing.rows[0]?.raw_results;
+
+    if (rawResults?.emailSent === true) {
+      return { sent: true, error: undefined };
+    }
+
+    return {
+      sent: false,
+      error: rawResults?.emailError ?? "Audit email send already claimed or in progress; no HTTP send attempted.",
+    };
   }
 
   const answerEngineName = report.answerEngine?.engine ?? report.buyerIntentPrompts.flatMap((prompt) => prompt.surfaces).find((surface) => surface.kind === "ai_engine")?.engine;
