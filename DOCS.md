@@ -709,3 +709,20 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - Live smoke after commit `8c788aa` completed the Allbirds audit and `emailSent=true`, but outbound logs showed two audit emails for the same submitted audit.
 - Added an idempotent `emailSendStartedAt` claim in `sendAuditEmail()` so only one process can call native `send_email` for a given audit id.
 - Marked capture-created audits as `running` immediately and updated `/api/run-audit` to avoid scheduling a duplicate worker when a capture worker is already running.
+
+## 2026-07-07 — Agentic homepage copy rewrite
+
+### Findings
+- Root `AGENTS.md` requires reading local Next.js docs before code changes; `node_modules` was absent initially, so `npm install` was run once.
+- Relevant Next.js 16.2.10 docs read: `node_modules/next/dist/docs/01-app/01-getting-started/03-layouts-and-pages.md` and `05-server-and-client-components.md`.
+- Homepage copy lives primarily in `src/app/page.tsx`; metadata copy lives in `src/app/layout.tsx`.
+- The first-screen audit form already has the required 3 fields: business name, website, and email.
+
+### Changes made
+- Rewrote the hero to the requested agentic angle: customers ask AI instead of Google, and the key question is whether AI recommends the business.
+- Replaced visible landing-page `show up` / `search` framing with `AI recommends`, `AI picks`, and `AI chooses` language.
+- Updated the below-fold proof band, `How it works`, Agent treatment, pricing, FAQ, footer, and metadata to match the simple non-technical AI recommendation angle.
+- Kept the free 30-second audit/no-card hook and preserved the existing 3-field hero form and checkout URLs.
+
+### Validation
+- Pending in this task: run `npm run build`, commit, push, and perform the single 90-second live verification with a hero screenshot.

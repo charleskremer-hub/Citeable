@@ -80,10 +80,10 @@ export default function Home() {
                 className="max-w-3xl text-[clamp(1.9rem,8vw,4.65rem)] leading-[0.98] tracking-[-0.045em] text-[#F0F0EC]"
                 style={{ fontFamily: "var(--font-display)" }}
               >
-                When customers ask for a business like yours, do you show up?
+                Your customers ask AI now - not Google. When AI recommends a business like yours, is it you?
               </h1>
               <p className="mt-2.5 max-w-2xl text-[0.95rem] leading-[1.32] text-[#B8B8C4] sm:mt-5 sm:text-xl sm:leading-[1.55]">
-                Citeable works out the real buying questions for your business, checks whether you are recommended, and shows exactly what to fix. 30-second audit, no card needed.
+                Citeable checks whether ChatGPT, Gemini and co actually recommend you, names who they pick instead, and hands you the fixes. Free 30-second check - no card.
               </p>
             </div>
 
@@ -143,7 +143,7 @@ export default function Home() {
                     {status === "loading" ? "Running…" : "Run my free audit"}
                   </button>
                   {errorMsg && <p className="m-0 text-sm text-[#FF6B6B]">{errorMsg}</p>}
-                  <p className="m-0 text-xs leading-5 text-[#6F6F80]">No card needed. Your score and 3 fixes arrive by email.</p>
+                  <p className="m-0 text-xs leading-5 text-[#6F6F80]">No card needed. See if AI chooses you, plus 3 fixes by email.</p>
                 </form>
               )}
             </div>
@@ -152,21 +152,21 @@ export default function Home() {
 
         <section className="mx-auto max-w-5xl px-5 py-6 sm:px-6">
           <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] px-5 py-5 text-center text-sm leading-6 text-[#A7A7B4] sm:text-base">
-            Enter only your business name and website. Citeable finds the questions buyers actually ask and runs the check automatically.
+            Enter your business name, website, and email. Citeable checks if AI picks you when customers ask for a business like yours.
           </div>
         </section>
 
         <section className="mx-auto max-w-5xl border-t border-white/[0.06] px-5 py-14 sm:px-6 sm:py-20">
           <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">How it works</p>
           <h2 className="max-w-2xl text-[clamp(2rem,5vw,3rem)] leading-[1.02] tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-            A simple check for small businesses.
+            See who AI chooses, and what to fix.
           </h2>
 
           <div className="mt-8 grid gap-1 overflow-hidden rounded-2xl bg-white/[0.07] sm:grid-cols-3">
             {[
-              "1. Enter your brand name and website",
-              "2. We find 10–20 buying questions automatically",
-              "3. We run the audit and email 3 simple fixes",
+              "1. Tell us your business name and website",
+              "2. We ask AI like a real customer would",
+              "3. You get who was picked and 3 fixes by email",
             ].map((step) => (
               <div key={step} className="bg-[#111116] p-6 text-lg font-semibold leading-7 tracking-[-0.02em] text-[#F0F0EC]">
                 {step}
@@ -180,10 +180,10 @@ export default function Home() {
             <div>
               <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">Agent €49 treatment</p>
               <h2 className="max-w-2xl text-[clamp(2rem,5vw,3rem)] leading-[1.02] tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                Not just a diagnosis. The actual fixes, every week.
+                Help AI choose you more often.
               </h2>
               <p className="mt-5 max-w-xl text-base leading-7 text-[#A7A7B4] sm:text-lg">
-                A review tells you what is missing. Agent turns that into 1–3 concrete fixes you can paste into your business profiles, FAQ, and website.
+                Agent turns the audit into 1–3 concrete fixes you can paste into your business profiles, FAQ, and website.
               </p>
             </div>
 
@@ -214,7 +214,7 @@ export default function Home() {
                 <div className="rounded-2xl border border-white/[0.08] bg-[#111116] p-5">
                   <p className="m-0 text-lg font-bold tracking-[-0.02em] text-[#F0F0EC]">Done to 80%. You validate and paste.</p>
                   <p className="mt-2 text-sm leading-6 text-[#A7A7B4]">
-                    Each weekly batch is drafted from native web_search checks and direct site checks, then written in plain language so the owner only reviews the facts and publishes.
+                    Each weekly batch starts with fresh AI recommendation checks, then gets written in plain language so the owner only reviews the facts and publishes.
                   </p>
                 </div>
               </div>
@@ -225,7 +225,7 @@ export default function Home() {
         <section className="mx-auto max-w-5xl border-t border-white/[0.06] px-5 py-14 sm:px-6 sm:py-20">
           <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">Pricing</p>
           <h2 className="max-w-2xl text-[clamp(2rem,5vw,3rem)] leading-[1.02] tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-            Start free. Watch one number. Get the work done for you when you are ready.
+            Start free. See if AI picks you. Get the work done for you when you are ready.
           </h2>
 
           <div className="mt-8 grid gap-4 lg:grid-cols-3">
@@ -237,7 +237,7 @@ export default function Home() {
                 badge: "Lead magnet",
                 features: [
                   "10–20 buying questions found for you",
-                  "Who appears in buyer searches",
+                  "Who AI picks instead of you",
                   "3 simple actions to do this week",
                 ],
                 cta: "Run my free audit",
@@ -252,7 +252,7 @@ export default function Home() {
                 note: "For owners who want one number to watch.",
                 badge: "Start here",
                 features: [
-                  "Monthly recommendation re-check",
+                  "Monthly AI recommendation re-check",
                   "Email alert when your score changes",
                   "Email alert when a named competitor changes",
                 ],
@@ -270,7 +270,7 @@ export default function Home() {
                 features: [
                   "1–3 fixes drafted for you every week",
                   "FAQ, Google Business, website, and page copy",
-                  "Paid-engine checks before each batch",
+                  "Fresh AI checks before each batch",
                   "Includes Monitor re-checks",
                 ],
                 cta: "Start Agent",
@@ -310,7 +310,7 @@ export default function Home() {
             <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-[#777786]">Plain English FAQ</p>
             <h2 className="mb-3 text-xl font-bold tracking-[-0.02em]">Do I need to configure anything?</h2>
             <p className="m-0 text-sm leading-6 text-[#A7A7B4]">
-              No. Enter your business name, website, and email. Citeable chooses the buying questions, runs the audit, and explains the fixes in plain English.
+              No. Enter your business name, website, and email. Citeable checks who AI recommends and explains the fixes in plain English.
             </p>
           </div>
         </section>
@@ -319,7 +319,7 @@ export default function Home() {
       <footer className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] px-5 py-8 sm:px-6">
         <div>
           <div className="text-lg tracking-[-0.02em]" style={{ fontFamily: "var(--font-display)" }}>Citeable</div>
-          <p className="m-0 text-sm text-[#686879]">See whether customers can find and choose your business.</p>
+          <p className="m-0 text-sm text-[#686879]">See whether AI recommends and chooses your business.</p>
         </div>
         <p className="m-0 text-sm text-[#444454]">© {new Date().getFullYear()} Citeable. All rights reserved.</p>
       </footer>

@@ -14,9 +14,9 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Citeable — Free Business Recommendation Audit",
+  title: "Citeable — Free AI Recommendation Audit",
   description:
-    "Enter your business name and website, then get an automatic recommendation score and 3 simple fixes by email.",
+    "Enter your business name and website, then see whether AI recommends you and get 3 simple fixes by email.",
 };
 
 export default function RootLayout({
