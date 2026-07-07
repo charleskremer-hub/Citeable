@@ -9,7 +9,7 @@ const FREE_AUDIT_CACHE_HOURS = 24;
 const FREE_AUDIT_EMAIL_DAILY_LIMIT = 3;
 const FREE_AUDIT_DOMAIN_DAILY_LIMIT = 10;
 const DEFAULT_GEMINI_MODEL = "gemini-flash-latest";
-const COMPETITOR_EXTRACTION_VERSION = "gemini_json_v2";
+const COMPETITOR_EXTRACTION_VERSION = "gemini_recommended_brands_v3";
 
 export type AuditTier = "free" | "agent_49eur";
 
@@ -470,10 +470,7 @@ type GeminiGenerateContentResponse = {
 };
 
 type GeminiStructuredBrandResponse = {
-  answer?: unknown;
-  mentioned_brand?: unknown;
-  brandMentioned?: unknown;
-  brands?: unknown;
+  recommended_brands?: unknown;
 };
 
 function currentGeminiModel() {
@@ -553,25 +550,26 @@ function brandNameFromUnknown(value: unknown) {
   return "";
 }
 
+function extractRecommendedBrandsFromLooseJson(text: string) {
+  const match = text.match(/"recommended_brands"\s*:\s*\[([\s\S]*?)(?:\]|$)/i);
+
+  if (!match) return [];
+
+  return Array.from(match[1].matchAll(/"([^"\n]{2,80})"/g), (brandMatch) => brandMatch[1]);
+}
+
 function parseGeminiStructuredBrandResponse(text: string): AnswerEngineAnswer {
   const parsed = safeJsonParse<GeminiStructuredBrandResponse | null>(jsonObjectFromText(text), null);
+  const brands = parsed && typeof parsed === "object" && Array.isArray(parsed.recommended_brands)
+    ? parsed.recommended_brands.map(brandNameFromUnknown)
+    : extractRecommendedBrandsFromLooseJson(text);
+  const recommendedBrands = uniqueInOrder(brands.map(normalizeCompetitorName).filter(Boolean), 12);
 
-  if (!parsed || typeof parsed !== "object") {
-    return { answer: text, competitorBrands: [] };
-  }
-
-  const brands = Array.isArray(parsed.brands) ? parsed.brands.map(brandNameFromUnknown) : [];
-  const answer = stringFromUnknown(parsed.answer) || text;
-  const mentionedBrand = typeof parsed.mentioned_brand === "boolean"
-    ? parsed.mentioned_brand
-    : typeof parsed.brandMentioned === "boolean"
-      ? parsed.brandMentioned
-      : undefined;
+  if (!recommendedBrands.length) return { answer: text, competitorBrands: [] };
 
   return {
-    answer,
-    competitorBrands: brands,
-    brandMentioned: mentionedBrand,
+    answer: `recommended_brands: ${recommendedBrands.join(", ")}`,
+    competitorBrands: recommendedBrands,
   };
 }
 
@@ -587,17 +585,18 @@ function createGeminiProvider(): AnswerEngineProvider {
       if (!apiKey) throw new Error(GEMINI_UNAVAILABLE);
 
       const prompt = [
-        "You are answering a real buyer-intent question for a visibility audit.",
+        "You are answering a real buyer-intent recommendation question for a visibility audit.",
         `Buyer question: ${question}`,
         `Audited brand: ${context.brandName}`,
         `Audited domain: ${context.domain}`,
         "Return ONLY valid JSON with this exact shape:",
-        '{"answer":"short honest recommendation in the buyer question language","mentioned_brand":false,"brands":["On","Hoka","Veja"]}',
-        "Rules for brands:",
-        `- brands must contain only real competing brand/company/product names you cite or recommend for this question, excluding ${context.brandName} and ${context.domain}.`,
-        "- Do not include generic words, categories, adjectives, personas, locations, headings, or prose tokens.",
-        "- If you cite no competitor brands, return an empty brands array.",
-        `- mentioned_brand is true only if your answer explicitly recommends or names ${context.brandName} or ${context.domain}.`,
+        '{"recommended_brands":["On","Hoka","Veja"]}',
+        "Rules:",
+        "- recommended_brands must contain only real brand/company/product names that answer the buyer question.",
+        `- Include ${context.brandName} only if you would genuinely recommend or cite it for this question.`,
+        `- Do not include ${context.domain} unless it is itself the brand name.`,
+        "- Do not include generic words, categories, adjectives, personas, locations, headings, explanations, URLs, or prose tokens.",
+        "- If you cannot name any recommended brands, return an empty recommended_brands array.",
       ].join("\n");
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
       let lastError = GEMINI_UNAVAILABLE;
@@ -786,9 +785,9 @@ export function buildPlainActions(
       basedOn: testedQuestions,
     },
     {
-      title: "Get listed where buyers already look",
-      doThis: `Create or refresh short profiles for ${category}. Say who you help, what you sell, and why someone should choose you.`,
-      where: "Google Business Profile, review sites, Reddit or community threads, YouTube, local directories, and relevant industry lists.",
+      title: "Earn third-party mentions Gemini can trust",
+      doThis: `Create or refresh short profiles for ${category}. Prioritise one directory/listing, one Reddit or Quora-style answer, and one relevant listicle or review page.`,
+      where: "Directory/profile pages, Reddit or Quora/community threads, and relevant industry listicles.",
     },
     {
       title: "Ask 3 happy customers for a review this week",
@@ -991,6 +990,7 @@ function extractHomepageSignals(html: string) {
 function categoryFromHomepageText(text: string, domain: string) {
   const lower = text.toLowerCase();
   const phraseRules: Array<[RegExp, string]> = [
+    [/\bosprey\b|backpacks?|rucksacks?|daypacks?|packs?\b|travel packs?|hiking packs?|outdoor gear|hydration packs?|luggage|packfinder|trekking/, "backpacks and outdoor gear"],
     [/\ballbirds\b|sustainable sneakers?|eco-?friendly shoes?|wool shoes?|tree runners?|running shoes?|walking shoes?|sneakers?|footwear|chaussures?/, "DTC footwear brand"],
     [/apparel|clothing|fashion|garments?|menswear|womenswear/, "fashion brand"],
     [/skin care|skincare|beauty|cosmetics/, "beauty brand"],
@@ -1028,6 +1028,10 @@ function categoryFromHomepageText(text: string, domain: string) {
   }
 
   return `${displayNameFromDomain(domain)} alternatives`;
+}
+
+function isGenericCategory(category: string) {
+  return /^(general business|business|company|website|online store|ecommerce platform|software platform|developer platform|unknown|your type of business)$/i.test(category.trim());
 }
 
 function categoryLooksLikeTechStack(category: string, homepageText: string) {
@@ -1113,6 +1117,7 @@ function localizedCategoryTerm(categoryTerm: string, language: "en" | "fr") {
 
 async function inferCategory(brandName: string, websiteUrl: string, fallbackCheck: AuditCheckResult) {
   const domain = domainFromWebsite(websiteUrl);
+  const fallbackText = `${fallbackCheck.detail} ${fallbackCheck.evidence ?? ""}`;
 
   try {
     const response = await withTimeout(normalizeWebsiteUrl(websiteUrl));
@@ -1123,13 +1128,23 @@ async function inferCategory(brandName: string, websiteUrl: string, fallbackChec
       const fallbackCategory = categoryFromHomepageText(signals, domain);
       const category = categoryLooksLikeTechStack(fallbackCategory, signals) ? "DTC footwear brand" : fallbackCategory;
 
-      return { category, homepageText: signals };
+      if (!isGenericCategory(category)) return { category, homepageText: signals };
+
+      const secondPassCategory = categoryFromHomepageText(`${brandName} ${domain} ${signals} ${fallbackText}`, domain);
+      return {
+        category: isGenericCategory(secondPassCategory) ? `${displayNameFromDomain(domain)} category` : secondPassCategory,
+        homepageText: signals,
+      };
     }
   } catch (error) {
     console.log(`[citeable] category homepage fetch failed: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 
-  return { category: categoryFromWebsite(fallbackCheck), homepageText: `${fallbackCheck.detail} ${fallbackCheck.evidence ?? ""}` };
+  const fallbackCategory = categoryFromHomepageText(`${brandName} ${domain} ${fallbackText}`, domain);
+  return {
+    category: isGenericCategory(fallbackCategory) ? `${displayNameFromDomain(domain)} category` : fallbackCategory,
+    homepageText: fallbackText,
+  };
 }
 
 function promptCategoryTerms(category: string) {
@@ -1140,6 +1155,14 @@ function promptCategoryTerms(category: string) {
       categoryTerm: lower.includes("sustainable") || lower.includes("eco") ? "sustainable sneakers" : "DTC shoe brand",
       useCase: "comfortable everyday wear",
       leader: "Nike",
+    };
+  }
+
+  if (/backpack|rucksack|outdoor|hiking|travel pack|daypack|luggage/.test(lower)) {
+    return {
+      categoryTerm: "backpacks and outdoor gear",
+      useCase: "hiking, travel, and everyday carry",
+      leader: "Patagonia",
     };
   }
 
@@ -1214,6 +1237,23 @@ function generateBuyerIntentPrompts(brandName: string, websiteUrl: string, categ
     ], 12);
   }
 
+  if (/backpack|rucksack|outdoor|hiking|travel pack|daypack|luggage/i.test(category)) {
+    return uniqueInOrder([
+      "What are the best hiking backpacks?",
+      "Best travel backpacks for carry-on?",
+      `Is ${brandName} a good backpack brand?`,
+      `Is ${brandName} worth it for hiking packs?`,
+      `${brandName} backpack reviews`,
+      "Which outdoor backpack brands are worth it?",
+      "Best daypacks for hiking and travel?",
+      "Best lightweight backpacks for trekking?",
+      "backpack alternatives to Patagonia",
+      "compare outdoor backpack brands",
+      "best hydration packs for hiking",
+      "best durable luggage for adventure travel",
+    ], 12);
+  }
+
   if (language === "fr") {
     return uniqueInOrder([
       `meilleur ${buyerCategory} à ${location}`,
@@ -1262,10 +1302,12 @@ const KNOWN_COMPANY_NAMES = [
 
 function normalizeCompetitorName(name: string) {
   return name
+    .replace(/REI\s+Co[- ]?op/gi, "REI Co-op")
     .replace(/&trade;?|™/gi, " Trade")
     .replace(/&amp;/gi, "&")
     .replace(/&#39;|&apos;/gi, "'")
     .replace(COMPANY_SUFFIXES, "")
+    .replace(/^REI\s+-op$/i, "REI Co-op")
     .replace(/^[-–—•\d.\s]+/, "")
     .replace(/[,:;.!?)\]}]+$/, "")
     .replace(/^[({\[]+/, "")
@@ -1288,6 +1330,13 @@ function looksLikeCompetitorName(name: string, brandName: string, domain: string
   if (/^[A-Z]{2,6}$/.test(normalized) && !/[aeiou]/i.test(normalized)) return false;
 
   return /^[A-Z][A-Za-z0-9&.+'-]*(?:\s+[A-Z][A-Za-z0-9&.+'-]*){0,3}$/.test(normalized);
+}
+
+function isAuditedBrandName(name: string, brandName: string, domain: string) {
+  const normalized = normalizeCompetitorName(name).toLowerCase();
+  const brandLower = brandName.toLowerCase();
+
+  return normalized === brandLower || domainVariants(domain).some((variant) => normalized === variant || normalized.includes(variant));
 }
 
 function extractCompetitorsFromText(text: string, brandName: string, domain: string, prompt = "") {
@@ -1326,11 +1375,12 @@ function extractCompetitorsFromText(text: string, brandName: string, domain: str
 }
 
 function filterStructuredCompetitorBrands(brands: string[], brandName: string, domain: string, prompt = "") {
+  void prompt;
+
   return uniqueInOrder(
     brands
       .map(normalizeCompetitorName)
-      .filter((candidate) => looksLikeCompetitorName(candidate, brandName, domain))
-      .filter((candidate) => !prompt.toLowerCase().includes(candidate.toLowerCase())),
+      .filter((candidate) => looksLikeCompetitorName(candidate, brandName, domain)),
     10
   );
 }
@@ -1747,7 +1797,7 @@ function categoryFromWebsite(websiteHtmlCheck: AuditCheckResult) {
   if (evidence.includes("crypto") || evidence.includes("blockchain")) return "crypto/blockchain";
   if (evidence.includes("bank") || evidence.includes("finance")) return "financial services";
   if (evidence.includes("software") || evidence.includes("api") || evidence.includes("saas")) return "software";
-  return "general business";
+  return "website category";
 }
 
 function buyerIntentSummaryText(report: Pick<AuditReport, "buyerIntentPrompts" | "competitors">) {

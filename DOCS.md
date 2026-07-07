@@ -849,3 +849,28 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - Clean competitors stored in `competitors_found`: `Veja`, `Cariuma`, `Hylo Athletics`, `On`.
 - Per-question Gemini competitors: sustainable sneakers => `Veja`, `Cariuma`; eco-friendly running shoes => `Veja`, `Hylo Athletics`, `On`; sustainable shoe brand => `Veja`, `Cariuma`.
 - Outbound email verification: NanoCorp email ID `6eb4eb97-5712-418f-aae3-b4ad26d726d1`, subject `Your Citeable visibility audit for Allbirds`, sent at `2026-07-07T12:58:41.243700`.
+
+## 2026-07-07 — 49EUR diagnostic refonte verification
+
+### Findings
+- The audit engine lives in `src/lib/audit-engine.ts`; report rendering lives in `src/app/audit/[id]/page.tsx`; public offer copy lives in `src/app/page.tsx`.
+- Gemini is the only answer engine currently wired by `answerEngineForTier`; public copy should say Gemini rather than promising ChatGPT/multi-engine coverage.
+- Category inference previously could fall back to broad categories; the latest logic uses homepage signals and re-runs inference when a generic category appears.
+- Verification audits were run locally with `audit_tier: agent_49eur` so all 12 Gemini prompts were checked, bypassing free quota/cache behavior.
+
+### Changes made
+- Updated Gemini prompt contract to request per-question JSON in the exact shape `{ "recommended_brands": [...] }`.
+- Detection now treats the audited brand as mentioned only when it appears in `recommended_brands`; competitors are the remaining recommended brands after stoplist/brand/domain filtering.
+- Hardened JSON parsing for pretty or partially truncated Gemini JSON and fixed `REI Co-op` normalization.
+- Added Osprey-specific category inference for `backpacks and outdoor gear`; Allbirds remains `DTC footwear brand` from footwear/sneaker signals.
+- Added an audit report proof block showing a concrete FAQ/page corrective draft based on a real Gemini competitor gap, plus `Corriger pour moi — 49€` CTA wired to `https://checkout.nanocorp.so/c/fzVo0YiuyHM5GStaVrpT`.
+- Added third-party mentions to the action plan: directory/listing, Reddit or Quora-style answer, and relevant listicle/review page.
+- Updated homepage copy to avoid multi-engine promises and reposition `llms.txt` as a minor bonus only.
+
+### Verification
+- `npm install` restored local dependencies; `npm run build` passed after changes.
+- Osprey audit `9e2061d9-a688-4475-84f3-da4b716ac2a1`: category `backpacks and outdoor gear`, 12 Gemini prompts checked, 12/12 brand mentions, competitors included Gregory, Deuter, REI Co-op, Patagonia, Arc'teryx, and others.
+- Allbirds audit `204c784b-15b2-4150-bb7e-1bbdedca7496`: category `DTC footwear brand`, 12 Gemini prompts checked, 12/12 brand mentions, competitors included Veja, Cariuma, Rothy's, On, Hoka, and others.
+- Report capture artifacts committed at `artifacts/audit-captures/osprey-report-2026-07-07.png` and `artifacts/audit-captures/allbirds-report-2026-07-07.png`.
+- Text proof captured from Osprey report: `Écart détecté : Gemini cite aussi Gregory, Deuter, REI Co-op pour “What are the best hiking backpacks?”`; generated FAQ/page draft follows directly below it.
+- Text proof captured from Allbirds report: `Écart détecté : Gemini cite aussi Veja, Cariuma, Rothy's pour “What are the best sustainable sneakers?”`; generated FAQ/page draft follows directly below it.

@@ -100,6 +100,31 @@ function fixSentence(category: string | undefined, hasCompetitors: boolean) {
   return `Voici quoi corriger : rends ton site plus clair sur ${business}, tes preuves et les raisons de te choisir.`;
 }
 
+function treatmentProof(brandName: string, category: string | undefined, questions: BuyerIntentPromptResult[], competitors: string[]) {
+  const question = questions.find((item) => item.available && !item.brandMentioned)
+    ?? questions.find((item) => item.available && item.competitors.length > 0)
+    ?? questions.find((item) => item.available)
+    ?? questions[0];
+
+  if (!question) return null;
+
+  const business = category && category !== "your type of business" ? category : "ton activité";
+  const citedCompetitors = uniqueNames([...question.competitors, ...competitors]).slice(0, 3);
+  const competitorText = citedCompetitors.length
+    ? `Gemini cite déjà ${citedCompetitors.join(", ")} sur ce sujet : la page doit expliquer pourquoi choisir ${brandName}, sans les attaquer.`
+    : `Aucun concurrent clair n'est cité sur ce sujet : la page doit rendre ${brandName} plus facile à recommander.`;
+
+  return {
+    gap: question.brandMentioned
+      ? citedCompetitors.length
+        ? `Écart détecté : Gemini cite aussi ${citedCompetitors.join(", ")} pour “${question.prompt}”.`
+        : `Question vérifiée : “${question.prompt}”.`
+      : `Manque détecté : Gemini ne cite pas ${brandName} pour “${question.prompt}”.`,
+    title: `FAQ/page à créer : “${question.prompt}”`,
+    draft: `Réponse brouillon à publier après validation : “Si vous comparez ${business}, commencez par votre cas d'usage, les preuves disponibles et l'étape suivante. ${brandName} doit présenter ici ses cas d'usage, ses avis ou preuves vérifiables, et une réponse directe à cette question. ${competitorText}”`,
+  };
+}
+
 function StatusPill({ failed, complete }: { failed: boolean; complete: boolean }) {
   const label = failed ? "Échec" : complete ? "Terminé" : "En cours";
   const className = failed
@@ -139,6 +164,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const topCompetitor = rankedCompetitors[0]?.name ?? competitors[0];
   const score = audit.score ?? 0;
   const color = scoreColor(score);
+  const proof = complete && !failed ? treatmentProof(audit.brand_name, audit.raw_results?.category, questions, competitors) : null;
   const phrases = [
     questionCount > 0
       ? isGeminiReport
@@ -166,8 +192,8 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
           <Link href="/" className="text-xl text-[#F0F0EC] no-underline" style={{ fontFamily: "var(--font-display)" }}>
             Citeable
           </Link>
-          <a href={DONE_FOR_YOU_CHECKOUT_URL} className="text-sm font-black text-[#CAFF3C] no-underline">
-            Corriger pour moi →
+          <a href={DONE_FOR_YOU_CHECKOUT_URL} className="text-sm font-black text-[#CAFF3C] no-underline" data-ph-capture-attribute-plan="agent_49eur" data-ph-capture-attribute-source="audit_report_nav">
+            Corriger pour moi — 49€ →
           </a>
         </nav>
 
@@ -269,6 +295,23 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                   {isGeminiReport ? "Gemini indisponible, réessaie." : "Native web_search unavailable; this report uses only checks that completed."}
                 </div>
               )}
+            </section>
+          ) : null}
+
+          {proof ? (
+            <section className="rounded-[1.5rem] border border-[#CAFF3C]/20 bg-[#CAFF3C]/[0.055] p-5 sm:p-6">
+              <p className="m-0 mb-3 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">Traitement 49€ — exemple concret</p>
+              <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
+                Un correctif généré depuis un signal réel
+              </h2>
+              <div className="mt-4 grid gap-3">
+                <p className="m-0 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm font-black leading-6 text-[#F0F0EC]">{proof.gap}</p>
+                <p className="m-0 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm font-black leading-6 text-[#CAFF3C]">{proof.title}</p>
+                <p className="m-0 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm font-bold leading-6 text-[#D6D6DF]">{proof.draft}</p>
+              </div>
+              <a href={DONE_FOR_YOU_CHECKOUT_URL} className="mt-5 inline-flex rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110">
+                Corriger pour moi — 49€ →
+              </a>
             </section>
           ) : null}
         </div>
