@@ -9,7 +9,9 @@ import AuditPoller from "./AuditPoller";
 export const dynamic = "force-dynamic";
 
 const DONE_FOR_YOU_CHECKOUT_URL = "https://checkout.nanocorp.so/c/fzVo0YiuyHM5GStaVrpT?utm_source=report";
+const REPORT_TEASER_CHECKOUT_URL = "https://checkout.nanocorp.so/c/fzVo0YiuyHM5GStaVrpT?utm_source=report_teaser";
 const MONITOR_CHECKOUT_URL = "https://checkout.nanocorp.so/c/SQdBFx6vxsKgDB0CUVXV?utm_source=report";
+const REPORT_TEASER_CTA = "Debloquer mes correctifs - 49EUR/mois";
 
 type AuditRow = {
   id: string;
@@ -154,6 +156,47 @@ function treatmentProof(brandName: string, category: string | undefined, questio
   };
 }
 
+function firstRealGapQuestion(questions: BuyerIntentPromptResult[]) {
+  return questions.find((question) => question.available && (!question.brandMentioned || question.competitors.length > 0));
+}
+
+function gapHook(brandName: string, question: BuyerIntentPromptResult, engine: string, locale: Locale) {
+  const citedCompetitors = uniqueNames(question.competitors).slice(0, 3);
+
+  if (!question.brandMentioned) {
+    return locale === "fr"
+      ? `Gap réel : ${engine} ne cite pas ${brandName} pour « ${question.prompt} ».`
+      : `Real gap: ${engine} does not mention ${brandName} for “${question.prompt}”.`;
+  }
+
+  if (citedCompetitors.length) {
+    return locale === "fr"
+      ? `À renforcer : ${engine} cite aussi ${citedCompetitors.join(", ")} pour « ${question.prompt} ».`
+      : `Needs reinforcement: ${engine} also cites ${citedCompetitors.join(", ")} for “${question.prompt}”.`;
+  }
+
+  return locale === "fr"
+    ? `Signal vérifié sur « ${question.prompt} ».`
+    : `Verified signal for “${question.prompt}”.`;
+}
+
+function priorityFixTeaser(brandName: string, questions: BuyerIntentPromptResult[], actions: PlainAction[], engine: string, locale: Locale) {
+  const gapQuestion = firstRealGapQuestion(questions);
+  const priorityAction = actions[0];
+
+  if (!gapQuestion || !priorityAction?.basedOn?.length) return null;
+
+  return {
+    title: priorityAction.title,
+    hook: gapHook(brandName, gapQuestion, engine, locale),
+    detailLines: [
+      priorityAction.doThis,
+      locale === "fr" ? `Où le publier : ${priorityAction.where}` : `Where to publish it: ${priorityAction.where}`,
+      locale === "fr" ? `Basé sur : ${priorityAction.basedOn.join(" · ")}` : `Based on: ${priorityAction.basedOn.join(" · ")}`,
+    ],
+  };
+}
+
 function StatusPill({ failed, complete, locale }: { failed: boolean; complete: boolean; locale: Locale }) {
   const copy = auditCopy[locale];
   const label = failed ? copy.status.failed : complete ? copy.status.complete : copy.status.running;
@@ -202,6 +245,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const color = scoreColor(score);
   const proof = complete && !failed && isAgentReport ? treatmentProof(audit.brand_name, audit.raw_results?.category, questions, competitors, answerEngineName, locale) : null;
   const monitorActions = (audit.raw_results?.monitoring?.actions?.slice(0, 3) ?? []).map((action) => localizePlainAction(action, locale));
+  const freeFixTeaser = complete && !failed && isFreeReport ? priorityFixTeaser(audit.brand_name, questions, monitorActions, answerEngineName, locale) : null;
   const sentimentLine = brandSentimentText(audit.raw_results?.brandSentiment ?? { label: "not_enough_signal", justification: "not enough signal" }, locale);
   const phrases = [
     questionCount > 0
@@ -322,6 +366,47 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                   {copy.noBrands}
                 </div>
               )}
+            </section>
+          ) : null}
+
+          {freeFixTeaser ? (
+            <section className="relative overflow-hidden rounded-[1.5rem] border border-[#CAFF3C]/30 bg-[radial-gradient(circle_at_top_left,rgba(202,255,60,0.14),rgba(17,17,22,0.96)_42%)] p-5 shadow-2xl shadow-[#CAFF3C]/5 sm:p-6" data-testid="agent-fix-teaser">
+              <div className="flex items-start gap-4">
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-[#CAFF3C]/30 bg-[#CAFF3C]/10 text-xl" aria-hidden="true">
+                  🔒
+                </div>
+                <div>
+                  <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">
+                    {locale === "fr" ? "Teaser Agent · correctif réel" : "Agent teaser · real fix"}
+                  </p>
+                  <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
+                    {freeFixTeaser.title}
+                  </h2>
+                  <p className="m-0 mt-3 text-sm font-black leading-6 text-[#F0F0EC]">{freeFixTeaser.hook}</p>
+                </div>
+              </div>
+
+              <div className="relative mt-4 overflow-hidden rounded-2xl border border-white/[0.08] bg-black/30">
+                <div className="grid gap-3 p-4 text-sm font-bold leading-6 text-[#D6D6DF] blur-[5px] select-none" aria-hidden="true">
+                  {freeFixTeaser.detailLines.map((line) => (
+                    <p key={line} className="m-0 rounded-xl border border-white/[0.06] bg-white/[0.04] p-3">
+                      {line}
+                    </p>
+                  ))}
+                </div>
+                <div className="absolute inset-0 grid place-items-center bg-[#09090B]/42 px-4 text-center backdrop-blur-[2px]">
+                  <div className="rounded-2xl border border-[#CAFF3C]/25 bg-[#09090B]/85 px-4 py-3 shadow-2xl shadow-black/35">
+                    <p className="m-0 text-2xl" aria-hidden="true">🔒</p>
+                    <p className="m-0 mt-1 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">
+                      {locale === "fr" ? "Détail du correctif verrouillé" : "Fix details locked"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <a href={REPORT_TEASER_CHECKOUT_URL} className="mt-5 inline-flex w-full justify-center rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110 sm:w-auto" data-ph-capture-attribute-plan="agent_49eur" data-ph-capture-attribute-source="report_teaser">
+                {REPORT_TEASER_CTA}
+              </a>
             </section>
           ) : null}
 

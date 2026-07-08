@@ -1078,3 +1078,22 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - Real answer-engine proof: score `100`, engine `Gemini`, model `gemini-flash-latest`, `realLlmCall=true`, email sent `true`.
 - Sentiment line observed on the live report: `How AI talks about you: Positive - highly recommended as a pioneer in comfortable, carbon-neutral footwear made from natural materials.`.
 - Screenshot saved locally at `/tmp/allbirds-sentiment-report.png`.
+
+## 2026-07-08 — C2 free report blurred fix teaser exploration
+
+### Findings
+- Next.js 16.2.10 dependencies were not installed in the fresh worker checkout, so `npm install` was run once to access the required local docs under `node_modules/next/dist/docs/`.
+- Local Next.js App Router docs confirm `/audit/[id]/page.tsx` uses async `params` and `headers()` in a default Server Component, matching the existing implementation.
+- Free, Monitor, and Agent reports share persisted `raw_results.buyerIntentPrompts` and `raw_results.monitoring.actions` from `runAudit()` in `src/lib/audit-engine.ts`.
+- `buildPlainActions()` generates the first priority action from the actual available buyer-intent prompts via `basedOn`; no teaser should be rendered when no available prompt/gap exists.
+- The audit report already gates detailed questions to non-free reports, so the teaser belongs in the free-report section after competitors and before the Monitor secondary upsell.
+
+### Changes made
+- Added a free-report Agent teaser in `src/app/audit/[id]/page.tsx` that renders only when the completed free audit has a real buyer-intent gap: either the audited brand was not mentioned for an available prompt or competitors were cited alongside it.
+- The teaser uses the first persisted priority action from `raw_results.monitoring.actions`, preserving the visible action title and one gap-specific hook while blurring the detailed `doThis`, `where`, and `basedOn` content behind a lock overlay.
+- The teaser CTA text is `Debloquer mes correctifs - 49EUR/mois` and points to `https://checkout.nanocorp.so/c/fzVo0YiuyHM5GStaVrpT?utm_source=report_teaser`.
+- No fallback/fake teaser is rendered when no real gap/action can be derived from the audit data.
+
+### Validation
+- `npm run lint` passed with the same two pre-existing warnings in `src/lib/audit-engine.ts`: unused `isAuditedBrandName` and `categoryFromWebsite`.
+- `npm run build` passed on Next.js 16.2.10 / Turbopack.
