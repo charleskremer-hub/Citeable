@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ensureAuditSchema, pool } from "@/lib/db";
-import type { BuyerIntentPromptResult, PlainAction } from "@/lib/audit-engine";
+import { brandSentimentLine } from "@/lib/audit-engine";
+import type { BrandSentiment, BuyerIntentPromptResult, PlainAction } from "@/lib/audit-engine";
 import AuditPoller from "./AuditPoller";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +23,7 @@ type AuditRow = {
     category?: string;
     auditTier?: string;
     answerEngine?: { engine?: string; model?: string; realLlmCall?: boolean };
+    brandSentiment?: BrandSentiment;
     buyerIntentPrompts?: BuyerIntentPromptResult[];
     monitoring?: { actions?: PlainAction[] };
   } | null;
@@ -173,12 +175,14 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const color = scoreColor(score);
   const proof = complete && !failed && isAgentReport ? treatmentProof(audit.brand_name, audit.raw_results?.category, questions, competitors, answerEngineName) : null;
   const monitorActions = audit.raw_results?.monitoring?.actions?.slice(0, 3) ?? [];
+  const sentimentLine = brandSentimentLine(audit.raw_results?.brandSentiment ?? { label: "not_enough_signal", justification: "not enough signal" });
   const phrases = [
     questionCount > 0
       ? isAnswerEngineReport
         ? `${brandMentionCount > 0 ? `${answerEngineName} recommends you` : `${answerEngineName} does not mention you`} (${brandMentionCount}/${questionCount} questions).`
         : `You are cited ${brandMentionCount} times across ${questionCount} questions.`
       : "No buyer question could be checked yet.",
+    sentimentLine,
     topCompetitor
       ? `${topCompetitor} is showing up where you should be.`
       : "No competitor clearly appears in your place.",
@@ -186,7 +190,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
       ? fixSentence(audit.raw_results?.category, competitors.length > 0)
       : isMonitorReport
         ? "Monitor adds 3 priority actions to tackle this week."
-        : "Free diagnostic: score, Gemini recommendation status, and cited competitors.",
+        : "Free diagnostic: score, AI sentiment, Gemini recommendation status, and cited competitors.",
   ];
 
   return (
@@ -300,7 +304,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                 Want monthly tracking instead?
               </h2>
               <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#D6D6DF]">
-                The free report stops at your score, Gemini recommendation status, and cited competitors. Monitor adds 3 concrete priorities and monthly Gemini tracking. The €49 fix remains the fastest path if you want it handled for you.
+                The free report stops at your score, AI sentiment, Gemini recommendation status, and cited competitors. Monitor adds 3 concrete priorities and monthly Gemini tracking. The €49 fix remains the fastest path if you want it handled for you.
               </p>
               <a href={MONITOR_CHECKOUT_URL} className="mt-5 inline-flex rounded-xl border border-white/15 px-5 py-3 text-sm font-black text-[#D6D6DF] no-underline transition hover:border-[#CAFF3C]/40 hover:text-[#CAFF3C]" data-ph-capture-attribute-plan="monitor_9eur" data-ph-capture-attribute-source="free_audit_report_secondary">
                 Monitor monthly — €9 →

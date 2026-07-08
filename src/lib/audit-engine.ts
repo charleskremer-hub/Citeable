@@ -11,7 +11,7 @@ const FREE_AUDIT_EMAIL_DAILY_LIMIT = 3;
 const FREE_AUDIT_DOMAIN_DAILY_LIMIT = 10;
 const DEFAULT_GEMINI_MODEL = "gemini-flash-latest";
 const DEFAULT_OPENAI_MODEL = "gpt-4o-mini";
-const COMPETITOR_EXTRACTION_VERSION = "gemini_recommended_brands_v3";
+const COMPETITOR_EXTRACTION_VERSION = "gemini_recommended_brands_sentiment_v4";
 
 export type AuditTier = "free" | "monitor_9eur" | "agent_49eur";
 
@@ -31,6 +31,7 @@ export type BuyerIntentSurfaceResult = {
   brandMentioned: boolean;
   competitors: string[];
   rawAnswerSnippet: string;
+  brandSentiment?: BrandSentiment;
   kind?: "ai_engine" | "supplementary" | "locked";
   status?: "checked" | "not_connected" | "locked" | "failed";
   engine?: string;
@@ -75,6 +76,13 @@ export type PlainAction = {
   doThis: string;
   where: string;
   basedOn?: string[];
+};
+
+export type BrandSentimentLabel = "positive" | "neutral" | "negative" | "not_enough_signal";
+
+export type BrandSentiment = {
+  label: BrandSentimentLabel;
+  justification: string;
 };
 
 export type MonitoringSnapshot = {
@@ -128,6 +136,7 @@ export type AuditReport = {
   checks: AuditCheckResult[];
   monitoring: MonitoringSnapshot;
   auditTier: AuditTier;
+  brandSentiment: BrandSentiment;
   answerEngine?: {
     engine: string;
     model: string;
@@ -152,6 +161,7 @@ type AuditRawResults = {
   checks?: AuditCheckResult[];
   monitoring?: MonitoringSnapshot;
   auditTier?: AuditTier;
+  brandSentiment?: BrandSentiment;
   answerEngine?: {
     engine: string;
     model: string;
@@ -347,6 +357,7 @@ function reportFromRow(row: AuditRow): AuditReport {
       actions: buildPlainActions(buyerIntentPrompts, row.raw_results?.category ?? "your type of business", row.competitors_found ?? []),
     },
     auditTier,
+    brandSentiment: normalizeBrandSentiment(row.raw_results?.brandSentiment ?? bestBrandSentimentFromPrompts(buyerIntentPrompts)),
     answerEngine: row.raw_results?.answerEngine,
   };
 }
@@ -625,6 +636,7 @@ type AnswerEngineQuestionContext = {
 type AnswerEngineAnswer = {
   answer: string;
   competitorBrands: string[];
+  brandSentiment?: BrandSentiment;
   brandMentioned?: boolean;
   model?: string;
 };
@@ -652,6 +664,8 @@ type GeminiGenerateContentResponse = {
 
 type GeminiStructuredBrandResponse = {
   recommended_brands?: unknown;
+  audited_brand_sentiment?: unknown;
+  audited_brand_sentiment_reason?: unknown;
 };
 
 type OpenAIChatCompletionResponse = {
@@ -813,6 +827,58 @@ function brandNameFromUnknown(value: unknown) {
   return "";
 }
 
+function normalizeBrandSentimentLabel(value: unknown): BrandSentimentLabel {
+  const label = typeof value === "string" ? value.trim().toLowerCase().replace(/[\s-]+/g, "_") : "";
+
+  if (label === "positive" || label === "neutral" || label === "negative") return label;
+  return "not_enough_signal";
+}
+
+function cleanSentimentReason(value: unknown) {
+  return typeof value === "string" ? value.trim().replace(/\s+/g, " ").replace(/[.。]+$/u, "").slice(0, 180) : "";
+}
+
+function normalizeBrandSentiment(value: unknown): BrandSentiment {
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    const label = normalizeBrandSentimentLabel(record.label ?? record.sentiment ?? record.audited_brand_sentiment);
+    const justification = cleanSentimentReason(record.justification ?? record.reason ?? record.audited_brand_sentiment_reason);
+
+    if (label !== "not_enough_signal" && justification) return { label, justification };
+  }
+
+  return { label: "not_enough_signal", justification: "not enough signal" };
+}
+
+function sentimentFromStructuredResponse(parsed: GeminiStructuredBrandResponse | null): BrandSentiment {
+  if (!parsed || typeof parsed !== "object") return { label: "not_enough_signal", justification: "not enough signal" };
+
+  const label = normalizeBrandSentimentLabel(parsed.audited_brand_sentiment);
+  const justification = cleanSentimentReason(parsed.audited_brand_sentiment_reason);
+
+  if (label === "not_enough_signal" || !justification) return { label: "not_enough_signal", justification: "not enough signal" };
+  return { label, justification };
+}
+
+function bestBrandSentimentFromPrompts(prompts: BuyerIntentPromptResult[]): BrandSentiment {
+  const sentiment = prompts
+    .flatMap((prompt) => prompt.surfaces)
+    .filter((surface) => surface.kind === "ai_engine" && surface.status === "checked" && surface.realLlmCall === true)
+    .map((surface) => normalizeBrandSentiment(surface.brandSentiment))
+    .find((item) => item.label !== "not_enough_signal" && item.justification !== "not enough signal");
+
+  return sentiment ?? { label: "not_enough_signal", justification: "not enough signal" };
+}
+
+export function brandSentimentLine(sentiment: BrandSentiment) {
+  const normalized = normalizeBrandSentiment(sentiment);
+
+  if (normalized.label === "not_enough_signal") return "How AI talks about you: not enough signal";
+
+  const label = normalized.label.charAt(0).toUpperCase() + normalized.label.slice(1);
+  return `How AI talks about you: ${label} - ${normalized.justification}.`;
+}
+
 function extractRecommendedBrandsFromLooseJson(text: string) {
   const match = text.match(/"recommended_brands"\s*:\s*\[([\s\S]*?)(?:\]|$)/i);
 
@@ -827,12 +893,14 @@ function parseStructuredBrandResponse(text: string): AnswerEngineAnswer {
     ? parsed.recommended_brands.map(brandNameFromUnknown)
     : extractRecommendedBrandsFromLooseJson(text);
   const recommendedBrands = uniqueInOrder(brands.map(normalizeCompetitorName).filter(Boolean), 12);
+  const brandSentiment = sentimentFromStructuredResponse(parsed);
 
-  if (!recommendedBrands.length) return { answer: text, competitorBrands: [] };
+  if (!recommendedBrands.length) return { answer: text, competitorBrands: [], brandSentiment };
 
   return {
     answer: `recommended_brands: ${recommendedBrands.join(", ")}`,
     competitorBrands: recommendedBrands,
+    brandSentiment,
   };
 }
 
@@ -864,13 +932,16 @@ function createGeminiProvider(): AnswerEngineProvider {
         `Audited brand: ${context.brandName}`,
         `Audited domain: ${context.domain}`,
         "Return ONLY valid JSON with this exact shape:",
-        '{"recommended_brands":["On","Hoka","Veja"]}',
+        '{"recommended_brands":["On","Hoka","Veja"],"audited_brand_sentiment":"positive","audited_brand_sentiment_reason":"described as a trusted premium option"}',
         "Rules:",
         "- recommended_brands must contain only real brand/company/product names that answer the buyer question.",
         `- Include ${context.brandName} only if you would genuinely recommend or cite it for this question.`,
         `- Do not include ${context.domain} unless it is itself the brand name.`,
         "- Do not include generic words, categories, adjectives, personas, locations, headings, explanations, URLs, or prose tokens.",
         "- If you cannot name any recommended brands, return an empty recommended_brands array.",
+        `- audited_brand_sentiment must describe only how you are presenting ${context.brandName} in this answer: positive, neutral, negative, or not_enough_signal.`,
+        "- Use not_enough_signal if the audited brand is not clearly described in the answer.",
+        "- audited_brand_sentiment_reason must be one short, non-technical phrase in plain English, or exactly not enough signal.",
       ].join("\n");
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
       let lastError = GEMINI_UNAVAILABLE;
@@ -938,13 +1009,16 @@ function createOpenAIProvider(): AnswerEngineProvider {
         `Audited brand: ${context.brandName}`,
         `Audited domain: ${context.domain}`,
         "Return ONLY valid JSON with this exact shape:",
-        '{"recommended_brands":["On","Hoka","Veja"]}',
+        '{"recommended_brands":["On","Hoka","Veja"],"audited_brand_sentiment":"positive","audited_brand_sentiment_reason":"described as a trusted premium option"}',
         "Rules:",
         "- recommended_brands must contain only real brand/company/product names that answer the buyer question.",
         `- Include ${context.brandName} only if you would genuinely recommend or cite it for this question.`,
         `- Do not include ${context.domain} unless it is itself the brand name.`,
         "- Do not include generic words, categories, adjectives, personas, locations, headings, explanations, URLs, or prose tokens.",
         "- If you cannot name any recommended brands, return an empty recommended_brands array.",
+        `- audited_brand_sentiment must describe only how you are presenting ${context.brandName} in this answer: positive, neutral, negative, or not_enough_signal.`,
+        "- Use not_enough_signal if the audited brand is not clearly described in the answer.",
+        "- audited_brand_sentiment_reason must be one short, non-technical phrase in plain English, or exactly not enough signal.",
       ].join("\n");
       let lastRateLimitError: AnswerEngineError | null = null;
 
@@ -2079,6 +2153,7 @@ async function probeAnswerEngine(prompt: string, brandName: string, domain: stri
       brandMentioned,
       competitors,
       rawAnswerSnippet: structuredAnswer.answer.slice(0, 900),
+      brandSentiment: structuredAnswer.brandSentiment,
       kind: "ai_engine",
       status: "checked",
       engine: provider.engine,
@@ -2286,6 +2361,7 @@ export async function sendAuditEmail(email: string, brandName: string, report: A
 
   const answerEngineName = report.answerEngine?.engine ?? report.buyerIntentPrompts.flatMap((prompt) => prompt.surfaces).find((surface) => surface.kind === "ai_engine")?.engine;
   const isAnswerEngineReport = Boolean(answerEngineName);
+  const sentimentLine = brandSentimentLine(report.brandSentiment);
   const actionLines = report.auditTier === "free"
     ? [
         "",
@@ -2308,6 +2384,7 @@ export async function sendAuditEmail(email: string, brandName: string, report: A
       `Your Citeable visibility audit for ${brandName}`,
       "",
       `Score: ${report.score}/100`,
+      sentimentLine,
       "",
       isAnswerEngineReport ? `What ${answerEngineName} found:` : "What native web_search found:",
       buyerIntentSummaryText(report),
@@ -2677,6 +2754,7 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
       actions: buildPlainActions(buyerIntentPrompts, inferred.category, competitors),
     },
     auditTier,
+    brandSentiment: bestBrandSentimentFromPrompts(buyerIntentPrompts),
     answerEngine,
   };
   const emailResult = await sendAuditEmail(args.email, args.brandName, reportWithoutEmail);
@@ -2744,6 +2822,7 @@ export async function completeQueuedAudit(auditId: string): Promise<QueuedAuditR
           category: report.category,
           buyerIntentPrompts: report.buyerIntentPrompts,
           auditTier: report.auditTier,
+          brandSentiment: report.brandSentiment,
           answerEngine: report.answerEngine,
           competitorExtractionVersion: COMPETITOR_EXTRACTION_VERSION,
           structuredDataFound: report.structuredDataFound,

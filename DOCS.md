@@ -1037,3 +1037,26 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 ### Validation
 - `npm run build` passed locally on Next.js 16.2.10 / Turbopack after adding the section.
 - Commit/push and one live cache-busted browser verification were the remaining deployment steps after this documentation entry.
+
+## 2026-07-08 — Free audit AI sentiment line
+
+### Findings
+- `src/lib/audit-engine.ts` owns the full audit pipeline: Gemini/OpenAI calls, parsed buyer-intent prompt surfaces, email sending, DB persistence, and queued audit completion.
+- Free and Monitor audits already run Gemini through the answer-engine provider; no second LLM call is needed if the existing Gemini JSON response includes sentiment fields in the same request.
+- `/audit/[id]` reads `raw_results` directly from Postgres and renders the top summary phrases from `buyerIntentPrompts`, while the email body is built in `sendAuditEmail()`.
+- Free audit cache matching depends on `COMPETITOR_EXTRACTION_VERSION`, so the version must change when the Gemini JSON schema changes to avoid serving cached reports without sentiment.
+
+### Changes made
+- Extended the Gemini/OpenAI structured answer schema to include `audited_brand_sentiment` and `audited_brand_sentiment_reason` in the same real answer-engine call used for recommended brands.
+- Added `BrandSentiment` normalization and `brandSentimentLine()` so non-determinable results display exactly `How AI talks about you: not enough signal` rather than inventing sentiment.
+- Stored `brandSentiment` in `raw_results`, exposed it via `/api/audit-status`, and rendered the line in `/audit/[id]` top summary phrases.
+- Added the same sentiment line to audit emails immediately after the score.
+- Bumped `COMPETITOR_EXTRACTION_VERSION` to `gemini_recommended_brands_sentiment_v4` so new free audits collect sentiment instead of reusing older no-sentiment cache rows.
+
+### Live proof
+- Commit initially pushed as `d0ab68a`; amended final commit includes this proof entry only.
+- Production proof audit used known brand `Allbirds` at `https://www.allbirds.com` with non-Gmail recipient `proof+allbirds-sentiment-20260708073547@getciteable.nanocorp.app`.
+- Live audit id: `3dfb13ee-5ea6-4c6d-864f-af505006d22f`; report URL: `https://getciteable.nanocorp.app/audit/3dfb13ee-5ea6-4c6d-864f-af505006d22f`.
+- Real answer-engine proof: score `100`, engine `Gemini`, model `gemini-flash-latest`, `realLlmCall=true`, email sent `true`.
+- Sentiment line observed on the live report: `How AI talks about you: Positive - highly recommended as a pioneer in comfortable, carbon-neutral footwear made from natural materials.`.
+- Screenshot saved locally at `/tmp/allbirds-sentiment-report.png`.
