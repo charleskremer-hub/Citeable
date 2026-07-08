@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 type AuditPollerProps = {
+  locale: "en" | "fr";
   auditId: string;
   email: string;
   brandName: string;
@@ -11,7 +12,7 @@ type AuditPollerProps = {
   complete: boolean;
 };
 
-export default function AuditPoller({ auditId, email, brandName, websiteUrl, complete }: AuditPollerProps) {
+export default function AuditPoller({ auditId, email, brandName, websiteUrl, complete, locale }: AuditPollerProps) {
   const router = useRouter();
 
   useEffect(() => {
@@ -25,6 +26,7 @@ export default function AuditPoller({ auditId, email, brandName, websiteUrl, com
         email,
         brand_name: brandName,
         website_url: websiteUrl,
+        locale,
       }),
     }).finally(() => router.refresh());
 
@@ -33,7 +35,7 @@ export default function AuditPoller({ auditId, email, brandName, websiteUrl, com
     return () => {
       window.clearInterval(interval);
     };
-  }, [auditId, brandName, complete, email, router, websiteUrl]);
+  }, [auditId, brandName, complete, email, locale, router, websiteUrl]);
 
   return null;
 }

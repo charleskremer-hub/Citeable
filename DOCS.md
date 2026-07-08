@@ -1,3 +1,21 @@
+## 2026-07-08 — French localization by Accept-Language / France geo
+
+### Findings
+- Per local Next.js 16 docs in `node_modules/next/dist/docs/01-app/`, the App Router can use request `headers()` in server components/layouts and localized content can be selected from dictionaries.
+- Homepage copy lived in client-only `src/app/page.tsx`, so serving French on the first request required a server wrapper plus a client UI component.
+- Audit report copy lived in `src/app/audit/[id]/page.tsx`; audit email copy lived in `sendAuditEmail()` inside `src/lib/audit-engine.ts`.
+
+### Changes made
+- Added `src/lib/i18n.ts` with `en`/`fr` dictionaries and locale detection from `Accept-Language` starting with `fr` or France geo headers (`x-vercel-ip-country`, `cf-ipcountry`, etc.).
+- Split the homepage into server `src/app/page.tsx` locale detection and client `src/app/HomeClient.tsx`, covering hero, form, dashboard wedge, monitoring price wedge, how-it-works, Agent, pricing, FAQ, and footer in English/French.
+- Localized `/audit/[id]` at render time from request headers, including status labels, score/running/error text, summary bullets, competitors, Monitor upsell, Monitor actions, question details, and Agent proof block.
+- Stored locale on queued audits from capture/run APIs and passed it through `runAudit()` so French visitors receive French audit-email copy; French audits also force French buyer-intent prompts instead of falling back to English category prompts.
+- Set the root `<html lang>` and page metadata dynamically to `en` or `fr` using the same header/geo detection.
+
+### Validation
+- `npm run lint` passed with two pre-existing warnings only: unused `isAuditedBrandName` and `categoryFromWebsite` in `src/lib/audit-engine.ts`.
+- `npm run build` passed on Next.js 16.2.10 / Turbopack.
+
 ## 2026-07-07 — CRITIQUE ChatGPT 49EUR, honest engine ladder, Monitor actions
 
 ### Findings

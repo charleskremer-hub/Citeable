@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
 import { auditTierFromPayload, checkFreeAuditQuota, findFreshFreeGeminiAudit, runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
+import { localeFromHeaders, localeFromUnknown } from "@/lib/i18n";
 
 export const maxDuration = 60;
 
@@ -13,7 +14,7 @@ type AuditRow = {
   engines_checked: unknown;
   competitors_found: unknown;
   fixes: unknown;
-  raw_results: { status?: string; error?: string; checks?: unknown; emailSent?: boolean; emailError?: string; category?: string; buyerIntentPrompts?: unknown; auditTier?: string; answerEngine?: unknown; startedAt?: string } | null;
+  raw_results: { status?: string; error?: string; checks?: unknown; emailSent?: boolean; emailError?: string; category?: string; buyerIntentPrompts?: unknown; auditTier?: string; answerEngine?: unknown; startedAt?: string; locale?: string } | null;
 };
 
 function isFreshStartedAt(value: string | undefined) {
@@ -37,6 +38,7 @@ export async function POST(req: NextRequest) {
     await ensureAuditSchema();
     const payload = await req.json();
     const auditTier = auditTierFromPayload(payload);
+    const locale = payload && typeof payload === "object" && "locale" in payload ? localeFromUnknown((payload as Record<string, unknown>).locale) : localeFromHeaders(req.headers);
     const auditId = typeof payload.audit_id === "string" ? payload.audit_id : undefined;
 
     if (auditId) {
@@ -62,6 +64,7 @@ export async function POST(req: NextRequest) {
           checks: row.raw_results?.checks ?? [],
           email_sent: Boolean(row.raw_results?.emailSent),
           email_error: row.raw_results?.emailError,
+          locale: row.raw_results?.locale ?? locale,
         });
       }
 
@@ -69,12 +72,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ audit_id: row.id, status: "failed", error: row.raw_results.error }, { status: 500 });
       }
 
-      if (auditTier !== "free" && row.raw_results?.auditTier !== auditTier) {
+      if ((auditTier !== "free" && row.raw_results?.auditTier !== auditTier) || !row.raw_results?.locale) {
         await pool.query(
           `UPDATE audits
            SET raw_results = COALESCE(raw_results, '{}'::jsonb) || $2::jsonb
            WHERE id = $1`,
-          [auditId, { auditTier }]
+          [auditId, { auditTier: auditTier !== "free" ? auditTier : row.raw_results?.auditTier ?? "free", locale: row.raw_results?.locale ?? locale }]
         );
       }
 
@@ -92,7 +95,7 @@ export async function POST(req: NextRequest) {
       const cachedAudit = await findFreshFreeGeminiAudit(brandName, websiteUrl);
 
       if (cachedAudit) {
-        return NextResponse.json({ audit_id: cachedAudit.id, status: "completed", audit_tier: auditTier, cached: true });
+        return NextResponse.json({ audit_id: cachedAudit.id, status: "completed", audit_tier: auditTier, cached: true, locale });
       }
 
       const quota = await checkFreeAuditQuota(email, websiteUrl);
@@ -106,13 +109,13 @@ export async function POST(req: NextRequest) {
       `INSERT INTO audits (email, brand_name, website_url, raw_results)
        VALUES ($1, $2, $3, $4)
        RETURNING id`,
-      [email, brandName, websiteUrl, { status: "queued", queuedAt: new Date().toISOString(), auditTier }]
+      [email, brandName, websiteUrl, { status: "queued", queuedAt: new Date().toISOString(), auditTier, locale }]
     );
     const createdAuditId = audit.rows[0].id;
 
     runAuditAfterResponse(createdAuditId);
 
-    return NextResponse.json({ audit_id: createdAuditId, status: "running", audit_tier: auditTier }, { status: 202 });
+    return NextResponse.json({ audit_id: createdAuditId, status: "running", audit_tier: auditTier, locale }, { status: 202 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Audit failed";
     return NextResponse.json({ error: message }, { status: 500 });

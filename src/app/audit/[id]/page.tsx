@@ -1,7 +1,8 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { ensureAuditSchema, pool } from "@/lib/db";
-import { brandSentimentLine } from "@/lib/audit-engine";
+import { auditCopy, brandSentimentText, localeFromHeaders, localizePlainAction, recommendationText, type Locale } from "@/lib/i18n";
 import type { BrandSentiment, BuyerIntentPromptResult, PlainAction } from "@/lib/audit-engine";
 import AuditPoller from "./AuditPoller";
 
@@ -70,24 +71,26 @@ function competitorCounts(names: string[]) {
     .slice(0, 12);
 }
 
-function questionEngineSummary(question: BuyerIntentPromptResult) {
+function questionEngineSummary(question: BuyerIntentPromptResult, locale: Locale) {
   const aiSurface = question.surfaces.find((surface) => surface.kind === "ai_engine");
 
   if (aiSurface) {
     const engine = aiSurface.engine ?? "Gemini";
-    const label = aiSurface.recommendationLabel ?? (aiSurface.brandMentioned ? `${engine} recommends you` : `${engine} does not mention you`);
-    const competitors = question.competitors.length ? ` · Competitors cited: ${question.competitors.join(", ")}` : " · No clear competitor cited";
-    return aiSurface.status === "checked" ? `${label}${competitors}` : (aiSurface.unavailableReason ?? `${engine} unavailable; try again.`);
+    const label = recommendationText(engine, aiSurface.brandMentioned, locale);
+    const competitors = question.competitors.length
+      ? locale === "fr" ? ` · Concurrents cités : ${question.competitors.join(", ")}` : ` · Competitors cited: ${question.competitors.join(", ")}`
+      : locale === "fr" ? " · Aucun concurrent clair cité" : " · No clear competitor cited";
+    return aiSurface.status === "checked" ? `${label}${competitors}` : (aiSurface.unavailableReason ?? (locale === "fr" ? `${engine} est indisponible ; réessaie.` : `${engine} unavailable; try again.`));
   }
 
   const checked = question.surfaces.filter((surface) => surface.kind === "supplementary" && surface.status === "checked");
   const unavailable = question.surfaces.filter((surface) => surface.kind === "supplementary" && surface.status !== "checked");
 
   if (checked.length > 0) {
-    return checked.map((surface) => `${surface.surface}: ${surface.brandMentioned ? "brand/domain found" : "brand/domain not found"}`).join(" · ");
+    return checked.map((surface) => `${surface.surface}: ${surface.brandMentioned ? (locale === "fr" ? "marque/domaine trouvé" : "brand/domain found") : (locale === "fr" ? "marque/domaine non trouvé" : "brand/domain not found")}`).join(" · ");
   }
 
-  return unavailable[0]?.unavailableReason ?? "Native web_search unavailable; this report uses only checks that completed.";
+  return unavailable[0]?.unavailableReason ?? (locale === "fr" ? "web_search natif indisponible ; ce rapport utilise uniquement les vérifications terminées." : "Native web_search unavailable; this report uses only checks that completed.");
 }
 
 function checkedQuestions(questions: BuyerIntentPromptResult[]) {
@@ -95,17 +98,21 @@ function checkedQuestions(questions: BuyerIntentPromptResult[]) {
   return available.length ? available : questions;
 }
 
-function fixSentence(category: string | undefined, hasCompetitors: boolean) {
-  const business = category && category !== "your type of business" ? category : "your business type";
+function fixSentence(category: string | undefined, hasCompetitors: boolean, locale: Locale) {
+  const business = category && category !== "your type of business" ? category : locale === "fr" ? "ton activité" : "your business type";
 
   if (hasCompetitors) {
-    return `What to fix: add a clear page about ${business}, with proof, reviews, and direct answers to buyer questions.`;
+    return locale === "fr"
+      ? `À corriger : ajoute une page claire sur ${business}, avec des preuves, des avis et des réponses directes aux questions d'achat.`
+      : `What to fix: add a clear page about ${business}, with proof, reviews, and direct answers to buyer questions.`;
   }
 
-  return `What to fix: make your site clearer about ${business}, your proof, and why buyers should choose you.`;
+  return locale === "fr"
+    ? `À corriger : rends ton site plus clair sur ${business}, tes preuves et les raisons de te choisir.`
+    : `What to fix: make your site clearer about ${business}, your proof, and why buyers should choose you.`;
 }
 
-function treatmentProof(brandName: string, category: string | undefined, questions: BuyerIntentPromptResult[], competitors: string[], engine: string) {
+function treatmentProof(brandName: string, category: string | undefined, questions: BuyerIntentPromptResult[], competitors: string[], engine: string, locale: Locale) {
   const question = questions.find((item) => item.available && !item.brandMentioned)
     ?? questions.find((item) => item.available && item.competitors.length > 0)
     ?? questions.find((item) => item.available)
@@ -113,8 +120,25 @@ function treatmentProof(brandName: string, category: string | undefined, questio
 
   if (!question) return null;
 
-  const business = category && category !== "your type of business" ? category : "your business type";
+  const business = category && category !== "your type of business" ? category : locale === "fr" ? "ton activité" : "your business type";
   const citedCompetitors = uniqueNames([...question.competitors, ...competitors]).slice(0, 3);
+
+  if (locale === "fr") {
+    const competitorText = citedCompetitors.length
+      ? `${engine} cite déjà ${citedCompetitors.join(", ")} sur ce sujet. La page doit expliquer pourquoi choisir ${brandName}, sans les attaquer.`
+      : `Aucun concurrent clair n'est cité sur ce sujet. La page doit rendre ${brandName} plus facile à recommander.`;
+
+    return {
+      gap: question.brandMentioned
+        ? citedCompetitors.length
+          ? `Écart trouvé : ${engine} cite aussi ${citedCompetitors.join(", ")} pour « ${question.prompt} ».`
+          : `Question vérifiée : « ${question.prompt} ».`
+        : `Écart trouvé : ${engine} ne cite pas ${brandName} pour « ${question.prompt} ».`,
+      title: `FAQ/page à créer : « ${question.prompt} »`,
+      draft: `Brouillon à publier après relecture : « Si tu compares ${business}, commence par ton besoin, les preuves disponibles et la prochaine étape. ${brandName} doit présenter ses cas d'usage, ses avis ou preuves vérifiables, puis répondre directement à cette question. ${competitorText} »`,
+    };
+  }
+
   const competitorText = citedCompetitors.length
     ? `${engine} already cites ${citedCompetitors.join(", ")} for this topic, so the page should explain why buyers should choose ${brandName} without attacking them.`
     : `No clear competitor is cited for this topic, so the page should make ${brandName} easier to recommend.`;
@@ -130,8 +154,9 @@ function treatmentProof(brandName: string, category: string | undefined, questio
   };
 }
 
-function StatusPill({ failed, complete }: { failed: boolean; complete: boolean }) {
-  const label = failed ? "Failed" : complete ? "Complete" : "Running";
+function StatusPill({ failed, complete, locale }: { failed: boolean; complete: boolean; locale: Locale }) {
+  const copy = auditCopy[locale];
+  const label = failed ? copy.status.failed : complete ? copy.status.complete : copy.status.running;
   const className = failed
     ? "border-[#FF8A8A]/25 bg-[#FF5F5F]/10 text-[#FF8A8A]"
     : complete
@@ -147,6 +172,8 @@ function StatusPill({ failed, complete }: { failed: boolean; complete: boolean }
 
 export default async function AuditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const locale = localeFromHeaders(await headers());
+  const copy = auditCopy[locale];
   await ensureAuditSchema();
 
   const result = await pool.query<AuditRow>(`SELECT * FROM audits WHERE id = $1`, [id]);
@@ -173,24 +200,24 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const topCompetitor = rankedCompetitors[0]?.name ?? competitors[0];
   const score = audit.score ?? 0;
   const color = scoreColor(score);
-  const proof = complete && !failed && isAgentReport ? treatmentProof(audit.brand_name, audit.raw_results?.category, questions, competitors, answerEngineName) : null;
-  const monitorActions = audit.raw_results?.monitoring?.actions?.slice(0, 3) ?? [];
-  const sentimentLine = brandSentimentLine(audit.raw_results?.brandSentiment ?? { label: "not_enough_signal", justification: "not enough signal" });
+  const proof = complete && !failed && isAgentReport ? treatmentProof(audit.brand_name, audit.raw_results?.category, questions, competitors, answerEngineName, locale) : null;
+  const monitorActions = (audit.raw_results?.monitoring?.actions?.slice(0, 3) ?? []).map((action) => localizePlainAction(action, locale));
+  const sentimentLine = brandSentimentText(audit.raw_results?.brandSentiment ?? { label: "not_enough_signal", justification: "not enough signal" }, locale);
   const phrases = [
     questionCount > 0
       ? isAnswerEngineReport
-        ? `${brandMentionCount > 0 ? `${answerEngineName} recommends you` : `${answerEngineName} does not mention you`} (${brandMentionCount}/${questionCount} questions).`
-        : `You are cited ${brandMentionCount} times across ${questionCount} questions.`
-      : "No buyer question could be checked yet.",
+        ? `${recommendationText(answerEngineName, brandMentionCount > 0, locale)} (${brandMentionCount}/${questionCount} ${locale === "fr" ? "questions" : "questions"}).`
+        : locale === "fr" ? `Tu es cité ${brandMentionCount} fois sur ${questionCount} questions.` : `You are cited ${brandMentionCount} times across ${questionCount} questions.`
+      : locale === "fr" ? "Aucune question d'achat n'a encore pu être vérifiée." : "No buyer question could be checked yet.",
     sentimentLine,
     topCompetitor
-      ? `${topCompetitor} is showing up where you should be.`
-      : "No competitor clearly appears in your place.",
+      ? locale === "fr" ? `${topCompetitor} apparaît là où tu devrais apparaître.` : `${topCompetitor} is showing up where you should be.`
+      : locale === "fr" ? "Aucun concurrent clair n'apparaît à ta place." : "No competitor clearly appears in your place.",
     isAgentReport
-      ? fixSentence(audit.raw_results?.category, competitors.length > 0)
+      ? fixSentence(audit.raw_results?.category, competitors.length > 0, locale)
       : isMonitorReport
-        ? "Monitor adds 3 priority actions to tackle this week."
-        : "Free diagnostic: score, AI sentiment, Gemini recommendation status, and cited competitors.",
+        ? locale === "fr" ? "Monitor ajoute 3 actions prioritaires pour cette semaine." : "Monitor adds {copy.monitorTitle}."
+        : locale === "fr" ? "Diagnostic gratuit : score, sentiment IA, statut de recommandation Gemini et concurrents cités." : "Free diagnostic: score, AI sentiment, Gemini recommendation status, and cited competitors.",
   ];
 
   return (
@@ -201,6 +228,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
         brandName={audit.brand_name}
         websiteUrl={audit.website_url}
         complete={complete || failed}
+        locale={locale}
       />
 
       <section className="mx-auto flex min-h-screen w-full max-w-3xl flex-col px-4 py-5 sm:px-6 sm:py-8">
@@ -209,28 +237,28 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             Citeable
           </Link>
           <a href={DONE_FOR_YOU_CHECKOUT_URL} className="text-sm font-black text-[#CAFF3C] no-underline" data-ph-capture-attribute-plan="agent_49eur" data-ph-capture-attribute-source="audit_report_nav">
-            Fix it for me — €49 →
+            {copy.navCta}
           </a>
         </nav>
 
         <div className="flex flex-1 flex-col justify-center gap-4 pb-8 sm:gap-5">
           <div className="rounded-[2rem] border border-white/[0.08] bg-[#111116] p-5 shadow-2xl shadow-black/30 sm:p-8">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <StatusPill failed={failed} complete={complete} />
+              <StatusPill failed={failed} complete={complete} locale={locale} />
               <a href={audit.website_url} className="max-w-full truncate text-sm font-bold text-[#8E8E9A] underline decoration-white/10 underline-offset-4">
                 {audit.website_url}
               </a>
             </div>
 
             <h1 className="text-[clamp(2rem,12vw,4.25rem)] leading-[0.95] tracking-[-0.05em]" style={{ fontFamily: "var(--font-display)" }}>
-              Simple report for {audit.brand_name}
+              {copy.title(audit.brand_name)}
             </h1>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-[190px_1fr] sm:items-center">
               <div
                 className="grid aspect-square w-40 place-items-center rounded-[2rem] border-[10px] bg-white/[0.03] sm:w-48"
                 style={{ borderColor: color, boxShadow: `0 0 42px ${color}2E` }}
-                aria-label={complete ? `Score ${score} out of 100` : "Score running"}
+                aria-label={complete ? copy.scoreAria(score) : copy.scoreRunningAria}
               >
                 <div className="text-center">
                   <div className="text-6xl font-black leading-none tracking-[-0.06em]" style={{ color }}>
@@ -242,11 +270,11 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
 
               {failed ? (
                 <div className="rounded-2xl border border-[#FF8A8A]/20 bg-[#FF5F5F]/10 p-4 text-sm font-bold leading-6 text-[#FFB1B1]">
-                  Could not run the report: {audit.raw_results?.error ?? "unknown error"}
+                  {copy.failedPrefix} {audit.raw_results?.error ?? copy.unknownError}
                 </div>
               ) : !complete ? (
                 <div className="rounded-2xl border border-[#FFB84D]/20 bg-[#FFB84D]/10 p-4 text-sm font-bold leading-6 text-[#FFD18A]">
-                  Wait 20–60 seconds: checking real results without inventing anything.
+                  {copy.runningText}
                 </div>
               ) : (
                 <ol className="m-0 grid list-none gap-3 p-0">
@@ -262,11 +290,11 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
               <a href={DONE_FOR_YOU_CHECKOUT_URL} className="inline-flex justify-center rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110" data-ph-capture-attribute-plan="agent_49eur" data-ph-capture-attribute-source="audit_report_primary">
-                Fix it for me — €49 →
+                {copy.primaryCta}
               </a>
               {complete && !failed && isFreeReport ? (
                 <a href={MONITOR_CHECKOUT_URL} className="inline-flex justify-center rounded-xl border border-white/15 px-5 py-3 text-sm font-black text-[#D6D6DF] no-underline transition hover:border-[#CAFF3C]/40 hover:text-[#CAFF3C]" data-ph-capture-attribute-plan="monitor_9eur" data-ph-capture-attribute-source="audit_report_secondary">
-                  Or monitor monthly — €9 →
+                  {copy.monitorCta}
                 </a>
               ) : null}
             </div>
@@ -276,7 +304,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6">
               <div className="mb-4 flex items-end justify-between gap-4">
                 <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                  {isAnswerEngineReport ? `Competitors cited by ${answerEngineName}` : "Brands found in web_search results"}
+                  {isAnswerEngineReport ? copy.competitorsTitle(answerEngineName) : copy.webSearchTitle}
                 </h2>
                 <span className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-black text-[#BCBCC8]">{rankedCompetitors.length || competitors.length}</span>
               </div>
@@ -291,7 +319,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                 </ul>
               ) : (
                 <div className="rounded-2xl border border-white/[0.07] bg-black/20 p-4 text-sm font-bold text-[#8E8E9A]">
-                  No brand names found in the available answers.
+                  {copy.noBrands}
                 </div>
               )}
             </section>
@@ -299,24 +327,24 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
 
           {complete && !failed && isFreeReport ? (
             <section className="rounded-[1.5rem] border border-[#CAFF3C]/20 bg-[#CAFF3C]/[0.055] p-5 sm:p-6">
-              <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">Secondary option · Monitor €9</p>
+              <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.secondaryEyebrow}</p>
               <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                Want monthly tracking instead?
+                {copy.secondaryTitle}
               </h2>
               <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#D6D6DF]">
-                The free report stops at your score, AI sentiment, Gemini recommendation status, and cited competitors. Monitor adds 3 concrete priorities and monthly Gemini tracking. The €49 fix remains the fastest path if you want it handled for you.
+                {copy.secondaryBody}
               </p>
               <a href={MONITOR_CHECKOUT_URL} className="mt-5 inline-flex rounded-xl border border-white/15 px-5 py-3 text-sm font-black text-[#D6D6DF] no-underline transition hover:border-[#CAFF3C]/40 hover:text-[#CAFF3C]" data-ph-capture-attribute-plan="monitor_9eur" data-ph-capture-attribute-source="free_audit_report_secondary">
-                Monitor monthly — €9 →
+                {copy.secondaryCta}
               </a>
             </section>
           ) : null}
 
           {complete && !failed && isMonitorReport ? (
             <section className="rounded-[1.5rem] border border-[#CAFF3C]/20 bg-[#CAFF3C]/[0.055] p-5 sm:p-6">
-              <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">Monitor €9</p>
+              <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.monitorEyebrow}</p>
               <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                3 priority actions to tackle this week
+                {copy.monitorTitle}
               </h2>
               {monitorActions.length ? (
                 <ol className="m-0 mt-4 grid list-none gap-3 p-0">
@@ -324,12 +352,12 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                     <li key={`${action.title}-${index}`} className="rounded-2xl border border-white/[0.08] bg-black/20 p-4">
                       <p className="m-0 text-sm font-black text-[#CAFF3C]">{index + 1}. {action.title}</p>
                       <p className="m-0 mt-2 text-sm font-bold leading-6 text-[#F0F0EC]">{action.doThis}</p>
-                      <p className="m-0 mt-2 text-xs font-bold uppercase tracking-[0.08em] text-[#8E8E9A]">Where: {action.where}</p>
+                      <p className="m-0 mt-2 text-xs font-bold uppercase tracking-[0.08em] text-[#8E8E9A]">{copy.where} {action.where}</p>
                     </li>
                   ))}
                 </ol>
               ) : (
-                <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#D6D6DF]">Actions will appear as soon as the Monitor report finishes.</p>
+                <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#D6D6DF]">{copy.monitorEmpty}</p>
               )}
             </section>
           ) : null}
@@ -338,10 +366,10 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6">
               <div className="mb-4 flex items-end justify-between gap-4">
                 <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                  {isAnswerEngineReport ? `Questions asked to ${answerEngineName}` : "Buyer web searches checked"}
+                  {isAnswerEngineReport ? copy.questionsTitle(answerEngineName) : copy.webQuestionsTitle}
                 </h2>
                 <span className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-black text-[#BCBCC8]">
-                  {isAnswerEngineReport ? `${answerEngineName} · ${answerEngine?.model ?? questions.flatMap((question) => question.surfaces).find((surface) => surface.kind === "ai_engine")?.model ?? "model unknown"}` : "Native web_search"}
+                  {isAnswerEngineReport ? `${answerEngineName} · ${answerEngine?.model ?? questions.flatMap((question) => question.surfaces).find((surface) => surface.kind === "ai_engine")?.model ?? copy.unknownModel}` : copy.nativeWebSearch}
                 </span>
               </div>
 
@@ -350,13 +378,13 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                   {questions.map((question) => (
                     <li key={question.prompt} className="rounded-2xl border border-white/[0.07] bg-black/20 p-4">
                       <p className="m-0 text-sm font-black text-[#F0F0EC]">{question.prompt}</p>
-                      <p className="m-0 mt-2 text-sm font-bold text-[#BCBCC8]">{questionEngineSummary(question)}</p>
+                      <p className="m-0 mt-2 text-sm font-bold text-[#BCBCC8]">{questionEngineSummary(question, locale)}</p>
                     </li>
                   ))}
                 </ol>
               ) : (
                 <div className="rounded-2xl border border-[#FF8A8A]/20 bg-[#FF5F5F]/10 p-4 text-sm font-bold text-[#FFB1B1]">
-                  {isAnswerEngineReport ? `${answerEngineName} unavailable; try again.` : "Native web_search unavailable; this report uses only checks that completed."}
+                  {isAnswerEngineReport ? copy.engineUnavailable(answerEngineName) : copy.webUnavailable}
                 </div>
               )}
             </section>
@@ -364,9 +392,9 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
 
           {proof ? (
             <section className="rounded-[1.5rem] border border-[#CAFF3C]/20 bg-[#CAFF3C]/[0.055] p-5 sm:p-6">
-              <p className="m-0 mb-3 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">€49 fix — concrete example</p>
+              <p className="m-0 mb-3 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.proofEyebrow}</p>
               <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                A fix generated from a real signal
+                {copy.proofTitle}
               </h2>
               <div className="mt-4 grid gap-3">
                 <p className="m-0 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm font-black leading-6 text-[#F0F0EC]">{proof.gap}</p>
@@ -374,7 +402,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                 <p className="m-0 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm font-bold leading-6 text-[#D6D6DF]">{proof.draft}</p>
               </div>
               <a href={DONE_FOR_YOU_CHECKOUT_URL} className="mt-5 inline-flex rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110" data-ph-capture-attribute-plan="agent_49eur" data-ph-capture-attribute-source="audit_report_proof">
-                Fix it for me — €49 →
+                {copy.primaryCta}
               </a>
             </section>
           ) : null}

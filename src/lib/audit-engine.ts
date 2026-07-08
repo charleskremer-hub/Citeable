@@ -1,4 +1,5 @@
 import { pool } from "./db";
+import { brandSentimentText, localizePlainAction, recommendationText, type Locale } from "./i18n";
 
 const USER_AGENT = "Mozilla/5.0 (compatible; CiteeableBot/1.0)";
 const CHECK_TIMEOUT_MS = 8_000;
@@ -171,6 +172,7 @@ type AuditRawResults = {
   competitorExtractionVersion?: string;
   weeklyEmailSent?: boolean;
   weeklyEmailError?: string;
+  locale?: Locale;
   startedAt?: string;
   completedAt?: string;
   failedAt?: string;
@@ -206,6 +208,7 @@ type RunAuditParams = {
   websiteUrl: string;
   email: string;
   auditTier?: AuditTier;
+  locale?: Locale;
 };
 
 type MonitoredBrandRow = {
@@ -1665,16 +1668,16 @@ function promptCategoryTerms(category: string) {
   return { categoryTerm: category, useCase: "growing companies", leader: "the market leader" };
 }
 
-function generateBuyerIntentPrompts(brandName: string, websiteUrl: string, category: string, homepageText: string) {
+function generateBuyerIntentPrompts(brandName: string, websiteUrl: string, category: string, homepageText: string, preferredLocale?: Locale) {
   const { categoryTerm, useCase, leader } = promptCategoryTerms(category);
   const domain = domainFromWebsite(websiteUrl);
-  const language = detectBuyerQuestionLanguage(homepageText, domain);
+  const language = preferredLocale ?? detectBuyerQuestionLanguage(homepageText, domain);
   const location = inferLocationFromHomepage(homepageText, domain);
   const audience = inferAudienceFromHomepage(homepageText, language);
   const buyerCategory = localizedCategoryTerm(categoryTerm, language);
   const englishLocationPhrase = location === "near me" ? "near me" : `in ${location}`;
 
-  if (/footwear|shoe|sneaker|running shoe/i.test(category)) {
+  if (language !== "fr" && /footwear|shoe|sneaker|running shoe/i.test(category)) {
     return uniqueInOrder([
       "What are the best sustainable sneakers?",
       "Best eco-friendly running shoes?",
@@ -1691,7 +1694,7 @@ function generateBuyerIntentPrompts(brandName: string, websiteUrl: string, categ
     ], 12);
   }
 
-  if (/backpack|rucksack|outdoor|hiking|travel pack|daypack|luggage/i.test(category)) {
+  if (language !== "fr" && /backpack|rucksack|outdoor|hiking|travel pack|daypack|luggage/i.test(category)) {
     return uniqueInOrder([
       "What are the best hiking backpacks?",
       "Best travel backpacks for carry-on?",
@@ -2194,8 +2197,8 @@ function lockedProEngineSurface(): BuyerIntentSurfaceResult {
   };
 }
 
-async function analyzeBuyerIntentPrompts(brandName: string, websiteUrl: string, domain: string, category: string, homepageText: string, tier: AuditTier): Promise<BuyerIntentPromptResult[]> {
-  const prompts = generateBuyerIntentPrompts(brandName, websiteUrl, category, homepageText).slice(0, tier === "free" ? 3 : 12);
+async function analyzeBuyerIntentPrompts(brandName: string, websiteUrl: string, domain: string, category: string, homepageText: string, tier: AuditTier, locale?: Locale): Promise<BuyerIntentPromptResult[]> {
+  const prompts = generateBuyerIntentPrompts(brandName, websiteUrl, category, homepageText, locale).slice(0, tier === "free" ? 3 : 12);
   const results: BuyerIntentPromptResult[] = [];
   const answerEngine = answerEngineForTier(tier);
 
@@ -2280,17 +2283,21 @@ function categoryFromWebsite(websiteHtmlCheck: AuditCheckResult) {
   return "website category";
 }
 
-function buyerIntentSummaryText(report: Pick<AuditReport, "buyerIntentPrompts" | "competitors">) {
+function buyerIntentSummaryText(report: Pick<AuditReport, "buyerIntentPrompts" | "competitors">, locale: Locale = "en") {
   const total = report.buyerIntentPrompts.length;
   const namedCount = report.buyerIntentPrompts.filter((prompt) => prompt.brandMentioned).length;
-  const brands = report.competitors.length ? report.competitors.join(", ") : "None found";
+  const brands = report.competitors.length ? report.competitors.join(", ") : locale === "fr" ? "Aucun trouvé" : "None found";
   const answerEngine = report.buyerIntentPrompts.flatMap((prompt) => prompt.surfaces).find((surface) => surface.kind === "ai_engine")?.engine;
 
   if (answerEngine) {
-    return `In ${total} buyer-intent ${answerEngine} prompts, ${answerEngine} cited your brand/domain ${namedCount} times. Other brands ${answerEngine} named: ${brands}.`;
+    return locale === "fr"
+      ? `Sur ${total} questions d'achat posées à ${answerEngine}, ${answerEngine} a cité ta marque ou ton domaine ${namedCount} fois. Autres marques citées par ${answerEngine} : ${brands}.`
+      : `In ${total} buyer-intent ${answerEngine} prompts, ${answerEngine} cited your brand/domain ${namedCount} times. Other brands ${answerEngine} named: ${brands}.`;
   }
 
-  return `In ${total} buyer-intent web searches, your brand/domain appeared ${namedCount} times. Other brands found in the same result snippets: ${brands}.`;
+  return locale === "fr"
+    ? `Sur ${total} recherches d'achat, ta marque ou ton domaine est apparu ${namedCount} fois. Autres marques trouvées dans les mêmes extraits : ${brands}.`
+    : `In ${total} buyer-intent web searches, your brand/domain appeared ${namedCount} times. Other brands found in the same result snippets: ${brands}.`;
 }
 
 function buildFixes(checks: AuditCheckResult[]) {
@@ -2334,7 +2341,7 @@ async function sendNativeEmail(to: string, subject: string, body: string) {
   }
 }
 
-export async function sendAuditEmail(email: string, brandName: string, report: AuditReport) {
+export async function sendAuditEmail(email: string, brandName: string, report: AuditReport, locale: Locale = "en") {
   const claim = await pool.query<{ id: string }>(
     `UPDATE audits
      SET raw_results = COALESCE(raw_results, '{}'::jsonb) || $2::jsonb
@@ -2361,46 +2368,49 @@ export async function sendAuditEmail(email: string, brandName: string, report: A
 
   const answerEngineName = report.answerEngine?.engine ?? report.buyerIntentPrompts.flatMap((prompt) => prompt.surfaces).find((surface) => surface.kind === "ai_engine")?.engine;
   const isAnswerEngineReport = Boolean(answerEngineName);
-  const sentimentLine = brandSentimentLine(report.brandSentiment);
+  const sentimentLine = brandSentimentText(report.brandSentiment, locale);
+  const localizedActions = report.monitoring.actions.slice(0, 3).map((action) => localizePlainAction(action, locale));
   const actionLines = report.auditTier === "free"
     ? [
         "",
-        "3 actions to do this week: included in Monitor €9.",
+        locale === "fr" ? "3 actions à faire cette semaine : incluses dans Monitor 9 €." : "3 actions to do this week: included in Monitor €9.",
       ]
     : [
         "",
-        "3 things to do this week:",
-        ...report.monitoring.actions.slice(0, 3).flatMap((action, index) => [
+        locale === "fr" ? "3 choses à faire cette semaine :" : "3 things to do this week:",
+        ...localizedActions.flatMap((action, index) => [
           `${index + 1}. ${action.title}`,
-          `   What to do: ${action.doThis}`,
-          `   Where: ${action.where}`,
+          locale === "fr" ? `   À faire : ${action.doThis}` : `   What to do: ${action.doThis}`,
+          locale === "fr" ? `   Où : ${action.where}` : `   Where: ${action.where}`,
         ]),
       ];
 
   return sendNativeEmail(
     email,
-    `Your Citeable visibility audit for ${brandName}`,
+    locale === "fr" ? `Ton audit de visibilité Citeable pour ${brandName}` : `Your Citeable visibility audit for ${brandName}`,
     [
-      `Your Citeable visibility audit for ${brandName}`,
+      locale === "fr" ? `Ton audit de visibilité Citeable pour ${brandName}` : `Your Citeable visibility audit for ${brandName}`,
       "",
       `Score: ${report.score}/100`,
       sentimentLine,
       "",
-      isAnswerEngineReport ? `What ${answerEngineName} found:` : "What native web_search found:",
-      buyerIntentSummaryText(report),
+      isAnswerEngineReport
+        ? locale === "fr" ? `Ce que ${answerEngineName} a trouvé :` : `What ${answerEngineName} found:`
+        : locale === "fr" ? "Ce que web_search natif a trouvé :" : "What native web_search found:",
+      buyerIntentSummaryText(report, locale),
       ...report.buyerIntentPrompts.flatMap((prompt) => [
         `- ${prompt.prompt}`,
         isAnswerEngineReport
-          ? `  ${prompt.surfaces.find((surface) => surface.kind === "ai_engine")?.recommendationLabel ?? (prompt.brandMentioned ? `${answerEngineName} te recommande` : `${answerEngineName} ne te cite pas`)}`
-          : `  Your brand/domain in snippets: ${prompt.brandMentioned ? "yes" : "no"}`,
-        `  Other brands found: ${prompt.competitors.length ? prompt.competitors.join(", ") : "None found"}`,
+          ? `  ${recommendationText(answerEngineName ?? "Gemini", prompt.brandMentioned, locale)}`
+          : locale === "fr" ? `  Ta marque ou ton domaine dans les extraits : ${prompt.brandMentioned ? "oui" : "non"}` : `  Your brand/domain in snippets: ${prompt.brandMentioned ? "yes" : "no"}`,
+        locale === "fr" ? `  Autres marques trouvées : ${prompt.competitors.length ? prompt.competitors.join(", ") : "Aucune trouvée"}` : `  Other brands found: ${prompt.competitors.length ? prompt.competitors.join(", ") : "None found"}`,
       ]),
       ...actionLines,
       "",
       isAnswerEngineReport
-        ? `Note: this audit uses real ${answerEngineName} LLM calls for buyer questions; if ${answerEngineName} is unavailable, Citeable says so and does not invent data.`
-        : "Note: this audit uses native NanoCorp web_search result snippets and direct site checks; it does not invent answer-engine responses.",
-      `View the report: https://getciteable.nanocorp.app/audit/${report.audit_id}`,
+        ? locale === "fr" ? `Note : cet audit utilise de vrais appels ${answerEngineName} pour des questions d'achat ; si ${answerEngineName} est indisponible, Citeable le dit et n'invente pas de données.` : `Note: this audit uses real ${answerEngineName} LLM calls for buyer questions; if ${answerEngineName} is unavailable, Citeable says so and does not invent data.`
+        : locale === "fr" ? "Note : cet audit utilise les extraits web_search natifs de NanoCorp et des vérifications directes du site ; il n'invente pas de réponses d'IA." : "Note: this audit uses native NanoCorp web_search result snippets and direct site checks; it does not invent answer-engine responses.",
+      locale === "fr" ? `Voir le rapport : https://getciteable.nanocorp.app/audit/${report.audit_id}` : `View the report: https://getciteable.nanocorp.app/audit/${report.audit_id}`,
     ].join("\n")
   );
 }
@@ -2715,7 +2725,7 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
   );
   const structuredDataFound = (foundationChecks.find((check) => check.check === "structured_data")?.score ?? 0) > 0;
   const inferred = await inferCategory(args.brandName, args.websiteUrl, foundationChecks.find((check) => check.check === "structured_data") ?? foundationChecks[0]);
-  const buyerIntentPrompts = await analyzeBuyerIntentPrompts(args.brandName, args.websiteUrl, domain, inferred.category, inferred.homepageText, auditTier);
+  const buyerIntentPrompts = await analyzeBuyerIntentPrompts(args.brandName, args.websiteUrl, domain, inferred.category, inferred.homepageText, auditTier, args.locale);
   const checkedAnswerEnginePrompts = buyerIntentPrompts.filter((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine" && surface.status === "checked"));
   const failedAnswerEnginePrompts = buyerIntentPrompts.filter((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine" && surface.status !== "checked"));
 
@@ -2757,7 +2767,7 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
     brandSentiment: bestBrandSentimentFromPrompts(buyerIntentPrompts),
     answerEngine,
   };
-  const emailResult = await sendAuditEmail(args.email, args.brandName, reportWithoutEmail);
+  const emailResult = await sendAuditEmail(args.email, args.brandName, reportWithoutEmail, args.locale ?? "en");
 
   return {
     ...reportWithoutEmail,
@@ -2788,6 +2798,7 @@ export async function completeQueuedAudit(auditId: string): Promise<QueuedAuditR
         status: "running",
         startedAt: new Date().toISOString(),
         auditTier: row.raw_results?.auditTier ?? "free",
+        locale: row.raw_results?.locale,
       },
     ]
   );
@@ -2800,6 +2811,7 @@ export async function completeQueuedAudit(auditId: string): Promise<QueuedAuditR
       websiteUrl: row.website_url,
       email: row.email,
       auditTier,
+      locale: row.raw_results?.locale,
     });
 
     await pool.query(
@@ -2822,6 +2834,7 @@ export async function completeQueuedAudit(auditId: string): Promise<QueuedAuditR
           category: report.category,
           buyerIntentPrompts: report.buyerIntentPrompts,
           auditTier: report.auditTier,
+          locale: row.raw_results?.locale,
           brandSentiment: report.brandSentiment,
           answerEngine: report.answerEngine,
           competitorExtractionVersion: COMPETITOR_EXTRACTION_VERSION,

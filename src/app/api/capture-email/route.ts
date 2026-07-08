@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
 import { auditTierFromPayload, checkFreeAuditQuota, findFreshFreeGeminiAudit, runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
+import { localeFromHeaders, localeFromUnknown } from "@/lib/i18n";
 
 export const maxDuration = 60;
 
@@ -10,6 +11,7 @@ export async function POST(req: NextRequest) {
     const payload = await req.json();
     const { email, brandName, websiteUrl } = validateAuditInput(payload);
     const auditTier = auditTierFromPayload(payload);
+    const locale = payload && typeof payload === "object" && "locale" in payload ? localeFromUnknown((payload as Record<string, unknown>).locale) : localeFromHeaders(req.headers);
 
     await pool.query(
       `INSERT INTO email_captures (email, brand_name, website_url)
@@ -33,6 +35,7 @@ export async function POST(req: NextRequest) {
             status: "completed",
             audit_tier: auditTier,
             cached: true,
+            locale,
           },
           { status: 200 }
         );
@@ -49,7 +52,7 @@ export async function POST(req: NextRequest) {
       `INSERT INTO audits (email, brand_name, website_url, raw_results)
        VALUES ($1, $2, $3, $4)
        RETURNING id`,
-      [email, brandName, websiteUrl, { status: "running", queuedAt: new Date().toISOString(), auditTier }]
+      [email, brandName, websiteUrl, { status: "running", queuedAt: new Date().toISOString(), auditTier, locale }]
     );
 
     const auditId = audit.rows[0].id;
@@ -72,6 +75,7 @@ export async function POST(req: NextRequest) {
         redirect_url: `/audit/${auditId}`,
         status: "queued",
         audit_tier: auditTier,
+        locale,
       },
       { status: 201 }
     );
