@@ -990,3 +990,19 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - Runtime log proof for each audit included `NanoCorp send_email auth failed; refreshing runtime token once { status: 401, message: 'Invalid credentials' }` followed by `NanoCorp send_email retry succeeded after runtime token refresh { status: 200 }` on the same `/api/capture-email` request.
 - No final email failure/401 was stored for the three proof audits: all public `/api/audit-status` responses returned `email_sent=true` and `email_error=null`.
 - After capturing the retry proof, production env was updated again so `NANOCORP_TOKEN_RUNTIME`, `NANOCORP_TOKEN`, and `AGENT_SECRET` all use the non-expiring runtime credential. Normal future traffic should not emit the intentional proof-only 401 before sending email.
+
+## 2026-07-08 — P0 report CTA to live €49 checkout
+
+### Findings
+- Per `AGENTS.md`, dependencies were installed and local Next.js 16.2.10 App Router docs were read from `node_modules/next/dist/docs/01-app/01-getting-started/03-layouts-and-pages.md`, `04-linking-and-navigating.md`, and `05-server-and-client-components.md` before editing.
+- `src/app/audit/[id]/page.tsx` already had NanoCorp checkout constants, but the €49 link had no `utm_source=report`, the primary nav/proof CTA used French copy, and the free-report €9 Monitor upsell was visually primary.
+- `/api/run-audit` accepts JSON with `email`, `brandName`, `websiteUrl`, optional tier payload, creates a DB audit row, and runs the real audit asynchronously via `after()`.
+
+### Changes made
+- Updated `DONE_FOR_YOU_CHECKOUT_URL` on `/audit/[id]` to the live GEO Agent checkout with attribution: `https://checkout.nanocorp.so/c/fzVo0YiuyHM5GStaVrpT?utm_source=report`.
+- Updated `MONITOR_CHECKOUT_URL` to include `utm_source=report` and restyled the free-report Monitor €9 CTA as a secondary outline option.
+- Added a primary in-card `Fix it for me — €49 →` CTA on every report state, wired to the live €49 checkout with analytics attributes.
+- Converted visible `/audit/[id]` report upsell/status/action copy from French to English for US/UK/CA/AU small-brand ICP.
+
+### Validation
+- `npm run build` passed on Next.js 16.2.10 / Turbopack.

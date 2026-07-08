@@ -6,8 +6,8 @@ import AuditPoller from "./AuditPoller";
 
 export const dynamic = "force-dynamic";
 
-const DONE_FOR_YOU_CHECKOUT_URL = "https://checkout.nanocorp.so/c/fzVo0YiuyHM5GStaVrpT";
-const MONITOR_CHECKOUT_URL = "https://checkout.nanocorp.so/c/SQdBFx6vxsKgDB0CUVXV";
+const DONE_FOR_YOU_CHECKOUT_URL = "https://checkout.nanocorp.so/c/fzVo0YiuyHM5GStaVrpT?utm_source=report";
+const MONITOR_CHECKOUT_URL = "https://checkout.nanocorp.so/c/SQdBFx6vxsKgDB0CUVXV?utm_source=report";
 
 type AuditRow = {
   id: string;
@@ -73,9 +73,9 @@ function questionEngineSummary(question: BuyerIntentPromptResult) {
 
   if (aiSurface) {
     const engine = aiSurface.engine ?? "Gemini";
-    const label = aiSurface.recommendationLabel ?? (aiSurface.brandMentioned ? `${engine} te recommande` : `${engine} ne te cite pas`);
-    const competitors = question.competitors.length ? ` · Concurrents cités: ${question.competitors.join(", ")}` : " · Aucun concurrent cité clairement";
-    return aiSurface.status === "checked" ? `${label}${competitors}` : (aiSurface.unavailableReason ?? `${engine} indisponible, réessaie.`);
+    const label = aiSurface.recommendationLabel ?? (aiSurface.brandMentioned ? `${engine} recommends you` : `${engine} does not mention you`);
+    const competitors = question.competitors.length ? ` · Competitors cited: ${question.competitors.join(", ")}` : " · No clear competitor cited";
+    return aiSurface.status === "checked" ? `${label}${competitors}` : (aiSurface.unavailableReason ?? `${engine} unavailable; try again.`);
   }
 
   const checked = question.surfaces.filter((surface) => surface.kind === "supplementary" && surface.status === "checked");
@@ -94,13 +94,13 @@ function checkedQuestions(questions: BuyerIntentPromptResult[]) {
 }
 
 function fixSentence(category: string | undefined, hasCompetitors: boolean) {
-  const business = category && category !== "your type of business" ? category : "ton activité";
+  const business = category && category !== "your type of business" ? category : "your business type";
 
   if (hasCompetitors) {
-    return `Voici quoi corriger : ajoute une page claire sur ${business}, avec tes preuves, tes avis et les réponses aux questions clients.`;
+    return `What to fix: add a clear page about ${business}, with proof, reviews, and direct answers to buyer questions.`;
   }
 
-  return `Voici quoi corriger : rends ton site plus clair sur ${business}, tes preuves et les raisons de te choisir.`;
+  return `What to fix: make your site clearer about ${business}, your proof, and why buyers should choose you.`;
 }
 
 function treatmentProof(brandName: string, category: string | undefined, questions: BuyerIntentPromptResult[], competitors: string[], engine: string) {
@@ -111,25 +111,25 @@ function treatmentProof(brandName: string, category: string | undefined, questio
 
   if (!question) return null;
 
-  const business = category && category !== "your type of business" ? category : "ton activité";
+  const business = category && category !== "your type of business" ? category : "your business type";
   const citedCompetitors = uniqueNames([...question.competitors, ...competitors]).slice(0, 3);
   const competitorText = citedCompetitors.length
-    ? `${engine} cite déjà ${citedCompetitors.join(", ")} sur ce sujet : la page doit expliquer pourquoi choisir ${brandName}, sans les attaquer.`
-    : `Aucun concurrent clair n'est cité sur ce sujet : la page doit rendre ${brandName} plus facile à recommander.`;
+    ? `${engine} already cites ${citedCompetitors.join(", ")} for this topic, so the page should explain why buyers should choose ${brandName} without attacking them.`
+    : `No clear competitor is cited for this topic, so the page should make ${brandName} easier to recommend.`;
 
   return {
     gap: question.brandMentioned
       ? citedCompetitors.length
-        ? `Écart détecté : ${engine} cite aussi ${citedCompetitors.join(", ")} pour “${question.prompt}”.`
-        : `Question vérifiée : “${question.prompt}”.`
-      : `Manque détecté : ${engine} ne cite pas ${brandName} pour “${question.prompt}”.`,
-    title: `FAQ/page à créer : “${question.prompt}”`,
-    draft: `Réponse brouillon à publier après validation : “Si vous comparez ${business}, commencez par votre cas d'usage, les preuves disponibles et l'étape suivante. ${brandName} doit présenter ici ses cas d'usage, ses avis ou preuves vérifiables, et une réponse directe à cette question. ${competitorText}”`,
+        ? `Gap found: ${engine} also cites ${citedCompetitors.join(", ")} for “${question.prompt}”.`
+        : `Question checked: “${question.prompt}”.`
+      : `Gap found: ${engine} does not cite ${brandName} for “${question.prompt}”.`,
+    title: `FAQ/page to create: “${question.prompt}”`,
+    draft: `Draft answer to publish after review: “If you are comparing ${business}, start with your use case, available proof, and the next step. ${brandName} should present its use cases, reviews or verifiable proof, and a direct answer to this question. ${competitorText}”`,
   };
 }
 
 function StatusPill({ failed, complete }: { failed: boolean; complete: boolean }) {
-  const label = failed ? "Échec" : complete ? "Terminé" : "En cours";
+  const label = failed ? "Failed" : complete ? "Complete" : "Running";
   const className = failed
     ? "border-[#FF8A8A]/25 bg-[#FF5F5F]/10 text-[#FF8A8A]"
     : complete
@@ -176,17 +176,17 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const phrases = [
     questionCount > 0
       ? isAnswerEngineReport
-        ? `${brandMentionCount > 0 ? `${answerEngineName} te recommande` : `${answerEngineName} ne te cite pas`} (${brandMentionCount}/${questionCount} questions).`
-        : `Tu es cité ${brandMentionCount} fois sur ${questionCount} questions.`
-      : "Aucune question client n'a pu être vérifiée pour l'instant.",
+        ? `${brandMentionCount > 0 ? `${answerEngineName} recommends you` : `${answerEngineName} does not mention you`} (${brandMentionCount}/${questionCount} questions).`
+        : `You are cited ${brandMentionCount} times across ${questionCount} questions.`
+      : "No buyer question could be checked yet.",
     topCompetitor
-      ? `Le concurrent ${topCompetitor} sort à ta place.`
-      : "Aucun concurrent ne sort clairement à ta place.",
+      ? `${topCompetitor} is showing up where you should be.`
+      : "No competitor clearly appears in your place.",
     isAgentReport
       ? fixSentence(audit.raw_results?.category, competitors.length > 0)
       : isMonitorReport
-        ? "Monitor ajoute 3 actions prioritaires à faire cette semaine."
-        : "Diagnostic gratuit : score, choix Gemini et concurrents cités.",
+        ? "Monitor adds 3 priority actions to tackle this week."
+        : "Free diagnostic: score, Gemini recommendation status, and cited competitors.",
   ];
 
   return (
@@ -205,7 +205,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             Citeable
           </Link>
           <a href={DONE_FOR_YOU_CHECKOUT_URL} className="text-sm font-black text-[#CAFF3C] no-underline" data-ph-capture-attribute-plan="agent_49eur" data-ph-capture-attribute-source="audit_report_nav">
-            Corriger pour moi — 49€ →
+            Fix it for me — €49 →
           </a>
         </nav>
 
@@ -219,14 +219,14 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             </div>
 
             <h1 className="text-[clamp(2rem,12vw,4.25rem)] leading-[0.95] tracking-[-0.05em]" style={{ fontFamily: "var(--font-display)" }}>
-              Rapport simple pour {audit.brand_name}
+              Simple report for {audit.brand_name}
             </h1>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-[190px_1fr] sm:items-center">
               <div
                 className="grid aspect-square w-40 place-items-center rounded-[2rem] border-[10px] bg-white/[0.03] sm:w-48"
                 style={{ borderColor: color, boxShadow: `0 0 42px ${color}2E` }}
-                aria-label={complete ? `Score ${score} sur 100` : "Score en cours"}
+                aria-label={complete ? `Score ${score} out of 100` : "Score running"}
               >
                 <div className="text-center">
                   <div className="text-6xl font-black leading-none tracking-[-0.06em]" style={{ color }}>
@@ -238,11 +238,11 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
 
               {failed ? (
                 <div className="rounded-2xl border border-[#FF8A8A]/20 bg-[#FF5F5F]/10 p-4 text-sm font-bold leading-6 text-[#FFB1B1]">
-                  Impossible de lancer le rapport : {audit.raw_results?.error ?? "erreur inconnue"}
+                  Could not run the report: {audit.raw_results?.error ?? "unknown error"}
                 </div>
               ) : !complete ? (
                 <div className="rounded-2xl border border-[#FFB84D]/20 bg-[#FFB84D]/10 p-4 text-sm font-bold leading-6 text-[#FFD18A]">
-                  Patiente 20–60 secondes : on vérifie les résultats réels, sans rien inventer.
+                  Wait 20–60 seconds: checking real results without inventing anything.
                 </div>
               ) : (
                 <ol className="m-0 grid list-none gap-3 p-0">
@@ -255,13 +255,24 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                 </ol>
               )}
             </div>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <a href={DONE_FOR_YOU_CHECKOUT_URL} className="inline-flex justify-center rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110" data-ph-capture-attribute-plan="agent_49eur" data-ph-capture-attribute-source="audit_report_primary">
+                Fix it for me — €49 →
+              </a>
+              {complete && !failed && isFreeReport ? (
+                <a href={MONITOR_CHECKOUT_URL} className="inline-flex justify-center rounded-xl border border-white/15 px-5 py-3 text-sm font-black text-[#D6D6DF] no-underline transition hover:border-[#CAFF3C]/40 hover:text-[#CAFF3C]" data-ph-capture-attribute-plan="monitor_9eur" data-ph-capture-attribute-source="audit_report_secondary">
+                  Or monitor monthly — €9 →
+                </a>
+              ) : null}
+            </div>
           </div>
 
           {complete && !failed ? (
             <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6">
               <div className="mb-4 flex items-end justify-between gap-4">
                 <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                  {isAnswerEngineReport ? `Concurrents cités par ${answerEngineName}` : "Brands found in web_search results"}
+                  {isAnswerEngineReport ? `Competitors cited by ${answerEngineName}` : "Brands found in web_search results"}
                 </h2>
                 <span className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-black text-[#BCBCC8]">{rankedCompetitors.length || competitors.length}</span>
               </div>
@@ -276,7 +287,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                 </ul>
               ) : (
                 <div className="rounded-2xl border border-white/[0.07] bg-black/20 p-4 text-sm font-bold text-[#8E8E9A]">
-                  Aucun nom trouvé dans les réponses disponibles.
+                  No brand names found in the available answers.
                 </div>
               )}
             </section>
@@ -284,24 +295,24 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
 
           {complete && !failed && isFreeReport ? (
             <section className="rounded-[1.5rem] border border-[#CAFF3C]/20 bg-[#CAFF3C]/[0.055] p-5 sm:p-6">
-              <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">Monitor 9€</p>
+              <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">Secondary option · Monitor €9</p>
               <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                Débloque les 3 actions à faire cette semaine
+                Want monthly tracking instead?
               </h2>
               <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#D6D6DF]">
-                Le gratuit s&apos;arrête au score, au choix Gemini et aux concurrents cités. Monitor ajoute les 3 priorités concrètes et le suivi mensuel Gemini.
+                The free report stops at your score, Gemini recommendation status, and cited competitors. Monitor adds 3 concrete priorities and monthly Gemini tracking. The €49 fix remains the fastest path if you want it handled for you.
               </p>
-              <a href={MONITOR_CHECKOUT_URL} className="mt-5 inline-flex rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110" data-ph-capture-attribute-plan="monitor_9eur" data-ph-capture-attribute-source="free_audit_report">
-                Passer au Monitor — 9€ →
+              <a href={MONITOR_CHECKOUT_URL} className="mt-5 inline-flex rounded-xl border border-white/15 px-5 py-3 text-sm font-black text-[#D6D6DF] no-underline transition hover:border-[#CAFF3C]/40 hover:text-[#CAFF3C]" data-ph-capture-attribute-plan="monitor_9eur" data-ph-capture-attribute-source="free_audit_report_secondary">
+                Monitor monthly — €9 →
               </a>
             </section>
           ) : null}
 
           {complete && !failed && isMonitorReport ? (
             <section className="rounded-[1.5rem] border border-[#CAFF3C]/20 bg-[#CAFF3C]/[0.055] p-5 sm:p-6">
-              <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">Monitor 9€</p>
+              <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">Monitor €9</p>
               <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                3 actions prioritaires à faire cette semaine
+                3 priority actions to tackle this week
               </h2>
               {monitorActions.length ? (
                 <ol className="m-0 mt-4 grid list-none gap-3 p-0">
@@ -309,12 +320,12 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                     <li key={`${action.title}-${index}`} className="rounded-2xl border border-white/[0.08] bg-black/20 p-4">
                       <p className="m-0 text-sm font-black text-[#CAFF3C]">{index + 1}. {action.title}</p>
                       <p className="m-0 mt-2 text-sm font-bold leading-6 text-[#F0F0EC]">{action.doThis}</p>
-                      <p className="m-0 mt-2 text-xs font-bold uppercase tracking-[0.08em] text-[#8E8E9A]">Où : {action.where}</p>
+                      <p className="m-0 mt-2 text-xs font-bold uppercase tracking-[0.08em] text-[#8E8E9A]">Where: {action.where}</p>
                     </li>
                   ))}
                 </ol>
               ) : (
-                <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#D6D6DF]">Les actions seront générées dès que le rapport Monitor est terminé.</p>
+                <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#D6D6DF]">Actions will appear as soon as the Monitor report finishes.</p>
               )}
             </section>
           ) : null}
@@ -323,7 +334,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6">
               <div className="mb-4 flex items-end justify-between gap-4">
                 <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                  {isAnswerEngineReport ? `Questions posées à ${answerEngineName}` : "Buyer web searches checked"}
+                  {isAnswerEngineReport ? `Questions asked to ${answerEngineName}` : "Buyer web searches checked"}
                 </h2>
                 <span className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-black text-[#BCBCC8]">
                   {isAnswerEngineReport ? `${answerEngineName} · ${answerEngine?.model ?? questions.flatMap((question) => question.surfaces).find((surface) => surface.kind === "ai_engine")?.model ?? "model unknown"}` : "Native web_search"}
@@ -341,7 +352,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                 </ol>
               ) : (
                 <div className="rounded-2xl border border-[#FF8A8A]/20 bg-[#FF5F5F]/10 p-4 text-sm font-bold text-[#FFB1B1]">
-                  {isAnswerEngineReport ? `${answerEngineName} indisponible, réessaie.` : "Native web_search unavailable; this report uses only checks that completed."}
+                  {isAnswerEngineReport ? `${answerEngineName} unavailable; try again.` : "Native web_search unavailable; this report uses only checks that completed."}
                 </div>
               )}
             </section>
@@ -349,17 +360,17 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
 
           {proof ? (
             <section className="rounded-[1.5rem] border border-[#CAFF3C]/20 bg-[#CAFF3C]/[0.055] p-5 sm:p-6">
-              <p className="m-0 mb-3 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">Traitement 49€ — exemple concret</p>
+              <p className="m-0 mb-3 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">€49 fix — concrete example</p>
               <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                Un correctif généré depuis un signal réel
+                A fix generated from a real signal
               </h2>
               <div className="mt-4 grid gap-3">
                 <p className="m-0 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm font-black leading-6 text-[#F0F0EC]">{proof.gap}</p>
                 <p className="m-0 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm font-black leading-6 text-[#CAFF3C]">{proof.title}</p>
                 <p className="m-0 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm font-bold leading-6 text-[#D6D6DF]">{proof.draft}</p>
               </div>
-              <a href={DONE_FOR_YOU_CHECKOUT_URL} className="mt-5 inline-flex rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110">
-                Corriger pour moi — 49€ →
+              <a href={DONE_FOR_YOU_CHECKOUT_URL} className="mt-5 inline-flex rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110" data-ph-capture-attribute-plan="agent_49eur" data-ph-capture-attribute-source="audit_report_proof">
+                Fix it for me — €49 →
               </a>
             </section>
           ) : null}
