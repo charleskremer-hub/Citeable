@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
-import type { EngineResult } from "@/lib/audit-engine";
+import { schedulePostAuditSequence, type EngineResult } from "@/lib/audit-engine";
 
 export const maxDuration = 60;
 
@@ -105,7 +105,9 @@ export async function POST(req: NextRequest) {
       ]
     );
 
-    return NextResponse.json({ ok: true, audit_id: auditId, score, engines_reached: engines.filter((engine) => engine.reachable).length, emailSent });
+    const scheduled = await schedulePostAuditSequence(auditId);
+
+    return NextResponse.json({ ok: true, audit_id: auditId, score, engines_reached: engines.filter((engine) => engine.reachable).length, emailSent, scheduled_post_audit_emails: scheduled });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Callback failed";
     return NextResponse.json({ error: message }, { status: 400 });

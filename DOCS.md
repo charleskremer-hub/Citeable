@@ -1,3 +1,31 @@
+## 2026-07-08 — C4 post-audit conversion email sequence
+
+### Findings
+- The free audit flow completes through `runQueuedAudit()` / `completeQueuedAudit()` in `src/lib/audit-engine.ts`; the existing J0 report email is `sendAuditEmail()` and now remains unchanged except for sharing the same audit data model.
+- Local `node_modules` was missing at checkout; after `npm install`, the relevant Next.js 16 docs read were `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/route.md`, `node_modules/next/dist/docs/01-app/01-getting-started/15-route-handlers.md`, and `node_modules/next/dist/docs/01-app/03-api-reference/04-functions/after.md` before adding routes.
+- No active NanoCorp products existed, while the landing page had stale checkout constants, so two active EUR products were created: Citeable Monitor (€9) and Citeable Agent (€49).
+- Scheduling is implemented with Postgres-backed due jobs plus a Vercel cron route, which is simpler and more reliable for this app than keeping in-memory timers after the request finishes.
+
+### Changes made
+- Added `audit_email_sequence_jobs` and `audit_email_unsubscribes` schema setup in `src/lib/db.ts`; jobs are unique by `(audit_id, step)` and claimed with `FOR UPDATE SKIP LOCKED` to prevent duplicate sends.
+- Added shared checkout constants in `src/lib/checkout-links.ts` and rewired `src/app/HomeClient.tsx` Monitor/Agent buttons to the new per-product checkout URLs.
+- Added `schedulePostAuditSequence()` in `src/lib/audit-engine.ts`; completed free audits schedule `j1_value` for `now() + 1 day` and `j3_offer` for `now() + 3 days`, while paid audits do not enter this sequence.
+- Added localized J+1/J+3 email builders that use only stored audit data: score, detected category, answer engine, real competitor/prompt signals when present, and one concrete action derived from the audit action builder.
+- Cached free-audit hits now create a per-lead copied completed audit row, send that lead the existing J0 report email, and schedule that lead's own J+1/J+3 jobs from the real cached audit data instead of returning another lead's audit ID.
+- Added `/api/cron/post-audit-emails` to send due sequence emails, including provider IDs/statuses in the job table; added `/api/unsubscribe` with signed token links and skip-on-unsubscribe behavior.
+- Added hourly Vercel cron config for `/api/cron/post-audit-emails` in `vercel.json`; the existing weekly rescan cron remains unchanged.
+
+### Product links
+- Monitor live checkout: `https://checkout.nanocorp.so/c/xJT8uIncksTRVDi6UcmU`; test checkout: `https://checkout.nanocorp.so/c/P44gZ47uysyRdIjd2Fow`.
+- Agent live checkout: `https://checkout.nanocorp.so/c/Sd2HIINDYwz3q41xCXio`; test checkout: `https://checkout.nanocorp.so/c/5z2yuSPUbQd1aLh9jW6i`.
+
+### Validation
+- `npm run lint` passed with the two pre-existing warnings only: unused `isAuditedBrandName` and `categoryFromWebsite` in `src/lib/audit-engine.ts`.
+- `npm run build` passed on Next.js 16.2.10 / Turbopack before and after the cached-audit edge patch; the build lists the new `/api/cron/post-audit-emails` and `/api/unsubscribe` dynamic routes.
+- Local proof audit: POST `/api/capture-email` for Rumpl / `https://www.rumpl.com` with French locale created uncached free audit `cd02e75f-498e-496a-8771-c22e306ec8fc`, score `44`, category `backpacks and outdoor gear`, real Gemini competitor signals `Patagonia`, `Osprey`, `Cotopaxi`, `YETI`, `Decathlon`.
+- Sequence proof: DB scheduled `j1_value` for `2026-07-09 09:51:14 UTC` and `j3_offer` for `2026-07-11 09:51:14 UTC`; only the test J+1 job was forced due and sent through `/api/cron/post-audit-emails`.
+- J+1 outbound proof: NanoCorp email `a0dc4553-5145-45b7-904f-b66c6ce7d268` sent at `2026-07-08T09:51:39.748230` to `charles+c4-sequence-uncached-20260708095101@getciteable.nanocorp.app`, subject `Rumpl: ton score 44/100 et l'action gratuite`, with real content mentioning score `44/100`, category `backpacks and outdoor gear`, Gemini citing `Patagonia` instead of Rumpl, a FAQ action, Monitor/Agent checkout CTAs, report link, and unsubscribe link.
+
 ## 2026-07-08 — French localization by Accept-Language / France geo
 
 ### Findings

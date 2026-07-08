@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
-import { auditTierFromPayload, checkFreeAuditQuota, findFreshFreeGeminiAudit, runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
+import { auditTierFromPayload, checkFreeAuditQuota, findFreshFreeGeminiAudit, createCachedFreeAuditForLead, runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
 import { localeFromHeaders, localeFromUnknown } from "@/lib/i18n";
 
 export const maxDuration = 60;
@@ -26,15 +26,22 @@ export async function POST(req: NextRequest) {
       const cachedAudit = await findFreshFreeGeminiAudit(brandName, websiteUrl);
 
       if (cachedAudit) {
+        const cachedLeadAudit = await createCachedFreeAuditForLead({ cachedAuditId: cachedAudit.id, email, brandName, websiteUrl, locale });
+        const auditId = cachedLeadAudit?.audit_id ?? cachedAudit.id;
+
         return NextResponse.json(
           {
             ok: true,
-            audit_id: cachedAudit.id,
-            website_url: cachedAudit.website_url,
-            redirect_url: `/audit/${cachedAudit.id}`,
+            audit_id: auditId,
+            website_url: cachedLeadAudit?.website_url ?? cachedAudit.website_url,
+            redirect_url: `/audit/${auditId}`,
             status: "completed",
             audit_tier: auditTier,
             cached: true,
+            cached_from_audit_id: cachedLeadAudit?.cached_from_audit_id ?? cachedAudit.id,
+            email_sent: cachedLeadAudit?.email_sent,
+            email_error: cachedLeadAudit?.email_error,
+            scheduled_post_audit_emails: cachedLeadAudit?.scheduled_post_audit_emails ?? [],
             locale,
           },
           { status: 200 }

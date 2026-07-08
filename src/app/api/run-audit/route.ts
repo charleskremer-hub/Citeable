@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
-import { auditTierFromPayload, checkFreeAuditQuota, findFreshFreeGeminiAudit, runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
+import { auditTierFromPayload, checkFreeAuditQuota, findFreshFreeGeminiAudit, createCachedFreeAuditForLead, runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
 import { localeFromHeaders, localeFromUnknown } from "@/lib/i18n";
 
 export const maxDuration = 60;
@@ -95,7 +95,18 @@ export async function POST(req: NextRequest) {
       const cachedAudit = await findFreshFreeGeminiAudit(brandName, websiteUrl);
 
       if (cachedAudit) {
-        return NextResponse.json({ audit_id: cachedAudit.id, status: "completed", audit_tier: auditTier, cached: true, locale });
+        const cachedLeadAudit = await createCachedFreeAuditForLead({ cachedAuditId: cachedAudit.id, email, brandName, websiteUrl, locale });
+        return NextResponse.json({
+          audit_id: cachedLeadAudit?.audit_id ?? cachedAudit.id,
+          status: "completed",
+          audit_tier: auditTier,
+          cached: true,
+          cached_from_audit_id: cachedLeadAudit?.cached_from_audit_id ?? cachedAudit.id,
+          email_sent: cachedLeadAudit?.email_sent,
+          email_error: cachedLeadAudit?.email_error,
+          scheduled_post_audit_emails: cachedLeadAudit?.scheduled_post_audit_emails ?? [],
+          locale,
+        });
       }
 
       const quota = await checkFreeAuditQuota(email, websiteUrl);

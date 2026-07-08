@@ -1,4 +1,6 @@
+import { createHash, timingSafeEqual } from "crypto";
 import { pool } from "./db";
+import { AGENT_CHECKOUT_URL, MONITOR_CHECKOUT_URL } from "./checkout-links";
 import { brandSentimentText, localizePlainAction, recommendationText, type Locale } from "./i18n";
 
 const USER_AGENT = "Mozilla/5.0 (compatible; CiteeableBot/1.0)";
@@ -223,6 +225,35 @@ type CachedFreeAuditRow = {
   id: string;
   website_url: string;
   created_at: Date;
+};
+
+type PostAuditEmailStep = "j1_value" | "j3_offer";
+
+type ScheduledPostAuditEmail = {
+  step: PostAuditEmailStep;
+  scheduled_at: Date;
+};
+
+type ClaimedPostAuditEmailJob = {
+  id: string;
+  audit_id: string;
+  email: string;
+  step: PostAuditEmailStep;
+  attempts: number;
+};
+
+type PostAuditEmailSendResult = {
+  job_id: string;
+  audit_id: string;
+  step: PostAuditEmailStep;
+  email: string;
+  status: "sent" | "skipped" | "failed";
+  scheduled_at?: string;
+  provider_message_id?: string;
+  provider_status?: string;
+  error?: string;
+  subject?: string;
+  preview?: string;
 };
 
 export type FreeAuditQuotaResult =
@@ -2415,6 +2446,392 @@ export async function sendAuditEmail(email: string, brandName: string, report: A
   );
 }
 
+function siteBaseUrl() {
+  return (envValue("NEXT_PUBLIC_SITE_URL") ?? envValue("VERCEL_PROJECT_URL") ?? "https://getciteable.nanocorp.app").replace(/\/$/, "");
+}
+
+function normalizedEmailAddress(email: string) {
+  return email.trim().toLowerCase();
+}
+
+function unsubscribeSecret() {
+  return envValue("UNSUBSCRIBE_SECRET") ?? envValue("NANOCORP_TOKEN_RUNTIME") ?? envValue("NANOCORP_TOKEN") ?? "citeable-unsubscribe-local";
+}
+
+function unsubscribeSignature(email: string) {
+  return createHash("sha256").update(`${unsubscribeSecret()}:${normalizedEmailAddress(email)}`).digest("hex").slice(0, 32);
+}
+
+function safeEqual(left: string, right: string) {
+  const leftBuffer = Buffer.from(left);
+  const rightBuffer = Buffer.from(right);
+  return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer);
+}
+
+export function unsubscribeTokenForEmail(email: string) {
+  const normalizedEmail = normalizedEmailAddress(email);
+  return Buffer.from(`${normalizedEmail}:${unsubscribeSignature(normalizedEmail)}`).toString("base64url");
+}
+
+function emailFromUnsubscribeToken(token: string) {
+  try {
+    const decoded = Buffer.from(token, "base64url").toString("utf8");
+    const separator = decoded.lastIndexOf(":");
+    if (separator <= 0) return null;
+
+    const email = decoded.slice(0, separator);
+    const signature = decoded.slice(separator + 1);
+
+    if (!email.includes("@") || !safeEqual(signature, unsubscribeSignature(email))) return null;
+
+    return normalizedEmailAddress(email);
+  } catch {
+    return null;
+  }
+}
+
+function unsubscribeUrlForEmail(email: string) {
+  return `${siteBaseUrl()}/api/unsubscribe?token=${encodeURIComponent(unsubscribeTokenForEmail(email))}`;
+}
+
+export async function unsubscribeFromPostAuditEmails(token: string) {
+  const email = emailFromUnsubscribeToken(token);
+  if (!email) return null;
+
+  await pool.query(
+    `INSERT INTO audit_email_unsubscribes (email)
+     VALUES ($1)
+     ON CONFLICT (email) DO NOTHING`,
+    [email]
+  );
+
+  return email;
+}
+
+async function isPostAuditUnsubscribed(email: string) {
+  const result = await pool.query<{ email: string }>(`SELECT email FROM audit_email_unsubscribes WHERE email = $1`, [normalizedEmailAddress(email)]);
+  return (result.rowCount ?? 0) > 0;
+}
+
+export async function schedulePostAuditSequence(auditId: string) {
+  const result = await pool.query<ScheduledPostAuditEmail>(
+    `INSERT INTO audit_email_sequence_jobs (audit_id, email, step, scheduled_at)
+     SELECT audits.id, audits.email, sequence.step, now() + sequence.delay
+     FROM audits
+     CROSS JOIN (VALUES
+       ('j1_value'::text, interval '1 day'),
+       ('j3_offer'::text, interval '3 days')
+     ) AS sequence(step, delay)
+     WHERE audits.id = $1
+       AND audits.score IS NOT NULL
+       AND COALESCE(audits.raw_results->>'auditTier', 'free') = 'free'
+       AND NOT EXISTS (
+         SELECT 1 FROM audit_email_unsubscribes
+         WHERE audit_email_unsubscribes.email = lower(trim(audits.email))
+       )
+     ON CONFLICT (audit_id, step) DO NOTHING
+     RETURNING step, scheduled_at`,
+    [auditId]
+  );
+
+  if (result.rows.length > 0) {
+    await pool.query(
+      `UPDATE audits
+       SET raw_results = COALESCE(raw_results, '{}'::jsonb) || $2::jsonb
+       WHERE id = $1`,
+      [
+        auditId,
+        {
+          postAuditSequenceScheduled: result.rows.map((row) => ({ step: row.step, scheduledAt: row.scheduled_at.toISOString() })),
+        },
+      ]
+    );
+  }
+
+  return result.rows.map((row) => ({ step: row.step, scheduled_at: row.scheduled_at.toISOString() }));
+}
+
+export async function createCachedFreeAuditForLead(args: {
+  cachedAuditId: string;
+  email: string;
+  brandName: string;
+  websiteUrl: string;
+  locale: Locale;
+}) {
+  const sourceResult = await pool.query<AuditRow>(`SELECT * FROM audits WHERE id = $1 AND score IS NOT NULL`, [args.cachedAuditId]);
+  const source = sourceResult.rows[0];
+
+  if (!source || source.score === null || source.score === undefined) return null;
+
+  const rawResults = {
+    ...(source.raw_results ?? {}),
+    status: "completed",
+    auditTier: "free" as AuditTier,
+    locale: args.locale,
+    cachedFromAuditId: args.cachedAuditId,
+    cachedForLeadAt: new Date().toISOString(),
+    emailSent: false,
+    emailError: undefined,
+  } as AuditRawResults & Record<string, unknown>;
+
+  delete rawResults.emailSendStartedAt;
+  delete rawResults.postAuditSequenceScheduled;
+  delete rawResults.weeklyEmailSent;
+  delete rawResults.weeklyEmailError;
+
+  const inserted = await pool.query<AuditRow>(
+    `INSERT INTO audits (email, brand_name, website_url, score, engines_checked, competitors_found, fixes, raw_results)
+     VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb, $8::jsonb)
+     RETURNING *`,
+    [
+      args.email,
+      args.brandName,
+      args.websiteUrl,
+      source.score,
+      JSON.stringify(source.engines_checked ?? []),
+      JSON.stringify(source.competitors_found ?? []),
+      JSON.stringify(source.fixes ?? []),
+      JSON.stringify(rawResults),
+    ]
+  );
+
+  const audit = inserted.rows[0];
+  const report = reportFromRow(audit);
+  const emailResult = await sendAuditEmail(args.email, args.brandName, report, args.locale);
+
+  await pool.query(
+    `UPDATE audits
+     SET raw_results = COALESCE(raw_results, '{}'::jsonb) || $2::jsonb
+     WHERE id = $1`,
+    [audit.id, { emailSent: emailResult.sent, emailError: emailResult.error, monitoring: report.monitoring }]
+  );
+
+  const scheduled = await schedulePostAuditSequence(audit.id);
+
+  return {
+    audit_id: audit.id,
+    cached_from_audit_id: args.cachedAuditId,
+    website_url: args.websiteUrl,
+    score: source.score,
+    email_sent: emailResult.sent,
+    email_error: emailResult.error,
+    scheduled_post_audit_emails: scheduled,
+  };
+}
+
+function answerEngineNameForReport(report: Pick<AuditReport, "answerEngine" | "buyerIntentPrompts">) {
+  return report.answerEngine?.engine ?? report.buyerIntentPrompts.flatMap((prompt) => prompt.surfaces).find((surface) => surface.kind === "ai_engine")?.engine ?? "AI";
+}
+
+function competitorSignalForReport(report: AuditReport) {
+  const replacementPrompt = report.buyerIntentPrompts.find((prompt) => !prompt.brandMentioned && prompt.competitors.length > 0);
+  const competitorPrompt = replacementPrompt ?? report.buyerIntentPrompts.find((prompt) => prompt.competitors.length > 0);
+  const competitor = competitorPrompt?.competitors[0] ?? report.competitors[0];
+
+  return competitor && competitorPrompt
+    ? { competitor, prompt: competitorPrompt.prompt, replacement: competitorPrompt === replacementPrompt }
+    : null;
+}
+
+function postAuditActionLines(report: AuditReport, locale: Locale) {
+  const action = report.monitoring.actions[0] ? localizePlainAction(report.monitoring.actions[0], locale) : null;
+
+  if (action) {
+    return locale === "fr"
+      ? [`Action gratuite à faire aujourd'hui : ${action.title}`, `À faire : ${action.doThis}`, `Où : ${action.where}`]
+      : [`Free action to do today: ${action.title}`, `What to do: ${action.doThis}`, `Where: ${action.where}`];
+  }
+
+  const fix = report.fixes[0];
+  if (fix) {
+    return locale === "fr"
+      ? [`Action gratuite à faire aujourd'hui : ${fix}`]
+      : [`Free action to do today: ${fix}`];
+  }
+
+  return locale === "fr"
+    ? ["Action gratuite à faire aujourd'hui : relis les questions d'achat du rapport et ajoute une réponse claire sur ton site."]
+    : ["Free action to do today: review the report's buyer questions and add one clear answer on your site."];
+}
+
+function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName: string, report: AuditReport, locale: Locale) {
+  const answerEngineName = answerEngineNameForReport(report);
+  const competitorSignal = competitorSignalForReport(report);
+  const actionLines = postAuditActionLines(report, locale);
+  const totalPrompts = report.buyerIntentPrompts.length;
+  const brandMentions = report.buyerIntentPrompts.filter((prompt) => prompt.brandMentioned).length;
+  const reportUrl = `${siteBaseUrl()}/audit/${report.audit_id}`;
+  const unsubscribeUrl = unsubscribeUrlForEmail(email);
+
+  if (step === "j3_offer") {
+    const subject = locale === "fr"
+      ? `${brandName}: on corrige tout pour toi`
+      : `${brandName}: we can fix it for you`;
+    const body = locale === "fr"
+      ? [
+          `Dernière relance sur ton audit Citeable pour ${brandName}.`,
+          "",
+          `Score réel de l'audit : ${report.score}/100`,
+          `Catégorie détectée : ${report.category}`,
+          competitorSignal
+            ? competitorSignal.replacement
+              ? `${answerEngineName} a cité ${competitorSignal.competitor} à ta place sur : “${competitorSignal.prompt}”.`
+              : `${answerEngineName} a aussi cité ${competitorSignal.competitor} sur : “${competitorSignal.prompt}”.`
+            : `${answerEngineName} n'a cité aucun concurrent dans cet audit ; il t'a cité ${brandMentions}/${totalPrompts} fois.`,
+          "",
+          "Si tu veux éviter de tout faire toi-même : Agent 49 € corrige tout pour toi à partir de ces signaux réels.",
+          `Démarrer Agent : ${AGENT_CHECKOUT_URL}`,
+          "Réassurance : tu gardes la main, et on ne part que des données réelles de ton audit — rien n'est inventé.",
+          "",
+          `Voir le rapport : ${reportUrl}`,
+          `Se désinscrire : ${unsubscribeUrl}`,
+        ].join("\n")
+      : [
+          `Final follow-up on your Citeable audit for ${brandName}.`,
+          "",
+          `Real audit score: ${report.score}/100`,
+          `Detected category: ${report.category}`,
+          competitorSignal
+            ? competitorSignal.replacement
+              ? `${answerEngineName} cited ${competitorSignal.competitor} instead of you for: “${competitorSignal.prompt}”.`
+              : `${answerEngineName} also cited ${competitorSignal.competitor} for: “${competitorSignal.prompt}”.`
+            : `${answerEngineName} did not cite a competitor in this audit; it cited you ${brandMentions}/${totalPrompts} times.`,
+          "",
+          "If you do not want to fix everything yourself: Agent €49 fixes it for you from these real signals.",
+          `Start Agent: ${AGENT_CHECKOUT_URL}`,
+          "Reassurance: you stay in control, and we only use the real data from your audit — nothing is invented.",
+          "",
+          `View the report: ${reportUrl}`,
+          `Unsubscribe: ${unsubscribeUrl}`,
+        ].join("\n");
+
+    return { subject, body };
+  }
+
+  const subject = locale === "fr"
+    ? `${brandName}: ton score ${report.score}/100 et l'action gratuite`
+    : `${brandName}: your ${report.score}/100 score and one free action`;
+  const body = locale === "fr"
+    ? [
+        `Hier, ton audit Citeable a donné ${report.score}/100 à ${brandName}.`,
+        `Catégorie détectée : ${report.category}`,
+        `Sur ${totalPrompts} questions posées à ${answerEngineName}, ta marque a été citée ${brandMentions} fois.`,
+        competitorSignal
+          ? competitorSignal.replacement
+            ? `${answerEngineName} a cité ${competitorSignal.competitor} à ta place sur cette vraie question : “${competitorSignal.prompt}”.`
+            : `${answerEngineName} a aussi cité ${competitorSignal.competitor} sur cette vraie question : “${competitorSignal.prompt}”.`
+          : `${answerEngineName} n'a cité aucun concurrent dans cet audit ; aucun nom n'est ajouté artificiellement.`,
+        "",
+        ...actionLines,
+        "",
+        "Pour suivre et recevoir les 3 actions chaque mois :",
+        `Monitor 9 €/mois : ${MONITOR_CHECKOUT_URL}`,
+        "Pour qu'on corrige tout pour toi :",
+        `Agent 49 €/mois : ${AGENT_CHECKOUT_URL}`,
+        "",
+        `Voir le rapport : ${reportUrl}`,
+        `Se désinscrire : ${unsubscribeUrl}`,
+      ].join("\n")
+    : [
+        `Yesterday, your Citeable audit gave ${brandName} ${report.score}/100.`,
+        `Detected category: ${report.category}`,
+        `Across ${totalPrompts} questions asked to ${answerEngineName}, your brand was cited ${brandMentions} times.`,
+        competitorSignal
+          ? competitorSignal.replacement
+            ? `${answerEngineName} cited ${competitorSignal.competitor} instead of you for this real question: “${competitorSignal.prompt}”.`
+            : `${answerEngineName} also cited ${competitorSignal.competitor} for this real question: “${competitorSignal.prompt}”.`
+          : `${answerEngineName} did not cite a competitor in this audit; no name is added artificially.`,
+        "",
+        ...actionLines,
+        "",
+        "To monitor this and get 3 actions every month:",
+        `Monitor €9/month: ${MONITOR_CHECKOUT_URL}`,
+        "To have us fix everything for you:",
+        `Agent €49/month: ${AGENT_CHECKOUT_URL}`,
+        "",
+        `View the report: ${reportUrl}`,
+        `Unsubscribe: ${unsubscribeUrl}`,
+      ].join("\n");
+
+  return { subject, body };
+}
+
+export async function runDuePostAuditEmails(limit = 10): Promise<PostAuditEmailSendResult[]> {
+  const claimed = await pool.query<ClaimedPostAuditEmailJob>(
+    `WITH due AS (
+       SELECT id
+       FROM audit_email_sequence_jobs
+       WHERE sent_at IS NULL
+         AND scheduled_at <= now()
+         AND attempts < 3
+         AND (send_started_at IS NULL OR send_started_at < now() - interval '20 minutes')
+       ORDER BY scheduled_at ASC
+       LIMIT $1
+       FOR UPDATE SKIP LOCKED
+     )
+     UPDATE audit_email_sequence_jobs jobs
+     SET send_started_at = now(), attempts = attempts + 1, error = NULL
+     FROM due
+     WHERE jobs.id = due.id
+     RETURNING jobs.id, jobs.audit_id, jobs.email, jobs.step, jobs.attempts`,
+    [limit]
+  );
+
+  const results: PostAuditEmailSendResult[] = [];
+
+  for (const job of claimed.rows) {
+    const auditResult = await pool.query<AuditRow>(`SELECT * FROM audits WHERE id = $1`, [job.audit_id]);
+    const audit = auditResult.rows[0];
+
+    if (!audit || audit.score === null || audit.score === undefined) {
+      const error = "Audit is missing or incomplete; post-audit email not sent.";
+      await pool.query(`UPDATE audit_email_sequence_jobs SET error = $2 WHERE id = $1`, [job.id, error]);
+      results.push({ job_id: job.id, audit_id: job.audit_id, step: job.step, email: job.email, status: "failed", error });
+      continue;
+    }
+
+    if (await isPostAuditUnsubscribed(job.email)) {
+      const error = "Skipped: lead unsubscribed.";
+      await pool.query(`UPDATE audit_email_sequence_jobs SET sent_at = now(), error = $2 WHERE id = $1`, [job.id, error]);
+      results.push({ job_id: job.id, audit_id: job.audit_id, step: job.step, email: job.email, status: "skipped", error });
+      continue;
+    }
+
+    const report = reportFromRow(audit);
+    const locale = audit.raw_results?.locale ?? "en";
+    const message = buildPostAuditEmail(job.step, job.email, audit.brand_name, report, locale);
+    const sendResult = await sendNativeEmail(job.email, message.subject, message.body);
+    const preview = message.body.split("\n").slice(0, 10).join("\n");
+
+    if (sendResult.sent) {
+      await pool.query(
+        `UPDATE audit_email_sequence_jobs
+         SET sent_at = now(), provider_message_id = $2, provider_status = $3, error = NULL
+         WHERE id = $1`,
+        [job.id, sendResult.id ?? null, sendResult.providerStatus ?? (sendResult.status ? String(sendResult.status) : null)]
+      );
+      results.push({
+        job_id: job.id,
+        audit_id: job.audit_id,
+        step: job.step,
+        email: job.email,
+        status: "sent",
+        provider_message_id: sendResult.id,
+        provider_status: sendResult.providerStatus ?? (sendResult.status ? String(sendResult.status) : undefined),
+        subject: message.subject,
+        preview,
+      });
+    } else {
+      const error = sendResult.error ?? "Post-audit email send failed.";
+      await pool.query(`UPDATE audit_email_sequence_jobs SET error = $2 WHERE id = $1`, [job.id, error]);
+      results.push({ job_id: job.id, audit_id: job.audit_id, step: job.step, email: job.email, status: "failed", error, subject: message.subject, preview });
+    }
+  }
+
+  return results;
+}
+
+
 
 
 export type GeoAgentAssets = {
@@ -2859,6 +3276,10 @@ export async function completeQueuedAudit(auditId: string): Promise<QueuedAuditR
        WHERE id = $1`,
       [auditId, { monitoring }]
     );
+
+    if (auditTier === "free") {
+      await schedulePostAuditSequence(auditId);
+    }
 
     return { status: "complete", report: { ...report, monitoring } };
   } catch (error) {

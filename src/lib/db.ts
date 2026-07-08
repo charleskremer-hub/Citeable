@@ -45,6 +45,31 @@ export async function ensureAuditSchema() {
   await pool.query(`ALTER TABLE audits ADD COLUMN IF NOT EXISTS run_type TEXT DEFAULT 'manual'`);
   await pool.query(`ALTER TABLE audits ADD COLUMN IF NOT EXISTS previous_audit_id UUID`);
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS audit_email_unsubscribes (
+      email TEXT PRIMARY KEY,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS audit_email_sequence_jobs (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      audit_id UUID NOT NULL REFERENCES audits(id) ON DELETE CASCADE,
+      email TEXT NOT NULL,
+      step TEXT NOT NULL,
+      scheduled_at TIMESTAMPTZ NOT NULL,
+      send_started_at TIMESTAMPTZ,
+      sent_at TIMESTAMPTZ,
+      provider_message_id TEXT,
+      provider_status TEXT,
+      error TEXT,
+      attempts INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (audit_id, step)
+    )
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS audit_email_sequence_due_idx ON audit_email_sequence_jobs (scheduled_at, sent_at, send_started_at)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS audit_email_sequence_audit_idx ON audit_email_sequence_jobs (audit_id)`);
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS monitored_brands (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       email TEXT NOT NULL,

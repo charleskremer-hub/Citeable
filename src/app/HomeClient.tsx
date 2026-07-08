@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { AGENT_CHECKOUT_URL, MONITOR_CHECKOUT_URL } from "@/lib/checkout-links";
 import { homeCopy, type Locale } from "@/lib/i18n";
-
-const DONE_FOR_YOU_CHECKOUT_URL = "https://checkout.nanocorp.so/c/fzVo0YiuyHM5GStaVrpT";
-const MONITOR_CHECKOUT_URL = "https://checkout.nanocorp.so/c/SQdBFx6vxsKgDB0CUVXV";
 
 const inputStyle = {
   width: "100%",
@@ -245,7 +243,7 @@ export default function HomeClient({ locale }: HomeClientProps) {
 
           <div className="mt-8 grid gap-4 lg:grid-cols-3">
             {copy.pricingTiers.map((tier) => {
-              const href = tier.href === "monitor" ? MONITOR_CHECKOUT_URL : tier.href === "agent" ? DONE_FOR_YOU_CHECKOUT_URL : tier.href;
+              const href = tier.href === "monitor" ? MONITOR_CHECKOUT_URL : tier.href === "agent" ? AGENT_CHECKOUT_URL : tier.href;
 
               return (
                 <div key={tier.name} className={`relative rounded-2xl border p-6 ${tier.highlight ? "border-[#CAFF3C]/35 bg-[#CAFF3C]/[0.055]" : "border-white/[0.08] bg-[#111116]"}`}>
