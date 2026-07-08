@@ -164,7 +164,7 @@ function contextSources(context: ReturnType<typeof auditContext>, locale: Locale
 function systemPrompt(locale: Locale) {
   if (locale === "fr") {
     return [
-      "Tu es l'Agent Citeable réservé aux acheteurs Agent 49 €.",
+      "Tu es l'Agent Citeable réservé aux acheteurs Agent 19 €.",
       "Réponds en français naturel, direct, utile.",
       "Tu dois t'appuyer uniquement sur le JSON d'audit fourni et sur les observations Gemini/ChatGPT produites dans cette conversation.",
       "N'invente jamais de données, de citations, de chiffres, de raisons SEO, de concurrents ou de sources qui ne sont pas dans l'audit.",
@@ -175,7 +175,7 @@ function systemPrompt(locale: Locale) {
   }
 
   return [
-    "You are the Citeable Agent reserved for Agent €49 buyers.",
+    "You are the Citeable Agent reserved for Agent €19 buyers.",
     "Answer in natural, direct, useful English.",
     "Use only the provided audit JSON and the Gemini/ChatGPT observations generated in this conversation.",
     "Never invent data, citations, numbers, SEO reasons, competitors, or sources that are not in the audit.",

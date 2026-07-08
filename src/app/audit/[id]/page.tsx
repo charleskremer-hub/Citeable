@@ -256,7 +256,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const answerEngine = audit.raw_results?.answerEngine;
   const answerEngineName = answerEngine?.engine ?? questions.flatMap((question) => question.surfaces).find((surface) => surface.kind === "ai_engine")?.engine ?? "Gemini";
   const isAnswerEngineReport = questions.some((question) => question.surfaces.some((surface) => surface.kind === "ai_engine"));
-  const isAgentReport = audit.raw_results?.auditTier === "agent_49eur";
+  const isAgentReport = audit.raw_results?.auditTier === "agent_19eur" || audit.raw_results?.auditTier === "agent_49eur";
   const isMonitorReport = audit.raw_results?.auditTier === "monitor_9eur";
   const isFreeReport = !isAgentReport && !isMonitorReport;
   const topCompetitor = rankedCompetitors[0]?.name ?? competitors[0];
@@ -299,7 +299,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
           <Link href="/" className="text-xl text-[#F0F0EC] no-underline" style={{ fontFamily: "var(--font-display)" }}>
             Citeable
           </Link>
-          <a href={AGENT_CHECKOUT_URL} className="text-sm font-black text-[#CAFF3C] no-underline" data-ph-capture-attribute-plan="agent_49eur" data-ph-capture-attribute-source="audit_report_nav">
+          <a href={AGENT_CHECKOUT_URL} className="text-sm font-black text-[#CAFF3C] no-underline" data-ph-capture-attribute-plan="agent_19eur" data-ph-capture-attribute-source="audit_report_nav">
             {copy.navCta}
           </a>
         </nav>
@@ -352,7 +352,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             </div>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <a href={AGENT_CHECKOUT_URL} className="inline-flex justify-center rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110" data-ph-capture-attribute-plan="agent_49eur" data-ph-capture-attribute-source="audit_report_primary">
+              <a href={AGENT_CHECKOUT_URL} className="inline-flex justify-center rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110" data-ph-capture-attribute-plan="agent_19eur" data-ph-capture-attribute-source="audit_report_primary">
                 {copy.primaryCta}
               </a>
               {complete && !failed && isFreeReport ? (
@@ -433,7 +433,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                 </div>
               </div>
 
-              <a href={AGENT_CHECKOUT_URL} className="mt-5 inline-flex w-full justify-center rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110 sm:w-auto" data-ph-capture-attribute-plan="agent_49eur" data-ph-capture-attribute-source="report_teaser">
+              <a href={AGENT_CHECKOUT_URL} className="mt-5 inline-flex w-full justify-center rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110 sm:w-auto" data-ph-capture-attribute-plan="agent_19eur" data-ph-capture-attribute-source="report_teaser">
                 {copy.reportTeaserCta}
               </a>
               <p className="m-0 mt-3 text-xs font-bold leading-5 text-[#8E8E9A]">{copy.reportReassurance}</p>
@@ -518,7 +518,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                 <p className="m-0 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm font-bold leading-6 text-[#D6D6DF]">{proof.draft}</p>
                 <p className="m-0 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm font-bold leading-6 text-[#D6D6DF]">{proof.google}</p>
               </div>
-              <a href={AGENT_CHECKOUT_URL} className="mt-5 inline-flex rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110" data-ph-capture-attribute-plan="agent_49eur" data-ph-capture-attribute-source="audit_report_proof">
+              <a href={AGENT_CHECKOUT_URL} className="mt-5 inline-flex rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110" data-ph-capture-attribute-plan="agent_19eur" data-ph-capture-attribute-source="audit_report_proof">
                 {copy.primaryCta}
               </a>
               <p className="m-0 mt-3 text-xs font-bold leading-5 text-[#8E8E9A]">{copy.reportReassurance}</p>

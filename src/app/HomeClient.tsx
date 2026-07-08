@@ -259,7 +259,7 @@ export default function HomeClient({ locale }: HomeClientProps) {
                       <li key={feature} className="flex gap-2"><span className="text-[#CAFF3C]">✓</span>{feature}</li>
                     ))}
                   </ul>
-                  {tier.plan === "geo_agent" ? (
+                  {tier.plan === "agent_19eur" ? (
                     <div className="mb-6 rounded-2xl border border-[#CAFF3C]/20 bg-[#CAFF3C]/[0.055] p-4 text-sm leading-6">
                       <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.1em] text-[#CAFF3C]">{copy.agentExampleLabel}</p>
                       <p className="m-0 font-bold text-[#F0F0EC]">{copy.agentExampleFaq}</p>
@@ -280,12 +280,16 @@ export default function HomeClient({ locale }: HomeClientProps) {
         </section>
 
         <section className="mx-auto max-w-5xl border-t border-white/[0.06] px-5 py-12 sm:px-6">
-          <div className="max-w-2xl rounded-2xl border border-white/[0.07] bg-white/[0.03] p-6">
-            <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-[#777786]">{copy.faqEyebrow}</p>
-            <h2 className="mb-3 text-xl font-bold tracking-[-0.02em]">{copy.faqQuestion}</h2>
-            <p className="m-0 text-sm leading-6 text-[#A7A7B4]">
-              {copy.faqAnswer}
-            </p>
+          <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#777786]">{copy.faqEyebrow}</p>
+          <div className="grid gap-4 md:grid-cols-2">
+            {copy.faqItems.map((item) => (
+              <div key={item.question} className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-6">
+                <h2 className="mb-3 text-xl font-bold tracking-[-0.02em]">{item.question}</h2>
+                <p className="m-0 text-sm leading-6 text-[#A7A7B4]">
+                  {item.answer}
+                </p>
+              </div>
+            ))}
           </div>
         </section>
       </main>

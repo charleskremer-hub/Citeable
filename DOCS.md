@@ -1,3 +1,22 @@
+## 2026-07-08 — Landing v2 Agent value and €19 canonical product
+
+### Findings
+- Per repo instructions, `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/page.md` and `layout.md` were read before editing App Router page/layout-related code.
+- The requested `citeable_landing_copy_v2.md` was not present under `/home/worker` and was not available in NanoCorp company docs; the task prompt copy was used as the source of truth.
+- Active products were deduped to one Monitor and one Agent: Monitor `1972c8ce-2dc0-43cc-a6b2-085e4b9c3f15` at €9 and Agent `b9bd9556-f006-4f02-bdb6-d94d89778bde` at €19.
+
+### Changes made
+- Created the canonical €19 Citeable Agent product and deactivated the previous €49 Agent product `bd597d5d-4d97-42e6-8123-6cc4c898eef5`.
+- Updated `src/lib/checkout-links.ts` so every Agent CTA uses the new per-product live checkout `https://checkout.nanocorp.so/c/HHBhgn2CwEaa3PzyxRER`; the Agent test checkout is `https://checkout.nanocorp.so/c/AbjLRWb5ry4KfPwUKVba`.
+- Rewrote the FR/EN landing copy in `src/lib/i18n.ts` around the new Agent value: weekly Gemini + ChatGPT checks, recommendation-loss diagnosis, 1–3 copy-paste fixes, mention plan, and audit-connected chat agent.
+- Updated `src/app/HomeClient.tsx` to render the new multi-item FAQ and highlight Agent as the popular €19/month plan.
+- Updated report, email, and Agent chat user-facing price copy from €49 to €19, while keeping legacy `agent_49eur` audit records compatible with the new `agent_19eur` tier.
+
+### Validation
+- `npm run lint` passed with the two pre-existing warnings only: unused `isAuditedBrandName` and `categoryFromWebsite` in `src/lib/audit-engine.ts`.
+- `npm run build` passed on Next.js 16.2.10 / Turbopack.
+- Source scan found no remaining public €49 strings, old Agent checkout URL, `gpt-4o-mini`, or `keys activated` landing copy.
+
 ## 2026-07-08 — Canonical checkout CTAs and conversion reassurance
 
 ### Findings

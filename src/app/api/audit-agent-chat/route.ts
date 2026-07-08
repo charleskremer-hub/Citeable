@@ -46,8 +46,8 @@ export async function POST(req: NextRequest) {
     const audit = result.rows[0];
 
     if (!audit) return NextResponse.json({ error: "Audit not found" }, { status: 404 });
-    if (audit.raw_results?.auditTier !== "agent_49eur") {
-      return NextResponse.json({ error: "Agent chat is reserved for Agent 49EUR audits", checkout_url: AGENT_CHECKOUT_URL }, { status: 403 });
+    if (audit.raw_results?.auditTier !== "agent_19eur" && audit.raw_results?.auditTier !== "agent_49eur") {
+      return NextResponse.json({ error: "Agent chat is reserved for Agent 19EUR audits", checkout_url: AGENT_CHECKOUT_URL }, { status: 403 });
     }
     if (audit.score === null || audit.raw_results?.status === "failed") {
       return NextResponse.json({ error: "Audit is not complete" }, { status: 409 });

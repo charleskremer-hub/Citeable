@@ -16,7 +16,7 @@ const DEFAULT_GEMINI_MODEL = "gemini-flash-latest";
 const DEFAULT_OPENAI_MODEL = ["gpt", "4o", "mini"].join("-");
 const COMPETITOR_EXTRACTION_VERSION = "gemini_recommended_brands_sentiment_v4";
 
-export type AuditTier = "free" | "monitor_9eur" | "agent_49eur";
+export type AuditTier = "free" | "monitor_9eur" | "agent_19eur" | "agent_49eur";
 
 export type PromptResult = {
   prompt: string;
@@ -284,8 +284,12 @@ export function normalizeWebsiteUrl(input: string) {
 }
 
 export function auditTierFromPayload(input: Record<string, unknown>): AuditTier {
+  if (input.audit_tier === "agent_19eur" || input.tier === "agent_19eur" || input.paid_tier === "agent_19eur" || input.agent_19eur === true) {
+    return "agent_19eur";
+  }
+
   if (input.audit_tier === "agent_49eur" || input.tier === "agent_49eur" || input.paid_tier === "agent_49eur" || input.agent_49eur === true) {
-    return "agent_49eur";
+    return "agent_19eur";
   }
 
   if (input.audit_tier === "monitor_9eur" || input.tier === "monitor_9eur" || input.paid_tier === "monitor_9eur" || input.monitor_9eur === true) {
@@ -764,6 +768,7 @@ const ANSWER_ENGINE_PROVIDER_CONFIGS: Record<AnswerEngineProviderKey, AnswerEngi
 const ANSWER_ENGINE_BY_TIER: Record<AuditTier, AnswerEngineProviderKey> = {
   free: "gemini",
   monitor_9eur: "gemini",
+  agent_19eur: "openai",
   agent_49eur: "openai",
 };
 
@@ -2294,8 +2299,8 @@ function formulaText() {
 }
 
 function formulaTextForTier(tier: AuditTier) {
-  if (tier === "agent_49eur") {
-    return "Your Agent €49 report checks visibility with Gemini + ChatGPT and shows whether they name your brand or cite competitors instead. If a check is unavailable, Citeable says so and never fabricates data.";
+  if (tier === "agent_19eur" || tier === "agent_49eur") {
+    return "Your Agent €19 report checks visibility with Gemini + ChatGPT and shows whether they name your brand or cite competitors instead. If a check is unavailable, Citeable says so and never fabricates data.";
   }
 
   if (tier === "monitor_9eur") {
@@ -2678,7 +2683,7 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
               : `${answerEngineName} a aussi cité ${competitorSignal.competitor} sur : “${competitorSignal.prompt}”.`
             : `${answerEngineName} n'a cité aucun concurrent dans cet audit ; il t'a cité ${brandMentions}/${totalPrompts} fois.`,
           "",
-          "Si tu veux éviter de tout faire toi-même : Agent 49 € corrige tout pour toi à partir de ces signaux réels.",
+          "Si tu veux éviter de tout faire toi-même : Agent 19 € corrige tout pour toi à partir de ces signaux réels.",
           `Démarrer Agent : ${AGENT_CHECKOUT_URL}`,
           "Réassurance : tu gardes la main, et on ne part que des données réelles de ton audit — rien n'est inventé.",
           "",
@@ -2696,7 +2701,7 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
               : `${answerEngineName} also cited ${competitorSignal.competitor} for: “${competitorSignal.prompt}”.`
             : `${answerEngineName} did not cite a competitor in this audit; it cited you ${brandMentions}/${totalPrompts} times.`,
           "",
-          "If you do not want to fix everything yourself: Agent €49 fixes it for you from these real signals.",
+          "If you do not want to fix everything yourself: Agent €19 fixes it for you from these real signals.",
           `Start Agent: ${AGENT_CHECKOUT_URL}`,
           "Reassurance: you stay in control, and we only use the real data from your audit — nothing is invented.",
           "",
@@ -2726,7 +2731,7 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
         "Pour suivre et recevoir les 3 actions chaque mois :",
         `Monitor 9 €/mois : ${MONITOR_CHECKOUT_URL}`,
         "Pour qu'on corrige tout pour toi :",
-        `Agent 49 €/mois : ${AGENT_CHECKOUT_URL}`,
+        `Agent 19 €/mois : ${AGENT_CHECKOUT_URL}`,
         "",
         `Voir le rapport : ${reportUrl}`,
         `Se désinscrire : ${unsubscribeUrl}`,
@@ -2746,7 +2751,7 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
         "To monitor this and get 3 actions every month:",
         `Monitor €9/month: ${MONITOR_CHECKOUT_URL}`,
         "To have us fix everything for you:",
-        `Agent €49/month: ${AGENT_CHECKOUT_URL}`,
+        `Agent €19/month: ${AGENT_CHECKOUT_URL}`,
         "",
         `View the report: ${reportUrl}`,
         `Unsubscribe: ${unsubscribeUrl}`,
