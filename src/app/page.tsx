@@ -150,6 +150,24 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="mx-auto max-w-5xl px-5 py-8 sm:px-6 sm:py-10">
+          <div className="relative overflow-hidden rounded-[1.6rem] border border-white/[0.08] bg-[#111116] p-6 shadow-2xl shadow-black/20 sm:p-8">
+            <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-[#CAFF3C]/10 blur-3xl" />
+            <div className="relative max-w-3xl">
+              <p className="mb-3 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">Done-for-you positioning</p>
+              <h2 className="text-[clamp(2rem,5vw,3.15rem)] leading-[1.02] tracking-[-0.04em] text-[#F0F0EC]" style={{ fontFamily: "var(--font-display)" }}>
+                You don&apos;t need another dashboard.
+              </h2>
+              <p className="mt-5 max-w-2xl text-base leading-7 text-[#B8B8C4] sm:text-lg">
+                Other tools show you charts. Citeable tells you exactly what to fix - and writes it for you: FAQ answers, Google Business text, page copy, ready to paste.
+              </p>
+              <p className="mt-5 inline-flex rounded-full border border-[#CAFF3C]/25 bg-[#CAFF3C]/10 px-4 py-2 text-sm font-bold leading-6 text-[#CAFF3C]">
+                Monitoring from EUR9/mo - the lowest-priced way to track if AI recommends you.
+              </p>
+            </div>
+          </div>
+        </section>
+
         <section className="mx-auto max-w-5xl px-5 py-6 sm:px-6">
           <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] px-5 py-5 text-center text-sm leading-6 text-[#A7A7B4] sm:text-base">
             Engine ladder: Free and Monitor use Gemini. Agent uses ChatGPT (gpt-4o-mini) today. Claude, Grok, and Mistral are available only when their keys are activated.

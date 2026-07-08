@@ -1022,3 +1022,18 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - CTA href inspected on the live report: `https://checkout.nanocorp.so/c/fzVo0YiuyHM5GStaVrpT?utm_source=report`.
 - Final checkout URL reached after redirect: `https://checkout.stripe.com/c/pay/cs_live_a1PQ46qTwxQi6c6YHzBTFhxoBboFCdpkCUf0sMov7veDZt0ZExUmpZsdiQ#fidnandhYHdWcXxpYCc%2FJ2FgY2RwaXEnKSdicGRmZGhqaWBTZHdsZGtxJz8nZmprcXdqaScpJ2R1bE5gfCc%2FJ3VuWmlsc2BaMDRRaG9dRjE3QGBOQFJpXWhtRDxxUFdyXXVrMFFoTU1SVUlVN2NxdWQzcFRdUkpPXWEzUGlcfFVqY2lxU2tRYXNdV2oxUktTU383NHRiRzNCfUZgVHFjMVw1NXE0clAwUV1gJyknY3dqaFZgd3Ngdyc%2FcXdwYCknZ2RmbmJ3anBrYUZqaWp3Jz8nJmNjY2NjYycpJ2lkfGpwcVF8dWAnPyd2bGtiaWBabHFgaCcpJ2BrZGdpYFVpZGZgbWppYWB3dic%2FcXdwYHgl`.
 - Screenshots saved in repo: `artifacts/live-captures/lems-report-e749d46.png` and `artifacts/live-captures/lems-stripe-checkout-e749d46.png`.
+
+## 2026-07-08 — Landing positioning: done-for-you vs dashboards
+
+### Findings
+- `src/app/page.tsx` is the homepage route and is a client component because it owns the audit form state and PostHog click handlers.
+- Per `AGENTS.md`, local Next.js 16 docs were read from `node_modules/next/dist/docs/01-app/01-getting-started/03-layouts-and-pages.md` and `05-server-and-client-components.md` before editing the App Router page.
+- The best high-page insertion point was immediately after the hero audit section and before the existing engine-ladder/how-it-works content.
+
+### Changes made
+- Added one positioning section near the top of the homepage with the requested dashboard contrast, done-for-you copy-paste output language, and honest `EUR9/mo` monitoring wedge.
+- Kept the existing hero, engine ladder, how-it-works, Agent, pricing, FAQ, and footer content unchanged.
+
+### Validation
+- `npm run build` passed locally on Next.js 16.2.10 / Turbopack after adding the section.
+- Commit/push and one live cache-busted browser verification were the remaining deployment steps after this documentation entry.
