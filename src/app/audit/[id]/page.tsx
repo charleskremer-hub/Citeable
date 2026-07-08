@@ -475,7 +475,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                   {isAnswerEngineReport ? copy.questionsTitle(answerEngineName) : copy.webQuestionsTitle}
                 </h2>
                 <span className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-black text-[#BCBCC8]">
-                  {isAnswerEngineReport ? `${answerEngineName} · ${answerEngine?.model ?? questions.flatMap((question) => question.surfaces).find((surface) => surface.kind === "ai_engine")?.model ?? copy.unknownModel}` : copy.nativeWebSearch}
+                  {isAnswerEngineReport ? answerEngineName : copy.nativeWebSearch}
                 </span>
               </div>
 

@@ -1198,3 +1198,16 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 ### Status
 - LIVE: the report CTA is wired to the live €49 checkout and the fresh `Pela Case` report CTA reaches live Stripe Checkout.
 - Follow-up: product catalog has duplicate active `Citeable Agent`/`Citeable GEO Agent` and duplicate `Citeable Monitor` products; clean-up should be planned carefully under the Stripe product rules, not done during this proof run.
+
+## 2026-07-08 — Zero-jargon landing engine messaging
+
+### Findings
+- Existing FR/EN landing copy in `src/lib/i18n.ts` still named `ChatGPT (gpt-4o-mini)` across the Agent section and pricing cards.
+- Report UI in `src/app/audit/[id]/page.tsx` displayed the answer engine model next to the engine name, which exposed model-version jargon in reports.
+- Email/report explanatory text in `src/lib/audit-engine.ts` used technical wording like OpenAI/LLM calls instead of the simple Gemini / Gemini + ChatGPT promise.
+- Per repo instructions, `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/page.md` was read before editing App Router page code.
+
+### Changes made
+- Simplified FR/EN landing copy so Free checks with Gemini, Monitor watches with Gemini, and Agent checks Gemini + ChatGPT.
+- Removed model-version wording from Agent hero/section copy, pricing title, pricing features, report engine badge, and audit email notes.
+- Kept disabled/backend engine details out of public-facing messaging; no landing copy promises Claude, Grok, Mistral, or key-activated engines.

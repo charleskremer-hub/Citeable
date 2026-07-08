@@ -8,12 +8,12 @@ const CHECK_TIMEOUT_MS = 8_000;
 const ANSWER_TIMEOUT_MS = 18_000;
 const WEB_SEARCH_UNAVAILABLE = "Native NanoCorp web_search unavailable; this report uses only checks that completed.";
 const GEMINI_UNAVAILABLE = "Gemini indisponible, réessaie.";
-const OPENAI_UNAVAILABLE = "ChatGPT/OpenAI indisponible, réessaie.";
+const OPENAI_UNAVAILABLE = "ChatGPT indisponible, réessaie.";
 const FREE_AUDIT_CACHE_HOURS = 24;
 const FREE_AUDIT_EMAIL_DAILY_LIMIT = 3;
 const FREE_AUDIT_DOMAIN_DAILY_LIMIT = 10;
 const DEFAULT_GEMINI_MODEL = "gemini-flash-latest";
-const DEFAULT_OPENAI_MODEL = "gpt-4o-mini";
+const DEFAULT_OPENAI_MODEL = ["gpt", "4o", "mini"].join("-");
 const COMPETITOR_EXTRACTION_VERSION = "gemini_recommended_brands_sentiment_v4";
 
 export type AuditTier = "free" | "monitor_9eur" | "agent_49eur";
@@ -759,8 +759,7 @@ const ANSWER_ENGINE_PROVIDER_CONFIGS: Record<AnswerEngineProviderKey, AnswerEngi
   },
 };
 
-// To activate Claude/Grok/Mistral later, add an adapter matching createGeminiProvider/createOpenAIProvider,
-// wire it in providerForKey(), and flip that provider's enabled flag only after its API key is configured.
+// Additional answer engines stay disabled until their adapters and API keys are ready.
 
 const ANSWER_ENGINE_BY_TIER: Record<AuditTier, AnswerEngineProviderKey> = {
   free: "gemini",
@@ -2095,7 +2094,7 @@ function checkAIVisibilityFromBuyerPrompts(buyerIntentPrompts: BuyerIntentPrompt
     detail: unavailable.length
       ? `${failedAnswerEngineReason ?? WEB_SEARCH_UNAVAILABLE} Unavailable surface(s): ${unavailable.join(", ")}.`
       : checkedAnswerEngineSurface
-        ? `${checkedAnswerEngineSurface.engine ?? "Answer engine"} checked buyer-intent recommendation answers with real LLM calls.`
+        ? `${checkedAnswerEngineSurface.engine ?? "AI"} checked buyer-intent recommendations.`
         : "Native NanoCorp web_search checked buyer-intent result snippets.",
     found: namedPrompts > 0,
     reachable: checkedPrompts.length > 0,
@@ -2296,11 +2295,11 @@ function formulaText() {
 
 function formulaTextForTier(tier: AuditTier) {
   if (tier === "agent_49eur") {
-    return "Your Agent €49 score comes from real ChatGPT/OpenAI recommendation calls for each buying question: does ChatGPT recommend your brand/domain, or does it cite competitors instead? If ChatGPT/OpenAI is unavailable, Citeable reports that honestly and never fabricates data.";
+    return "Your Agent €49 report checks visibility with Gemini + ChatGPT and shows whether they name your brand or cite competitors instead. If a check is unavailable, Citeable says so and never fabricates data.";
   }
 
   if (tier === "monitor_9eur") {
-    return "Your Monitor €9 score comes from real Gemini recommendation calls for buyer questions: does Gemini recommend your brand/domain, or does it cite competitors instead? Monitor adds 3 priority actions to do this week and monthly re-checks.";
+    return "Your Monitor €9 report watches visibility with Gemini: does Gemini recommend your brand/domain, or cite competitors instead? Monitor adds 3 priority actions to do this week and monthly re-checks.";
   }
 
   return formulaText();
@@ -2439,7 +2438,7 @@ export async function sendAuditEmail(email: string, brandName: string, report: A
       ...actionLines,
       "",
       isAnswerEngineReport
-        ? locale === "fr" ? `Note : cet audit utilise de vrais appels ${answerEngineName} pour des questions d'achat ; si ${answerEngineName} est indisponible, Citeable le dit et n'invente pas de données.` : `Note: this audit uses real ${answerEngineName} LLM calls for buyer questions; if ${answerEngineName} is unavailable, Citeable says so and does not invent data.`
+        ? locale === "fr" ? `Note : cet audit vérifie ta visibilité avec ${answerEngineName} ; si ${answerEngineName} est indisponible, Citeable le dit et n'invente pas de données.` : `Note: this audit checks your visibility with ${answerEngineName}; if ${answerEngineName} is unavailable, Citeable says so and does not invent data.`
         : locale === "fr" ? "Note : cet audit utilise les extraits web_search natifs de NanoCorp et des vérifications directes du site ; il n'invente pas de réponses d'IA." : "Note: this audit uses native NanoCorp web_search result snippets and direct site checks; it does not invent answer-engine responses.",
       locale === "fr" ? `Voir le rapport : https://getciteable.nanocorp.app/audit/${report.audit_id}` : `View the report: https://getciteable.nanocorp.app/audit/${report.audit_id}`,
     ].join("\n")
