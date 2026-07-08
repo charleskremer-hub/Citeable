@@ -1,3 +1,22 @@
+## 2026-07-08 — Canonical checkout CTAs and conversion reassurance
+
+### Findings
+- Per repo instructions, dependencies were installed and `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/page.md` was read before editing App Router page files.
+- NanoCorp had four active products: two Agent-priced products at €49 and two Monitor-priced products at €9.
+- Canonical active products chosen: Agent `bd597d5d-4d97-42e6-8123-6cc4c898eef5` (`https://checkout.nanocorp.so/c/Sd2HIINDYwz3q41xCXio`) and Monitor `1972c8ce-2dc0-43cc-a6b2-085e4b9c3f15` (`https://checkout.nanocorp.so/c/xJT8uIncksTRVDi6UcmU`).
+- Duplicate products deactivated via `nanocorp products delete`: Agent duplicate `c6e3e751-da75-47f9-9d77-5911a6280beb` and Monitor duplicate `55cd1e94-8746-46ab-b201-f374b2fad594`.
+
+### Changes made
+- Rewired `src/app/audit/[id]/page.tsx` to import canonical `AGENT_CHECKOUT_URL` and `MONITOR_CHECKOUT_URL` from `src/lib/checkout-links.ts`; removed hardcoded duplicate report checkout URLs and UTM variants.
+- Added honest FR/EN reassurance copy to pricing cards and report CTAs: one-time NanoCorp checkout, no automatic subscription. The stricter “résiliable à tout moment” phrasing was not used because the live checkout renders a one-time payment rather than a Stripe subscription.
+- Added tangible Agent examples to pricing in `src/app/HomeClient.tsx`: a FAQ answer-ready paragraph and a Google Business sentence in both French and English.
+- Made the report proof block visible for every completed report, not only paid Agent reports, and added a Google Business sentence alongside the audit-derived FAQ draft.
+
+### Validation
+- `npm run lint` passed with the two pre-existing warnings only: unused `isAuditedBrandName` and `categoryFromWebsite` in `src/lib/audit-engine.ts`.
+- `npm run build` passed on Next.js 16.2.10 / Turbopack.
+- Repo checkout URL scan shows public code references only the two canonical live checkout constants plus their test links in `src/lib/checkout-links.ts`.
+
 ## 2026-07-08 — Landing engine disclaimer removal
 
 ### Findings

@@ -248,12 +248,24 @@ export default function HomeClient({ locale }: HomeClientProps) {
                   <div className="mb-2 text-4xl tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
                     {tier.price}<span className="text-base text-[#9A9AA8]">{"suffix" in tier ? tier.suffix : ""}</span>
                   </div>
-                  <p className="mb-5 min-h-10 text-sm text-[#A7A7B4]">{tier.note}</p>
+                  <p className="mb-3 min-h-10 text-sm text-[#A7A7B4]">{tier.note}</p>
+                  {tier.plan !== "free" ? (
+                    <p className="m-0 mb-5 rounded-xl border border-white/[0.07] bg-black/20 px-3 py-2 text-xs font-bold leading-5 text-[#8E8E9A]">
+                      {copy.pricingReassurance}
+                    </p>
+                  ) : null}
                   <ul className="m-0 mb-6 flex list-none flex-col gap-2 p-0 text-sm text-[#B8B8C4]">
                     {tier.features.map((feature) => (
                       <li key={feature} className="flex gap-2"><span className="text-[#CAFF3C]">✓</span>{feature}</li>
                     ))}
                   </ul>
+                  {tier.plan === "geo_agent" ? (
+                    <div className="mb-6 rounded-2xl border border-[#CAFF3C]/20 bg-[#CAFF3C]/[0.055] p-4 text-sm leading-6">
+                      <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.1em] text-[#CAFF3C]">{copy.agentExampleLabel}</p>
+                      <p className="m-0 font-bold text-[#F0F0EC]">{copy.agentExampleFaq}</p>
+                      <p className="m-0 mt-3 font-bold text-[#D6D6DF]">{copy.agentExampleGoogle}</p>
+                    </div>
+                  ) : null}
                   <a
                     href={href}
                     onClick={() => window.posthog?.capture(tier.plan === "free" ? "audit_cta_clicked" : "purchase_started", { plan: tier.plan, source: "pricing_card", locale })}

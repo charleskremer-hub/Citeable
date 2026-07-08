@@ -1,17 +1,13 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { AGENT_CHECKOUT_URL, MONITOR_CHECKOUT_URL } from "@/lib/checkout-links";
 import { ensureAuditSchema, pool } from "@/lib/db";
 import { auditCopy, brandSentimentText, localeFromHeaders, localizePlainAction, recommendationText, type Locale } from "@/lib/i18n";
 import type { BrandSentiment, BuyerIntentPromptResult, PlainAction } from "@/lib/audit-engine";
 import AuditPoller from "./AuditPoller";
 
 export const dynamic = "force-dynamic";
-
-const DONE_FOR_YOU_CHECKOUT_URL = "https://checkout.nanocorp.so/c/fzVo0YiuyHM5GStaVrpT?utm_source=report";
-const REPORT_TEASER_CHECKOUT_URL = "https://checkout.nanocorp.so/c/fzVo0YiuyHM5GStaVrpT?utm_source=report_teaser";
-const MONITOR_CHECKOUT_URL = "https://checkout.nanocorp.so/c/SQdBFx6vxsKgDB0CUVXV?utm_source=report";
-const REPORT_TEASER_CTA = "Debloquer mes correctifs - 49EUR/mois";
 
 type AuditRow = {
   id: string;
@@ -137,7 +133,8 @@ function treatmentProof(brandName: string, category: string | undefined, questio
           : `Question vérifiée : « ${question.prompt} ».`
         : `Écart trouvé : ${engine} ne cite pas ${brandName} pour « ${question.prompt} ».`,
       title: `FAQ/page à créer : « ${question.prompt} »`,
-      draft: `Brouillon à publier après relecture : « Si tu compares ${business}, commence par ton besoin, les preuves disponibles et la prochaine étape. ${brandName} doit présenter ses cas d'usage, ses avis ou preuves vérifiables, puis répondre directement à cette question. ${competitorText} »`,
+      draft: `Brouillon FAQ à publier après relecture : « Si tu compares ${business}, commence par ton besoin, les preuves disponibles et la prochaine étape. ${brandName} doit présenter ses cas d'usage, ses avis ou preuves vérifiables, puis répondre directement à cette question. ${competitorText} »`,
+      google: `Phrase Google Business à coller : « ${brandName} aide les clients à comparer ${business} avec des informations claires, des preuves vérifiables et une prochaine étape simple. »`,
     };
   }
 
@@ -152,7 +149,8 @@ function treatmentProof(brandName: string, category: string | undefined, questio
         : `Question checked: “${question.prompt}”.`
       : `Gap found: ${engine} does not cite ${brandName} for “${question.prompt}”.`,
     title: `FAQ/page to create: “${question.prompt}”`,
-    draft: `Draft answer to publish after review: “If you are comparing ${business}, start with your use case, available proof, and the next step. ${brandName} should present its use cases, reviews or verifiable proof, and a direct answer to this question. ${competitorText}”`,
+    draft: `FAQ draft to publish after review: “If you are comparing ${business}, start with your use case, available proof, and the next step. ${brandName} should present its use cases, reviews or verifiable proof, and a direct answer to this question. ${competitorText}”`,
+    google: `Google Business sentence to paste: “${brandName} helps buyers compare ${business} with clear information, verifiable proof, and a simple next step.”`,
   };
 }
 
@@ -263,7 +261,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const topCompetitor = rankedCompetitors[0]?.name ?? competitors[0];
   const score = audit.score ?? 0;
   const color = scoreColor(score);
-  const proof = complete && !failed && isAgentReport ? treatmentProof(audit.brand_name, audit.raw_results?.category, questions, competitors, answerEngineName, locale) : null;
+  const proof = complete && !failed ? treatmentProof(audit.brand_name, audit.raw_results?.category, questions, competitors, answerEngineName, locale) : null;
   const monitorActions = (audit.raw_results?.monitoring?.actions?.slice(0, 3) ?? []).map((action) => localizePlainAction(action, locale));
   const freeFixTeaser = complete && !failed && isFreeReport ? priorityFixTeaser(audit.brand_name, questions, monitorActions, answerEngineName, locale) : null;
   const sentimentLine = brandSentimentText(audit.raw_results?.brandSentiment ?? { label: "not_enough_signal", justification: "not enough signal" }, locale);
@@ -280,7 +278,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
     isAgentReport
       ? fixSentence(audit.raw_results?.category, competitors.length > 0, locale)
       : isMonitorReport
-        ? locale === "fr" ? "Monitor ajoute 3 actions prioritaires pour cette semaine." : "Monitor adds {copy.monitorTitle}."
+        ? locale === "fr" ? "Monitor ajoute 3 actions prioritaires pour cette semaine." : "Monitor adds 3 priority actions for this week."
         : locale === "fr" ? "Diagnostic gratuit : score, sentiment IA, statut de recommandation Gemini et concurrents cités." : "Free diagnostic: score, AI sentiment, Gemini recommendation status, and cited competitors.",
   ];
 
@@ -300,7 +298,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
           <Link href="/" className="text-xl text-[#F0F0EC] no-underline" style={{ fontFamily: "var(--font-display)" }}>
             Citeable
           </Link>
-          <a href={DONE_FOR_YOU_CHECKOUT_URL} className="text-sm font-black text-[#CAFF3C] no-underline" data-ph-capture-attribute-plan="agent_49eur" data-ph-capture-attribute-source="audit_report_nav">
+          <a href={AGENT_CHECKOUT_URL} className="text-sm font-black text-[#CAFF3C] no-underline" data-ph-capture-attribute-plan="agent_49eur" data-ph-capture-attribute-source="audit_report_nav">
             {copy.navCta}
           </a>
         </nav>
@@ -353,7 +351,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             </div>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <a href={DONE_FOR_YOU_CHECKOUT_URL} className="inline-flex justify-center rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110" data-ph-capture-attribute-plan="agent_49eur" data-ph-capture-attribute-source="audit_report_primary">
+              <a href={AGENT_CHECKOUT_URL} className="inline-flex justify-center rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110" data-ph-capture-attribute-plan="agent_49eur" data-ph-capture-attribute-source="audit_report_primary">
                 {copy.primaryCta}
               </a>
               {complete && !failed && isFreeReport ? (
@@ -362,6 +360,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                 </a>
               ) : null}
             </div>
+            <p className="m-0 mt-3 text-xs font-bold leading-5 text-[#8E8E9A]">{copy.reportReassurance}</p>
           </div>
 
           {complete && !failed ? (
@@ -424,9 +423,10 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                 </div>
               </div>
 
-              <a href={REPORT_TEASER_CHECKOUT_URL} className="mt-5 inline-flex w-full justify-center rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110 sm:w-auto" data-ph-capture-attribute-plan="agent_49eur" data-ph-capture-attribute-source="report_teaser">
-                {REPORT_TEASER_CTA}
+              <a href={AGENT_CHECKOUT_URL} className="mt-5 inline-flex w-full justify-center rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110 sm:w-auto" data-ph-capture-attribute-plan="agent_49eur" data-ph-capture-attribute-source="report_teaser">
+                {copy.reportTeaserCta}
               </a>
+              <p className="m-0 mt-3 text-xs font-bold leading-5 text-[#8E8E9A]">{copy.reportReassurance}</p>
             </section>
           ) : null}
 
@@ -442,6 +442,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
               <a href={MONITOR_CHECKOUT_URL} className="mt-5 inline-flex rounded-xl border border-white/15 px-5 py-3 text-sm font-black text-[#D6D6DF] no-underline transition hover:border-[#CAFF3C]/40 hover:text-[#CAFF3C]" data-ph-capture-attribute-plan="monitor_9eur" data-ph-capture-attribute-source="free_audit_report_secondary">
                 {copy.secondaryCta}
               </a>
+              <p className="m-0 mt-3 text-xs font-bold leading-5 text-[#8E8E9A]">{copy.reportReassurance}</p>
             </section>
           ) : null}
 
@@ -505,10 +506,12 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                 <p className="m-0 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm font-black leading-6 text-[#F0F0EC]">{proof.gap}</p>
                 <p className="m-0 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm font-black leading-6 text-[#CAFF3C]">{proof.title}</p>
                 <p className="m-0 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm font-bold leading-6 text-[#D6D6DF]">{proof.draft}</p>
+                <p className="m-0 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm font-bold leading-6 text-[#D6D6DF]">{proof.google}</p>
               </div>
-              <a href={DONE_FOR_YOU_CHECKOUT_URL} className="mt-5 inline-flex rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110" data-ph-capture-attribute-plan="agent_49eur" data-ph-capture-attribute-source="audit_report_proof">
+              <a href={AGENT_CHECKOUT_URL} className="mt-5 inline-flex rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110" data-ph-capture-attribute-plan="agent_49eur" data-ph-capture-attribute-source="audit_report_proof">
                 {copy.primaryCta}
               </a>
+              <p className="m-0 mt-3 text-xs font-bold leading-5 text-[#8E8E9A]">{copy.reportReassurance}</p>
             </section>
           ) : null}
         </div>
