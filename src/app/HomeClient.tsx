@@ -172,12 +172,6 @@ export default function HomeClient({ locale }: HomeClientProps) {
           </div>
         </section>
 
-        <section className="mx-auto max-w-5xl px-5 py-6 sm:px-6">
-          <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] px-5 py-5 text-center text-sm leading-6 text-[#A7A7B4] sm:text-base">
-            {copy.engineLadder}
-          </div>
-        </section>
-
         <section className="mx-auto max-w-5xl border-t border-white/[0.06] px-5 py-14 sm:px-6 sm:py-20">
           <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.howEyebrow}</p>
           <h2 className="max-w-2xl text-[clamp(2rem,5vw,3rem)] leading-[1.02] tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>

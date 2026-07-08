@@ -1,3 +1,15 @@
+## 2026-07-08 — Landing engine disclaimer removal
+
+### Findings
+- The landing page copy is centralized in `src/lib/i18n.ts` and rendered by `src/app/HomeClient.tsx`.
+- The standalone engine disclaimer block used `copy.engineLadder`; related `keys activated` caveats also appeared in Agent card, Agent pricing features, and FAQ copy for both English and French locales.
+- Per repo instructions, Next.js docs were installed/read from `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/page.md` before editing App Router page code.
+
+### Changes made
+- Removed the entire rendered `copy.engineLadder` section from `src/app/HomeClient.tsx` without replacing it.
+- Removed the English and French `engineLadder` strings from `src/lib/i18n.ts`.
+- Removed related English/French `keys activated` caveats from Agent card body, Agent pricing feature lists, and FAQ answers while keeping the hero, done-for-you section, pricing, and FAQ sections intact.
+
 ## 2026-07-08 — C4 post-audit conversion email sequence
 
 ### Findings
