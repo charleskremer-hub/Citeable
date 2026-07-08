@@ -1159,3 +1159,23 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - Real answer-engine proof: score `75`, engine `Gemini`, model `gemini-flash-latest`, `realLlmCall=true`.
 - Teaser observed on live report with CTA href `https://checkout.nanocorp.so/c/fzVo0YiuyHM5GStaVrpT?utm_source=report_teaser` and visible title `Add a FAQ page for the questions buyers search`.
 - Screenshot saved locally at `/tmp/citeable-teaser.png` (full page: `/tmp/citeable-teaser-report-full.png`).
+
+## 2026-07-08 — Live proof for P0 report CTA (€49 checkout, Pela Case)
+
+### Findings
+- CTA wiring already existed in commit `e749d4675fa6aa8ba0b8a6a2bf4fc101cebf08bb` (`Wire audit report CTA to GEO Agent checkout`); no app-code change was needed in this run.
+- Active NanoCorp product check confirmed `Citeable GEO Agent` is active at `4900` cents `eur` with live checkout `https://checkout.nanocorp.so/c/fzVo0YiuyHM5GStaVrpT`.
+- Before the proof run, the database had `0` prior audit rows for candidate brands/websites including `Pela`, `Pela Case`, and `pelacase.com`, so `Pela Case` was a never-tested brand for this site.
+
+### Live proof
+- Submitted a fresh public audit through `https://getciteable.nanocorp.app` for `Pela Case`, website `https://pelacase.com`, recipient `proof+pela-202607081600@getciteable.nanocorp.app`.
+- Live audit/report URL: `https://getciteable.nanocorp.app/audit/a2168ef8-30b7-43d0-9ec5-885842ffc5c4`.
+- Completed audit row: score `19/100`, category `food & beverage`, `answerEngine.engine=Gemini`, `answerEngine.model=gemini-flash-latest`, `realLlmCall=true`, competitors `AG1`, `Oatly`, `LaCroix`, `emailSent=true`.
+- Live report CTA hrefs for `Fix it for me — €49 →` were `https://checkout.nanocorp.so/c/fzVo0YiuyHM5GStaVrpT?utm_source=report`.
+- `agent-browser --session cta-proof click @e3 --new-tab` on the in-report `Fix it for me — €49 →` CTA opened the live checkout and reached Stripe Checkout for `Citeable GEO Agent`, showing `€49.00` and quantity `1`.
+- Final checkout URL reached from the CTA click: `https://checkout.stripe.com/c/pay/cs_live_a1FXxql97VhMXOWuEz4wnTwmFFCHyE1btfLUJJ8BUT3mo54Y1kZ8c2ujYK#fidnandhYHdWcXxpYCc%2FJ2FgY2RwaXEnKSdicGRmZGhqaWBTZHdsZGtxJz8nZmprcXdqaScpJ2R1bE5gfCc%2FJ3VuWmlsc2BaMDRRaG9dRjE3QGBOQFJpXWhtRDxxUFdyXXVrMFFoTU1SVUlVN2NxdWQzcFRdUkpPXWEzUGlcfFVqY2lxU2tRYXNdV2oxUktTU383NHRiRzNCfUZgVHFjMVw1NXE0clAwUV1gJyknY3dqaFZgd3Ngdyc%2FcXdwYCknZ2RmbmJ3anBrYUZqaWp3Jz8nJmNjY2NjYycpJ2lkfGpwcVF8dWAnPyd2bGtiaWBabHFgaCcpJ2BrZGdpYFVpZGZgbWppYWB3dic%2FcXdwYHgl`.
+- Screenshots saved in repo: `artifacts/live-captures/pela-report-e749d46.png` and `artifacts/live-captures/pela-stripe-checkout-e749d46.png`.
+
+### Status
+- LIVE: the report CTA is wired to the live €49 checkout and the fresh `Pela Case` report CTA reaches live Stripe Checkout.
+- Follow-up: product catalog has duplicate active `Citeable Agent`/`Citeable GEO Agent` and duplicate `Citeable Monitor` products; clean-up should be planned carefully under the Stripe product rules, not done during this proof run.
