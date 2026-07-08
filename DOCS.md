@@ -1211,3 +1211,25 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - Simplified FR/EN landing copy so Free checks with Gemini, Monitor watches with Gemini, and Agent checks Gemini + ChatGPT.
 - Removed model-version wording from Agent hero/section copy, pricing title, pricing features, report engine badge, and audit email notes.
 - Kept disabled/backend engine details out of public-facing messaging; no landing copy promises Claude, Grok, Mistral, or key-activated engines.
+
+## 2026-07-08 — Agent audit chat MVP exploration
+
+### Findings
+- `node_modules/next/dist/docs/` is missing in this checkout (`ls node_modules/next/dist/docs` returns no such file), so changes follow the existing Next.js 16 App Router server/client component and route-handler patterns already used in `src/app/audit/[id]/page.tsx` and `src/app/api/run-audit/route.ts`.
+- The audit report page is `src/app/audit/[id]/page.tsx`; it reads `audits.raw_results` for `auditTier`, `category`, `answerEngine`, `brandSentiment`, `buyerIntentPrompts`, and `monitoring.actions`.
+- Minimal paid gating can use the stored `raw_results.auditTier === "agent_49eur"` flag; there is no existing login/session or post-checkout entitlement table.
+- Existing stored Agent-tier audits are available for Allbirds and Osprey; other recent real-brand audits are stored as free tier with Gemini buyer-intent prompt data.
+- Existing engine adapters in `src/lib/audit-engine.ts` support real Gemini via `GEMINI_API_KEY`/`NANO_USER_GEMINI_API_KEY` and real ChatGPT via `OPENAI_API_KEY`/`NANO_USER_CHATGPT_API_KEY`.
+
+### Changes made
+- Added `src/lib/audit-agent-chat.ts` with the Agent chat response builder. It loads stored audit facts, calls both real ChatGPT (`OPENAI_API_KEY`/`NANO_USER_CHATGPT_API_KEY`) and Gemini (`GEMINI_API_KEY`/`NANO_USER_GEMINI_API_KEY`), and returns a deterministic grounded answer using only stored audit facts plus engine status.
+- Added gated `POST /api/audit-agent-chat` in `src/app/api/audit-agent-chat/route.ts`; it returns `403` with the Agent checkout URL unless `audits.raw_results.auditTier === "agent_49eur"` and returns `409` until the audit is complete.
+- Added `src/app/audit/[id]/AgentAuditChat.tsx` and mounted it on completed Agent reports in `src/app/audit/[id]/page.tsx`; the chat UI supports FR/EN copy, starter prompts, audit-source display, and engine status display.
+- Created a third real-brand Agent-tier proof audit for Patagonia: `867e242f-c687-41d7-a82a-9e80ce92564e` (score 18, category `Patagonia alternatives`) to supplement existing Agent proofs for Osprey and Allbirds.
+
+### Validation
+- Read Next.js 16 route-handler and server/client component docs after installing dependencies: `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/route.md` and `node_modules/next/dist/docs/01-app/01-getting-started/05-server-and-client-components.md`.
+- `npm run lint` passes with only the two pre-existing warnings in `src/lib/audit-engine.ts`: unused `isAuditedBrandName` and `categoryFromWebsite`.
+- `npm run build` passes with Next.js 16.2.10 / Turbopack; route list includes `/api/audit-agent-chat`.
+- Local gate check against free audit `a2168ef8-30b7-43d0-9ec5-885842ffc5c4` returned HTTP `403` and the Agent checkout URL.
+- Final proof conversations were saved to `/tmp/agent-chat-proof.json`; all three returned HTTP `200` with `ChatGPT ✓` and `Gemini ✓`.

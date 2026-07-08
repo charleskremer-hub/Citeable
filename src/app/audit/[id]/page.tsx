@@ -6,6 +6,7 @@ import { ensureAuditSchema, pool } from "@/lib/db";
 import { auditCopy, brandSentimentText, localeFromHeaders, localizePlainAction, recommendationText, type Locale } from "@/lib/i18n";
 import type { BrandSentiment, BuyerIntentPromptResult, PlainAction } from "@/lib/audit-engine";
 import AuditPoller from "./AuditPoller";
+import AgentAuditChat from "./AgentAuditChat";
 
 export const dynamic = "force-dynamic";
 
@@ -386,6 +387,15 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                 </div>
               )}
             </section>
+          ) : null}
+
+          {complete && !failed && isAgentReport ? (
+            <AgentAuditChat
+              auditId={audit.id}
+              brandName={audit.brand_name}
+              category={audit.raw_results?.category}
+              locale={locale}
+            />
           ) : null}
 
           {freeFixTeaser ? (
