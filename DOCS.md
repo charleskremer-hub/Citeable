@@ -1097,3 +1097,25 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 ### Validation
 - `npm run lint` passed with the same two pre-existing warnings in `src/lib/audit-engine.ts`: unused `isAuditedBrandName` and `categoryFromWebsite`.
 - `npm run build` passed on Next.js 16.2.10 / Turbopack.
+
+## 2026-07-08 — Free report Agent fix teaser tied to real audit gap
+
+### Findings
+- The free audit report renders from `src/app/audit/[id]/page.tsx` as a dynamic App Router server component and reads completed audit rows from Postgres.
+- Free reports already receive real Gemini buyer-intent prompt results plus generated `monitoring.actions` from `buildPlainActions()` in `src/lib/audit-engine.ts`.
+- The priority action title is generated from actual tested prompts, but the teaser needed its hidden details to be explicitly tied to the first real gap prompt so it cannot look generic or fake.
+
+### Changes made
+- Updated the free-report Agent teaser to show only when a real available gap exists: either Gemini does not mention the audited brand or it also cites competitors.
+- Kept the visible teaser title as the first generated priority FAQ action and the visible hook as the real gap line with the exact tested prompt/competitors.
+- Rebuilt the blurred locked detail lines from that same first gap prompt, including where to publish and the prompt it is based on.
+- Kept the CTA text `Debloquer mes correctifs - 49EUR/mois` wired to `https://checkout.nanocorp.so/c/fzVo0YiuyHM5GStaVrpT?utm_source=report_teaser`.
+
+### Validation
+- `npm run lint` passed with two pre-existing warnings only: unused `isAuditedBrandName` and `categoryFromWebsite` in `src/lib/audit-engine.ts`.
+- `npm run build` passed on Next.js 16.2.10 / Turbopack.
+- Live proof audit used known brand `Rothy's` at `https://rothys.com/` with non-Gmail recipient `proof+teaser-rothys-20260708091527@getciteable.nanocorp.app`.
+- Live audit id: `b283de8c-ffab-4198-a6ea-4915bec84765`; report URL: `https://getciteable.nanocorp.app/audit/b283de8c-ffab-4198-a6ea-4915bec84765`.
+- Real answer-engine proof: score `75`, engine `Gemini`, model `gemini-flash-latest`, `realLlmCall=true`.
+- Teaser observed on live report with CTA href `https://checkout.nanocorp.so/c/fzVo0YiuyHM5GStaVrpT?utm_source=report_teaser` and visible title `Add a FAQ page for the questions buyers search`.
+- Screenshot saved locally at `/tmp/citeable-teaser.png` (full page: `/tmp/citeable-teaser-report-full.png`).

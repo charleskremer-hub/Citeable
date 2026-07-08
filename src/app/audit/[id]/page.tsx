@@ -160,6 +160,30 @@ function firstRealGapQuestion(questions: BuyerIntentPromptResult[]) {
   return questions.find((question) => question.available && (!question.brandMentioned || question.competitors.length > 0));
 }
 
+function gapFixDetailLines(question: BuyerIntentPromptResult, action: PlainAction, locale: Locale) {
+  const citedCompetitors = uniqueNames(question.competitors).slice(0, 3);
+
+  if (locale === "fr") {
+    const competitorLine = citedCompetitors.length ? `Concurrents vus sur ce gap : ${citedCompetitors.join(", ")}.` : "Objectif : rendre la marque assez claire pour être citée sur ce gap.";
+
+    return [
+      `À faire : crée une page ou section qui répond à cette requête exacte : « ${question.prompt} ».`,
+      competitorLine,
+      `Où le publier : ${action.where}`,
+      `Basé sur : ${question.prompt}`,
+    ];
+  }
+
+  const competitorLine = citedCompetitors.length ? `Competitors seen on this gap: ${citedCompetitors.join(", ")}.` : "Goal: make the brand clear enough to be cited for this gap.";
+
+  return [
+    `To do: create a page or section that answers this exact query: “${question.prompt}”.`,
+    competitorLine,
+    `Where to publish it: ${action.where}`,
+    `Based on: ${question.prompt}`,
+  ];
+}
+
 function gapHook(brandName: string, question: BuyerIntentPromptResult, engine: string, locale: Locale) {
   const citedCompetitors = uniqueNames(question.competitors).slice(0, 3);
 
@@ -182,18 +206,14 @@ function gapHook(brandName: string, question: BuyerIntentPromptResult, engine: s
 
 function priorityFixTeaser(brandName: string, questions: BuyerIntentPromptResult[], actions: PlainAction[], engine: string, locale: Locale) {
   const gapQuestion = firstRealGapQuestion(questions);
-  const priorityAction = actions[0];
+  const priorityAction = actions.find((action) => action.basedOn?.includes(gapQuestion?.prompt ?? ""));
 
-  if (!gapQuestion || !priorityAction?.basedOn?.length) return null;
+  if (!gapQuestion || !priorityAction) return null;
 
   return {
     title: priorityAction.title,
     hook: gapHook(brandName, gapQuestion, engine, locale),
-    detailLines: [
-      priorityAction.doThis,
-      locale === "fr" ? `Où le publier : ${priorityAction.where}` : `Where to publish it: ${priorityAction.where}`,
-      locale === "fr" ? `Basé sur : ${priorityAction.basedOn.join(" · ")}` : `Based on: ${priorityAction.basedOn.join(" · ")}`,
-    ],
+    detailLines: gapFixDetailLines(gapQuestion, priorityAction, locale),
   };
 }
 
