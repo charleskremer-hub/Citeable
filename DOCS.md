@@ -1398,3 +1398,18 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - Confirm the sending tool can generate `{{unsubscribe_url}}` for each recipient before any email is sent.
 - Only after explicit GO: send Email 1, then Email 2 on J+3 and Email 3 on J+7 only to non-responders/non-unsubscribed recipients.
 - Draft any inbound replies for Charles to send manually; do not auto-reply.
+
+## 2026-07-09 — Organic SEO/GEO answer pages and social drafts
+
+### Findings
+- Local `node_modules/next/dist/docs/` was missing in the fresh checkout; ran `npm install` once, then read the Next.js 16 App Router docs for pages, generated metadata, static params, and sitemap generation before changing route code.
+- Existing app uses a server `src/app/page.tsx` wrapper plus client `src/app/HomeClient.tsx`, with locale selected from `Accept-Language` / France geo headers in `src/lib/i18n.ts`.
+- Existing launch copy lived in `LINKEDIN_POST.md` and the NanoCorp document `linkedin_post`; it informed the new validation-only organic social drafts.
+- Source-backed market claims used for the SEO/GEO pages were fetched into `artifacts/research/`: Adobe AI retail traffic study, Capgemini AI shopping research, and Bain AI search research.
+
+### Changes made
+- Added shared programmatic page data in `src/lib/answer-pages.ts` for 5 categories in FR and EN: DTC sneakers, specialty coffee, clean beauty, ethical fashion, and coworking.
+- Added the dynamic static route `src/app/[locale]/[slug]/page.tsx` with indexable metadata, canonical/alternate language links, answer-ready H1/direct-answer/list structure, proof signals, source links, FAQ JSON-LD, and CTA back to the free audit.
+- Added `src/app/sitemap.ts` so the homepage and all 10 FR/EN organic answer pages appear in the generated sitemap.
+- Added a homepage resource section in `src/app/HomeClient.tsx` linking to the localized answer pages for crawl/discovery.
+- Created local social draft artifact `artifacts/social/organic-social-drafts-2026-07-09.md` and NanoCorp document `organic_social_drafts_2026_07_09` titled `BROUILLON — Posts organiques Citeable IA recommendations`; both are explicitly marked as drafts for Charles validation, not published.

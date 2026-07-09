@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { answerPages } from "@/lib/answer-pages";
 import { AGENT_CHECKOUT_URL, MONITOR_CHECKOUT_URL } from "@/lib/checkout-links";
 import { homeCopy, type Locale } from "@/lib/i18n";
 
@@ -22,6 +23,7 @@ type HomeClientProps = {
 
 export default function HomeClient({ locale }: HomeClientProps) {
   const copy = homeCopy[locale];
+  const resourcePages = answerPages.filter((page) => page.locale === locale).slice(0, 5);
   const [email, setEmail] = useState("");
   const [brandName, setBrandName] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
@@ -317,6 +319,32 @@ export default function HomeClient({ locale }: HomeClientProps) {
                 </p>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-5xl border-t border-white/[0.06] px-5 py-14 sm:px-6 sm:py-20">
+          <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
+            <div>
+              <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">
+                {locale === "fr" ? "Guides IA" : "AI guides"}
+              </p>
+              <h2 className="max-w-xl text-[clamp(2rem,5vw,3rem)] leading-[1.02] tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
+                {locale === "fr" ? "Est-ce que l'IA recommande ta catégorie ?" : "Does AI recommend your category?"}
+              </h2>
+              <p className="mt-5 max-w-xl text-base leading-7 text-[#A7A7B4] sm:text-lg">
+                {locale === "fr"
+                  ? "Des pages answer-ready pour comprendre les signaux que ChatGPT, Gemini et les AI Overviews peuvent citer avant de recommander une marque."
+                  : "Answer-ready pages explaining the signals ChatGPT, Gemini and AI Overviews can cite before recommending a brand."}
+              </p>
+            </div>
+            <div className="grid gap-3">
+              {resourcePages.map((page) => (
+                <a key={page.slug} href={`/${page.locale}/${page.slug}`} className="rounded-2xl border border-white/[0.08] bg-white/[0.035] p-5 text-[#F0F0EC] no-underline transition hover:border-[#CAFF3C]/35 hover:bg-[#CAFF3C]/[0.04]">
+                  <span className="block text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">{page.category}</span>
+                  <span className="mt-2 block text-lg font-black tracking-[-0.02em]">{page.title}</span>
+                </a>
+              ))}
+            </div>
           </div>
         </section>
       </main>
