@@ -19,7 +19,7 @@ type AgentAuditChatProps = {
 
 const copy = {
   en: {
-    eyebrow: "Agent €19 · interactive",
+    eyebrow: "Agent €19/month · interactive",
     title: "Ask your audit anything",
     body: "Answers use your stored audit, Gemini, and ChatGPT. If the audit does not contain a fact, the agent says so instead of guessing.",
     placeholder: "Ask why an AI cites a competitor, or request a copy-paste fix…",
@@ -35,7 +35,7 @@ const copy = {
     ],
   },
   fr: {
-    eyebrow: "Agent 19 € · interactif",
+    eyebrow: "Agent 19 €/mois · interactif",
     title: "Pose tes questions à l'audit",
     body: "Les réponses utilisent ton audit stocké, Gemini et ChatGPT. Si l'audit ne contient pas une info, l'agent le dit au lieu d'inventer.",
     placeholder: "Demande pourquoi l'IA cite un concurrent, ou un correctif prêt à coller…",

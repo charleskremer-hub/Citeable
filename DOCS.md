@@ -1,3 +1,19 @@
+## 2026-07-09 — Agent monthly consistency follow-up
+
+### Findings
+- Per repo instructions, `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/page.md` and `layout.md` were read after `npm ci` restored local dependencies.
+- Active NanoCorp products are deduped to one Agent and one Monitor: Agent `25126f5b-138e-4c4a-813e-df671b929b5c` named `Citeable Agent — 19 EUR/mois` at `1900 eur`, and Monitor `1972c8ce-2dc0-43cc-a6b2-085e4b9c3f15` at `900 eur`.
+- `nanocorp products create --help` exposes fixed price/currency/name/description only; no recurring/subscription flag is available from the current NanoCorp product CLI, so the checkout product is labeled monthly but cannot be converted to a true recurring Stripe subscription by this worker tool.
+- The existing free report teaser logic already reveals one sample question and excludes that question from the locked priority fixes via `questionKey(question) !== revealedKey`.
+
+### Changes made
+- Updated remaining Agent chat, Agent API error, Agent system prompt, formula text, and post-audit email copy to say `€19/month` / `19 €/mois` and include the no-commitment/cancel-anytime reassurance where relevant.
+- Re-ran source scans for stale `achat unique`, `pas d'abonnement`, `one-time`, `no subscription`, and non-monthly Agent price literals; no matches remain in `src/`.
+
+### Validation
+- `npm run lint` passed with the two pre-existing warnings only: unused `isAuditedBrandName` and `categoryFromWebsite` in `src/lib/audit-engine.ts`.
+- `npm run build` passed on Next.js 16.2.10 / Turbopack.
+
 ## 2026-07-09 — Free report teaser no give-away + Agent monthly label
 
 ### Findings

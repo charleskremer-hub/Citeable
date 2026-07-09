@@ -2300,7 +2300,7 @@ function formulaText() {
 
 function formulaTextForTier(tier: AuditTier) {
   if (tier === "agent_19eur" || tier === "agent_49eur") {
-    return "Your Agent €19 report checks visibility with Gemini + ChatGPT and shows whether they name your brand or cite competitors instead. If a check is unavailable, Citeable says so and never fabricates data.";
+    return "Your Agent €19/month report checks visibility with Gemini + ChatGPT and shows whether they name your brand or cite competitors instead. If a check is unavailable, Citeable says so and never fabricates data.";
   }
 
   if (tier === "monitor_9eur") {
@@ -2683,7 +2683,7 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
               : `${answerEngineName} a aussi cité ${competitorSignal.competitor} sur : “${competitorSignal.prompt}”.`
             : `${answerEngineName} n'a cité aucun concurrent dans cet audit ; il t'a cité ${brandMentions}/${totalPrompts} fois.`,
           "",
-          "Si tu veux éviter de tout faire toi-même : Agent 19 € corrige tout pour toi à partir de ces signaux réels.",
+          "Si tu veux éviter de tout faire toi-même : Agent 19 €/mois corrige tout pour toi à partir de ces signaux réels. Sans engagement, résiliable à tout moment.",
           `Démarrer Agent : ${AGENT_CHECKOUT_URL}`,
           "Réassurance : tu gardes la main, et on ne part que des données réelles de ton audit — rien n'est inventé.",
           "",
@@ -2701,7 +2701,7 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
               : `${answerEngineName} also cited ${competitorSignal.competitor} for: “${competitorSignal.prompt}”.`
             : `${answerEngineName} did not cite a competitor in this audit; it cited you ${brandMentions}/${totalPrompts} times.`,
           "",
-          "If you do not want to fix everything yourself: Agent €19 fixes it for you from these real signals.",
+          "If you do not want to fix everything yourself: Agent €19/month fixes it for you from these real signals. No commitment, cancel anytime.",
           `Start Agent: ${AGENT_CHECKOUT_URL}`,
           "Reassurance: you stay in control, and we only use the real data from your audit — nothing is invented.",
           "",
