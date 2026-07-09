@@ -1,3 +1,24 @@
+## 2026-07-09 — Worker validation for teaser lock + Agent €19/month proof
+
+### Findings
+- Re-read `DOCS.md` first; current source already contains the requested free-report teaser and monthly-pricing fixes from commits `74c82e5` and `93dd233`.
+- Per repo instructions, `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/page.md` and `layout.md` were read after `npm ci` restored local Next.js 16.2.10 docs.
+- `/audit/[id]` free reports use `freeSampleQuestion = priorityQuestions(questions)[0]` for the single revealed Agent sample and pass that question to `lockedFixTeasers()`, which filters out `questionKey(question) === revealedKey`; this prevents the same fix from appearing revealed and locked.
+- Active NanoCorp products are deduped to one Agent and one Monitor: Agent `25126f5b-138e-4c4a-813e-df671b929b5c` (`Citeable Agent — 19 EUR/mois`, 1900 eur) and Monitor `1972c8ce-2dc0-43cc-a6b2-085e4b9c3f15` (`Citeable Monitor`, 900 eur). Inactive historical Agent/Monitor products remain inactive in `nanocorp products list --all`.
+- `nanocorp products create --help` still exposes only fixed `--price`, `--currency`, `--name`, and `--description`; no recurring/subscription flag is available, so the checkout is labeled monthly but could not be converted to a true recurring Stripe subscription from this worker CLI.
+
+### Validation
+- Source scan found no public `achat unique`, `pas d'abonnement`, `one-time`, `no subscription`, old Agent checkout URLs, or public Agent €49 price copy under `src/`.
+- `npm run lint` passed with only the two pre-existing warnings in `src/lib/audit-engine.ts` for unused `isAuditedBrandName` and `categoryFromWebsite`.
+- `npm run build` passed on Next.js 16.2.10 / Turbopack.
+
+### Live proof
+- Live free audit launched for real brand/site `Topo Designs` / `https://topodesigns.com`; report URL: `https://getciteable.nanocorp.app/audit/bc1f96f1-a5bb-44c9-a110-7b32ff750a74`.
+- The report reveals exactly one Agent sample for `What are the best hiking backpacks?` and locks different priority fixes: `Best travel backpacks for carry-on?` and `Is Topo Designs a good backpack brand?`.
+- Report CTA text is `Unlock Agent — €19/month`, reassurance is `No commitment, cancel anytime. Agent is €19/month.`, and extracted report anchors point to `https://checkout.nanocorp.so/c/zuJCYwhaUnzJGWIrB1dz`.
+- Stripe checkout proof shows `€19.00`, product `Citeable Agent — 19 EUR/mois`, and description `Abonnement mensuel Citeable Agent. Sans engagement, resiliable a tout moment.`
+- Proof screenshots saved at `artifacts/live-captures/topo-free-report-teaser-20260709064611.png` and `artifacts/live-captures/topo-agent-checkout-stripe-20260709064722.png`.
+
 ## 2026-07-09 — Agent monthly consistency follow-up
 
 ### Findings
