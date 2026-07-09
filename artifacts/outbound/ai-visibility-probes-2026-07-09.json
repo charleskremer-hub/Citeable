@@ -1,0 +1,115 @@
+{
+  "items": [
+    {
+      "name": "Caprice Paris",
+      "category": "bijoux fantaisie/accessoires de cheveux made in France",
+      "recommended_brands": [
+        "Les Néréides",
+        "Bérénice",
+        "Mademoiselle Aimee"
+      ],
+      "prospect_appeared": false,
+      "draft_hook": "Elevate your style with unique French accessories that stand out."
+    },
+    {
+      "name": "Sevonnerie",
+      "category": "savons solides artisanaux français",
+      "recommended_brands": [
+        "Savon Stories",
+        "La Savonnerie de Nyons",
+        "Savons de Marseille"
+      ],
+      "prospect_appeared": false,
+      "draft_hook": "Discover the art of French soap-making with exquisite artisan options."
+    },
+    {
+      "name": "Kaloé Cosmétique Naturelle",
+      "category": "petites marques de cosmétiques naturels français",
+      "recommended_brands": [
+        "Patyka",
+        "Cattier",
+        "Les Petits Pröd"
+      ],
+      "prospect_appeared": false,
+      "draft_hook": "Explore natural beauty with charming French brands that care."
+    },
+    {
+      "name": "L'Art du Bain",
+      "category": "savons artisanaux et bain naturel",
+      "recommended_brands": [
+        "L'Occitane",
+        "Compagnie de Provence",
+        "Savon de Marseille"
+      ],
+      "prospect_appeared": false,
+      "draft_hook": "Indulge in luxurious bath experiences with artisanal French soaps."
+    },
+    {
+      "name": "Zenzitude",
+      "category": "soins bien-être naturels et savons artisanaux",
+      "recommended_brands": [
+        "Cocooning",
+        "Les Savons de Joya",
+        "L'Artisan Parfumeur"
+      ],
+      "prospect_appeared": false,
+      "draft_hook": "Nurture your well-being with natural care from trusted French brands."
+    },
+    {
+      "name": "Sabuni & Cie",
+      "category": "savons naturels et cosmétiques solides",
+      "recommended_brands": [
+        "Bioderma",
+        "Lush",
+        "Savon de Marseille"
+      ],
+      "prospect_appeared": false,
+      "draft_hook": "Choose eco-friendly beauty with solid cosmetics that shine."
+    },
+    {
+      "name": "Local Hammer",
+      "category": "concept stores créateurs cadeaux originaux français",
+      "recommended_brands": [
+        "Merci",
+        "Fleux",
+        "BHV Marais"
+      ],
+      "prospect_appeared": false,
+      "draft_hook": "Find unique gifts that celebrate French creativity and craftsmanship."
+    },
+    {
+      "name": "Les Savons de Joya",
+      "category": "cosmétiques solides bio zéro déchet",
+      "recommended_brands": [
+        "Lamazuna",
+        "Les Savons de Marseille",
+        "Croll & Denecke"
+      ],
+      "prospect_appeared": false,
+      "draft_hook": "Join the zero-waste movement with organic solid cosmetics."
+    },
+    {
+      "name": "North Devon Soap",
+      "category": "small UK handmade soap brands",
+      "recommended_brands": [
+        "The Soap Co.",
+        "Bramble & Blossom",
+        "Devon Soap Company"
+      ],
+      "prospect_appeared": false,
+      "draft_hook": "Experience the charm of handmade UK soaps crafted with care."
+    },
+    {
+      "name": "La Savonnerie du Nouveau Monde",
+      "category": "savons et cosmétiques naturels made in France",
+      "recommended_brands": [
+        "Savon de Marseille",
+        "L'Occitane",
+        "Les Savons de Joya"
+      ],
+      "prospect_appeared": false,
+      "draft_hook": "Embrace natural beauty with authentic French soaps and cosmetics."
+    }
+  ],
+  "status": 200
+}

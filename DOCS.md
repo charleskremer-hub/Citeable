@@ -1378,3 +1378,23 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - `npm install` was required because `node_modules/.bin/next` and `eslint` were missing in the worker checkout.
 - `npm run lint` passed with only the two pre-existing warnings in `src/lib/audit-engine.ts`: unused `isAuditedBrandName` and `categoryFromWebsite`.
 - `npm run build` passed on Next.js 16.2.10 / Turbopack.
+
+## 2026-07-09 — Outbound SMB prospecting + 19 EUR done-for-you draft
+
+### Findings
+- Prepared an approval-gated outbound package for small SMB/non-tech brands, prioritizing French prospects plus one anglophone UK test.
+- No outbound emails were sent; status is ready for Charles review and explicitly pending GO before any send.
+- Used public generic business addresses only. Official NanoCorp web fetches confirmed public emails for Caprice Paris, Kaloé Cosmétique Naturelle, L'Art du Bain, Zenzitude, and Sabuni & Cie; remaining public addresses should be rechecked immediately before sending; weak/unverified candidates Bretzel et Arc-en-ciel, J'ose Dire, and 13WICKS were replaced with Local Hammer, Les Savons de Joya, and La Savonnerie du Nouveau Monde.
+- Ran one conservative AI-visibility mini-test through OpenAI `gpt-4o-mini` using general model knowledge, saved at `artifacts/outbound/ai-visibility-probes-2026-07-09.json`; every selected prospect was absent from the mini-test recommendations, so copy must phrase this as a quick signal rather than a definitive audit.
+- Gemini batch probing was attempted but was too slow / partially malformed, so it was not used for the final outreach claims.
+
+### Assets prepared
+- Created the full prospect list, 3-step FR sequence, 3-step EN sequence, guardrails, send cadence, unsubscribe requirements, and personalization tokens at `artifacts/outbound/smb-outbound-19eur-draft-2026-07-09.md`.
+- Saved source/contact fetch notes at `artifacts/outbound/prospect-source-notes-2026-07-09.txt`, `artifacts/outbound/prospect-contact-fetches-2026-07-09.txt`, and `artifacts/outbound/prospect-search-evidence-2026-07-09.txt`.
+
+### Charles approval checklist
+- Review the 10 prospects and draft sequence in `artifacts/outbound/smb-outbound-19eur-draft-2026-07-09.md`.
+- Re-verify public business emails for Local Hammer, Les Savons de Joya, North Devon Soap, and La Savonnerie du Nouveau Monde immediately before sending.
+- Confirm the sending tool can generate `{{unsubscribe_url}}` for each recipient before any email is sent.
+- Only after explicit GO: send Email 1, then Email 2 on J+3 and Email 3 on J+7 only to non-responders/non-unsubscribed recipients.
+- Draft any inbound replies for Charles to send manually; do not auto-reply.

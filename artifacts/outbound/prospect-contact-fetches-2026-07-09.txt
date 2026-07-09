@@ -1,0 +1,99 @@
+
+
+===== https://www.sevonnerie.fr/contact =====
+url=https://www.sevonnerie.fr/contact title="Erreur 404" total_chars=163 credits=0.0011
+
+#### Aucun produit disponible pour le moment
+
+Restez à l'écoute ! D'autres produits seront affichés ici au fur et à mesure qu'ils seront ajoutés.
+
+_search_ _clear_
+
+
+===== https://www.sevonnerie.fr/pages/contact =====
+url=https://www.sevonnerie.fr/pages/contact title="Erreur 404" total_chars=163 credits=0.0011
+
+#### Aucun produit disponible pour le moment
+
+Restez à l'écoute ! D'autres produits seront affichés ici au fur et à mesure qu'ils seront ajoutés.
+
+_search_ _clear_
+
+
+===== https://kaloe-cosmetique-naturelle.com/contact =====
+url=https://kaloe-cosmetique-naturelle.com/contact title="Contact Us – Kaloé" total_chars=287 credits=0.0011
+
+[0](https://kaloe-cosmetique-naturelle.com/cart-2/)
+
+## Contact
+
+## Une question ? Je vous réponds au plus vite :
+
+- 10 rue de l'aqueduc - 30210 Vers-Pont-Du-Gard - France
+- 06.13.24.30.66
+- contact@kaloe-cosmetique-naturelle.com
+
+Nom & Prénom
+
+Email
+
+Message
+
+Envoyer
+
+## Mon panier (0)
+
+
+===== https://kaloe-cosmetique-naturelle.com/pages/contact =====
+url=https://kaloe-cosmetique-naturelle.com/pages/contact title="Contact Us – Kaloé" total_chars=292 credits=0.0011
+
+[0](https://kaloe-cosmetique-naturelle.com/cart-2/)
+
+## Contact
+
+## Une question ? Je vous réponds au plus vite :
+
+- 10 rue de l'aqueduc - 30210 Vers-Pont-Du-Gard - France
+- 06.13.24.30.66
+- contact@kaloe-cosmetique-naturelle.com
+
+Nom & Prénom
+
+Email
+
+Message
+
+Envoyer
+
+## Mon panier (  0   )
+
+
+===== https://bretzeletarcenciel.com/pages/contact =====
+{"success":false,"result":null,"error":"Web fetch failed: Firecrawl error: scrape failed: DNS resolution failed for hostname \"bretzeletarcenciel.com\". This means the domain name could not be translated to an IP address. Possible causes: (1) The domain name is misspelled (check for typos), . Credits have been refunded."}
+
+
+===== https://bretzeletarcenciel.com/contact =====
+
+
+===== https://jose-dire.com/contact =====
+{"success":false,"result":null,"error":"Web fetch failed: Firecrawl error: scrape failed: DNS resolution failed for hostname \"jose-dire.com\". This means the domain name could not be translated to an IP address. Possible causes: (1) The domain name is misspelled (check for typos), (2) The d. Credits have been refunded."}
+
+
+===== https://jose-dire.com/pages/contact =====
+{"success":false,"result":null,"error":"Web fetch failed: Firecrawl error: scrape failed: DNS resolution failed for hostname \"jose-dire.com\". This means the domain name could not be translated to an IP address. Possible causes: (1) The domain name is misspelled (check for typos), (2) The d. Credits have been refunded."}
+
+
+===== https://www.northdevonsoap.co.uk/contact-us/ =====
+{"success":false,"result":null,"error":"Web fetch is temporarily disabled after 3 consecutive failures (last error: Firecrawl error: scrape failed: DNS resolution failed for hostname \"jose-dire.com\". This means the domain name could not be translated to an IP address. Possible causes: (1) The domain name is misspelled (check for typos), (2) The d). Try again in 599s. No credits were charged."}
+
+
+===== https://www.northdevonsoap.co.uk/contact/ =====
+{"success":false,"result":null,"error":"Web fetch is temporarily disabled after 3 consecutive failures (last error: Firecrawl error: scrape failed: DNS resolution failed for hostname \"jose-dire.com\". This means the domain name could not be translated to an IP address. Possible causes: (1) The domain name is misspelled (check for typos), (2) The d). Try again in 599s. No credits were charged."}
+
+
+===== https://13wickscandleco.ca/pages/contact-us =====
+{"success":false,"result":null,"error":"Web fetch is temporarily disabled after 3 consecutive failures (last error: Firecrawl error: scrape failed: DNS resolution failed for hostname \"jose-dire.com\". This means the domain name could not be translated to an IP address. Possible causes: (1) The domain name is misspelled (check for typos), (2) The d). Try again in 598s. No credits were charged."}
+
+
+===== https://13wickscandleco.ca/pages/contact =====
+{"success":false,"result":null,"error":"Web fetch is temporarily disabled after 3 consecutive failures (last error: Firecrawl error: scrape failed: DNS resolution failed for hostname \"jose-dire.com\". This means the domain name could not be translated to an IP address. Possible causes: (1) The domain name is misspelled (check for typos), (2) The d). Try again in 598s. No credits were charged."}

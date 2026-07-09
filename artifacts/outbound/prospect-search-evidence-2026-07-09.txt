@@ -1,0 +1,26 @@
+2026-07-09 replacement/source search evidence (NanoCorp web search snippets)
+
+Local Hammer / contact@localhammer.com
+- Search query: "Local Hammer" "contact@localhammer.com"
+- Snippets returned official/local pages including Facebook about page, CGU, Mentions Légales, and CGV. Snippets show Local Hammer as a concept store and list contact@localhammer.com.
+
+Sevonnerie / contact@sevonnerie.fr
+- Search query: "Sevonnerie" "contact@sevonnerie.fr"
+- Snippets returned official site, Facebook, Instagram, and Infobel entries. Official site snippet lists address, phone, and “Envoyez-nous un e-mail : contact@sevonnerie.fr”.
+
+North Devon Soap / hello@northdevonsoap.co.uk
+- Search query: "North Devon Soap" "hello@northdevonsoap.co.uk"
+- Snippets returned official site homepage/shop plus Facebook and Crunchbase. Official snippets describe small-batch natural vegan soap and list hello@northdevonsoap.co.uk.
+
+Les Savons de Joya / contact@lessavonsdejoya.com
+- Search query: "Les Savons de Joya" "contact@"
+- Snippets returned official site and tourism/Cosmébio entries. Tourism snippet lists contact@lessavonsdejoya.com.
+
+La Savonnerie du Nouveau Monde / contact.optimale@optimale-cosmetologie.com
+- Search query: "La Savonnerie du Nouveau Monde" "contact@"
+- Snippets returned official site, Cosmébio, Facebook, and tourism entries. Official/snippet contact is contact.optimale@optimale-cosmetologie.com.
+
+Rejected/removed weak candidates
+- Bretzel et Arc-en-ciel: search confirmed the business exists but did not validate the email/domain used in the initial draft.
+- J'ose Dire: search results did not validate the brand/domain/email used in the initial draft.
+- 13WICKS Candle Co.: search did not validate 13wickscandleco@gmail.com.
