@@ -1413,3 +1413,8 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - Added `src/app/sitemap.ts` so the homepage and all 10 FR/EN organic answer pages appear in the generated sitemap.
 - Added a homepage resource section in `src/app/HomeClient.tsx` linking to the localized answer pages for crawl/discovery.
 - Created local social draft artifact `artifacts/social/organic-social-drafts-2026-07-09.md` and NanoCorp document `organic_social_drafts_2026_07_09` titled `BROUILLON — Posts organiques Citeable IA recommendations`; both are explicitly marked as drafts for Charles validation, not published.
+
+### Validation
+- `npm run lint` passed with two pre-existing warnings in `src/lib/audit-engine.ts` only: unused `isAuditedBrandName` and `categoryFromWebsite`.
+- `npm run build` passed on Next.js 16.2.10 / Turbopack and generated the new SEO/GEO routes plus `/sitemap.xml`.
+- Pushed commit `8db8ef3` to `main`; after the required 90-second wait, installed Chrome once for `agent-browser` because the sandbox reported `Chrome not found`, then verified the live FR specialty-coffee page rendered at `https://getciteable.nanocorp.app/fr/ia-recommande-cafe-specialite` with screenshot `/tmp/citeable-organic-seo-page.png`. The live check exposed awkward category grammar, which was fixed locally before the final cleanup commit.

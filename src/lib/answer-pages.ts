@@ -145,7 +145,7 @@ function createPage(seed: CategorySeed, locale: AnswerLocale): AnswerPage {
     featuredList: isFr
       ? ["une proposition de valeur en une phrase", "des pages qui répondent aux questions d'achat", "des avis et comparatifs lisibles", "des mentions tierces cohérentes", "des informations locales, prix ou disponibilité à jour"]
       : ["a one-sentence value proposition", "pages that answer buying questions", "readable reviews and comparisons", "consistent third-party mentions", "current local, price or availability information"],
-    verificationTitle: isFr ? `Comment vérifier si l'IA recommande une marque de ${category} ?` : `How do you check whether AI recommends a ${category} brand?`,
+    verificationTitle: isFr ? `Comment vérifier si l'IA recommande une marque dans la catégorie ${category} ?` : `How do you check whether AI recommends a brand in ${category}?`,
     verificationIntro: isFr
       ? "Ne te fie pas à une seule question. Teste plusieurs formulations proches d'une vraie intention d'achat, puis regarde si la marque est citée, pourquoi elle l'est, et qui est recommandé à la place."
       : "Do not trust one prompt. Test several versions of a real buying intent, then check whether the brand is cited, why it is cited, and which competitors are recommended instead.",
@@ -175,7 +175,7 @@ function createPage(seed: CategorySeed, locale: AnswerLocale): AnswerPage {
     relatedTitle: isFr ? "Autres catégories" : "Other categories",
     faq: [
       {
-        question: isFr ? `Pourquoi l'IA ne recommande-t-elle pas ma marque de ${category} ?` : `Why does AI not recommend my ${category} brand?`,
+        question: isFr ? "Pourquoi l'IA ne recommande-t-elle pas ma marque dans cette catégorie ?" : "Why does AI not recommend my brand in this category?",
         answer: isFr
           ? `Souvent parce que les preuves publiques sont trop faibles, contradictoires ou difficiles à extraire. ${seed.frAngle}`
           : `Usually because public proof is too thin, inconsistent or hard to extract. ${seed.enAngle}`,
