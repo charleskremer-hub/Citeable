@@ -1,3 +1,24 @@
+## 2026-07-09 — Meta SMB ad refresh package
+
+### Findings
+- `nanocorp ads --help` confirms ads are read-only from the worker CLI; creative regeneration, targeting edits, budget edits, and pausing are owner-controlled from the NanoCorp dashboard / Meta Ads Manager, so the new creative and targeting could not be applied directly by this worker.
+- Active campaign snapshot from `nanocorp ads list`: campaign `49b54812-ad64-42d0-bcd2-09344457d29f`, status `ACTIVE`, effective status `ACTIVE`, creative status `READY`, daily cap `$5/day`, destination `https://getciteable.nanocorp.app?utm_source=facebook&utm_medium=paid_social&utm_campaign=49b54812-ad64-42d0-bcd2-09344457d29f`, countries `FR`, `BE`, `CH`, `DE`, `NL`, `GB`, `US`, `CA`.
+- Current insights from `nanocorp ads insights 49b54812-ad64-42d0-bcd2-09344457d29f`: spend `$9.51`, impressions `30,349`, clicks `133`, inline link clicks `152`, CTR `0.438235%`, CPC `$0.071504`.
+- Budget was verified at `$5/day` and was not changed.
+
+### Assets prepared
+- Created the owner handoff brief at `artifacts/ads/meta-smb-brief-2026-07-09.md` with the exact FR/EN ad copy, CTA, targeting, budget guardrail, and kill-switch.
+- Captured the active campaign JSON at `artifacts/ads/meta-smb-campaign-state-2026-07-09.json` and insights JSON at `artifacts/ads/meta-smb-insights-2026-07-09.json`.
+- Created square 1080x1080 dark-background, green-accent Meta creative previews at `artifacts/ads/meta-smb-creative-fr-2026-07-09.png` and `artifacts/ads/meta-smb-creative-en-2026-07-09.png`, with editable HTML sources beside them.
+
+### Manual Meta Ads Manager actions for Charles
+- Apply the FR default creative: headline `L'IA recommande-t-elle ton entreprise ?`, primary text from the task brief, CTA `Audit gratuit` or `En savoir plus` if required by Meta.
+- Apply the EN variant: headline `Does AI recommend your business?`, primary text from the task brief, CTA `Free audit` or `Learn More` if required by Meta.
+- Replace broad geo targeting with France plus anglophone countries only: keep `FR`, `GB`, `US`, `CA`; add `AU`; remove `BE`, `CH`, `DE`, `NL` unless Charles explicitly wants to keep them for a separate French-market test.
+- Set age to `25-55` and tighten detailed targeting to small business owners / business owners / entrepreneurship / small business / e-commerce / Shopify / local business / local marketing / TPE-PME / solo founders.
+- Keep total spend unchanged at `$5/day`; if splitting ad sets for the requested 70% France priority, use about `$3.50/day` FR and `$1.50/day` EN, otherwise keep one `$5/day` ad set and monitor delivery mix.
+- Keep the kill-switch unchanged: pause if CPA exceeds `€49`.
+
 ## 2026-07-09 — Live proof for Agent teaser/pricing task
 
 ### Live audit proof
