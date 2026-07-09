@@ -1252,3 +1252,23 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - `npm run build` passes with Next.js 16.2.10 / Turbopack; route list includes `/api/audit-agent-chat`.
 - Local gate check against free audit `a2168ef8-30b7-43d0-9ec5-885842ffc5c4` returned HTTP `403` and the Agent checkout URL.
 - Final proof conversations were saved to `/tmp/agent-chat-proof.json`; all three returned HTTP `200` with `ChatGPT ✓` and `Gemini ✓`.
+
+## 2026-07-09 — A2 done-for-you vs dashboard landing angle
+
+### Findings
+- Landing copy is centralized in `src/lib/i18n.ts` for both `en` and `fr`; `src/app/HomeClient.tsx` renders the hero, audit form, post-hero positioning block, and pricing checkout CTAs from those strings.
+- The audit funnel starts in the hero form (`/api/capture-email`), redirects to `/audit/[id]`, and the Agent pricing/report CTAs use the existing `AGENT_CHECKOUT_URL` from `src/lib/checkout-links.ts`.
+- Per root `AGENTS.md`, attempted to consult bundled Next docs before editing App Router files, but this checkout has no `node_modules/next/dist/docs/` directory after install, so changes followed existing Next.js 16 App Router patterns in this repo.
+- No competitor names or logos are shown in the landing copy; the new comparison speaks only about generic dashboards.
+
+### Changes made
+- Sharpened the EN hero to lead with done-for-you AI visibility and “No dashboard to learn.”
+- Sharpened the FR hero to lead with “Ta visibilité IA, corrigée pour toi” and “Pas de dashboard à apprendre.”
+- Reworked the section directly under the hero into the requested dashboard-vs-Citeable message in EN and FR, including the exact core wedge: tools give a dashboard; Citeable tells what to fix and writes the fixes.
+- Added two simple comparison cards under the wedge: generic dashboard work left to the customer vs Citeable showing, drafting, and letting the customer validate/paste.
+- Preserved the existing audit form, pricing cards, analytics events, and Agent/Monitor checkout links.
+
+### Validation
+- `npm install` was required because `node_modules/.bin/next` and `eslint` were missing in the worker checkout.
+- `npm run lint` passed with only the two pre-existing warnings in `src/lib/audit-engine.ts`: unused `isAuditedBrandName` and `categoryFromWebsite`.
+- `npm run build` passed on Next.js 16.2.10 / Turbopack.

@@ -157,7 +157,7 @@ export default function HomeClient({ locale }: HomeClientProps) {
         <section className="mx-auto max-w-5xl px-5 py-8 sm:px-6 sm:py-10">
           <div className="relative overflow-hidden rounded-[1.6rem] border border-white/[0.08] bg-[#111116] p-6 shadow-2xl shadow-black/20 sm:p-8">
             <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-[#CAFF3C]/10 blur-3xl" />
-            <div className="relative max-w-3xl">
+            <div className="relative max-w-4xl">
               <p className="mb-3 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.positioningEyebrow}</p>
               <h2 className="text-[clamp(2rem,5vw,3.15rem)] leading-[1.02] tracking-[-0.04em] text-[#F0F0EC]" style={{ fontFamily: "var(--font-display)" }}>
                 {copy.positioningTitle}
@@ -165,6 +165,33 @@ export default function HomeClient({ locale }: HomeClientProps) {
               <p className="mt-5 max-w-2xl text-base leading-7 text-[#B8B8C4] sm:text-lg">
                 {copy.positioningBody}
               </p>
+              <div className="mt-7 grid gap-3 md:grid-cols-[0.92fr_1.08fr]">
+                <div className="rounded-2xl border border-white/[0.08] bg-black/20 p-5">
+                  <p className="m-0 text-xs font-black uppercase tracking-[0.12em] text-[#777786]">{copy.dashboardCardTitle}</p>
+                  <p className="mt-3 text-sm font-semibold leading-6 text-[#A7A7B4]">{copy.dashboardCardBody}</p>
+                  <ul className="m-0 mt-4 flex list-none flex-col gap-2 p-0 text-sm text-[#858594]">
+                    {copy.dashboardCardItems.map((item) => (
+                      <li key={item} className="flex gap-2">
+                        <span className="text-[#5A5A66]">×</span>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="rounded-2xl border border-[#CAFF3C]/25 bg-[#CAFF3C]/[0.07] p-5 shadow-2xl shadow-[#CAFF3C]/5">
+                  <p className="m-0 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.citeableCardTitle}</p>
+                  <p className="mt-3 text-sm font-black leading-6 text-[#F0F0EC]">{copy.citeableCardBody}</p>
+                  <ul className="m-0 mt-4 flex list-none flex-col gap-2 p-0 text-sm font-bold text-[#DDEFC0]">
+                    {copy.citeableCardItems.map((item) => (
+                      <li key={item} className="flex gap-2">
+                        <span className="text-[#CAFF3C]">✓</span>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
               <p className="mt-5 inline-flex rounded-full border border-[#CAFF3C]/25 bg-[#CAFF3C]/10 px-4 py-2 text-sm font-bold leading-6 text-[#CAFF3C]">
                 {copy.positioningPrice}
               </p>
