@@ -1,3 +1,19 @@
+## 2026-07-09 — Live proof for Agent teaser/pricing task
+
+### Live audit proof
+- Pushed verification commit `7b719ff` to `main`, waited 90 seconds, then verified the live homepage shows Agent `€19/month` and `No commitment, cancel anytime.`
+- Fresh production free audit launched for real brand/site `Minaal` / `https://www.minaal.com`; report URL: `https://getciteable.nanocorp.app/audit/fac54674-5b22-4b0c-83db-40c64a83f393`.
+- Audit completed with real Gemini data (`realLlmCall=true`), score `69`, category `backpacks and outdoor gear`, and audit tier `free`.
+- Free report reveals exactly one sample: `What are the best hiking backpacks?`.
+- Free report locks different priority fixes only: `Best travel backpacks for carry-on?` and `Is Minaal a good backpack brand?`; no duplicate of the revealed sample appears in the locked list.
+- Report Agent CTAs point to canonical checkout `https://checkout.nanocorp.so/c/zuJCYwhaUnzJGWIrB1dz` with `Start Agent — €19/month →` and `Unlock Agent — €19/month` labels.
+- Checkout proof shows `€19.00`, product `Citeable Agent — 19 EUR/mois`, and description `Abonnement mensuel Citeable Agent. Sans engagement, resiliable a tout moment.`
+
+### Captures
+- `artifacts/live-captures/deploy-7b719ff-home.png`
+- `artifacts/live-captures/minaal-free-report-teaser-7b719ff.png`
+- `artifacts/live-captures/agent-checkout-19eur-7b719ff.png`
+
 ## 2026-07-09 — Worker revalidation for Agent teaser/pricing task
 
 ### Findings
