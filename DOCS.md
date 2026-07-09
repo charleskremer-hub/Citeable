@@ -1,3 +1,17 @@
+## 2026-07-09 — Worker revalidation for Agent teaser/pricing task
+
+### Findings
+- Re-read `DOCS.md` before exploring; the requested implementation is already present on `main` in commits `74c82e5`, `93dd233`, and `6f0d033`.
+- Read the bundled Next.js 16.2.10 App Router `page.md` and `layout.md` docs after `npm ci`, per repo instructions.
+- Free `/audit/[id]` reports reveal one sample from `freeSampleQuestion` and call `lockedFixTeasers(questions, locale, freeSampleQuestion)`, which filters out the revealed prompt key before showing locked titles, so the revealed sample cannot be duplicated as a locked fix.
+- Active NanoCorp products remain deduped to one Agent and one Monitor: Agent `25126f5b-138e-4c4a-813e-df671b929b5c` at 1900 eur named `Citeable Agent — 19 EUR/mois`, and Monitor `1972c8ce-2dc0-43cc-a6b2-085e4b9c3f15` at 900 eur.
+- `nanocorp products create --help` still exposes only fixed `--price`, `--currency`, `--name`, and `--description`; no recurring/subscription flag is available, so checkout is labeled monthly but could not be converted to a true recurring Stripe subscription from this worker CLI.
+
+### Validation
+- `npm run lint` passed with the two pre-existing warnings only: unused `isAuditedBrandName` and `categoryFromWebsite` in `src/lib/audit-engine.ts`.
+- `npm run build` passed on Next.js 16.2.10 / Turbopack.
+- Source scan found no public `achat unique`, `pas d'abonnement`, `one-time`, `no subscription`, `49 €/mois`, or `€49/month` strings under `src/`; remaining `agent_49eur` strings are legacy audit-tier compatibility identifiers only.
+
 ## 2026-07-09 — Worker validation for teaser lock + Agent €19/month proof
 
 ### Findings
