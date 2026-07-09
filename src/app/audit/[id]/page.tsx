@@ -111,14 +111,7 @@ function fixSentence(category: string | undefined, hasCompetitors: boolean, loca
     : `What to fix: make your site clearer about ${business}, your proof, and why buyers should choose you.`;
 }
 
-function treatmentProof(brandName: string, category: string | undefined, questions: BuyerIntentPromptResult[], competitors: string[], engine: string, locale: Locale) {
-  const question = questions.find((item) => item.available && !item.brandMentioned)
-    ?? questions.find((item) => item.available && item.competitors.length > 0)
-    ?? questions.find((item) => item.available)
-    ?? questions[0];
-
-  if (!question) return null;
-
+function treatmentProofForQuestion(brandName: string, category: string | undefined, question: BuyerIntentPromptResult, competitors: string[], engine: string, locale: Locale) {
   const business = category && category !== "your type of business" ? category : locale === "fr" ? "ton activité" : "your business type";
   const citedCompetitors = uniqueNames([...question.competitors, ...competitors]).slice(0, 3);
 
@@ -155,65 +148,34 @@ function treatmentProof(brandName: string, category: string | undefined, questio
   };
 }
 
-function firstRealGapQuestion(questions: BuyerIntentPromptResult[]) {
-  return questions.find((question) => question.available && (!question.brandMentioned || question.competitors.length > 0));
-}
-
-function gapFixDetailLines(question: BuyerIntentPromptResult, action: PlainAction, locale: Locale) {
-  const citedCompetitors = uniqueNames(question.competitors).slice(0, 3);
-
-  if (locale === "fr") {
-    const competitorLine = citedCompetitors.length ? `Concurrents vus sur ce gap : ${citedCompetitors.join(", ")}.` : "Objectif : rendre la marque assez claire pour être citée sur ce gap.";
-
-    return [
-      `À faire : crée une page ou section qui répond à cette requête exacte : « ${question.prompt} ».`,
-      competitorLine,
-      `Où le publier : ${action.where}`,
-      `Basé sur : ${question.prompt}`,
-    ];
-  }
-
-  const competitorLine = citedCompetitors.length ? `Competitors seen on this gap: ${citedCompetitors.join(", ")}.` : "Goal: make the brand clear enough to be cited for this gap.";
-
+function priorityQuestions(questions: BuyerIntentPromptResult[]) {
   return [
-    `To do: create a page or section that answers this exact query: “${question.prompt}”.`,
-    competitorLine,
-    `Where to publish it: ${action.where}`,
-    `Based on: ${question.prompt}`,
+    ...questions.filter((item) => item.available && !item.brandMentioned),
+    ...questions.filter((item) => item.available && item.brandMentioned && item.competitors.length > 0),
+    ...questions.filter((item) => item.available && item.brandMentioned && item.competitors.length === 0),
   ];
 }
 
-function gapHook(brandName: string, question: BuyerIntentPromptResult, engine: string, locale: Locale) {
-  const citedCompetitors = uniqueNames(question.competitors).slice(0, 3);
-
-  if (!question.brandMentioned) {
-    return locale === "fr"
-      ? `Gap réel : ${engine} ne cite pas ${brandName} pour « ${question.prompt} ».`
-      : `Real gap: ${engine} does not mention ${brandName} for “${question.prompt}”.`;
-  }
-
-  if (citedCompetitors.length) {
-    return locale === "fr"
-      ? `À renforcer : ${engine} cite aussi ${citedCompetitors.join(", ")} pour « ${question.prompt} ».`
-      : `Needs reinforcement: ${engine} also cites ${citedCompetitors.join(", ")} for “${question.prompt}”.`;
-  }
-
-  return locale === "fr"
-    ? `Signal vérifié sur « ${question.prompt} ».`
-    : `Verified signal for “${question.prompt}”.`;
+function questionKey(question: BuyerIntentPromptResult) {
+  return question.prompt.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
-function priorityFixTeaser(brandName: string, questions: BuyerIntentPromptResult[], actions: PlainAction[], engine: string, locale: Locale) {
-  const gapQuestion = firstRealGapQuestion(questions);
-  const priorityAction = actions.find((action) => action.basedOn?.includes(gapQuestion?.prompt ?? ""));
+function treatmentProof(brandName: string, category: string | undefined, questions: BuyerIntentPromptResult[], competitors: string[], engine: string, locale: Locale) {
+  const question = priorityQuestions(questions)[0];
 
-  if (!gapQuestion || !priorityAction) return null;
+  return question ? treatmentProofForQuestion(brandName, category, question, competitors, engine, locale) : null;
+}
 
-  return {
-    title: priorityAction.title,
-    hook: gapHook(brandName, gapQuestion, engine, locale),
-    detailLines: gapFixDetailLines(gapQuestion, priorityAction, locale),
-  };
+function lockedFixTeasers(questions: BuyerIntentPromptResult[], locale: Locale, revealedQuestion: BuyerIntentPromptResult | null) {
+  const revealedKey = revealedQuestion ? questionKey(revealedQuestion) : null;
+
+  return priorityQuestions(questions)
+    .filter((question) => question.available && questionKey(question) !== revealedKey)
+    .slice(0, 3)
+    .map((question) => ({
+      key: question.prompt,
+      title: locale === "fr" ? `Correctif prioritaire : « ${question.prompt} »` : `Priority fix: “${question.prompt}”`,
+    }));
 }
 
 function StatusPill({ failed, complete, locale }: { failed: boolean; complete: boolean; locale: Locale }) {
@@ -262,9 +224,11 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const topCompetitor = rankedCompetitors[0]?.name ?? competitors[0];
   const score = audit.score ?? 0;
   const color = scoreColor(score);
-  const proof = complete && !failed ? treatmentProof(audit.brand_name, audit.raw_results?.category, questions, competitors, answerEngineName, locale) : null;
+  const freeSampleQuestion = complete && !failed && isFreeReport ? priorityQuestions(questions)[0] ?? null : null;
+  const freeSampleProof = freeSampleQuestion ? treatmentProofForQuestion(audit.brand_name, audit.raw_results?.category, freeSampleQuestion, competitors, answerEngineName, locale) : null;
+  const lockedFreeFixes = complete && !failed && isFreeReport ? lockedFixTeasers(questions, locale, freeSampleQuestion) : [];
+  const proof = complete && !failed && !isFreeReport ? treatmentProof(audit.brand_name, audit.raw_results?.category, questions, competitors, answerEngineName, locale) : null;
   const monitorActions = (audit.raw_results?.monitoring?.actions?.slice(0, 3) ?? []).map((action) => localizePlainAction(action, locale));
-  const freeFixTeaser = complete && !failed && isFreeReport ? priorityFixTeaser(audit.brand_name, questions, monitorActions, answerEngineName, locale) : null;
   const sentimentLine = brandSentimentText(audit.raw_results?.brandSentiment ?? { label: "not_enough_signal", justification: "not enough signal" }, locale);
   const phrases = [
     questionCount > 0
@@ -398,40 +362,52 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             />
           ) : null}
 
-          {freeFixTeaser ? (
+          {freeSampleProof ? (
             <section className="relative overflow-hidden rounded-[1.5rem] border border-[#CAFF3C]/30 bg-[radial-gradient(circle_at_top_left,rgba(202,255,60,0.14),rgba(17,17,22,0.96)_42%)] p-5 shadow-2xl shadow-[#CAFF3C]/5 sm:p-6" data-testid="agent-fix-teaser">
               <div className="flex items-start gap-4">
                 <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-[#CAFF3C]/30 bg-[#CAFF3C]/10 text-xl" aria-hidden="true">
-                  🔒
+                  ✦
                 </div>
                 <div>
                   <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">
-                    {locale === "fr" ? "Teaser Agent · correctif réel" : "Agent teaser · real fix"}
+                    {locale === "fr" ? "Échantillon Agent · révélé" : "Agent sample · revealed"}
                   </p>
                   <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                    {freeFixTeaser.title}
+                    {copy.proofTitle}
                   </h2>
-                  <p className="m-0 mt-3 text-sm font-black leading-6 text-[#F0F0EC]">{freeFixTeaser.hook}</p>
+                  <p className="m-0 mt-3 text-sm font-black leading-6 text-[#F0F0EC]">{freeSampleProof.gap}</p>
                 </div>
               </div>
 
-              <div className="relative mt-4 overflow-hidden rounded-2xl border border-white/[0.08] bg-black/30">
-                <div className="grid gap-3 p-4 text-sm font-bold leading-6 text-[#D6D6DF] blur-[5px] select-none" aria-hidden="true">
-                  {freeFixTeaser.detailLines.map((line) => (
-                    <p key={line} className="m-0 rounded-xl border border-white/[0.06] bg-white/[0.04] p-3">
-                      {line}
-                    </p>
-                  ))}
-                </div>
-                <div className="absolute inset-0 grid place-items-center bg-[#09090B]/42 px-4 text-center backdrop-blur-[2px]">
-                  <div className="rounded-2xl border border-[#CAFF3C]/25 bg-[#09090B]/85 px-4 py-3 shadow-2xl shadow-black/35">
-                    <p className="m-0 text-2xl" aria-hidden="true">🔒</p>
-                    <p className="m-0 mt-1 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">
-                      {locale === "fr" ? "Détail du correctif verrouillé" : "Fix details locked"}
-                    </p>
-                  </div>
-                </div>
+              <div className="mt-4 grid gap-3">
+                <p className="m-0 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm font-black leading-6 text-[#CAFF3C]">{freeSampleProof.title}</p>
+                <p className="m-0 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm font-bold leading-6 text-[#D6D6DF]">{freeSampleProof.draft}</p>
+                <p className="m-0 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm font-bold leading-6 text-[#D6D6DF]">{freeSampleProof.google}</p>
               </div>
+
+              {lockedFreeFixes.length ? (
+                <div className="mt-5 border-t border-white/[0.08] pt-5">
+                  <p className="m-0 mb-3 text-xs font-black uppercase tracking-[0.12em] text-[#8E8E9A]">
+                    {locale === "fr" ? "Autres correctifs prioritaires verrouillés" : "Other priority fixes locked"}
+                  </p>
+                  <ol className="m-0 grid list-none gap-3 p-0">
+                    {lockedFreeFixes.map((fix, index) => (
+                      <li key={fix.key} className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-black/30 p-4">
+                        <div className="pr-10">
+                          <p className="m-0 text-sm font-black leading-6 text-[#F0F0EC]">{index + 1}. {fix.title}</p>
+                          <p className="m-0 mt-2 text-xs font-black uppercase tracking-[0.1em] text-[#8E8E9A]">{locale === "fr" ? "Contenu du correctif verrouillé" : "Fix content locked"}</p>
+                        </div>
+                        <div className="mt-3 grid gap-2 blur-[5px] select-none" aria-hidden="true">
+                          <span className="h-3 rounded-full bg-white/20" />
+                          <span className="h-3 w-10/12 rounded-full bg-white/15" />
+                          <span className="h-3 w-8/12 rounded-full bg-white/10" />
+                        </div>
+                        <div className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-full border border-[#CAFF3C]/25 bg-[#09090B]/90 text-sm" aria-label={locale === "fr" ? "Correctif verrouillé" : "Locked fix"}>🔒</div>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              ) : null}
 
               <a href={AGENT_CHECKOUT_URL} className="mt-5 inline-flex w-full justify-center rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110 sm:w-auto" data-ph-capture-attribute-plan="agent_19eur" data-ph-capture-attribute-source="report_teaser">
                 {copy.reportTeaserCta}

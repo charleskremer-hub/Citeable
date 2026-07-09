@@ -1,3 +1,21 @@
+## 2026-07-09 — Free report teaser no give-away + Agent monthly label
+
+### Findings
+- Per repo instructions, `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/page.md` and `layout.md` were read before editing App Router report/landing code.
+- The free `/audit/[id]` report previously rendered a locked Agent teaser and then a fully revealed proof block that could use the same buyer-intent question, creating a give-away/duplicate.
+- NanoCorp product CLI supports `create`, `delete`, `link`, and `list` with fixed `--price` only; no recurring/subscription flag or product update command is exposed, so the Agent product was recreated with an explicit monthly label instead of a true recurring price object.
+- Active products after cleanup: Agent `25126f5b-138e-4c4a-813e-df671b929b5c` at €19 labeled `Citeable Agent — 19 EUR/mois`, and Monitor `1972c8ce-2dc0-43cc-a6b2-085e4b9c3f15` at €9.
+
+### Changes made
+- Updated `src/app/audit/[id]/page.tsx` so free reports reveal exactly one sample Agent fix from one real available audit question, then list other priority fixes as locked cards with titles only; the revealed sample question is excluded from locked cards.
+- Restricted the full proof block to paid/non-free reports so free reports no longer show the same correction twice.
+- Updated report, CTA, and landing copy in `src/lib/i18n.ts` to consistently say Agent is €19/month / 19 €/mois and “Sans engagement, résiliable à tout moment”; removed false one-time/no-subscription reassurance from source copy.
+- Recreated the Agent checkout product with monthly wording, deactivated old Agent `b9bd9556-f006-4f02-bdb6-d94d89778bde`, and updated `src/lib/checkout-links.ts` to live checkout `https://checkout.nanocorp.so/c/zuJCYwhaUnzJGWIrB1dz` and test checkout `https://checkout.nanocorp.so/c/pezmM9VcDh3T6QAo3geP`.
+
+### Validation
+- `npm run lint` passed with the two pre-existing warnings only: unused `isAuditedBrandName` and `categoryFromWebsite` in `src/lib/audit-engine.ts`.
+- `npm run build` passed on Next.js 16.2.10 / Turbopack.
+- Source scan found no stale public `achat unique`, `pas d'abonnement`, old Agent checkout URLs, or public €49 Agent strings in `src/`.
 ## 2026-07-08 — Landing v2 Agent value and €19 canonical product
 
 ### Findings
