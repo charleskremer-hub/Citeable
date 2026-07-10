@@ -1,3 +1,20 @@
+## 2026-07-10 — NanoCorp ad FR/France switch handoff
+
+### Findings
+- Read existing `DOCS.md` first. The latest active NanoCorp ads state now matches Charles' brief: one active campaign `49b54812-ad64-42d0-bcd2-09344457d29f` still targets `US`, `GB`, `CA`, `AU` at `$5/day`.
+- `nanocorp ads --help` explicitly says the worker Ads commands are read-only; campaign creative, geo targeting, and budget controls are owner-controlled from the NanoCorp dashboard / Meta Ads Manager, so the worker could not directly apply the FR creative or France geo switch.
+- Current `nanocorp ads insights 49b54812-ad64-42d0-bcd2-09344457d29f` returned spend `$16.32`, `37,176` impressions, `195` clicks, `224` inline link clicks, CTR `0.524532%`, and CPC `$0.083692`.
+
+### Assets prepared
+- Captured the current read-only campaign state in `artifacts/ads/meta-fr-switch-current-state-2026-07-10.json` and insights in `artifacts/ads/meta-fr-switch-insights-2026-07-10.json`.
+- Regenerated a single FR-first square creative with dark background and green accent at `artifacts/ads/meta-fr-switch-creative-2026-07-10.png`, with editable HTML source at `artifacts/ads/meta-fr-switch-creative-2026-07-10.html`.
+- Created Charles' exact handoff at `artifacts/ads/meta-fr-switch-handoff-2026-07-10.md`, including the requested FR title, primary text, CTA, France + BE/CH/LU target, US/GB/CA/AU removals, unchanged `$5/day` budget, and CPA `> 49 EUR` kill-switch.
+
+### Manual Meta Ads Manager actions for Charles
+- Open campaign/ad set matching `utm_campaign=49b54812-ad64-42d0-bcd2-09344457d29f`, keep exactly one active ad, and do not run FR + EN in parallel.
+- Replace locations with `France`; add `Belgium`, `Switzerland`, and `Luxembourg` if the same ad set supports them; remove `United States`, `United Kingdom`, `Canada`, and `Australia`.
+- Keep budget unchanged at `$5/day`, update the active ad to the FR copy/creative from `artifacts/ads/meta-fr-switch-handoff-2026-07-10.md`, and pause if CPA exceeds `49 EUR`.
+
 ## 2026-07-10 — ICP 3 segment audit and Meta ad-set split
 
 ### Findings

@@ -1,0 +1,14 @@
+{
+  "success": true,
+  "result": {
+    "campaign_local_id": "49b54812-ad64-42d0-bcd2-09344457d29f",
+    "status": "ACTIVE",
+    "spend_usd": 16.32,
+    "impressions": 37176,
+    "clicks": 195,
+    "inline_link_clicks": 224,
+    "ctr": 0.524532,
+    "cpc": 0.083692
+  },
+  "error": null
+}
