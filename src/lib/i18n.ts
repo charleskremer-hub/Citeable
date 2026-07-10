@@ -310,6 +310,90 @@ export function brandSentimentText(sentiment: SentimentLike, locale: Locale) {
 export function localizePlainAction(action: PlainActionLike, locale: Locale): PlainActionLike {
   if (locale === "en") return action;
 
+  if (action.title.startsWith("Update Google Business Profile")) {
+    const questions = action.basedOn?.length ? action.basedOn.map((prompt) => `« ${prompt} »`).join(" ; ") : "les questions locales testées dans cet audit";
+    return {
+      ...action,
+      title: "Mets à jour ta fiche Google Business pour l'intention locale",
+      doThis: `Réécris ta description et tes services autour de ces questions : ${questions}. Ajoute service, ville, preuve et prise de rendez-vous.`,
+      where: "Fiche Google Business : description, services, posts, Q&R, photos et lien de rendez-vous.",
+    };
+  }
+
+  if (action.title.startsWith("Refresh professional directory")) {
+    return {
+      ...action,
+      title: "Mets à jour tes annuaires métier",
+      doThis: "Aligne Doctolib, Resalib, annuaires locaux ou métiers avec la même catégorie, ville, services et preuves que ton site.",
+      where: "Annuaires professionnels, pages locales, marketplaces et profils de citation.",
+    };
+  }
+
+  if (action.title.startsWith("Create a 'why choose me'")) {
+    return {
+      ...action,
+      title: "Crée une page locale “pourquoi me choisir”",
+      doThis: "Publie une page qui explique qui tu aides, où tu interviens, tes avis, qualifications et comment réserver.",
+      where: "Ton site, liée depuis l'accueil, contact, Google Business et tes annuaires.",
+    };
+  }
+
+  if (action.title.startsWith("Align social bios")) {
+    const questions = action.basedOn?.length ? action.basedOn.map((prompt) => `« ${prompt} »`).join(" ; ") : "les questions créateur testées dans cet audit";
+    return {
+      ...action,
+      title: "Aligne tes bios sociales avec ta niche créateur",
+      doThis: `Mets à jour tes bios Instagram, TikTok, YouTube, LinkedIn, newsletter ou podcast pour répondre à ces questions : ${questions}.`,
+      where: "Profils sociaux, page créateur, YouTube About, bio TikTok/Instagram et link-in-bio.",
+    };
+  }
+
+  if (action.title.startsWith("Get included in top-creator")) {
+    return {
+      ...action,
+      title: "Fais-toi citer dans des listicles top créateurs",
+      doThis: "Pitch ou mets à jour des pages crédibles avec une bio courte, ta niche, une preuve d'audience, tes meilleurs contenus et pourquoi te suivre.",
+      where: "Listicles top créateurs, blogs de niche, podcasts, newsletters et listes médias.",
+    };
+  }
+
+  if (action.title.startsWith("Build press and entity")) {
+    return {
+      ...action,
+      title: "Construis des preuves presse et entité",
+      doThis: "Rassemble interviews, presse, prix, collaborations et faits publics cohérents avant Wikipedia/Wikidata.",
+      where: "Page presse, media kit, profils créateur, interviews publiques et preuves d'éligibilité.",
+    };
+  }
+
+  if (action.title.startsWith("Add FAQ and product-page")) {
+    const questions = action.basedOn?.length ? action.basedOn.map((prompt) => `« ${prompt} »`).join(" ; ") : "les questions marque testées dans cet audit";
+    return {
+      ...action,
+      title: "Ajoute des réponses FAQ et pages produit",
+      doThis: `Crée une section FAQ/produit crawlable qui répond simplement à ces questions : ${questions}.`,
+      where: "Pages produit, pages catégorie, FAQ et guides d'achat liés depuis l'accueil.",
+    };
+  }
+
+  if (action.title.startsWith("Earn listicle and review")) {
+    return {
+      ...action,
+      title: "Obtiens des mentions dans listicles et avis",
+      doThis: "Priorité : un listicle pertinent, une page d'avis et une page de comparaison que l'IA peut citer.",
+      where: "Listicles secteur, pages d'avis, guides comparatifs, marketplaces et communautés.",
+    };
+  }
+
+  if (action.title.startsWith("Ask 3 customers for product-specific")) {
+    return {
+      ...action,
+      title: "Demande 3 avis produit cette semaine",
+      doThis: "Demande aux clients de mentionner le produit, le cas d'usage, le résultat et pourquoi ils t'ont choisi.",
+      where: "Avis produit, Google si pertinent, marketplaces, Trustpilot et sections preuve sociale.",
+    };
+  }
+
   if (action.title.startsWith("Add a FAQ page")) {
     const questions = action.basedOn?.length ? action.basedOn.map((prompt) => `« ${prompt} »`).join(" ; ") : "les questions testées dans cet audit";
     return {

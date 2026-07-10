@@ -12,7 +12,7 @@ type AuditRow = {
   engines_checked: unknown;
   competitors_found: unknown;
   fixes: unknown;
-  raw_results: { status?: string; error?: string; checks?: unknown; emailSent?: boolean; emailError?: string; category?: string; buyerIntentPrompts?: unknown; auditTier?: string; answerEngine?: unknown; brandSentiment?: unknown } | null;
+  raw_results: { status?: string; error?: string; checks?: unknown; emailSent?: boolean; emailError?: string; category?: string; icpSegment?: unknown; buyerIntentPrompts?: unknown; auditTier?: string; answerEngine?: unknown; brandSentiment?: unknown } | null;
 };
 
 export async function GET(req: NextRequest) {
@@ -43,6 +43,7 @@ export async function GET(req: NextRequest) {
     competitors: audit.competitors_found ?? [],
     buyer_intent_prompts: audit.raw_results?.buyerIntentPrompts ?? [],
     category: audit.raw_results?.category,
+    icp_segment: audit.raw_results?.icpSegment,
     audit_tier: audit.raw_results?.auditTier ?? "free",
     answer_engine: audit.raw_results?.answerEngine,
     brand_sentiment: audit.raw_results?.brandSentiment,

@@ -14,9 +14,38 @@ const FREE_AUDIT_EMAIL_DAILY_LIMIT = 3;
 const FREE_AUDIT_DOMAIN_DAILY_LIMIT = 10;
 const DEFAULT_GEMINI_MODEL = "gemini-flash-latest";
 const DEFAULT_OPENAI_MODEL = ["gpt", "4o", "mini"].join("-");
-const COMPETITOR_EXTRACTION_VERSION = "gemini_recommended_brands_sentiment_v4";
+const COMPETITOR_EXTRACTION_VERSION = "gemini_recommended_brands_sentiment_v5_icp_segments";
 
 export type AuditTier = "free" | "monitor_9eur" | "agent_19eur" | "agent_49eur";
+export type IcpSegmentKey = "small_brand_ecommerce" | "local_independent" | "creator_influencer";
+
+export type IcpSegmentMetadata = {
+  key: IcpSegmentKey;
+  label: string;
+  buyerIntent: string;
+  remediationFocus: string[];
+};
+
+const ICP_SEGMENTS: Record<IcpSegmentKey, IcpSegmentMetadata> = {
+  small_brand_ecommerce: {
+    key: "small_brand_ecommerce",
+    label: "Small brand / ecommerce",
+    buyerIntent: "best brand of [product]",
+    remediationFocus: ["FAQ", "product pages", "reviews", "third-party listicles"],
+  },
+  local_independent: {
+    key: "local_independent",
+    label: "Local independent / professional service",
+    buyerIntent: "best [profession] in [city] / near me",
+    remediationFocus: ["Google Business Profile", "professional directories", "why choose me page", "local reviews"],
+  },
+  creator_influencer: {
+    key: "creator_influencer",
+    label: "Creator / influencer",
+    buyerIntent: "best [niche] creator to follow / top [niche] creators",
+    remediationFocus: ["social bios", "social profiles", "top creator listicles", "press / Wikipedia eligibility"],
+  },
+};
 
 export type PromptResult = {
   prompt: string;
@@ -133,6 +162,7 @@ export type AuditReport = {
   formula: string;
   structuredDataFound: boolean;
   category: string;
+  icpSegment: IcpSegmentMetadata;
   buyerIntentPrompts: BuyerIntentPromptResult[];
   emailSent: boolean;
   emailError?: string;
@@ -157,6 +187,7 @@ type AuditRawResults = {
   error?: string;
   formula?: string;
   category?: string;
+  icpSegment?: IcpSegmentMetadata;
   buyerIntentPrompts?: BuyerIntentPromptResult[];
   structuredDataFound?: boolean;
   emailSent?: boolean;
@@ -376,6 +407,8 @@ function reportFromRow(row: AuditRow): AuditReport {
   const checks = row.raw_results?.checks ?? checksFromEngines(row.engines_checked ?? []);
   const buyerIntentPrompts = row.raw_results?.buyerIntentPrompts ?? [];
   const auditTier = row.raw_results?.auditTier ?? "free";
+  const category = row.raw_results?.category ?? "unknown";
+  const icpSegment = row.raw_results?.icpSegment ?? detectIcpSegment(row.brand_name, row.website_url, category, "");
 
   return {
     audit_id: row.id,
@@ -385,14 +418,15 @@ function reportFromRow(row: AuditRow): AuditReport {
     fixes: row.fixes ?? [],
     formula: row.raw_results?.formula ?? formulaTextForTier(auditTier),
     structuredDataFound: Boolean(row.raw_results?.structuredDataFound),
-    category: row.raw_results?.category ?? "unknown",
+    category,
+    icpSegment,
     buyerIntentPrompts,
     emailSent: Boolean(row.raw_results?.emailSent),
     emailError: row.raw_results?.emailError,
     checks,
     monitoring: {
       ...emptyMonitoringSnapshot(buyerIntentPrompts),
-      actions: buildPlainActions(buyerIntentPrompts, row.raw_results?.category ?? "your type of business", row.competitors_found ?? []),
+      actions: buildPlainActions(buyerIntentPrompts, category, row.competitors_found ?? [], icpSegment),
     },
     auditTier,
     brandSentiment: normalizeBrandSentiment(row.raw_results?.brandSentiment ?? bestBrandSentimentFromPrompts(buyerIntentPrompts)),
@@ -1255,7 +1289,8 @@ function emptyMonitoringSnapshot(currentPrompts: BuyerIntentPromptResult[] = [])
 export function buildPlainActions(
   prompts: BuyerIntentPromptResult[] = [],
   category = "your type of business",
-  competitors: string[] = []
+  competitors: string[] = [],
+  segment: IcpSegmentMetadata = ICP_SEGMENTS.small_brand_ecommerce
 ): PlainAction[] {
   const testedQuestions = uniqueInOrder(
     prompts.filter((prompt) => prompt.available).map((prompt) => prompt.prompt),
@@ -1266,25 +1301,67 @@ export function buildPlainActions(
     ? testedQuestions.map((prompt) => `“${prompt}”`).join("; ")
     : "the buyer questions in this audit";
   const compareText = competitorExamples.length
-    ? `Use the real names native web_search already surfaces: ${competitorExamples.join(", ")}.`
+    ? `Use the real names already surfaced by the audit: ${competitorExamples.join(", ")}.`
     : "Use the names buyers already compare you with, if any appear in future audits.";
+
+  if (segment.key === "local_independent") {
+    return [
+      {
+        title: "Update Google Business Profile for local intent",
+        doThis: `Rewrite your Google Business description and services around these exact local questions: ${questionText}. Add service, city, proof, and booking language.`,
+        where: "Google Business Profile: description, services, products/posts, Q&A, photos, and appointment URL.",
+        basedOn: testedQuestions,
+      },
+      {
+        title: "Refresh professional directory profiles",
+        doThis: `Make Doctolib, Resalib, Avvo, Psychology Today, Yelp, or the relevant local directory repeat the same category, city, services, and proof as your site. ${compareText}`,
+        where: "Professional directories, local chamber pages, marketplace profiles, and citation sites.",
+      },
+      {
+        title: "Create a 'why choose me' local proof page",
+        doThis: `Publish one page for ${category} that explains who you help, where you operate, reviews, qualifications, and when to book you.`,
+        where: "Your website, linked from homepage, contact page, Google Business Profile, and directory bios.",
+      },
+    ];
+  }
+
+  if (segment.key === "creator_influencer") {
+    return [
+      {
+        title: "Align social bios with the creator niche",
+        doThis: `Update Instagram, TikTok, YouTube, LinkedIn, newsletter, and podcast bios so they answer these discovery questions: ${questionText}.`,
+        where: "Primary social profiles, creator homepage, newsletter profile, YouTube About, TikTok/Instagram bio, and link-in-bio page.",
+        basedOn: testedQuestions,
+      },
+      {
+        title: "Get included in top-creator listicles",
+        doThis: `Pitch or update credible 'top ${category} creators' pages with a concise bio, niche, audience proof, best content links, and why ${category} audiences follow you. ${compareText}`,
+        where: "Top creator listicles, niche blogs, podcast roundups, newsletter directories, and media lists.",
+      },
+      {
+        title: "Build press and entity proof",
+        doThis: "Collect interviews, press mentions, awards, collaborations, and consistent profile facts before pursuing Wikipedia/Wikidata-style entity visibility.",
+        where: "Press page, media kit, creator profiles, Wikidata/Wikipedia eligibility materials, and public interviews.",
+      },
+    ];
+  }
 
   return [
     {
-      title: "Add a FAQ page for the questions buyers search",
-      doThis: `Create one page that answers these exact tested questions in simple words: ${questionText}.`,
-      where: "On your own website, linked from the homepage and main navigation.",
+      title: "Add FAQ and product-page answers",
+      doThis: `Create one crawlable FAQ/product section that answers these exact tested questions in simple words: ${questionText}.`,
+      where: "Product pages, category pages, FAQ, and buying-guide pages linked from the homepage and main navigation.",
       basedOn: testedQuestions,
     },
     {
-      title: "Earn third-party mentions Gemini can trust",
-      doThis: `Create or refresh short profiles for ${category}. Prioritise one directory/listing, one Reddit or Quora-style answer, and one relevant listicle or review page.`,
-      where: "Directory/profile pages, Reddit or Quora/community threads, and relevant industry listicles.",
+      title: "Earn listicle and review mentions",
+      doThis: `Create or refresh proof for ${category}. Prioritise one relevant listicle, one review page, and one comparison page that AI can cite. ${compareText}`,
+      where: "Industry listicles, review pages, comparison guides, marketplaces, and trusted community threads.",
     },
     {
-      title: "Ask 3 happy customers for a review this week",
-      doThis: `Ask customers to mention the problem you solved and the result they got. ${compareText}`,
-      where: "Google reviews, review sites, LinkedIn, and any marketplace or directory profile you already use.",
+      title: "Ask 3 customers for product-specific reviews",
+      doThis: "Ask customers to mention the product, use case, result, and why they chose you over alternatives.",
+      where: "Product reviews, Google reviews when relevant, marketplaces, Trustpilot, and social proof sections.",
     },
   ];
 }
@@ -1444,7 +1521,7 @@ function monitoringSnapshotFromRuns(current: StoredPromptRow, runs: StoredPrompt
     trend,
     scoreDelta: previousTrendPoint && current.score !== null && current.score !== undefined ? current.score - previousTrendPoint.score : null,
     competitorMovements: compareCompetitorMovement(currentPrompts, previousPrompts),
-    actions: buildPlainActions(currentPrompts, current.raw_results?.category ?? "your type of business"),
+    actions: buildPlainActions(currentPrompts, current.raw_results?.category ?? "your type of business", [], current.raw_results?.icpSegment ?? ICP_SEGMENTS.small_brand_ecommerce),
     sources: extractSourceCitationReports(currentPrompts),
     previousAuditId: previousRun?.id,
   };
@@ -1484,6 +1561,7 @@ function categoryFromHomepageText(text: string, domain: string) {
   const phraseRules: Array<[RegExp, string]> = [
     [/\bosprey\b|backpacks?|rucksacks?|daypacks?|packs?\b|travel packs?|hiking packs?|outdoor gear|hydration packs?|luggage|packfinder|trekking/, "backpacks and outdoor gear"],
     [/\ballbirds\b|sustainable sneakers?|eco-?friendly shoes?|wool shoes?|tree runners?|running shoes?|walking shoes?|sneakers?|footwear|chaussures?/, "DTC footwear brand"],
+    [/\bmkbhd\b|marques brownlee|youtube|youtuber|tiktok|instagram|newsletter|podcast|substack|streamer|content creator|creator|influencer|créateur|créatrice|influenceur|influenceuse/, "creator"],
     [/apparel|clothing|fashion|garments?|menswear|womenswear/, "fashion brand"],
     [/skin care|skincare|beauty|cosmetics/, "beauty brand"],
     [/coffee|tea|beverage|drinks?|snacks?|food & beverage|food and beverage/, "food & beverage"],
@@ -1519,6 +1597,7 @@ function categoryFromHomepageText(text: string, domain: string) {
     if (pattern.test(lower)) return category;
   }
 
+  if (/\.coach$|coach/i.test(domain)) return "fitness coach";
   return `${displayNameFromDomain(domain)} alternatives`;
 }
 
@@ -1617,7 +1696,7 @@ async function inferCategory(brandName: string, websiteUrl: string, fallbackChec
     if (response.ok) {
       const html = await response.text();
       const signals = extractHomepageSignals(html);
-      const fallbackCategory = categoryFromHomepageText(signals, domain);
+      const fallbackCategory = categoryFromHomepageText(`${brandName} ${domain} ${signals}`, domain);
       const category = categoryLooksLikeTechStack(fallbackCategory, signals) ? "DTC footwear brand" : fallbackCategory;
 
       if (!isGenericCategory(category)) return { category, homepageText: signals };
@@ -1661,6 +1740,7 @@ function promptCategoryTerms(category: string) {
   if (/fashion|apparel|clothing/.test(lower)) return { categoryTerm: category, useCase: "everyday clothing", leader: "Everlane" };
   if (/beauty|skincare|cosmetic/.test(lower)) return { categoryTerm: category, useCase: "daily routines", leader: "Glossier" };
   if (/food|beverage|coffee|tea|drink/.test(lower)) return { categoryTerm: category, useCase: "daily consumption", leader: "Starbucks" };
+  if (/creator|influencer/.test(lower)) return { categoryTerm: category, useCase: "audiences looking for people to follow", leader: "top creators" };
 
   if (lower.includes("digital product passport")) {
     return {
@@ -1703,6 +1783,36 @@ function promptCategoryTerms(category: string) {
   return { categoryTerm: category, useCase: "growing companies", leader: "the market leader" };
 }
 
+
+function detectIcpSegment(brandName: string, websiteUrl: string, category: string, homepageText: string): IcpSegmentMetadata {
+  const domain = domainFromWebsite(websiteUrl);
+  const lower = `${brandName} ${domain} ${category} ${homepageText}`.toLowerCase();
+
+  if (/\b(creator|influencer|youtube|youtuber|tiktok|instagram|newsletter|podcast|substack|streamer|content creator|créateur|créatrice|influenceur|influenceuse)\b/.test(lower)) {
+    return ICP_SEGMENTS.creator_influencer;
+  }
+
+  if (/\b(coach|trainer|therapist|psychologist|psychotherapist|psy|th[eé]rapeute|kine|kin[eé]|consultant|lawyer|avocat|notaire|dentist|dentiste|doctor|médecin|clinic|cabinet|agency|agence|plumber|plombier|electrician|[ée]lectricien|restaurant|salon|barber|realtor|real estate|immobili[eè]re|local|near me|près de moi|rendez-vous|appointment|doctolib|resalib|google business profile|google maps)\b/.test(lower)) {
+    return ICP_SEGMENTS.local_independent;
+  }
+
+  return ICP_SEGMENTS.small_brand_ecommerce;
+}
+
+function creatorNiche(categoryTerm: string, homepageText: string) {
+  const lower = `${categoryTerm} ${homepageText}`.toLowerCase();
+
+  if (/mkbhd|marques|tech|gadget|smartphone|consumer electronics|youtube/.test(lower)) return "tech";
+  if (/fitness|sport|running|yoga|nutrition/.test(lower)) return "fitness";
+  if (/beauty|skincare|makeup|cosmetic/.test(lower)) return "beauty";
+  if (/fashion|style|apparel|clothing/.test(lower)) return "fashion";
+  if (/travel|outdoor|hiking|backpack/.test(lower)) return "travel";
+  if (/food|coffee|recipe|cooking/.test(lower)) return "food";
+  if (/business|startup|marketing|saas|tech|ai/.test(lower)) return "business";
+
+  return categoryTerm.replace(/\b(creator|influencer|content creator|brand|category)\b/gi, "").trim() || "niche";
+}
+
 function generateBuyerIntentPrompts(brandName: string, websiteUrl: string, category: string, homepageText: string, preferredLocale?: Locale) {
   const { categoryTerm, useCase, leader } = promptCategoryTerms(category);
   const domain = domainFromWebsite(websiteUrl);
@@ -1711,72 +1821,137 @@ function generateBuyerIntentPrompts(brandName: string, websiteUrl: string, categ
   const audience = inferAudienceFromHomepage(homepageText, language);
   const buyerCategory = localizedCategoryTerm(categoryTerm, language);
   const englishLocationPhrase = location === "near me" ? "near me" : `in ${location}`;
+  const frenchLocationPhrase = location === "near me" ? "près de moi" : `à ${location}`;
+  const segment = detectIcpSegment(brandName, websiteUrl, category, homepageText);
+
+  if (segment.key === "local_independent") {
+    return language === "fr"
+      ? uniqueInOrder([
+          `meilleur ${buyerCategory} ${frenchLocationPhrase}`,
+          `${buyerCategory} près de moi`,
+          `${buyerCategory} recommandé ${frenchLocationPhrase}`,
+          `avis ${brandName}`,
+          `${brandName} est-il fiable`,
+          `quel ${buyerCategory} choisir ${frenchLocationPhrase}`,
+          `${buyerCategory} avec bons avis ${frenchLocationPhrase}`,
+          `${buyerCategory} disponible rapidement ${frenchLocationPhrase}`,
+          `${buyerCategory} Doctolib Resalib ${location === "near me" ? "" : location}`.trim(),
+          `${buyerCategory} Google Business ${location === "near me" ? "" : location}`.trim(),
+          `pourquoi choisir ${brandName}`,
+          `alternative à ${leader} ${frenchLocationPhrase}`,
+        ], 12)
+      : uniqueInOrder([
+          `best ${buyerCategory} ${englishLocationPhrase}`,
+          `${buyerCategory} near me`,
+          `best reviewed ${buyerCategory} ${englishLocationPhrase}`,
+          `${brandName} reviews`,
+          `is ${brandName} reliable`,
+          `which ${buyerCategory} should I choose ${englishLocationPhrase}`,
+          `${buyerCategory} with good reviews ${englishLocationPhrase}`,
+          `${buyerCategory} available quickly ${englishLocationPhrase}`,
+          `${buyerCategory} Google Business Profile ${englishLocationPhrase}`,
+          `${buyerCategory} professional directory ${englishLocationPhrase}`,
+          `why choose ${brandName}`,
+          `${buyerCategory} alternatives to ${leader} ${englishLocationPhrase}`,
+        ], 12);
+  }
+
+  if (segment.key === "creator_influencer") {
+    const niche = creatorNiche(categoryTerm, homepageText);
+    return language === "fr"
+      ? uniqueInOrder([
+          `meilleur créateur ${niche} à suivre`,
+          `top créateurs ${niche}`,
+          `meilleur influenceur ${niche} à suivre`,
+          `${brandName} avis créateur`,
+          `${brandName} vaut-il le coup à suivre`,
+          `créateurs ${niche} recommandés`,
+          `influenceurs ${niche} les plus crédibles`,
+          `comptes ${niche} à suivre`,
+          `meilleurs profils ${niche} Instagram TikTok YouTube`,
+          `listicle top ${niche} creators`,
+          `${brandName} presse interview`,
+          `${brandName} Wikipedia`,
+        ], 12)
+      : uniqueInOrder([
+          `best ${niche} creator to follow`,
+          `top ${niche} creators`,
+          `best ${niche} influencer to follow`,
+          `${brandName} creator reviews`,
+          `is ${brandName} worth following`,
+          `recommended ${niche} creators`,
+          `most credible ${niche} influencers`,
+          `${niche} accounts to follow`,
+          `best ${niche} Instagram TikTok YouTube profiles`,
+          `top ${niche} creators listicle`,
+          `${brandName} press interview`,
+          `${brandName} Wikipedia`,
+        ], 12);
+  }
 
   if (language !== "fr" && /footwear|shoe|sneaker|running shoe/i.test(category)) {
     return uniqueInOrder([
-      "What are the best sustainable sneakers?",
-      "Best eco-friendly running shoes?",
+      "What is the best sustainable sneaker brand?",
+      "Best eco-friendly running shoe brand?",
       `Is ${brandName} a good sustainable shoe brand?`,
       `Is ${brandName} worth it for everyday sneakers?`,
       `${brandName} shoe reviews`,
       "Which DTC shoe brands are worth it?",
-      "Most comfortable wool sneakers?",
-      "Best walking shoes for everyday wear?",
+      "Most comfortable wool sneaker brand?",
+      "Best walking shoe brand for everyday wear?",
       "sustainable sneakers alternatives to Nike",
       "compare eco-friendly shoe brands",
-      "best breathable sneakers for travel",
-      "best machine washable sneakers",
+      "best breathable sneaker brand for travel",
+      "best machine washable sneaker brand",
     ], 12);
   }
 
   if (language !== "fr" && /backpack|rucksack|outdoor|hiking|travel pack|daypack|luggage/i.test(category)) {
     return uniqueInOrder([
-      "What are the best hiking backpacks?",
-      "Best travel backpacks for carry-on?",
+      "What is the best hiking backpack brand?",
+      "Best travel backpack brand for carry-on?",
       `Is ${brandName} a good backpack brand?`,
       `Is ${brandName} worth it for hiking packs?`,
       `${brandName} backpack reviews`,
       "Which outdoor backpack brands are worth it?",
-      "Best daypacks for hiking and travel?",
-      "Best lightweight backpacks for trekking?",
+      "Best daypack brand for hiking and travel?",
+      "Best lightweight backpack brand for trekking?",
       "backpack alternatives to Patagonia",
       "compare outdoor backpack brands",
-      "best hydration packs for hiking",
-      "best durable luggage for adventure travel",
+      "best hydration pack brand for hiking",
+      "best durable luggage brand for adventure travel",
     ], 12);
   }
 
   if (language === "fr") {
     return uniqueInOrder([
-      `meilleur ${buyerCategory} à ${location}`,
-      `${buyerCategory} recommandé à ${location}`,
+      `meilleure marque de ${buyerCategory}`,
+      `marque ${buyerCategory} recommandée`,
       `${buyerCategory} pas cher`,
       `prix ${buyerCategory}`,
       `avis ${brandName}`,
       `${brandName} est-il fiable`,
       `alternative à ${leader}`,
       `${buyerCategory} pour ${audience}`,
-      `quel ${buyerCategory} choisir`,
-      `comparer ${buyerCategory}`,
-      `${buyerCategory} avec devis rapide`,
-      `${buyerCategory} près de moi`,
+      `quelle marque de ${buyerCategory} choisir`,
+      `comparer marques ${buyerCategory}`,
+      `meilleure marque ${buyerCategory} pour ${audience}`,
     ], 12);
   }
 
   return uniqueInOrder([
-    `best ${buyerCategory} ${englishLocationPhrase}`,
+    `best ${buyerCategory} brand`,
     `best ${buyerCategory} for ${useCase}`,
-    `top ${buyerCategory} companies 2026`,
+    `top ${buyerCategory} brands 2026`,
     `affordable ${buyerCategory}`,
     `${buyerCategory} pricing`,
     `${brandName} reviews`,
     `is ${brandName} reliable`,
     `${buyerCategory} alternatives to ${leader}`,
     `${buyerCategory} for ${audience}`,
-    `which ${buyerCategory} should I choose`,
-    `compare ${buyerCategory} vendors`,
-    `${buyerCategory} with fast quote`,
-    `${buyerCategory} near me`,
+    `which ${buyerCategory} brand should I choose`,
+    `compare ${buyerCategory} brands`,
+    `best ${buyerCategory} brand for ${audience}`,
   ], 12);
 }
 
@@ -2335,16 +2510,24 @@ function buyerIntentSummaryText(report: Pick<AuditReport, "buyerIntentPrompts" |
     : `In ${total} buyer-intent web searches, your brand/domain appeared ${namedCount} times. Other brands found in the same result snippets: ${brands}.`;
 }
 
-function buildFixes(checks: AuditCheckResult[]) {
+function buildFixes(checks: AuditCheckResult[], segment: IcpSegmentMetadata = ICP_SEGMENTS.small_brand_ecommerce, category = "your type of business") {
   const byName = new Map(checks.map((check) => [check.check, check]));
   const fixes: string[] = [];
 
   if ((byName.get("structured_data")?.score ?? 0) < 25) {
-    fixes.push("Add Organization JSON-LD schema and complete OpenGraph title/description tags on the homepage.");
+    fixes.push(segment.key === "creator_influencer"
+      ? "Add Person/ProfilePage JSON-LD and consistent profile metadata on the creator homepage and social profiles."
+      : "Add Organization JSON-LD schema and complete OpenGraph title/description tags on the homepage.");
   }
 
   if ((byName.get("search_visibility")?.score ?? 0) < 25) {
-    fixes.push("Create crawlable brand pages and third-party profiles that clearly connect the brand name to the official domain.");
+    if (segment.key === "local_independent") {
+      fixes.push("Complete Google Business Profile, professional directories, and local citation pages with the same profession, city, services, and booking link.");
+    } else if (segment.key === "creator_influencer") {
+      fixes.push("Make social bios, creator profiles, and link-in-bio pages consistently state the niche, audience, proof, and official website.");
+    } else {
+      fixes.push("Create crawlable brand, product, review, and comparison pages that clearly connect the brand name to the official domain.");
+    }
   }
 
   if ((byName.get("technical_seo")?.score ?? 0) < 15) {
@@ -2352,11 +2535,29 @@ function buildFixes(checks: AuditCheckResult[]) {
   }
 
   if ((byName.get("ai_visibility")?.score ?? 0) < 15) {
-    fixes.push("Earn mentions on trusted community, review, and industry pages that web search and answer engines can cite.");
+    if (segment.key === "local_independent") {
+      fixes.push(`Publish a local 'why choose me' page for ${category}, then collect reviews that mention city, service, problem solved, and outcome.`);
+    } else if (segment.key === "creator_influencer") {
+      fixes.push(`Earn mentions in credible 'top ${category} creators' listicles, podcast/newsletter directories, interviews, and press pages.`);
+    } else {
+      fixes.push("Earn mentions on trusted product listicles, review pages, comparison guides, community threads, and marketplaces that answer engines can cite.");
+    }
   }
 
   if ((byName.get("wikipedia")?.score ?? 0) < 20) {
-    fixes.push("Build authoritative third-party coverage and Wikidata-style entity consistency before pursuing encyclopedia visibility.");
+    fixes.push(segment.key === "creator_influencer"
+      ? "Build press, interviews, collaborations, awards, and consistent public profile facts before pursuing Wikipedia or Wikidata eligibility."
+      : "Build authoritative third-party coverage and Wikidata-style entity consistency before pursuing encyclopedia visibility.");
+  }
+
+  if (fixes.length === 0) {
+    if (segment.key === "local_independent") {
+      fixes.push("Maintain Google Business Profile, professional directories, local reviews, and the 'why choose me' page so local AI recommendations stay consistent.");
+    } else if (segment.key === "creator_influencer") {
+      fixes.push("Maintain social bios, creator profiles, top-creator listicle mentions, press, and entity proof so AI keeps recommending the creator.");
+    } else {
+      fixes.push("Maintain FAQ, product pages, reviews, and listicle/review mentions so AI recommendations stay consistent for product-brand questions.");
+    }
   }
 
   return fixes.slice(0, 5);
@@ -2952,7 +3153,7 @@ export function generateGeoAgentAssetsFromAudit(audit: {
     competitors,
     faqPageCopy,
     llmsTxt: llmsTxtForBrand(audit.brand_name, audit.website_url, category, availablePromptTexts, description),
-    weeklyActionPlan: buildPlainActions(prompts, category, competitors),
+    weeklyActionPlan: buildPlainActions(prompts, category, competitors, audit.raw_results?.icpSegment ?? ICP_SEGMENTS.small_brand_ecommerce),
     reviewRequestTemplates: [
       `Hi {{customer_name}}, quick favour: would you leave a short review for ${audit.brand_name}? Please mention what you were trying to solve, why you chose us, and the result you got. It helps new buyers understand when ${audit.brand_name} is the right fit.`,
       `Could you share one sentence about your experience with ${audit.brand_name}? A useful review says: “We used ${audit.brand_name} for {{use_case}} and it helped us {{result}}.”`,
@@ -3146,6 +3347,7 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
   );
   const structuredDataFound = (foundationChecks.find((check) => check.check === "structured_data")?.score ?? 0) > 0;
   const inferred = await inferCategory(args.brandName, args.websiteUrl, foundationChecks.find((check) => check.check === "structured_data") ?? foundationChecks[0]);
+  const icpSegment = detectIcpSegment(args.brandName, args.websiteUrl, inferred.category, inferred.homepageText);
   const buyerIntentPrompts = await analyzeBuyerIntentPrompts(args.brandName, args.websiteUrl, domain, inferred.category, inferred.homepageText, auditTier, args.locale);
   const checkedAnswerEnginePrompts = buyerIntentPrompts.filter((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine" && surface.status === "checked"));
   const failedAnswerEnginePrompts = buyerIntentPrompts.filter((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine" && surface.status !== "checked"));
@@ -3157,7 +3359,7 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
 
   const checks = [...foundationChecks, checkAIVisibilityFromBuyerPrompts(buyerIntentPrompts)];
   const engines = checks.map(checkToEngine);
-  const fixes = buildFixes(checks);
+  const fixes = buildFixes(checks, icpSegment, inferred.category);
   const score = computeScore(checks, buyerIntentPrompts);
   const competitors = sortedByFrequency(buyerIntentPrompts.flatMap((prompt) => prompt.competitors), 20);
   const firstAnswerEngineSurface = buyerIntentPrompts.flatMap((prompt) => prompt.surfaces).find((surface) => surface.kind === "ai_engine");
@@ -3177,12 +3379,13 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
     formula: formulaTextForTier(auditTier),
     structuredDataFound,
     category: inferred.category,
+    icpSegment,
     buyerIntentPrompts,
     emailSent: false,
     checks,
     monitoring: {
       ...emptyMonitoringSnapshot(buyerIntentPrompts),
-      actions: buildPlainActions(buyerIntentPrompts, inferred.category, competitors),
+      actions: buildPlainActions(buyerIntentPrompts, inferred.category, competitors, icpSegment),
     },
     auditTier,
     brandSentiment: bestBrandSentimentFromPrompts(buyerIntentPrompts),
@@ -3253,6 +3456,7 @@ export async function completeQueuedAudit(auditId: string): Promise<QueuedAuditR
           status: "completed",
           formula: report.formula,
           category: report.category,
+          icpSegment: report.icpSegment,
           buyerIntentPrompts: report.buyerIntentPrompts,
           auditTier: report.auditTier,
           locale: row.raw_results?.locale,

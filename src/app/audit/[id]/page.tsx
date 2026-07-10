@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { AGENT_CHECKOUT_URL, MONITOR_CHECKOUT_URL } from "@/lib/checkout-links";
 import { ensureAuditSchema, pool } from "@/lib/db";
 import { auditCopy, brandSentimentText, localeFromHeaders, localizePlainAction, recommendationText, type Locale } from "@/lib/i18n";
-import type { BrandSentiment, BuyerIntentPromptResult, PlainAction } from "@/lib/audit-engine";
+import type { BrandSentiment, BuyerIntentPromptResult, IcpSegmentMetadata, PlainAction } from "@/lib/audit-engine";
 import AuditPoller from "./AuditPoller";
 import AgentAuditChat from "./AgentAuditChat";
 
@@ -21,6 +21,7 @@ type AuditRow = {
     status?: string;
     error?: string;
     category?: string;
+    icpSegment?: IcpSegmentMetadata;
     auditTier?: string;
     answerEngine?: { engine?: string; model?: string; realLlmCall?: boolean };
     brandSentiment?: BrandSentiment;
@@ -97,21 +98,33 @@ function checkedQuestions(questions: BuyerIntentPromptResult[]) {
   return available.length ? available : questions;
 }
 
-function fixSentence(category: string | undefined, hasCompetitors: boolean, locale: Locale) {
+function fixSentence(category: string | undefined, hasCompetitors: boolean, locale: Locale, segment?: IcpSegmentMetadata) {
   const business = category && category !== "your type of business" ? category : locale === "fr" ? "ton activité" : "your business type";
+
+  if (segment?.key === "local_independent") {
+    return locale === "fr"
+      ? `À corriger : aligne ta fiche Google Business, tes annuaires métier, ta page “pourquoi me choisir” et tes avis locaux autour de ${business}.`
+      : `What to fix: align your Google Business Profile, professional directories, “why choose me” page, and local reviews around ${business}.`;
+  }
+
+  if (segment?.key === "creator_influencer") {
+    return locale === "fr"
+      ? `À corriger : aligne tes bios/profils sociaux, tes mentions “top créateurs”, ta presse et tes preuves d'entité autour de ${business}.`
+      : `What to fix: align social bios/profiles, top-creator listicle mentions, press, and entity proof around ${business}.`;
+  }
 
   if (hasCompetitors) {
     return locale === "fr"
-      ? `À corriger : ajoute une page claire sur ${business}, avec des preuves, des avis et des réponses directes aux questions d'achat.`
-      : `What to fix: add a clear page about ${business}, with proof, reviews, and direct answers to buyer questions.`;
+      ? `À corriger : ajoute une page claire sur ${business}, avec FAQ, pages produit, avis et réponses directes aux questions d'achat.`
+      : `What to fix: add clear ${business} FAQ/product pages with reviews and direct answers to buyer questions.`;
   }
 
   return locale === "fr"
-    ? `À corriger : rends ton site plus clair sur ${business}, tes preuves et les raisons de te choisir.`
-    : `What to fix: make your site clearer about ${business}, your proof, and why buyers should choose you.`;
+    ? `À corriger : rends ton site plus clair sur ${business}, tes preuves produit, tes avis et les raisons de choisir ta marque.`
+    : `What to fix: make your site clearer about ${business}, product proof, reviews, and why buyers should choose your brand.`;
 }
 
-function treatmentProofForQuestion(brandName: string, category: string | undefined, question: BuyerIntentPromptResult, competitors: string[], engine: string, locale: Locale) {
+function treatmentProofForQuestion(brandName: string, category: string | undefined, question: BuyerIntentPromptResult, competitors: string[], engine: string, locale: Locale, segment?: IcpSegmentMetadata) {
   const business = category && category !== "your type of business" ? category : locale === "fr" ? "ton activité" : "your business type";
   const citedCompetitors = uniqueNames([...question.competitors, ...competitors]).slice(0, 3);
 
@@ -126,9 +139,17 @@ function treatmentProofForQuestion(brandName: string, category: string | undefin
           ? `Écart trouvé : ${engine} cite aussi ${citedCompetitors.join(", ")} pour « ${question.prompt} ».`
           : `Question vérifiée : « ${question.prompt} ».`
         : `Écart trouvé : ${engine} ne cite pas ${brandName} pour « ${question.prompt} ».`,
-      title: `FAQ/page à créer : « ${question.prompt} »`,
-      draft: `Brouillon FAQ à publier après relecture : « Si tu compares ${business}, commence par ton besoin, les preuves disponibles et la prochaine étape. ${brandName} doit présenter ses cas d'usage, ses avis ou preuves vérifiables, puis répondre directement à cette question. ${competitorText} »`,
-      google: `Phrase Google Business à coller : « ${brandName} aide les clients à comparer ${business} avec des informations claires, des preuves vérifiables et une prochaine étape simple. »`,
+      title: segment?.key === "local_independent" ? `Fiche Google Business / page locale à corriger : « ${question.prompt} »` : segment?.key === "creator_influencer" ? `Bio sociale / listicle à corriger : « ${question.prompt} »` : `FAQ/page produit à créer : « ${question.prompt} »`,
+      draft: segment?.key === "local_independent"
+        ? `Brouillon local à publier après relecture : « ${brandName} accompagne les clients qui cherchent ${business} près de chez eux. Explique la ville servie, les cas traités, les qualifications, les avis vérifiables et la prochaine étape pour réserver. ${competitorText} »`
+        : segment?.key === "creator_influencer"
+          ? `Brouillon profil/listicle à publier après relecture : « ${brandName} est un profil ${business} à suivre pour son angle, ses contenus utiles et ses preuves publiques. Ajoute la niche, les plateformes actives, les meilleures preuves et les liens presse/profils. ${competitorText} »`
+          : `Brouillon FAQ à publier après relecture : « Si tu compares ${business}, commence par ton besoin, les preuves disponibles et la prochaine étape. ${brandName} doit présenter ses cas d'usage, ses avis ou preuves vérifiables, puis répondre directement à cette question. ${competitorText} »`,
+      google: segment?.key === "local_independent"
+        ? `Phrase Google Business à coller : « ${brandName} aide les clients à choisir ${business} avec une prise de rendez-vous claire, des avis vérifiables et des informations locales à jour. »`
+        : segment?.key === "creator_influencer"
+          ? `Phrase bio/profil à coller : « ${brandName} crée du contenu ${business} à suivre pour des conseils clairs, des preuves publiques et des liens vers les meilleurs contenus et interviews. »`
+          : `Phrase page produit à coller : « ${brandName} aide les clients à comparer ${business} avec des informations claires, des avis vérifiables et une prochaine étape simple. »`,
     };
   }
 
@@ -142,11 +163,20 @@ function treatmentProofForQuestion(brandName: string, category: string | undefin
         ? `Gap found: ${engine} also cites ${citedCompetitors.join(", ")} for “${question.prompt}”.`
         : `Question checked: “${question.prompt}”.`
       : `Gap found: ${engine} does not cite ${brandName} for “${question.prompt}”.`,
-    title: `FAQ/page to create: “${question.prompt}”`,
-    draft: `FAQ draft to publish after review: “If you are comparing ${business}, start with your use case, available proof, and the next step. ${brandName} should present its use cases, reviews or verifiable proof, and a direct answer to this question. ${competitorText}”`,
-    google: `Google Business sentence to paste: “${brandName} helps buyers compare ${business} with clear information, verifiable proof, and a simple next step.”`,
+    title: segment?.key === "local_independent" ? `Google Business / local page fix: “${question.prompt}”` : segment?.key === "creator_influencer" ? `Social bio / listicle fix: “${question.prompt}”` : `FAQ/product page to create: “${question.prompt}”`,
+    draft: segment?.key === "local_independent"
+      ? `Local draft to publish after review: “${brandName} helps clients looking for ${business} nearby. State the city served, cases handled, qualifications, verifiable reviews, and the next booking step. ${competitorText}”`
+      : segment?.key === "creator_influencer"
+        ? `Profile/listicle draft to publish after review: “${brandName} is a ${business} creator worth following for a clear angle, useful content, and public proof. Add the niche, active platforms, best proof, and press/profile links. ${competitorText}”`
+        : `FAQ draft to publish after review: “If you are comparing ${business}, start with your use case, available proof, and the next step. ${brandName} should present its use cases, reviews or verifiable proof, and a direct answer to this question. ${competitorText}”`,
+    google: segment?.key === "local_independent"
+      ? `Google Business sentence to paste: “${brandName} helps clients choose ${business} with clear booking steps, verifiable reviews, and up-to-date local information.”`
+      : segment?.key === "creator_influencer"
+        ? `Social/profile sentence to paste: “${brandName} creates ${business} content worth following for clear advice, public proof, and links to the best content and interviews.”`
+        : `Product-page sentence to paste: “${brandName} helps buyers compare ${business} with clear information, verifiable reviews, and a simple next step.”`,
   };
 }
+
 
 function priorityQuestions(questions: BuyerIntentPromptResult[]) {
   return [
@@ -160,10 +190,10 @@ function questionKey(question: BuyerIntentPromptResult) {
   return question.prompt.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
-function treatmentProof(brandName: string, category: string | undefined, questions: BuyerIntentPromptResult[], competitors: string[], engine: string, locale: Locale) {
+function treatmentProof(brandName: string, category: string | undefined, questions: BuyerIntentPromptResult[], competitors: string[], engine: string, locale: Locale, segment?: IcpSegmentMetadata) {
   const question = priorityQuestions(questions)[0];
 
-  return question ? treatmentProofForQuestion(brandName, category, question, competitors, engine, locale) : null;
+  return question ? treatmentProofForQuestion(brandName, category, question, competitors, engine, locale, segment) : null;
 }
 
 function lockedFixTeasers(questions: BuyerIntentPromptResult[], locale: Locale, revealedQuestion: BuyerIntentPromptResult | null) {
@@ -206,6 +236,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   if (!audit) notFound();
 
   const failed = audit.raw_results?.status === "failed";
+  const icpSegment = audit.raw_results?.icpSegment;
   const complete = audit.score !== null;
   const questions = checkedQuestions(audit.raw_results?.buyerIntentPrompts ?? []);
   const questionCount = complete ? questions.length : 0;
@@ -225,9 +256,9 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const score = audit.score ?? 0;
   const color = scoreColor(score);
   const freeSampleQuestion = complete && !failed && isFreeReport ? priorityQuestions(questions)[0] ?? null : null;
-  const freeSampleProof = freeSampleQuestion ? treatmentProofForQuestion(audit.brand_name, audit.raw_results?.category, freeSampleQuestion, competitors, answerEngineName, locale) : null;
+  const freeSampleProof = freeSampleQuestion ? treatmentProofForQuestion(audit.brand_name, audit.raw_results?.category, freeSampleQuestion, competitors, answerEngineName, locale, icpSegment) : null;
   const lockedFreeFixes = complete && !failed && isFreeReport ? lockedFixTeasers(questions, locale, freeSampleQuestion) : [];
-  const proof = complete && !failed && !isFreeReport ? treatmentProof(audit.brand_name, audit.raw_results?.category, questions, competitors, answerEngineName, locale) : null;
+  const proof = complete && !failed && !isFreeReport ? treatmentProof(audit.brand_name, audit.raw_results?.category, questions, competitors, answerEngineName, locale, icpSegment) : null;
   const monitorActions = (audit.raw_results?.monitoring?.actions?.slice(0, 3) ?? []).map((action) => localizePlainAction(action, locale));
   const sentimentLine = brandSentimentText(audit.raw_results?.brandSentiment ?? { label: "not_enough_signal", justification: "not enough signal" }, locale);
   const phrases = [
@@ -241,7 +272,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
       ? locale === "fr" ? `${topCompetitor} apparaît là où tu devrais apparaître.` : `${topCompetitor} is showing up where you should be.`
       : locale === "fr" ? "Aucun concurrent clair n'apparaît à ta place." : "No competitor clearly appears in your place.",
     isAgentReport
-      ? fixSentence(audit.raw_results?.category, competitors.length > 0, locale)
+      ? fixSentence(audit.raw_results?.category, competitors.length > 0, locale, icpSegment)
       : isMonitorReport
         ? locale === "fr" ? "Monitor ajoute 3 actions prioritaires pour cette semaine." : "Monitor adds 3 priority actions for this week."
         : locale === "fr" ? "Diagnostic gratuit : score, sentiment IA, statut de recommandation Gemini et concurrents cités." : "Free diagnostic: score, AI sentiment, Gemini recommendation status, and cited competitors.",

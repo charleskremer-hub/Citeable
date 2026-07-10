@@ -14,7 +14,7 @@ type AuditRow = {
   engines_checked: unknown;
   competitors_found: unknown;
   fixes: unknown;
-  raw_results: { status?: string; error?: string; checks?: unknown; emailSent?: boolean; emailError?: string; category?: string; buyerIntentPrompts?: unknown; auditTier?: string; answerEngine?: unknown; startedAt?: string; locale?: string } | null;
+  raw_results: { status?: string; error?: string; checks?: unknown; emailSent?: boolean; emailError?: string; category?: string; icpSegment?: unknown; buyerIntentPrompts?: unknown; auditTier?: string; answerEngine?: unknown; startedAt?: string; locale?: string } | null;
 };
 
 function isFreshStartedAt(value: string | undefined) {
@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
           competitors: row.competitors_found ?? [],
           buyer_intent_prompts: row.raw_results?.buyerIntentPrompts ?? [],
           category: row.raw_results?.category,
+          icp_segment: row.raw_results?.icpSegment,
           audit_tier: row.raw_results?.auditTier ?? "free",
           answer_engine: row.raw_results?.answerEngine,
           fixes: row.fixes ?? [],

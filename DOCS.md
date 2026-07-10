@@ -1,3 +1,28 @@
+## 2026-07-10 — ICP 3 segment audit and Meta ad-set split
+
+### Findings
+- Read existing `DOCS.md` first. Company docs did not contain a `citeable-icp-segments` memory, so the task brief was treated as the source of truth.
+- Per repo instructions, installed dependencies and read the local Next.js 16 `page.md` and `route.md` docs from `node_modules/next/dist/docs/` before changing App Router code.
+- `nanocorp ads list` remains read-only for workers; current applied Meta state is one active campaign `49b54812-ad64-42d0-bcd2-09344457d29f` at `$5/day`, so 3 ad sets cannot be created directly by code/CLI and must be applied by Charles in Meta Ads Manager / owner Ads UI.
+
+### Product changes
+- Added ICP segment metadata and detection in `src/lib/audit-engine.ts`: `small_brand_ecommerce`, `local_independent`, and `creator_influencer`.
+- Buyer-intent prompts now branch by segment: ecommerce asks `best [product] brand`; local independents ask `best/meilleur [profession] near me/près de moi`; creators ask `best/top [niche] creator/influencer to follow`.
+- Generated fixes/actions now branch by segment: ecommerce focuses FAQ/product pages/reviews/listicles; local focuses Google Business Profile, professional directories, local reviews, and a “why choose me” page; creators focus social bios/profiles, top-creator listicles, press, and Wikipedia/entity proof.
+- Stored `icpSegment` in audit `raw_results`, returned it from `/api/run-audit` and `/api/audit-status`, and invalidated the free-audit cache with `gemini_recommended_brands_sentiment_v5_icp_segments` so stale pre-segment audits are not reused.
+- Updated `src/app/audit/[id]/page.tsx` and `src/lib/i18n.ts` so visible proof snippets and Monitor action localization match the detected segment.
+
+### Validation
+- `npm run build` passes on Next.js 16.2.10 / Turbopack.
+- Ran three real local production-build audits with real Gemini calls (`realLlmCall=true`): Allbirds, TrainMe Coach, and Marques Brownlee. Final JSON reports are in `artifacts/audits/segment-a-allbirds-status-2026-07-10.json`, `artifacts/audits/segment-b-trainme-status-2026-07-10.json`, and `artifacts/audits/segment-c-mkbhd-status-2026-07-10.json`.
+- Human-readable smoke report is `artifacts/audits/icp-3-segment-smoke-reports-2026-07-10.md`.
+
+### Meta ad-set handoff
+- Created `artifacts/ads/meta-icp-3-adsets-2026-07-10.md` with three separate ad sets: small brands/ecommerce, local independents, and creators/influencers.
+- Budget remains unchanged at `$5/day`, split `$1.67`, `$1.67`, `$1.66`; CPA must be measured by segment and creators should be watched/cut first if CPA loses.
+- Captured current read-only campaign state in `artifacts/ads/meta-current-ads-state-2026-07-10.json`.
+- Charles still needs to apply the 3 ad sets, creative, copy, UTMs, and budget split manually in Meta Ads Manager / owner Ads UI.
+
 ## 2026-07-09 — Meta SMB ad refresh package
 
 ### Findings
