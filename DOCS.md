@@ -1472,3 +1472,25 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - Added `src/app/fr/page.tsx` to render the existing landing/funnel with French copy and French page metadata.
 - Updated the French landing proof strings in `src/lib/i18n.ts`: hero now says `Visibilité IA, réglée pour vous.`, A2 now uses the requested accented/em-dash copy, and the comparison card labels are `❌ Autre dashboard` / `✅ Citeable`.
 - Added `https://getciteable.nanocorp.app/fr` to `src/app/sitemap.ts`.
+
+## 2026-07-11 — NanoCorp Ads REGENERATE FR creative handoff
+
+### Findings
+- Read existing `DOCS.md` first and confirmed the latest Ads limitation is unchanged: `nanocorp ads --help` exposes only read-only commands (`list`, `insights`) for workers, with campaign controls owner-managed from NanoCorp dashboard / Meta Ads Manager.
+- Current active NanoCorp Ads campaign remains `49b54812-ad64-42d0-bcd2-09344457d29f`, status `ACTIVE`, creative status `READY`, budget `daily_cap_usd: 5.0`, and countries `US`, `GB`, `CA`, `AU`.
+- Current insights snapshot for the campaign: spend `$16.35`, impressions `37,181`, clicks `196`, inline link clicks `225`, CTR `0.527151%`, CPC `$0.083418`.
+
+### Assets prepared
+- Saved current campaign state to `artifacts/ads/meta-fr-regen-current-state-2026-07-11.json` and insights to `artifacts/ads/meta-fr-regen-insights-2026-07-11.json`.
+- Created the requested French REGENERATE creative source at `artifacts/ads/meta-fr-regen-creative-2026-07-11.html` and rendered final 1080×1080 PNG at `artifacts/ads/meta-fr-regen-creative-2026-07-11.png`.
+- Visual uses dark background `#0a0a0a`, green accent `#22c55e`, visible score `47/100`, blurred competitor rows, and `FR · BE · LU` market badge.
+- Wrote Charles' Meta Ads Manager handoff at `artifacts/ads/meta-fr-regen-handoff-2026-07-11.md` with exact FR headline, primary text, CTA, destination URL, France/Belgium/Luxembourg targeting, US/GB/CA/AU/Suisse removals, unchanged `$5/day` budget, and CPA `> 49 EUR` pause rule.
+
+### Manual actions for Charles
+- Replace the active ad creative/copy with the files and copy in `artifacts/ads/meta-fr-regen-handoff-2026-07-11.md`.
+- Replace geo targeting with France, Belgique, Luxembourg only; remove United States, United Kingdom, Canada, Australia, and Switzerland/Suisse if present.
+- Keep budget at `$5/day` and pause if CPA exceeds `49 EUR`.
+
+### Validation
+- `npm run build` passed on Next.js 16.2.10 / Turbopack after installing local dependencies in the fresh worker checkout.
+- Final PNG was inspected at 1080×1080 with `agent-browser`; required visual elements are present: French headline, dark background, green accents, `47/100` score, blurred competitor rows, and `FR · BE · LU` badge.
