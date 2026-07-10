@@ -1443,3 +1443,15 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - `npm run lint` passed with two pre-existing warnings in `src/lib/audit-engine.ts` only: unused `isAuditedBrandName` and `categoryFromWebsite`.
 - `npm run build` passed on Next.js 16.2.10 / Turbopack and generated the new SEO/GEO routes plus `/sitemap.xml`.
 - Pushed commit `8db8ef3` to `main`; after the required 90-second wait, installed Chrome once for `agent-browser` because the sandbox reported `Chrome not found`, then verified the live FR specialty-coffee page rendered at `https://getciteable.nanocorp.app/fr/ia-recommande-cafe-specialite` with screenshot `/tmp/citeable-organic-seo-page.png`. The live check exposed awkward category grammar, which was fixed locally before the final cleanup commit.
+## 2026-07-10 — French landing route live proof fix
+
+### Findings
+- Read existing `DOCS.md` before exploring, then installed dependencies because `node_modules` was absent in the fresh checkout.
+- Per repo instructions, read local Next.js 16 page convention docs from `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/page.md` before editing App Router files; the docs confirm a `page.tsx` leaf is required for a route segment to be publicly accessible.
+- `/fr` and `/fr/` returned 404 because there was no `src/app/fr/page.tsx`, no middleware rewrite, and `next.config.ts` did not define an i18n/redirect fallback. The existing localized landing only selected French on `/` from request headers via `localeFromHeaders()`.
+- The audit funnel already lives in reusable `src/app/HomeClient.tsx` and receives `locale`, so the safest fix was to mount the same component at `/fr` with `locale="fr"` rather than duplicating the funnel or changing checkout logic.
+
+### Changes made
+- Added `src/app/fr/page.tsx` to render the existing landing/funnel with French copy and French page metadata.
+- Updated the French landing proof strings in `src/lib/i18n.ts`: hero now says `Visibilité IA, réglée pour vous.`, A2 now uses the requested accented/em-dash copy, and the comparison card labels are `❌ Autre dashboard` / `✅ Citeable`.
+- Added `https://getciteable.nanocorp.app/fr` to `src/app/sitemap.ts`.

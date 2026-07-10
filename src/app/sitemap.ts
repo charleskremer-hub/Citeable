@@ -13,6 +13,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       priority: 1,
     },
+    {
+      url: `${siteUrl}/fr`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.95,
+    },
     ...answerPages.map((page) => ({
       url: `${siteUrl}/${page.locale}/${page.slug}`,
       lastModified: now,
