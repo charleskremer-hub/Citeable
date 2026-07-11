@@ -1,0 +1,139 @@
+{
+  "segment": "C",
+  "brand": "Ali Abdaal",
+  "audit_id": "c1c13245-ce8d-4c84-8b98-d9d6f739f7da",
+  "url": "https://getciteable.nanocorp.app/audit/c1c13245-ce8d-4c84-8b98-d9d6f739f7da",
+  "status": "completed",
+  "score": 59,
+  "category": "backpacks and outdoor gear",
+  "icp_segment": {
+    "key": "creator_influencer",
+    "label": "Creator / influencer",
+    "buyerIntent": "best [niche] creator to follow / top [niche] creators",
+    "remediationFocus": [
+      "social bios",
+      "social profiles",
+      "top creator listicles",
+      "press / Wikipedia eligibility"
+    ]
+  },
+  "prompts": [
+    {
+      "prompt": "meilleur créateur tech à suivre",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gemini-flash-latest",
+          "engine": "Gemini",
+          "status": "checked",
+          "surface": "Gemini",
+          "reachable": true,
+          "competitors": [
+            "Marques Brownlee",
+            "Linus Tech Tips",
+            "MrMobile"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "highly recommended for productivity and tech ecosystem insights"
+          },
+          "rawAnswerSnippet": "recommended_brands: Marques Brownlee, Ali Abdaal, Linus Tech Tips, MrMobile",
+          "recommendationLabel": "Gemini te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Marques Brownlee",
+        "Linus Tech Tips",
+        "MrMobile"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "top créateurs tech",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gemini-flash-latest",
+          "engine": "Gemini",
+          "status": "checked",
+          "surface": "Gemini",
+          "reachable": true,
+          "competitors": [
+            "Marques Brownlee",
+            "Linus Tech Tips"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "not_enough_signal",
+            "justification": "not enough signal"
+          },
+          "rawAnswerSnippet": "recommended_brands: Marques Brownlee, Linus Tech Tips",
+          "recommendationLabel": "Gemini ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Marques Brownlee",
+        "Linus Tech Tips"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "meilleur influenceur tech à suivre",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gemini-flash-latest",
+          "engine": "Gemini",
+          "status": "checked",
+          "surface": "Gemini",
+          "reachable": true,
+          "competitors": [
+            "Marques Brownlee",
+            "Linus Tech Tips",
+            "Mrwhosetheboss",
+            "Leo Duff"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "highly recommended for his insightful productivity tech and ecosystem reviews"
+          },
+          "rawAnswerSnippet": "recommended_brands: Marques Brownlee, Linus Tech Tips, Mrwhosetheboss, Ali Abdaal, Leo Duff",
+          "recommendationLabel": "Gemini te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Marques Brownlee",
+        "Linus Tech Tips",
+        "Mrwhosetheboss",
+        "Leo Duff"
+      ],
+      "brandMentioned": true
+    }
+  ],
+  "competitors": [
+    "Marques Brownlee",
+    "Linus Tech Tips",
+    "MrMobile",
+    "Mrwhosetheboss",
+    "Leo Duff"
+  ],
+  "fixes": [
+    "Add Person/ProfilePage JSON-LD and consistent profile metadata on the creator homepage and social profiles.",
+    "Publish accessible robots.txt and sitemap.xml files so search and answer engines can discover key pages.",
+    "Build press, interviews, collaborations, awards, and consistent public profile facts before pursuing Wikipedia or Wikidata eligibility."
+  ],
+  "answer_engine": {
+    "model": "gemini-flash-latest",
+    "engine": "Gemini",
+    "realLlmCall": true
+  },
+  "error": null
+}

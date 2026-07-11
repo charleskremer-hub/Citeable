@@ -1,3 +1,21 @@
+## 2026-07-11 — Final Charles delivery: 3 live audit proofs + Meta ad sets
+
+### Findings
+- Read existing `DOCS.md` first. The ICP 3-segment implementation is present on `origin/main` as commit `f269177` (`Add ICP segment-specific audits and ad sets`); the French `/fr` route fix is commit `522d49c` (`fix French landing route`). The task reference `453d6c69` was not found as a git ref, so the shipped ICP commit was used as the code proof.
+- Verified live A2 landing pages with cache-bust `?cb=20260711133212`: EN shows `DONE-FOR-YOU, NOT ANOTHER DASHBOARD`; FR shows `Visibilité IA, réglée pour vous.` and `DONE-FOR-YOU, PAS UN DASHBOARD DE PLUS`.
+- Generated real live audits through production `/api/run-audit`, then verified production `/audit/[id]` pages with `agent-browser`. Cotopaxi was not retained because the live detector classified it as creator/influencer from homepage text; Segment A was regenerated with Allbirds and correctly detected as `small_brand_ecommerce`.
+
+### Final proof audits
+- Segment A / ecommerce: Allbirds audit `f6b169fe-e582-4aaf-849a-c5eff162776e`, score `75`, intent `meilleure marque de DTC shoe brand`, competitors `Cariuma`, `Veja`, `On`, `Koio`, top proof `FAQ draft to publish after review`.
+- Segment B / local pro: Coach Parangon audit `003f89f4-4e64-4009-8c08-aa7eb0ca67e4`, score `87`, intents `meilleur coach sportif à Paris` and `coach sportif près de moi`, competitors `Ownsport`, `ProTrainer`, `Just Coaching`, top proof `Google Business / local page fix`.
+- Segment C / creator: Ali Abdaal audit `c1c13245-ce8d-4c84-8b98-d9d6f739f7da`, score `59`, intents `meilleur créateur tech à suivre` and `top créateurs tech`, competitors `Marques Brownlee`, `Linus Tech Tips`, `MrMobile`, `Mrwhosetheboss`, `Leo Duff`, top proof `Social bio / listicle fix`.
+
+### Delivery artifacts
+- Final Charles report: `artifacts/final-delivery/rapport-charles-final-2026-07-11.md`.
+- API proof JSON: `artifacts/final-delivery/live-audit-segment-a-allbirds-final-20260711132946.json`, `artifacts/final-delivery/live-audit-segment-b-coachparangon-final-20260711132902.json`, and `artifacts/final-delivery/live-audit-segment-c-aliabdaal-final-20260711133104.json`.
+- Browser-visible proof text: `artifacts/final-delivery/browser/a2-en-20260711133212.txt`, `artifacts/final-delivery/browser/a2-fr-20260711133212.txt`, and the three `artifacts/final-delivery/browser/audit-*-20260711133212.txt` files.
+- Meta handoff remains manual for Charles only: ad sets `seg_marques` at `$2/j`, `seg_indepros` at `$2/j`, and `seg_createurs` at `$1/j`; total stays `$5/j`, with no worker-side activation.
+
 ## 2026-07-10 — NanoCorp ad FR/France switch handoff
 
 ### Findings

@@ -1,0 +1,134 @@
+{
+  "segment": "A",
+  "brand": "Allbirds",
+  "audit_id": "f6b169fe-e582-4aaf-849a-c5eff162776e",
+  "url": "https://getciteable.nanocorp.app/audit/f6b169fe-e582-4aaf-849a-c5eff162776e",
+  "status": "completed",
+  "score": 75,
+  "category": "DTC footwear brand",
+  "icp_segment": {
+    "key": "small_brand_ecommerce",
+    "label": "Small brand / ecommerce",
+    "buyerIntent": "best brand of [product]",
+    "remediationFocus": [
+      "FAQ",
+      "product pages",
+      "reviews",
+      "third-party listicles"
+    ]
+  },
+  "prompts": [
+    {
+      "prompt": "meilleure marque de DTC shoe brand",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gemini-flash-latest",
+          "engine": "Gemini",
+          "status": "checked",
+          "surface": "Gemini",
+          "reachable": true,
+          "competitors": [
+            "Veja",
+            "Cariuma",
+            "Koio",
+            "On"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "recognized as a pioneer and leader in sustainable DTC footwear"
+          },
+          "rawAnswerSnippet": "recommended_brands: Allbirds, Veja, Cariuma, Koio, On",
+          "recommendationLabel": "Gemini te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Veja",
+        "Cariuma",
+        "Koio",
+        "On"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "marque DTC shoe brand recommandée",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gemini-flash-latest",
+          "engine": "Gemini",
+          "status": "checked",
+          "surface": "Gemini",
+          "reachable": true,
+          "competitors": [
+            "Veja",
+            "Cariuma",
+            "On"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "not_enough_signal",
+            "justification": "not enough signal"
+          },
+          "rawAnswerSnippet": "recommended_brands: Allbirds, Veja, Cariuma, On",
+          "recommendationLabel": "Gemini te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Veja",
+        "Cariuma",
+        "On"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "DTC shoe brand pas cher",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gemini-flash-latest",
+          "engine": "Gemini",
+          "status": "checked",
+          "surface": "Gemini",
+          "reachable": true,
+          "competitors": [
+            "Cariuma"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "not_enough_signal",
+            "justification": "not enough signal"
+          },
+          "rawAnswerSnippet": "recommended_brands: Cariuma",
+          "recommendationLabel": "Gemini ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Cariuma"
+      ],
+      "brandMentioned": false
+    }
+  ],
+  "competitors": [
+    "Cariuma",
+    "Veja",
+    "On",
+    "Koio"
+  ],
+  "fixes": [
+    "Maintain FAQ, product pages, reviews, and listicle/review mentions so AI recommendations stay consistent for product-brand questions."
+  ],
+  "answer_engine": {
+    "model": "gemini-flash-latest",
+    "engine": "Gemini",
+    "realLlmCall": true
+  },
+  "error": null
+}

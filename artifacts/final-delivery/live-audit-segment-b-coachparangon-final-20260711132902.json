@@ -1,0 +1,120 @@
+{
+  "segment": "B",
+  "brand": "Coach Parangon",
+  "audit_id": "003f89f4-4e64-4009-8c08-aa7eb0ca67e4",
+  "url": "https://getciteable.nanocorp.app/audit/003f89f4-4e64-4009-8c08-aa7eb0ca67e4",
+  "status": "completed",
+  "score": 87,
+  "category": "fitness coach",
+  "icp_segment": {
+    "key": "local_independent",
+    "label": "Local independent / professional service",
+    "buyerIntent": "best [profession] in [city] / near me",
+    "remediationFocus": [
+      "Google Business Profile",
+      "professional directories",
+      "why choose me page",
+      "local reviews"
+    ]
+  },
+  "prompts": [
+    {
+      "prompt": "meilleur coach sportif à Paris",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gemini-flash-latest",
+          "engine": "Gemini",
+          "status": "checked",
+          "surface": "Gemini",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "not_enough_signal",
+            "justification": "not enough signal"
+          },
+          "rawAnswerSnippet": "{\n  \"recommended_brands\":\n [\n    \"Coach Parangon",
+          "recommendationLabel": "Gemini te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "coach sportif près de moi",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gemini-flash-latest",
+          "engine": "Gemini",
+          "status": "checked",
+          "surface": "Gemini",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "not_enough_signal",
+            "justification": "not enough signal"
+          },
+          "rawAnswerSnippet": "{\n  \"recommended_brands\":\n [\n    \"Coach Parangon",
+          "recommendationLabel": "Gemini te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "coach sportif recommandé à Paris",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gemini-flash-latest",
+          "engine": "Gemini",
+          "status": "checked",
+          "surface": "Gemini",
+          "reachable": true,
+          "competitors": [
+            "Ownsport",
+            "ProTrainer",
+            "Just Coaching"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "recognized as a highly qualified premium coaching service specializing in posture and physical preparation"
+          },
+          "rawAnswerSnippet": "recommended_brands: Coach Parangon, Ownsport, ProTrainer, Just Coaching",
+          "recommendationLabel": "Gemini te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Ownsport",
+        "ProTrainer",
+        "Just Coaching"
+      ],
+      "brandMentioned": true
+    }
+  ],
+  "competitors": [
+    "Ownsport",
+    "ProTrainer",
+    "Just Coaching"
+  ],
+  "fixes": [
+    "Complete Google Business Profile, professional directories, and local citation pages with the same profession, city, services, and booking link.",
+    "Build authoritative third-party coverage and Wikidata-style entity consistency before pursuing encyclopedia visibility."
+  ],
+  "answer_engine": {
+    "model": "gemini-flash-latest",
+    "engine": "Gemini",
+    "realLlmCall": true
+  },
+  "error": null
+}
