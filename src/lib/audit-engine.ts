@@ -1561,13 +1561,13 @@ function categoryFromHomepageText(text: string, domain: string) {
   const phraseRules: Array<[RegExp, string]> = [
     [/\bosprey\b|backpacks?|rucksacks?|daypacks?|packs?\b|travel packs?|hiking packs?|outdoor gear|hydration packs?|luggage|packfinder|trekking/, "backpacks and outdoor gear"],
     [/\ballbirds\b|sustainable sneakers?|eco-?friendly shoes?|wool shoes?|tree runners?|running shoes?|walking shoes?|sneakers?|footwear|chaussures?/, "DTC footwear brand"],
+    [/boulangerie|bakery|p[aâ]tisserie|pastry|restaurant|bistro|brasserie|traiteur|catering/, "bakery / restaurant"],
     [/\bmkbhd\b|marques brownlee|youtube|youtuber|tiktok|instagram|newsletter|podcast|substack|streamer|content creator|creator|influencer|créateur|créatrice|influenceur|influenceuse/, "creator"],
     [/apparel|clothing|fashion|garments?|menswear|womenswear/, "fashion brand"],
     [/skin care|skincare|beauty|cosmetics/, "beauty brand"],
     [/coffee|tea|beverage|drinks?|snacks?|food & beverage|food and beverage/, "food & beverage"],
     [/plombier|plumbing|leak repair|chauffagiste/, "plumber"],
     [/[ée]lectricien|electrician|electrical contractor/, "electrician"],
-    [/restaurant|bistro|brasserie|traiteur|catering/, "restaurant"],
     [/dentiste|dental|orthodont/, "dentist"],
     [/avocat|law firm|lawyer|legal services/, "law firm"],
     [/expert-?comptable|accountant|bookkeeping/, "accounting firm"],
@@ -1788,12 +1788,12 @@ function detectIcpSegment(brandName: string, websiteUrl: string, category: strin
   const domain = domainFromWebsite(websiteUrl);
   const lower = `${brandName} ${domain} ${category} ${homepageText}`.toLowerCase();
 
-  if (/\b(creator|influencer|youtube|youtuber|tiktok|instagram|newsletter|podcast|substack|streamer|content creator|créateur|créatrice|influenceur|influenceuse)\b/.test(lower)) {
-    return ICP_SEGMENTS.creator_influencer;
+  if (/\b(coach|trainer|therapist|psychologist|psychotherapist|psy|th[eé]rapeute|kine|kin[eé]|consultant|lawyer|avocat|notaire|dentist|dentiste|doctor|médecin|clinic|cabinet|agency|agence|plumber|plombier|electrician|[ée]lectricien|boulangerie|bakery|p[aâ]tisserie|pastry|restaurant|salon|barber|realtor|real estate|immobili[eè]re|local|near me|près de moi|rendez-vous|appointment|doctolib|resalib|google business profile|google maps)\b/.test(lower)) {
+    return ICP_SEGMENTS.local_independent;
   }
 
-  if (/\b(coach|trainer|therapist|psychologist|psychotherapist|psy|th[eé]rapeute|kine|kin[eé]|consultant|lawyer|avocat|notaire|dentist|dentiste|doctor|médecin|clinic|cabinet|agency|agence|plumber|plombier|electrician|[ée]lectricien|restaurant|salon|barber|realtor|real estate|immobili[eè]re|local|near me|près de moi|rendez-vous|appointment|doctolib|resalib|google business profile|google maps)\b/.test(lower)) {
-    return ICP_SEGMENTS.local_independent;
+  if (/\b(creator|influencer|youtube|youtuber|tiktok|instagram|newsletter|podcast|substack|streamer|content creator|créateur|créatrice|influenceur|influenceuse)\b/.test(lower)) {
+    return ICP_SEGMENTS.creator_influencer;
   }
 
   return ICP_SEGMENTS.small_brand_ecommerce;

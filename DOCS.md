@@ -1512,3 +1512,21 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 ### Validation
 - `npm run build` passed on Next.js 16.2.10 / Turbopack after installing local dependencies in the fresh worker checkout.
 - Final PNG was inspected at 1080×1080 with `agent-browser`; required visual elements are present: French headline, dark background, green accents, `47/100` score, blurred competitor rows, and `FR · BE · LU` badge.
+
+## 2026-07-12 — Checkout funnel smoke test: audit → report CTA → checkout
+
+### Funnel result
+- Ran production audit from https://getciteable.nanocorp.app with brand `Boulangerie Paul`, website `paul.fr`, email `test-citeable@mailinator.com`; audit ID `7586e97c-7efa-4c33-b0a0-e8859d6e5838`, report URL `https://getciteable.nanocorp.app/audit/7586e97c-7efa-4c33-b0a0-e8859d6e5838`.
+- Audit URL live: ✓. Report page loads: ✓. CTA button visible: ✓. Checkout URL correct: ✓. Checkout page loads: ✓.
+- Report showed score `6/100`, visible competitor list, and multiple Agent/Monitor CTAs.
+- Primary report CTA href was `https://checkout.nanocorp.so/c/zuJCYwhaUnzJGWIrB1dz`, matching active product `Citeable Agent — 19 EUR/mois` from `nanocorp products list`.
+- Clicking the Agent CTA opened NanoCorp checkout and redirected to Stripe Checkout: `https://checkout.stripe.com/c/pay/cs_live_a1BOAr2Vbh8n1xNUlNMhUZwyRaDC1pM8YdjkwToClqbwXWSRCFC8a7F1re#fidnandhYHdWcXxpYCc%2FJ2FgY2RwaXEnKSdicGRmZGhqaWBTZHdsZGtxJz8nZmprcXdqaScpJ2R1bE5gfCc%2FJ3VuWmlsc2BaMDRRaG9dRjE3QGBOQFJpXWhtRDxxUFdyXXVrMFFoTU1SVUlVN2NxdWQzcFRdUkpPXWEzUGlcfFVqY2lxU2tRYXNdV2oxUktTU383NHRiRzNCfUZgVHFjMVw1NXE0clAwUV1gJyknY3dqaFZgd3Ngdyc%2FcXdwYCknZ2RmbmJ3anBrYUZqaWp3Jz8nJmNjY2NjYycpJ2lkfGpwcVF8dWAnPyd2bGtiaWBabHFgaCcpJ2BrZGdpYFVpZGZgbWppYWB3dic%2FcXdwYHgl`.
+- Browser network showed `GET https://checkout.nanocorp.so/c/zuJCYwhaUnzJGWIrB1dz` returned `200`, then Stripe Checkout returned `200`.
+- `nanocorp web fetch https://checkout.nanocorp.so/c/zuJCYwhaUnzJGWIrB1dz` loaded checkout content showing `€19.00` and product `Citeable Agent — 19 EUR/mois`.
+- No page JS errors or console errors were reported on the audit report page or Stripe Checkout during the smoke test.
+
+### Bug found and patched
+- Checkout was not the break point: the CTA URL and checkout page are healthy, so the current `purchase_started = 0 revenue` pattern is likely user drop-off/payment non-completion after reaching Stripe, not a broken link.
+- Found a report-quality bug while testing `paul.fr`: generic social links caused the bakery to be classified as `creator_influencer`, producing creator competitors like Gary Vaynerchuk and creator prompts.
+- Patched `src/lib/audit-engine.ts` so bakery/restaurant/pâtisserie terms classify before generic social/creator signals and local-business segment detection runs before creator detection for local businesses.
+- Validation: `npm run build` passed on Next.js 16.2.10 after installing local dependencies. The package install reported 2 moderate npm audit vulnerabilities; no dependency changes were made for those unrelated findings.
