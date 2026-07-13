@@ -1,6 +1,7 @@
 import { createHash, timingSafeEqual } from "crypto";
 import { pool } from "./db";
 import { AGENT_CHECKOUT_URL, MONITOR_CHECKOUT_URL } from "./checkout-links";
+import { recordFunnelEvent } from "./funnel";
 import { brandSentimentText, localizePlainAction, recommendationText, type Locale } from "./i18n";
 
 const USER_AGENT = "Mozilla/5.0 (compatible; CiteeableBot/1.0)";
@@ -3471,6 +3472,14 @@ export async function completeQueuedAudit(auditId: string): Promise<QueuedAuditR
         }),
       ]
     );
+
+    await recordFunnelEvent({
+      eventName: "audit_completed",
+      auditId,
+      source: "run_queued_audit",
+      metadata: { brandName: row.brand_name, websiteUrl: row.website_url, auditTier, score: report.score, locale: row.raw_results?.locale },
+      dedupeKey: `audit_completed:${auditId}`,
+    });
 
     if (auditTier !== "free") {
       await upsertMonitoredBrandForAudit(auditId);

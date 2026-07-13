@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
 import { auditTierFromPayload, checkFreeAuditQuota, findFreshFreeGeminiAudit, createCachedFreeAuditForLead, runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
+import { recordFunnelEvent } from "@/lib/funnel";
 import { localeFromHeaders, localeFromUnknown } from "@/lib/i18n";
 
 export const maxDuration = 60;
@@ -97,8 +98,25 @@ export async function POST(req: NextRequest) {
 
       if (cachedAudit) {
         const cachedLeadAudit = await createCachedFreeAuditForLead({ cachedAuditId: cachedAudit.id, email, brandName, websiteUrl, locale });
+        const createdOrCachedAuditId = cachedLeadAudit?.audit_id ?? cachedAudit.id;
+
+        await recordFunnelEvent({
+          eventName: "audit_started",
+          auditId: createdOrCachedAuditId,
+          source: "run_audit_cached",
+          metadata: { brandName, websiteUrl, auditTier, cachedFromAuditId: cachedAudit.id, locale },
+          dedupeKey: `audit_started:${createdOrCachedAuditId}`,
+        });
+        await recordFunnelEvent({
+          eventName: "audit_completed",
+          auditId: createdOrCachedAuditId,
+          source: "run_audit_cached",
+          metadata: { brandName, websiteUrl, auditTier, cachedFromAuditId: cachedAudit.id, locale },
+          dedupeKey: `audit_completed:${createdOrCachedAuditId}`,
+        });
+
         return NextResponse.json({
-          audit_id: cachedLeadAudit?.audit_id ?? cachedAudit.id,
+          audit_id: createdOrCachedAuditId,
           status: "completed",
           audit_tier: auditTier,
           cached: true,
@@ -124,6 +142,14 @@ export async function POST(req: NextRequest) {
       [email, brandName, websiteUrl, { status: "queued", queuedAt: new Date().toISOString(), auditTier, locale }]
     );
     const createdAuditId = audit.rows[0].id;
+
+    await recordFunnelEvent({
+      eventName: "audit_started",
+      auditId: createdAuditId,
+      source: "run_audit",
+      metadata: { brandName, websiteUrl, auditTier, locale },
+      dedupeKey: `audit_started:${createdAuditId}`,
+    });
 
     runAuditAfterResponse(createdAuditId);
 

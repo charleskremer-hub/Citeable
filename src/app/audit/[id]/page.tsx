@@ -3,10 +3,12 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { AGENT_CHECKOUT_URL, MONITOR_CHECKOUT_URL } from "@/lib/checkout-links";
 import { ensureAuditSchema, pool } from "@/lib/db";
+import { recordFunnelEvent } from "@/lib/funnel";
 import { auditCopy, brandSentimentText, localeFromHeaders, localizePlainAction, recommendationText, type Locale } from "@/lib/i18n";
 import type { BrandSentiment, BuyerIntentPromptResult, IcpSegmentMetadata, PlainAction } from "@/lib/audit-engine";
 import AuditPoller from "./AuditPoller";
 import AgentAuditChat from "./AgentAuditChat";
+import FunnelCheckoutLink from "./FunnelCheckoutLink";
 
 export const dynamic = "force-dynamic";
 
@@ -186,8 +188,8 @@ function priorityQuestions(questions: BuyerIntentPromptResult[]) {
   ];
 }
 
-function questionKey(question: BuyerIntentPromptResult) {
-  return question.prompt.trim().replace(/\s+/g, " ").toLowerCase();
+function priorityGapQuestions(questions: BuyerIntentPromptResult[]) {
+  return priorityQuestions(questions).filter((question) => question.available && (!question.brandMentioned || question.competitors.length > 0));
 }
 
 function treatmentProof(brandName: string, category: string | undefined, questions: BuyerIntentPromptResult[], competitors: string[], engine: string, locale: Locale, segment?: IcpSegmentMetadata) {
@@ -196,17 +198,6 @@ function treatmentProof(brandName: string, category: string | undefined, questio
   return question ? treatmentProofForQuestion(brandName, category, question, competitors, engine, locale, segment) : null;
 }
 
-function lockedFixTeasers(questions: BuyerIntentPromptResult[], locale: Locale, revealedQuestion: BuyerIntentPromptResult | null) {
-  const revealedKey = revealedQuestion ? questionKey(revealedQuestion) : null;
-
-  return priorityQuestions(questions)
-    .filter((question) => question.available && questionKey(question) !== revealedKey)
-    .slice(0, 3)
-    .map((question) => ({
-      key: question.prompt,
-      title: locale === "fr" ? `Correctif prioritaire : « ${question.prompt} »` : `Priority fix: “${question.prompt}”`,
-    }));
-}
 
 function StatusPill({ failed, complete, locale }: { failed: boolean; complete: boolean; locale: Locale }) {
   const copy = auditCopy[locale];
@@ -252,12 +243,20 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const isAgentReport = audit.raw_results?.auditTier === "agent_19eur" || audit.raw_results?.auditTier === "agent_49eur";
   const isMonitorReport = audit.raw_results?.auditTier === "monitor_9eur";
   const isFreeReport = !isAgentReport && !isMonitorReport;
+
+  await recordFunnelEvent({
+    eventName: "report_viewed",
+    auditId: audit.id,
+    source: "audit_page",
+    metadata: { brandName: audit.brand_name, websiteUrl: audit.website_url, auditTier: audit.raw_results?.auditTier ?? "free", complete, failed },
+  });
+
   const topCompetitor = rankedCompetitors[0]?.name ?? competitors[0];
   const score = audit.score ?? 0;
   const color = scoreColor(score);
-  const freeSampleQuestion = complete && !failed && isFreeReport ? priorityQuestions(questions)[0] ?? null : null;
-  const freeSampleProof = freeSampleQuestion ? treatmentProofForQuestion(audit.brand_name, audit.raw_results?.category, freeSampleQuestion, competitors, answerEngineName, locale, icpSegment) : null;
-  const lockedFreeFixes = complete && !failed && isFreeReport ? lockedFixTeasers(questions, locale, freeSampleQuestion) : [];
+  const freeGapQuestion = complete && !failed && isFreeReport ? priorityGapQuestions(questions)[0] ?? null : null;
+  const freeSampleProof = freeGapQuestion ? treatmentProofForQuestion(audit.brand_name, audit.raw_results?.category, freeGapQuestion, competitors, answerEngineName, "en", icpSegment) : null;
+  const honestNoGapTeaser = complete && !failed && isFreeReport && !freeSampleProof;
   const proof = complete && !failed && !isFreeReport ? treatmentProof(audit.brand_name, audit.raw_results?.category, questions, competitors, answerEngineName, locale, icpSegment) : null;
   const monitorActions = (audit.raw_results?.monitoring?.actions?.slice(0, 3) ?? []).map((action) => localizePlainAction(action, locale));
   const sentimentLine = brandSentimentText(audit.raw_results?.brandSentiment ?? { label: "not_enough_signal", justification: "not enough signal" }, locale);
@@ -346,6 +345,52 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
               )}
             </div>
 
+            {freeSampleProof ? (
+              <section className="mt-6 overflow-hidden rounded-[1.5rem] border border-[#CAFF3C]/35 bg-[radial-gradient(circle_at_top_left,rgba(202,255,60,0.16),rgba(10,10,12,0.96)_46%)] p-4 shadow-2xl shadow-[#CAFF3C]/5 sm:p-5" data-testid="agent-fix-teaser">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="m-0 text-xs font-black uppercase tracking-[0.14em] text-[#CAFF3C]">Real fix from this audit</p>
+                    <h2 className="m-0 mt-2 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
+                      One fix Citeable Agent can ship for {audit.brand_name}
+                    </h2>
+                  </div>
+                  <span className="rounded-full border border-[#CAFF3C]/25 bg-[#CAFF3C]/10 px-3 py-1 text-xs font-black text-[#CAFF3C]">Verified gap</span>
+                </div>
+
+                <div className="mt-4 rounded-2xl border border-white/[0.08] bg-black/25 p-4">
+                  <p className="m-0 text-sm font-black leading-6 text-[#F0F0EC]">1. {freeSampleProof.gap}</p>
+                  <p className="m-0 mt-2 text-sm font-black leading-6 text-[#CAFF3C]">2. {freeSampleProof.title}</p>
+
+                  <div className="relative mt-4 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#09090B]/80">
+                    <div className="grid gap-3 p-4 blur-[6px] select-none" aria-hidden="true">
+                      <p className="m-0 text-sm font-bold leading-6 text-[#D6D6DF]">{freeSampleProof.draft}</p>
+                      <p className="m-0 text-sm font-bold leading-6 text-[#D6D6DF]">{freeSampleProof.google}</p>
+                    </div>
+                    <div className="absolute inset-0 grid place-items-center bg-[#09090B]/62 p-4 text-center backdrop-blur-[2px]">
+                      <FunnelCheckoutLink
+                        auditId={audit.id}
+                        href={AGENT_CHECKOUT_URL}
+                        source="report_teaser"
+                        className="inline-flex rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline shadow-2xl shadow-[#CAFF3C]/20 transition hover:brightness-110"
+                      >
+                        Unlock your fixes — Citeable Agent 19€/mo
+                      </FunnelCheckoutLink>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            ) : honestNoGapTeaser ? (
+              <section className="mt-6 rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-4 sm:p-5" data-testid="agent-fix-teaser">
+                <p className="m-0 text-xs font-black uppercase tracking-[0.14em] text-[#8E8E9A]">No fake fixes</p>
+                <h2 className="m-0 mt-2 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
+                  No verified gap was found in this free audit.
+                </h2>
+                <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#D6D6DF]">
+                  Citeable will not invent a correction. This report found no missing recommendation or cited-competitor gap in the checked prompts.
+                </p>
+              </section>
+            ) : null}
+
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
               <a href={AGENT_CHECKOUT_URL} className="inline-flex justify-center rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110" data-ph-capture-attribute-plan="agent_19eur" data-ph-capture-attribute-source="audit_report_primary">
                 {copy.primaryCta}
@@ -391,60 +436,6 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
               category={audit.raw_results?.category}
               locale={locale}
             />
-          ) : null}
-
-          {freeSampleProof ? (
-            <section className="relative overflow-hidden rounded-[1.5rem] border border-[#CAFF3C]/30 bg-[radial-gradient(circle_at_top_left,rgba(202,255,60,0.14),rgba(17,17,22,0.96)_42%)] p-5 shadow-2xl shadow-[#CAFF3C]/5 sm:p-6" data-testid="agent-fix-teaser">
-              <div className="flex items-start gap-4">
-                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-[#CAFF3C]/30 bg-[#CAFF3C]/10 text-xl" aria-hidden="true">
-                  ✦
-                </div>
-                <div>
-                  <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">
-                    {locale === "fr" ? "Échantillon Agent · révélé" : "Agent sample · revealed"}
-                  </p>
-                  <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                    {copy.proofTitle}
-                  </h2>
-                  <p className="m-0 mt-3 text-sm font-black leading-6 text-[#F0F0EC]">{freeSampleProof.gap}</p>
-                </div>
-              </div>
-
-              <div className="mt-4 grid gap-3">
-                <p className="m-0 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm font-black leading-6 text-[#CAFF3C]">{freeSampleProof.title}</p>
-                <p className="m-0 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm font-bold leading-6 text-[#D6D6DF]">{freeSampleProof.draft}</p>
-                <p className="m-0 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm font-bold leading-6 text-[#D6D6DF]">{freeSampleProof.google}</p>
-              </div>
-
-              {lockedFreeFixes.length ? (
-                <div className="mt-5 border-t border-white/[0.08] pt-5">
-                  <p className="m-0 mb-3 text-xs font-black uppercase tracking-[0.12em] text-[#8E8E9A]">
-                    {locale === "fr" ? "Autres correctifs prioritaires verrouillés" : "Other priority fixes locked"}
-                  </p>
-                  <ol className="m-0 grid list-none gap-3 p-0">
-                    {lockedFreeFixes.map((fix, index) => (
-                      <li key={fix.key} className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-black/30 p-4">
-                        <div className="pr-10">
-                          <p className="m-0 text-sm font-black leading-6 text-[#F0F0EC]">{index + 1}. {fix.title}</p>
-                          <p className="m-0 mt-2 text-xs font-black uppercase tracking-[0.1em] text-[#8E8E9A]">{locale === "fr" ? "Contenu du correctif verrouillé" : "Fix content locked"}</p>
-                        </div>
-                        <div className="mt-3 grid gap-2 blur-[5px] select-none" aria-hidden="true">
-                          <span className="h-3 rounded-full bg-white/20" />
-                          <span className="h-3 w-10/12 rounded-full bg-white/15" />
-                          <span className="h-3 w-8/12 rounded-full bg-white/10" />
-                        </div>
-                        <div className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-full border border-[#CAFF3C]/25 bg-[#09090B]/90 text-sm" aria-label={locale === "fr" ? "Correctif verrouillé" : "Locked fix"}>🔒</div>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              ) : null}
-
-              <a href={AGENT_CHECKOUT_URL} className="mt-5 inline-flex w-full justify-center rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110 sm:w-auto" data-ph-capture-attribute-plan="agent_19eur" data-ph-capture-attribute-source="report_teaser">
-                {copy.reportTeaserCta}
-              </a>
-              <p className="m-0 mt-3 text-xs font-bold leading-5 text-[#8E8E9A]">{copy.reportReassurance}</p>
-            </section>
           ) : null}
 
           {complete && !failed && isFreeReport ? (

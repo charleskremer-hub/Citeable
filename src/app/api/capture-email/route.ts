@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
 import { auditTierFromPayload, checkFreeAuditQuota, findFreshFreeGeminiAudit, createCachedFreeAuditForLead, runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
+import { recordFunnelEvent } from "@/lib/funnel";
 import { localeFromHeaders, localeFromUnknown } from "@/lib/i18n";
 
 export const maxDuration = 60;
@@ -28,6 +29,21 @@ export async function POST(req: NextRequest) {
       if (cachedAudit) {
         const cachedLeadAudit = await createCachedFreeAuditForLead({ cachedAuditId: cachedAudit.id, email, brandName, websiteUrl, locale });
         const auditId = cachedLeadAudit?.audit_id ?? cachedAudit.id;
+
+        await recordFunnelEvent({
+          eventName: "audit_started",
+          auditId,
+          source: "capture_email_cached",
+          metadata: { brandName, websiteUrl, auditTier, cachedFromAuditId: cachedAudit.id, locale },
+          dedupeKey: `audit_started:${auditId}`,
+        });
+        await recordFunnelEvent({
+          eventName: "audit_completed",
+          auditId,
+          source: "capture_email_cached",
+          metadata: { brandName, websiteUrl, auditTier, cachedFromAuditId: cachedAudit.id, locale },
+          dedupeKey: `audit_completed:${auditId}`,
+        });
 
         return NextResponse.json(
           {
@@ -63,6 +79,14 @@ export async function POST(req: NextRequest) {
     );
 
     const auditId = audit.rows[0].id;
+
+    await recordFunnelEvent({
+      eventName: "audit_started",
+      auditId,
+      source: "capture_email",
+      metadata: { brandName, websiteUrl, auditTier, locale },
+      dedupeKey: `audit_started:${auditId}`,
+    });
 
     after(async () => {
       const result = await runQueuedAudit(auditId);

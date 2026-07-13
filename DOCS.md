@@ -1530,3 +1530,14 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - Found a report-quality bug while testing `paul.fr`: generic social links caused the bakery to be classified as `creator_influencer`, producing creator competitors like Gary Vaynerchuk and creator prompts.
 - Patched `src/lib/audit-engine.ts` so bakery/restaurant/pâtisserie terms classify before generic social/creator signals and local-business segment detection runs before creator detection for local businesses.
 - Validation: `npm run build` passed on Next.js 16.2.10 after installing local dependencies. The package install reported 2 moderate npm audit vulnerabilities; no dependency changes were made for those unrelated findings.
+
+## 2026-07-13 — C2 free report teaser + funnel tracking
+
+### Findings
+- Read existing `DOCS.md` first and checked local Next.js 16 route/page docs under `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/` before changing App Router code.
+- `/audit/[id]` already generated audit-derived proof copy from real `buyerIntentPrompts`; the free report teaser needed to be limited to actual gaps only (`brandMentioned === false` or cited competitors present), with an honest no-gap state.
+
+### Changes
+- Added persistent `audit_funnel_events` storage in `src/lib/db.ts`, a reusable recorder in `src/lib/funnel.ts`, and `GET/POST /api/funnel` in `src/app/api/funnel/route.ts`.
+- Server records `audit_started`, `audit_completed`, and `report_viewed`; the blurred teaser CTA records `teaser_cta_click` and `checkout_opened` before opening the Agent checkout.
+- Replaced the old free sample block on `src/app/audit/[id]/page.tsx` with one real, audit-derived fix directly under the score: first two lines visible, remaining generated fix blurred, overlay CTA text `Unlock your fixes — Citeable Agent 19€/mo` pointing to the Agent 19€ checkout.

@@ -87,6 +87,20 @@ export async function ensureAuditSchema() {
   await pool.query(`CREATE INDEX IF NOT EXISTS monitored_brands_due_idx ON monitored_brands (active, next_run_at)`);
   await pool.query(`CREATE INDEX IF NOT EXISTS audits_brand_site_created_idx ON audits (lower(brand_name), website_url, created_at DESC)`);
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS audit_funnel_events (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      event_name TEXT NOT NULL CHECK (event_name IN ('audit_started', 'audit_completed', 'report_viewed', 'teaser_cta_click', 'checkout_opened')),
+      audit_id UUID,
+      source TEXT,
+      metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+      dedupe_key TEXT UNIQUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS audit_funnel_events_created_idx ON audit_funnel_events (created_at DESC)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS audit_funnel_events_name_created_idx ON audit_funnel_events (event_name, created_at DESC)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS audit_funnel_events_audit_idx ON audit_funnel_events (audit_id, created_at DESC)`);
+  await pool.query(`
     UPDATE monitored_brands
     SET next_run_at = GREATEST(next_run_at, COALESCE(last_run_at, created_at) + interval '30 days')
     WHERE active = true
