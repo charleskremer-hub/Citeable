@@ -1,6 +1,5 @@
 import { createHash, timingSafeEqual } from "crypto";
 import { pool } from "./db";
-import { AGENT_CHECKOUT_URL, MONITOR_CHECKOUT_URL } from "./checkout-links";
 import { recordFunnelEvent } from "./funnel";
 import { brandSentimentText, localizePlainAction, recommendationText, type Locale } from "./i18n";
 
@@ -225,6 +224,8 @@ type AuditRow = {
   monitored_brand_id?: string | null;
   run_type?: string | null;
   previous_audit_id?: string | null;
+  followup_1_sent_at?: Date | null;
+  followup_2_sent_at?: Date | null;
   created_at?: Date;
 };
 
@@ -272,6 +273,7 @@ type ClaimedPostAuditEmailJob = {
   email: string;
   step: PostAuditEmailStep;
   attempts: number;
+  scheduled_at: Date;
 };
 
 type PostAuditEmailSendResult = {
@@ -2700,6 +2702,11 @@ function unsubscribeUrlForEmail(email: string) {
   return `${siteBaseUrl()}/api/unsubscribe?token=${encodeURIComponent(unsubscribeTokenForEmail(email))}`;
 }
 
+function followupClickUrl(auditId: string, step: PostAuditEmailStep, target: "report" | "agent_checkout") {
+  const params = new URLSearchParams({ audit_id: auditId, step, target });
+  return `${siteBaseUrl()}/api/funnel/followup-click?${params.toString()}`;
+}
+
 export async function unsubscribeFromPostAuditEmails(token: string) {
   const email = emailFromUnsubscribeToken(token);
   if (!email) return null;
@@ -2755,6 +2762,30 @@ export async function schedulePostAuditSequence(auditId: string) {
   }
 
   return result.rows.map((row) => ({ step: row.step, scheduled_at: row.scheduled_at.toISOString() }));
+}
+
+async function backfillDuePostAuditSequenceJobs(limit: number) {
+  await pool.query(
+    `INSERT INTO audit_email_sequence_jobs (audit_id, email, step, scheduled_at)
+     SELECT audits.id, audits.email, due.step, audits.created_at + due.delay
+     FROM audits
+     CROSS JOIN LATERAL (VALUES
+       ('j1_value'::text, interval '1 day', audits.followup_1_sent_at),
+       ('j3_offer'::text, interval '3 days', audits.followup_2_sent_at)
+     ) AS due(step, delay, sent_at)
+     WHERE audits.score IS NOT NULL
+       AND audits.created_at + due.delay <= now()
+       AND due.sent_at IS NULL
+       AND COALESCE(audits.raw_results->>'auditTier', 'free') = 'free'
+       AND NOT EXISTS (
+         SELECT 1 FROM audit_email_unsubscribes
+         WHERE audit_email_unsubscribes.email = lower(trim(audits.email))
+       )
+     ORDER BY audits.created_at ASC
+     LIMIT $1
+     ON CONFLICT (audit_id, step) DO NOTHING`,
+    [Math.max(1, Math.min(50, limit * 2))]
+  );
 }
 
 export async function createCachedFreeAuditForLead(args: {
@@ -2866,7 +2897,8 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
   const actionLines = postAuditActionLines(report, locale);
   const totalPrompts = report.buyerIntentPrompts.length;
   const brandMentions = report.buyerIntentPrompts.filter((prompt) => prompt.brandMentioned).length;
-  const reportUrl = `${siteBaseUrl()}/audit/${report.audit_id}`;
+  const reportUrl = followupClickUrl(report.audit_id, step, "report");
+  const agentCheckoutUrl = followupClickUrl(report.audit_id, step, "agent_checkout");
   const unsubscribeUrl = unsubscribeUrlForEmail(email);
 
   if (step === "j3_offer") {
@@ -2885,8 +2917,8 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
               : `${answerEngineName} a aussi cité ${competitorSignal.competitor} sur : “${competitorSignal.prompt}”.`
             : `${answerEngineName} n'a cité aucun concurrent dans cet audit ; il t'a cité ${brandMentions}/${totalPrompts} fois.`,
           "",
-          "Si tu veux éviter de tout faire toi-même : Agent 19 €/mois corrige tout pour toi à partir de ces signaux réels. Sans engagement, résiliable à tout moment.",
-          `Démarrer Agent : ${AGENT_CHECKOUT_URL}`,
+          "Si tu veux éviter de tout faire toi-même : Citeable Agent 19 €/mois prépare les correctifs copy-paste, le plan de mentions et le chat à partir de ces signaux réels. Sans engagement, résiliable à tout moment.",
+          `Démarrer Agent : ${agentCheckoutUrl}`,
           "Réassurance : tu gardes la main, et on ne part que des données réelles de ton audit — rien n'est inventé.",
           "",
           `Voir le rapport : ${reportUrl}`,
@@ -2903,8 +2935,8 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
               : `${answerEngineName} also cited ${competitorSignal.competitor} for: “${competitorSignal.prompt}”.`
             : `${answerEngineName} did not cite a competitor in this audit; it cited you ${brandMentions}/${totalPrompts} times.`,
           "",
-          "If you do not want to fix everything yourself: Agent €19/month fixes it for you from these real signals. No commitment, cancel anytime.",
-          `Start Agent: ${AGENT_CHECKOUT_URL}`,
+          "If you do not want to fix everything yourself: Citeable Agent €19/month prepares copy-paste fixes, a mention plan, and chat from these real signals. No commitment, cancel anytime.",
+          `Start Agent: ${agentCheckoutUrl}`,
           "Reassurance: you stay in control, and we only use the real data from your audit — nothing is invented.",
           "",
           `View the report: ${reportUrl}`,
@@ -2930,10 +2962,7 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
         "",
         ...actionLines,
         "",
-        "Pour suivre et recevoir les 3 actions chaque mois :",
-        `Monitor 9 €/mois : ${MONITOR_CHECKOUT_URL}`,
-        "Pour qu'on corrige tout pour toi :",
-        `Agent 19 €/mois : ${AGENT_CHECKOUT_URL}`,
+        "Reviens au rapport pour voir le détail et appliquer l'action avec le contexte réel de l'audit.",
         "",
         `Voir le rapport : ${reportUrl}`,
         `Se désinscrire : ${unsubscribeUrl}`,
@@ -2950,10 +2979,7 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
         "",
         ...actionLines,
         "",
-        "To monitor this and get 3 actions every month:",
-        `Monitor €9/month: ${MONITOR_CHECKOUT_URL}`,
-        "To have us fix everything for you:",
-        `Agent €19/month: ${AGENT_CHECKOUT_URL}`,
+        "Return to the report to see the detail and apply the action with the real audit context.",
         "",
         `View the report: ${reportUrl}`,
         `Unsubscribe: ${unsubscribeUrl}`,
@@ -2963,15 +2989,22 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
 }
 
 export async function runDuePostAuditEmails(limit = 10): Promise<PostAuditEmailSendResult[]> {
+  await backfillDuePostAuditSequenceJobs(limit);
+
   const claimed = await pool.query<ClaimedPostAuditEmailJob>(
     `WITH due AS (
-       SELECT id
-       FROM audit_email_sequence_jobs
-       WHERE sent_at IS NULL
-         AND scheduled_at <= now()
-         AND attempts < 3
-         AND (send_started_at IS NULL OR send_started_at < now() - interval '20 minutes')
-       ORDER BY scheduled_at ASC
+       SELECT jobs.id
+       FROM audit_email_sequence_jobs jobs
+       JOIN audits ON audits.id = jobs.audit_id
+       WHERE jobs.sent_at IS NULL
+         AND jobs.scheduled_at <= now()
+         AND jobs.attempts < 3
+         AND (jobs.send_started_at IS NULL OR jobs.send_started_at < now() - interval '20 minutes')
+         AND (
+           (jobs.step = 'j1_value' AND audits.followup_1_sent_at IS NULL)
+           OR (jobs.step = 'j3_offer' AND audits.followup_2_sent_at IS NULL)
+         )
+       ORDER BY jobs.scheduled_at ASC
        LIMIT $1
        FOR UPDATE SKIP LOCKED
      )
@@ -2979,7 +3012,7 @@ export async function runDuePostAuditEmails(limit = 10): Promise<PostAuditEmailS
      SET send_started_at = now(), attempts = attempts + 1, error = NULL
      FROM due
      WHERE jobs.id = due.id
-     RETURNING jobs.id, jobs.audit_id, jobs.email, jobs.step, jobs.attempts`,
+     RETURNING jobs.id, jobs.audit_id, jobs.email, jobs.step, jobs.attempts, jobs.scheduled_at`,
     [limit]
   );
 
@@ -3016,12 +3049,33 @@ export async function runDuePostAuditEmails(limit = 10): Promise<PostAuditEmailS
          WHERE id = $1`,
         [job.id, sendResult.id ?? null, sendResult.providerStatus ?? (sendResult.status ? String(sendResult.status) : null)]
       );
+      await pool.query(
+        `UPDATE audits
+         SET followup_1_sent_at = CASE WHEN $2 = 'j1_value' THEN COALESCE(followup_1_sent_at, now()) ELSE followup_1_sent_at END,
+             followup_2_sent_at = CASE WHEN $2 = 'j3_offer' THEN COALESCE(followup_2_sent_at, now()) ELSE followup_2_sent_at END
+         WHERE id = $1`,
+        [job.audit_id, job.step]
+      );
+      await recordFunnelEvent({
+        eventName: job.step === "j1_value" ? "followup_1_sent" : "followup_2_sent",
+        auditId: job.audit_id,
+        source: "post_audit_email_cron",
+        metadata: {
+          email: job.email,
+          step: job.step,
+          subject: message.subject,
+          provider_message_id: sendResult.id ?? null,
+          provider_status: sendResult.providerStatus ?? (sendResult.status ? String(sendResult.status) : null),
+        },
+        dedupeKey: `${job.step === "j1_value" ? "followup_1_sent" : "followup_2_sent"}:${job.audit_id}`,
+      });
       results.push({
         job_id: job.id,
         audit_id: job.audit_id,
         step: job.step,
         email: job.email,
         status: "sent",
+        scheduled_at: job.scheduled_at.toISOString(),
         provider_message_id: sendResult.id,
         provider_status: sendResult.providerStatus ?? (sendResult.status ? String(sendResult.status) : undefined),
         subject: message.subject,

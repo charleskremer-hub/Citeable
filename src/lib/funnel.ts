@@ -1,6 +1,15 @@
 import { pool } from "./db";
 
-export const FUNNEL_EVENTS = ["audit_started", "audit_completed", "report_viewed", "teaser_cta_click", "checkout_opened"] as const;
+export const FUNNEL_EVENTS = [
+  "audit_started",
+  "audit_completed",
+  "report_viewed",
+  "teaser_cta_click",
+  "checkout_opened",
+  "followup_1_sent",
+  "followup_2_sent",
+  "followup_click",
+] as const;
 
 export type FunnelEventName = (typeof FUNNEL_EVENTS)[number];
 

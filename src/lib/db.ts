@@ -44,6 +44,8 @@ export async function ensureAuditSchema() {
   await pool.query(`ALTER TABLE audits ADD COLUMN IF NOT EXISTS monitored_brand_id UUID`);
   await pool.query(`ALTER TABLE audits ADD COLUMN IF NOT EXISTS run_type TEXT DEFAULT 'manual'`);
   await pool.query(`ALTER TABLE audits ADD COLUMN IF NOT EXISTS previous_audit_id UUID`);
+  await pool.query(`ALTER TABLE audits ADD COLUMN IF NOT EXISTS followup_1_sent_at TIMESTAMPTZ`);
+  await pool.query(`ALTER TABLE audits ADD COLUMN IF NOT EXISTS followup_2_sent_at TIMESTAMPTZ`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS audit_email_unsubscribes (
       email TEXT PRIMARY KEY,
@@ -70,6 +72,22 @@ export async function ensureAuditSchema() {
   await pool.query(`CREATE INDEX IF NOT EXISTS audit_email_sequence_due_idx ON audit_email_sequence_jobs (scheduled_at, sent_at, send_started_at)`);
   await pool.query(`CREATE INDEX IF NOT EXISTS audit_email_sequence_audit_idx ON audit_email_sequence_jobs (audit_id)`);
   await pool.query(`
+    UPDATE audits
+    SET followup_1_sent_at = COALESCE(followup_1_sent_at, sent_jobs.sent_at)
+    FROM audit_email_sequence_jobs sent_jobs
+    WHERE sent_jobs.audit_id = audits.id
+      AND sent_jobs.step = 'j1_value'
+      AND sent_jobs.sent_at IS NOT NULL
+  `);
+  await pool.query(`
+    UPDATE audits
+    SET followup_2_sent_at = COALESCE(followup_2_sent_at, sent_jobs.sent_at)
+    FROM audit_email_sequence_jobs sent_jobs
+    WHERE sent_jobs.audit_id = audits.id
+      AND sent_jobs.step = 'j3_offer'
+      AND sent_jobs.sent_at IS NOT NULL
+  `);
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS monitored_brands (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       email TEXT NOT NULL,
@@ -85,17 +103,25 @@ export async function ensureAuditSchema() {
     )
   `);
   await pool.query(`CREATE INDEX IF NOT EXISTS monitored_brands_due_idx ON monitored_brands (active, next_run_at)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS audits_followup_1_due_idx ON audits (created_at) WHERE score IS NOT NULL AND followup_1_sent_at IS NULL`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS audits_followup_2_due_idx ON audits (created_at) WHERE score IS NOT NULL AND followup_2_sent_at IS NULL`);
   await pool.query(`CREATE INDEX IF NOT EXISTS audits_brand_site_created_idx ON audits (lower(brand_name), website_url, created_at DESC)`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS audit_funnel_events (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      event_name TEXT NOT NULL CHECK (event_name IN ('audit_started', 'audit_completed', 'report_viewed', 'teaser_cta_click', 'checkout_opened')),
+      event_name TEXT NOT NULL,
       audit_id UUID,
       source TEXT,
       metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
       dedupe_key TEXT UNIQUE,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     )
+  `);
+  await pool.query(`ALTER TABLE audit_funnel_events DROP CONSTRAINT IF EXISTS audit_funnel_events_event_name_check`);
+  await pool.query(`
+    ALTER TABLE audit_funnel_events
+    ADD CONSTRAINT audit_funnel_events_event_name_check
+    CHECK (event_name IN ('audit_started', 'audit_completed', 'report_viewed', 'teaser_cta_click', 'checkout_opened', 'followup_1_sent', 'followup_2_sent', 'followup_click'))
   `);
   await pool.query(`CREATE INDEX IF NOT EXISTS audit_funnel_events_created_idx ON audit_funnel_events (created_at DESC)`);
   await pool.query(`CREATE INDEX IF NOT EXISTS audit_funnel_events_name_created_idx ON audit_funnel_events (event_name, created_at DESC)`);

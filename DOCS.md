@@ -1541,3 +1541,21 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - Added persistent `audit_funnel_events` storage in `src/lib/db.ts`, a reusable recorder in `src/lib/funnel.ts`, and `GET/POST /api/funnel` in `src/app/api/funnel/route.ts`.
 - Server records `audit_started`, `audit_completed`, and `report_viewed`; the blurred teaser CTA records `teaser_cta_click` and `checkout_opened` before opening the Agent checkout.
 - Replaced the old free sample block on `src/app/audit/[id]/page.tsx` with one real, audit-derived fix directly under the score: first two lines visible, remaining generated fix blurred, overlay CTA text `Unlock your fixes — Citeable Agent 19€/mo` pointing to the Agent 19€ checkout.
+
+## 2026-07-14 — C4 follow-up email sequence hardening + tracking funnel
+
+### Findings
+- Read existing `DOCS.md` first. The app already had a post-audit job table and `/api/cron/post-audit-emails`, but the required audit-level anti-duplicate columns (`followup_1_sent_at`, `followup_2_sent_at`) and funnel events (`followup_1_sent`, `followup_2_sent`, `followup_click`) were not wired into the current schema/type layer.
+- Per repo instructions, local Next.js 16 route-handler docs were read after `npm install`: `node_modules/next/dist/docs/01-app/01-getting-started/15-route-handlers.md` and `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/route.md`.
+- `src/lib/checkout-links.ts` already points Agent checkout to the required live Citeable Agent 19 EUR URL: `https://checkout.nanocorp.so/c/zuJCYwhaUnzJGWIrB1dz`.
+
+### Changes made
+- Added `audits.followup_1_sent_at` and `audits.followup_2_sent_at` migrations, indexes, and backfill from already-sent sequence jobs in `src/lib/db.ts`.
+- Extended `audit_funnel_events` and `src/lib/funnel.ts` for `followup_1_sent`, `followup_2_sent`, and `followup_click` so `/api/funnel` reports these events in counts and recent events.
+- Updated `runDuePostAuditEmails()` in `src/lib/audit-engine.ts` to backfill due jobs from completed free audits, claim only audits whose matching follow-up column is still null, mark the matching audit column after a successful send, and record a deduped funnel sent event.
+- Reworked J+1/J+3 email links to use `/api/funnel/followup-click`; J+1 links to `/audit/[id]`, and J+3 links to a tracked redirect that lands on the Agent 19 EUR checkout.
+- Added `src/app/api/funnel/followup-click/route.ts`, a dynamic route that records `followup_click` with audit id, step, target, and redirect URL, then redirects to either the audit report or Agent checkout.
+
+### Validation
+- `npm run lint` passed with the two pre-existing warnings only: unused `isAuditedBrandName` and `categoryFromWebsite` in `src/lib/audit-engine.ts`.
+- `npm run build` passed on Next.js 16.2.10 / Turbopack and lists the new dynamic route `/api/funnel/followup-click`.
