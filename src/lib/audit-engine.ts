@@ -12,7 +12,7 @@ const OPENAI_UNAVAILABLE = "ChatGPT indisponible, réessaie.";
 const FREE_AUDIT_CACHE_HOURS = 24;
 const FREE_AUDIT_EMAIL_DAILY_LIMIT = 1;
 const FREE_AUDIT_DOMAIN_DAILY_LIMIT = 1;
-const BUYER_PROMPT_SET_VERSION = "stable_recipient_locale_v1";
+const BUYER_PROMPT_SET_VERSION = "relevant_content_clean_category_v2";
 const DEFAULT_GEMINI_MODEL = "gemini-flash-latest";
 const DEFAULT_OPENAI_MODEL = ["gpt", "4o", "mini"].join("-");
 const COMPETITOR_EXTRACTION_VERSION = "gemini_recommended_brands_sentiment_v5_icp_segments";
@@ -1560,25 +1560,116 @@ function displayNameFromDomain(domain: string) {
     .join(" ");
 }
 
+const NAVIGATION_FOOTER_TERMS = [
+  "careers", "career", "jobs", "affiliates", "affiliate", "ambassador", "giving back", "package", "packages", "login", "log in", "sign in", "cart", "basket", "account", "terms", "privacy", "shop", "menu", "navigation", "footer", "returns", "shipping", "wishlist", "newsletter", "contact", "support", "help", "faq", "store locator", "track order", "order status", "accessibility",
+  "carrières", "emploi", "recrutement", "affiliés", "connexion", "compte", "panier", "confidentialité", "conditions", "boutique", "menu", "livraison", "retours", "aide", "contact",
+];
+
+const NAVIGATION_FOOTER_PATTERN = new RegExp(`\\b(?:${NAVIGATION_FOOTER_TERMS.map(escapedRegex).join("|")})\\b`, "gi");
+
+function stripNonContentHtml(html: string) {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<svg[\s\S]*?<\/svg>/gi, " ")
+    .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
+    .replace(/<(?:nav|footer|header|aside)[^>]*>[\s\S]*?<\/(?:nav|footer|header|aside)>/gi, " ");
+}
+
+function decodeHtmlEntities(value: string) {
+  return value
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&mdash;|&ndash;/gi, "-");
+}
+
+function compactContentText(value: string) {
+  return decodeHtmlEntities(stripHtml(value)).replace(NAVIGATION_FOOTER_PATTERN, " ").replace(/\s+/g, " ").trim();
+}
+
+function extractMetaContent(html: string, attribute: "name" | "property", value: string) {
+  const escapedValue = escapedRegex(value);
+  return html.match(new RegExp(`<meta[^>]+${attribute}=["']${escapedValue}["'][^>]+content=["']([^"']+)["']`, "i"))?.[1]
+    ?? html.match(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+${attribute}=["']${escapedValue}["']`, "i"))?.[1]
+    ?? "";
+}
+
+function extractTags(html: string, tagNames: string[]) {
+  const tagPattern = tagNames.map(escapedRegex).join("|");
+  return Array.from(html.matchAll(new RegExp(`<(?:${tagPattern})[^>]*>([\\s\\S]*?)<\\/(?:${tagPattern})>`, "gi")))
+    .map((match) => compactContentText(match[1] ?? ""))
+    .filter(Boolean);
+}
+
+function extractJsonLdText(html: string) {
+  const chunks: string[] = [];
+
+  for (const match of html.matchAll(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)) {
+    try {
+      const parsed = JSON.parse(decodeHtmlEntities(stripHtml(match[1] ?? "")));
+      const stack = Array.isArray(parsed) ? [...parsed] : [parsed];
+
+      while (stack.length) {
+        const item = stack.shift();
+        if (!item || typeof item !== "object") continue;
+
+        const record = item as Record<string, unknown>;
+        const type = Array.isArray(record["@type"]) ? record["@type"].join(" ") : String(record["@type"] ?? "");
+        const contentType = type.toLowerCase();
+
+        for (const key of ["name", "description", "category", "brand", "slogan"]) {
+          const value = record[key];
+          if (typeof value === "string") chunks.push(value);
+          if (value && typeof value === "object" && "name" in value && typeof (value as { name?: unknown }).name === "string") chunks.push((value as { name: string }).name);
+        }
+
+        if (/product|organization|localbusiness|store|restaurant|person|webpage/.test(contentType)) {
+          for (const value of Object.values(record)) {
+            if (Array.isArray(value)) stack.push(...value);
+          }
+        }
+      }
+    } catch {
+      chunks.push(match[1] ?? "");
+    }
+  }
+
+  return chunks.join(" ");
+}
+
 function extractHomepageSignals(html: string) {
   const metaDescription = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i)?.[1]
     ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i)?.[1]
     ?? "";
-  const ogDescription = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i)?.[1]
-    ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:description["']/i)?.[1]
-    ?? "";
+  const ogDescription = extractMetaContent(html, "property", "og:description");
+  const twitterDescription = extractMetaContent(html, "name", "twitter:description");
   const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "";
-  const jsonLd = (html.match(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi) ?? [])
-    .map((script) => stripHtml(script))
-    .join(" ");
+  const cleanHtml = stripNonContentHtml(html);
+  const headings = extractTags(cleanHtml, ["h1", "h2", "h3"]);
+  const productText = Array.from(cleanHtml.matchAll(/<[^>]+(?:class|id)=["'][^"']*(?:product|collection|category|hero|main|content|description)[^"']*["'][^>]*>([\s\S]{0,1800}?)<\/[a-z0-9-]+>/gi))
+    .map((match) => compactContentText(match[1] ?? ""))
+    .filter(Boolean)
+    .slice(0, 10);
+  const jsonLd = extractJsonLdText(html);
 
-  return stripHtml([title, metaDescription, ogDescription, jsonLd, html].join(" ")).slice(0, 12_000);
+  return [title, metaDescription, ogDescription, twitterDescription, headings.join(" "), productText.join(" "), jsonLd]
+    .map(compactContentText)
+    .filter(Boolean)
+    .join(" ")
+    .slice(0, 12_000);
+}
+
+function cleanCategoryText(value: string) {
+  return value.replace(NAVIGATION_FOOTER_PATTERN, " ").replace(/\b(?:a|an|and|or|the|de|des|du|la|le|les)\b\s*$/gi, "").replace(/\s+/g, " ").trim();
 }
 
 function categoryFromHomepageText(text: string, domain: string) {
   const lower = text.toLowerCase();
   const phraseRules: Array<[RegExp, string]> = [
-    [/\bosprey\b|backpacks?|rucksacks?|daypacks?|packs?\b|travel packs?|hiking packs?|outdoor gear|hydration packs?|luggage|packfinder|trekking/, "backpacks and outdoor gear"],
+    [/\bbombas\b|\bsocks?\b|chaussettes?|hosiery|merino socks?|compression socks?|dress socks?|ankle socks?|crew socks?/, "socks and apparel"],
+    [/\bosprey\b|backpacks?|rucksacks?|daypacks?|travel packs?|hiking packs?|outdoor gear|hydration packs?|luggage|packfinder|trekking/, "backpacks and outdoor gear"],
     [/\ballbirds\b|sustainable sneakers?|eco-?friendly shoes?|wool shoes?|tree runners?|running shoes?|walking shoes?|sneakers?|footwear|chaussures?/, "DTC footwear brand"],
     [/boulangerie|bakery|p[aâ]tisserie|pastry|restaurant|bistro|brasserie|traiteur|catering/, "bakery / restaurant"],
     [/\bmkbhd\b|marques brownlee|youtube|youtuber|tiktok|instagram|newsletter|podcast|substack|streamer|content creator|creator|influencer|créateur|créatrice|influenceur|influenceuse/, "creator"],
@@ -1617,7 +1708,7 @@ function categoryFromHomepageText(text: string, domain: string) {
   }
 
   if (/\.coach$|coach/i.test(domain)) return "fitness coach";
-  return `${displayNameFromDomain(domain)} alternatives`;
+  return cleanCategoryText(`${displayNameFromDomain(domain)} alternatives`);
 }
 
 function isGenericCategory(category: string) {
@@ -1627,7 +1718,7 @@ function isGenericCategory(category: string) {
 function categoryLooksLikeTechStack(category: string, homepageText: string) {
   const lowerCategory = category.toLowerCase();
   const lowerText = homepageText.toLowerCase();
-  const productSignals = /\ballbirds\b|sustainable sneakers?|eco-?friendly shoes?|wool shoes?|tree runners?|running shoes?|walking shoes?|sneakers?|footwear|chaussures?|apparel|clothing|fashion|skincare|beauty|coffee|beverage|food/.test(lowerText);
+  const productSignals = /\ballbirds\b|\bbombas\b|socks?|chaussettes?|hosiery|sustainable sneakers?|eco-?friendly shoes?|wool shoes?|tree runners?|running shoes?|walking shoes?|sneakers?|footwear|chaussures?|apparel|clothing|fashion|skincare|beauty|coffee|beverage|food/.test(lowerText);
 
   return productSignals && /e-?commerce|online store|shopify|website|platform|developer platform|software platform/.test(lowerCategory);
 }
@@ -1648,10 +1739,10 @@ const LOCATION_HINTS = [
   "London", "New York", "Los Angeles", "Chicago", "San Francisco", "Austin", "Seattle", "Boston", "Miami", "Toronto",
 ];
 
-function inferLocationFromHomepage(text: string, domain: string) {
+function inferLocationFromHomepage(text: string) {
   const normalized = text.replace(/\s+/g, " ");
   const postalMatch = normalized.match(/\b\d{5}\s+([A-ZÀ-Ÿ][A-Za-zÀ-ÿ' -]{2,38})\b/);
-  const nearMatch = normalized.match(/\b(?:à|a|in|near|based in|situ[eé]\s+[aà])\s+([A-ZÀ-Ÿ][A-Za-zÀ-ÿ' -]{2,38})\b/);
+  const nearMatch = normalized.match(/\b(?:à|in|near|based in|situ[eé]\s+[aà])\s+([A-ZÀ-Ÿ][A-Za-zÀ-ÿ' -]{2,38})\b/);
   const knownCity = LOCATION_HINTS.find((city) => new RegExp(`\\b${escapedRegex(city)}\\b`, "i").test(normalized));
   const city = postalMatch?.[1] ?? nearMatch?.[1] ?? knownCity;
 
@@ -1662,8 +1753,7 @@ function inferLocationFromHomepage(text: string, domain: string) {
       .slice(0, 40);
   }
 
-  if (domain.endsWith(".fr")) return "France";
-  return "near me";
+  return null;
 }
 
 function inferAudienceFromHomepage(text: string, language: "en" | "fr") {
@@ -1680,10 +1770,14 @@ function inferAudienceFromHomepage(text: string, language: "en" | "fr") {
 }
 
 function localizedCategoryTerm(categoryTerm: string, language: "en" | "fr") {
-  if (language !== "fr") return categoryTerm;
+  const cleanTerm = cleanCategoryText(categoryTerm);
+  if (language !== "fr") return cleanTerm;
 
-  const lower = categoryTerm.toLowerCase();
+  const lower = cleanTerm.toLowerCase();
   const translations: Array<[RegExp, string]> = [
+    [/socks? and apparel|hosiery/, "chaussettes et vêtements"],
+    [/backpacks? and outdoor gear/, "sacs à dos et équipement outdoor"],
+    [/footwear|shoe|sneaker/, "chaussures"],
     [/plumber/, "plombier"],
     [/electrician/, "électricien"],
     [/law firm/, "cabinet d'avocat"],
@@ -1702,7 +1796,7 @@ function localizedCategoryTerm(categoryTerm: string, language: "en" | "fr") {
     [/developer platform/, "plateforme développeur"],
   ];
 
-  return translations.find(([pattern]) => pattern.test(lower))?.[1] ?? categoryTerm;
+  return translations.find(([pattern]) => pattern.test(lower))?.[1] ?? cleanTerm;
 }
 
 async function inferCategory(brandName: string, websiteUrl: string, fallbackCheck: AuditCheckResult) {
@@ -1738,7 +1832,16 @@ async function inferCategory(brandName: string, websiteUrl: string, fallbackChec
 }
 
 function promptCategoryTerms(category: string) {
-  const lower = category.toLowerCase();
+  const cleanCategory = cleanCategoryText(category);
+  const lower = cleanCategory.toLowerCase();
+
+  if (/socks?|hosiery|chaussettes?|apparel/.test(lower)) {
+    return {
+      categoryTerm: lower.includes("sock") || lower.includes("chaussette") || lower.includes("hosiery") ? "socks and apparel" : cleanCategory,
+      useCase: "comfortable everyday basics",
+      leader: "Smartwool",
+    };
+  }
 
   if (/footwear|shoe|sneaker|running shoe/.test(lower)) {
     return {
@@ -1756,10 +1859,10 @@ function promptCategoryTerms(category: string) {
     };
   }
 
-  if (/fashion|apparel|clothing/.test(lower)) return { categoryTerm: category, useCase: "everyday clothing", leader: "Everlane" };
-  if (/beauty|skincare|cosmetic/.test(lower)) return { categoryTerm: category, useCase: "daily routines", leader: "Glossier" };
-  if (/food|beverage|coffee|tea|drink/.test(lower)) return { categoryTerm: category, useCase: "daily consumption", leader: "Starbucks" };
-  if (/creator|influencer/.test(lower)) return { categoryTerm: category, useCase: "audiences looking for people to follow", leader: "top creators" };
+  if (/fashion|apparel|clothing/.test(lower)) return { categoryTerm: cleanCategory, useCase: "everyday clothing", leader: "Everlane" };
+  if (/beauty|skincare|cosmetic/.test(lower)) return { categoryTerm: cleanCategory, useCase: "daily routines", leader: "Glossier" };
+  if (/food|beverage|coffee|tea|drink/.test(lower)) return { categoryTerm: cleanCategory, useCase: "daily consumption", leader: "Starbucks" };
+  if (/creator|influencer/.test(lower)) return { categoryTerm: cleanCategory, useCase: "audiences looking for people to follow", leader: "top creators" };
 
   if (lower.includes("digital product passport")) {
     return {
@@ -1793,13 +1896,13 @@ function promptCategoryTerms(category: string) {
     };
   }
 
-  if (lower.includes("crm")) return { categoryTerm: category, useCase: "early-stage startups", leader: "HubSpot" };
-  if (lower.includes("project management")) return { categoryTerm: category, useCase: "small teams", leader: "Asana" };
-  if (lower.includes("email marketing")) return { categoryTerm: category, useCase: "B2B startups", leader: "Mailchimp" };
-  if (lower.includes("analytics")) return { categoryTerm: category, useCase: "SaaS teams", leader: "Google Analytics" };
-  if (lower.includes("developer")) return { categoryTerm: category, useCase: "product teams", leader: "Twilio" };
+  if (lower.includes("crm")) return { categoryTerm: cleanCategory, useCase: "early-stage startups", leader: "HubSpot" };
+  if (lower.includes("project management")) return { categoryTerm: cleanCategory, useCase: "small teams", leader: "Asana" };
+  if (lower.includes("email marketing")) return { categoryTerm: cleanCategory, useCase: "B2B startups", leader: "Mailchimp" };
+  if (lower.includes("analytics")) return { categoryTerm: cleanCategory, useCase: "SaaS teams", leader: "Google Analytics" };
+  if (lower.includes("developer")) return { categoryTerm: cleanCategory, useCase: "product teams", leader: "Twilio" };
 
-  return { categoryTerm: category, useCase: "growing companies", leader: "the market leader" };
+  return { categoryTerm: cleanCategory, useCase: "growing companies", leader: "the market leader" };
 }
 
 
@@ -1832,53 +1935,69 @@ function creatorNiche(categoryTerm: string, homepageText: string) {
   return categoryTerm.replace(/\b(creator|influencer|content creator|brand|category)\b/gi, "").trim() || "niche";
 }
 
+
+function promptHasBannedNavigationTerm(prompt: string) {
+  NAVIGATION_FOOTER_PATTERN.lastIndex = 0;
+  return NAVIGATION_FOOTER_PATTERN.test(prompt);
+}
+
+function cleanBuyerPrompt(prompt: string) {
+  return cleanCategoryText(prompt)
+    .replace(/\b(?:company|companies|vendors|platforms|solutions)\b$/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function cleanPromptList(prompts: string[], limit = 12) {
+  return uniqueInOrder(prompts.map(cleanBuyerPrompt).filter((prompt) => prompt.length > 3 && !promptHasBannedNavigationTerm(prompt)), limit);
+}
+
 function generateBuyerIntentPrompts(brandName: string, websiteUrl: string, category: string, homepageText: string, preferredLocale?: Locale) {
   const { categoryTerm, useCase, leader } = promptCategoryTerms(category);
   const domain = domainFromWebsite(websiteUrl);
   const language = preferredLocale ?? detectBuyerQuestionLanguage(homepageText, domain);
-  const location = inferLocationFromHomepage(homepageText, domain);
+  const location = inferLocationFromHomepage(homepageText);
   const audience = inferAudienceFromHomepage(homepageText, language);
   const buyerCategory = localizedCategoryTerm(categoryTerm, language);
-  const englishLocationPhrase = location === "near me" ? "near me" : `in ${location}`;
-  const frenchLocationPhrase = location === "near me" ? "près de moi" : `à ${location}`;
+  const englishLocationPhrase = location ? ` in ${location}` : "";
+  const frenchLocationPhrase = location ? ` à ${location}` : "";
+  const ecommerceLocationSuffix = location ? (language === "fr" ? ` à ${location}` : ` in ${location}`) : "";
   const segment = detectIcpSegment(brandName, websiteUrl, category, homepageText);
 
   if (segment.key === "local_independent") {
     return language === "fr"
-      ? uniqueInOrder([
-          `meilleur ${buyerCategory} ${frenchLocationPhrase}`,
-          `${buyerCategory} près de moi`,
-          `${buyerCategory} recommandé ${frenchLocationPhrase}`,
+      ? cleanPromptList([
+          `meilleur ${buyerCategory}${frenchLocationPhrase}`,
+          `${buyerCategory} recommandé${frenchLocationPhrase}`,
           `avis ${brandName}`,
           `${brandName} est-il fiable`,
-          `quel ${buyerCategory} choisir ${frenchLocationPhrase}`,
-          `${buyerCategory} avec bons avis ${frenchLocationPhrase}`,
-          `${buyerCategory} disponible rapidement ${frenchLocationPhrase}`,
-          `${buyerCategory} Doctolib Resalib ${location === "near me" ? "" : location}`.trim(),
-          `${buyerCategory} Google Business ${location === "near me" ? "" : location}`.trim(),
+          `quel ${buyerCategory} choisir${frenchLocationPhrase}`,
+          `${buyerCategory} avec bons avis${frenchLocationPhrase}`,
+          `${buyerCategory} disponible rapidement${frenchLocationPhrase}`,
+          `${buyerCategory} Doctolib Resalib ${location ?? ""}`.trim(),
+          `${buyerCategory} Google Business ${location ?? ""}`.trim(),
           `pourquoi choisir ${brandName}`,
-          `alternative à ${leader} ${frenchLocationPhrase}`,
+          `alternative à ${leader}${frenchLocationPhrase}`,
         ], 12)
-      : uniqueInOrder([
-          `best ${buyerCategory} ${englishLocationPhrase}`,
-          `${buyerCategory} near me`,
-          `best reviewed ${buyerCategory} ${englishLocationPhrase}`,
+      : cleanPromptList([
+          `best ${buyerCategory}${englishLocationPhrase}`,
+          `best reviewed ${buyerCategory}${englishLocationPhrase}`,
           `${brandName} reviews`,
           `is ${brandName} reliable`,
-          `which ${buyerCategory} should I choose ${englishLocationPhrase}`,
-          `${buyerCategory} with good reviews ${englishLocationPhrase}`,
-          `${buyerCategory} available quickly ${englishLocationPhrase}`,
-          `${buyerCategory} Google Business Profile ${englishLocationPhrase}`,
-          `${buyerCategory} professional directory ${englishLocationPhrase}`,
+          `which ${buyerCategory} should I choose${englishLocationPhrase}`,
+          `${buyerCategory} with good reviews${englishLocationPhrase}`,
+          `${buyerCategory} available quickly${englishLocationPhrase}`,
+          `${buyerCategory} Google Business Profile${englishLocationPhrase}`,
+          `${buyerCategory} professional directory${englishLocationPhrase}`,
           `why choose ${brandName}`,
-          `${buyerCategory} alternatives to ${leader} ${englishLocationPhrase}`,
+          `${buyerCategory} alternatives to ${leader}${englishLocationPhrase}`,
         ], 12);
   }
 
   if (segment.key === "creator_influencer") {
     const niche = creatorNiche(categoryTerm, homepageText);
     return language === "fr"
-      ? uniqueInOrder([
+      ? cleanPromptList([
           `meilleur créateur ${niche} à suivre`,
           `top créateurs ${niche}`,
           `meilleur influenceur ${niche} à suivre`,
@@ -1892,7 +2011,7 @@ function generateBuyerIntentPrompts(brandName: string, websiteUrl: string, categ
           `${brandName} presse interview`,
           `${brandName} Wikipedia`,
         ], 12)
-      : uniqueInOrder([
+      : cleanPromptList([
           `best ${niche} creator to follow`,
           `top ${niche} creators`,
           `best ${niche} influencer to follow`,
@@ -1909,7 +2028,7 @@ function generateBuyerIntentPrompts(brandName: string, websiteUrl: string, categ
   }
 
   if (language !== "fr" && /footwear|shoe|sneaker|running shoe/i.test(category)) {
-    return uniqueInOrder([
+    return cleanPromptList([
       "What is the best sustainable sneaker brand?",
       "Best eco-friendly running shoe brand?",
       `Is ${brandName} a good sustainable shoe brand?`,
@@ -1926,7 +2045,7 @@ function generateBuyerIntentPrompts(brandName: string, websiteUrl: string, categ
   }
 
   if (language !== "fr" && /backpack|rucksack|outdoor|hiking|travel pack|daypack|luggage/i.test(category)) {
-    return uniqueInOrder([
+    return cleanPromptList([
       "What is the best hiking backpack brand?",
       "Best travel backpack brand for carry-on?",
       `Is ${brandName} a good backpack brand?`,
@@ -1943,8 +2062,9 @@ function generateBuyerIntentPrompts(brandName: string, websiteUrl: string, categ
   }
 
   if (language === "fr") {
-    return uniqueInOrder([
-      `meilleure marque de ${buyerCategory}`,
+    return cleanPromptList([
+      `meilleur ${buyerCategory}${ecommerceLocationSuffix}`,
+      `meilleure marque de ${buyerCategory}${ecommerceLocationSuffix}`,
       `marque ${buyerCategory} recommandée`,
       `${buyerCategory} pas cher`,
       `prix ${buyerCategory}`,
@@ -1958,7 +2078,8 @@ function generateBuyerIntentPrompts(brandName: string, websiteUrl: string, categ
     ], 12);
   }
 
-  return uniqueInOrder([
+  return cleanPromptList([
+    `best ${buyerCategory}${ecommerceLocationSuffix}`,
     `best ${buyerCategory} brand`,
     `best ${buyerCategory} for ${useCase}`,
     `top ${buyerCategory} brands 2026`,
@@ -1982,6 +2103,7 @@ const NON_COMPETITOR_NAMES = new Set([
 const NON_COMPETITOR_NAME_KEYS = new Set(Array.from(NON_COMPETITOR_NAMES, (name) => name.toLowerCase()));
 
 const KNOWN_COMPANY_NAMES = [
+  "Smartwool", "Darn Tough", "Stance", "Feetures", "Happy Socks", "Sockwell", "Thorlos", "Balega", "Wigwam", "Falke", "Uniqlo", "Mack Weldon",
   "Nike", "New Balance", "Veja", "Hoka", "On", "Brooks", "Adidas", "Reebok", "Saucony", "Asics", "Puma", "Vans", "Converse", "Rothy's", "Vivobarefoot", "Cariuma", "Atoms", "Greats", "Toms", "Ecco", "Merrell", "Salomon", "Altra", "Keen", "Merinos", "Xero Shoes", "Nisolo",
   "Stripe", "Shopify", "Crossmint", "Skyfire", "Coinbase", "Catalog", "Visa", "PayPal", "Mastercard", "Amazon", "Google", "OpenAI", "Perplexity", "Microsoft", "BigCommerce", "Commercetools", "Nevermined", "Mirakl", "Kore.ai", "Kore", "Gorgias", "Envive", "ACI Worldwide", "Eco", "PayOS", "Ramp", "Nekuda", "Basis Theory", "Rye", "Stax Payments", "Helcim", "Clover", "Square", "Adyen", "Worldpay", "Bolt", "Razorpay", "Mollie", "Checkout.com",
 ];
@@ -2072,12 +2194,7 @@ function filterStructuredCompetitorBrands(brands: string[], brandName: string, d
 }
 
 function buyerIntentSearchQuery(prompt: string) {
-  const lower = prompt.toLowerCase();
-  const expansion = lower.includes("agentic commerce")
-    ? "companies vendors platforms payments wallets stablecoin rails agent protocols"
-    : "companies vendors platforms";
-
-  return `${prompt} ${expansion}`.replace(/\s+/g, " ").trim();
+  return cleanBuyerPrompt(prompt);
 }
 
 function surfaceText(result: SurfaceFetchResult, surfaceName: string) {
@@ -2726,6 +2843,12 @@ function compactText(value: string, fallback: string) {
   return value.replace(/\s+/g, " ").trim().slice(0, 220) || fallback;
 }
 
+function scoreExplanationLine(score: number, brandMentions: number, totalPrompts: number, locale: Locale) {
+  return locale === "fr"
+    ? `Score expliqué : ${score}/100 combine ${brandMentions}/${totalPrompts} recommandations, le sentiment IA, les concurrents cités et les bases techniques vérifiées.`
+    : `Score explained: ${score}/100 combines ${brandMentions}/${totalPrompts} recommendations, AI sentiment, cited competitors, and verified technical basics.`;
+}
+
 function buildAuditResultEmail(email: string, brandName: string, report: AuditReport, locale: Locale) {
   const answerEngineName = answerEngineNameForReport(report);
   const competitorSignal = competitorSignalForReport(report);
@@ -2734,6 +2857,7 @@ function buildAuditResultEmail(email: string, brandName: string, report: AuditRe
   const reportUrl = `${siteBaseUrl()}/audit/${report.audit_id}`;
   const totalPrompts = report.buyerIntentPrompts.length || 1;
   const brandMentions = report.buyerIntentPrompts.filter((prompt) => prompt.brandMentioned).length;
+  const scoreLine = scoreExplanationLine(report.score, brandMentions, totalPrompts, locale);
   const subject = locale === "fr" ? `${brandName}: score ${report.score}/100` : `${brandName}: ${report.score}/100 score`;
 
   const body = locale === "fr"
@@ -2741,6 +2865,8 @@ function buildAuditResultEmail(email: string, brandName: string, report: AuditRe
         `${brandName}: score IA`,
         "",
         `# ${report.score}/100`,
+        `Catégorie détectée : ${report.category}`,
+        scoreLine,
         "",
         competitorSignal
           ? competitorSignal.replacement
@@ -2761,6 +2887,8 @@ function buildAuditResultEmail(email: string, brandName: string, report: AuditRe
         `${brandName}: AI score`,
         "",
         `# ${report.score}/100`,
+        `Detected category: ${report.category}`,
+        scoreLine,
         "",
         competitorSignal
           ? competitorSignal.replacement
@@ -3074,6 +3202,7 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
           "",
           `Score réel de l'audit : ${report.score}/100`,
           `Catégorie détectée : ${report.category}`,
+          scoreExplanationLine(report.score, brandMentions, totalPrompts, locale),
           competitorSignal
             ? competitorSignal.replacement
               ? `${answerEngineName} a cité ${competitorSignal.competitor} à ta place sur : “${competitorSignal.prompt}”.`
@@ -3091,6 +3220,7 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
           "",
           `Real audit score: ${report.score}/100`,
           `Detected category: ${report.category}`,
+          scoreExplanationLine(report.score, brandMentions, totalPrompts, locale),
           competitorSignal
             ? competitorSignal.replacement
               ? `${answerEngineName} cited ${competitorSignal.competitor} instead of you for: “${competitorSignal.prompt}”.`
@@ -3114,6 +3244,7 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
     ? [
         `Hier, ton audit Citeable a donné ${report.score}/100 à ${brandName}.`,
         `Catégorie détectée : ${report.category}`,
+        scoreExplanationLine(report.score, brandMentions, totalPrompts, locale),
         `Sur ${totalPrompts} questions posées à ${answerEngineName}, ta marque a été citée ${brandMentions} fois.`,
         competitorSignal
           ? competitorSignal.replacement
@@ -3131,6 +3262,7 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
     : [
         `Yesterday, your Citeable audit gave ${brandName} ${report.score}/100.`,
         `Detected category: ${report.category}`,
+        scoreExplanationLine(report.score, brandMentions, totalPrompts, locale),
         `Across ${totalPrompts} questions asked to ${answerEngineName}, your brand was cited ${brandMentions} times.`,
         competitorSignal
           ? competitorSignal.replacement
@@ -3578,7 +3710,7 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
   const structuredDataFound = (foundationChecks.find((check) => check.check === "structured_data")?.score ?? 0) > 0;
   const inferred = await inferCategory(args.brandName, args.websiteUrl, foundationChecks.find((check) => check.check === "structured_data") ?? foundationChecks[0]);
   const icpSegment = detectIcpSegment(args.brandName, args.websiteUrl, inferred.category, inferred.homepageText);
-  const auditLocale = recipientLocaleFromSignals(args.email, args.websiteUrl, inferred.homepageText);
+  const auditLocale = args.locale ?? recipientLocaleFromSignals(args.email, args.websiteUrl, inferred.homepageText);
   const buyerIntentPrompts = await analyzeBuyerIntentPrompts(args.brandName, args.websiteUrl, domain, inferred.category, inferred.homepageText, auditTier, auditLocale);
   const checkedAnswerEnginePrompts = buyerIntentPrompts.filter((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine" && surface.status === "checked"));
   const failedAnswerEnginePrompts = buyerIntentPrompts.filter((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine" && surface.status !== "checked"));

@@ -1583,3 +1583,20 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - Local smoke proof used real audits and internal suppressed recipients so no external email was sent: FR `Boulangerie Paul` audit `033030ca-2662-4b7a-a223-54cb3d636a2d` completed score `6`, locale `fr`, prompt version `stable_recipient_locale_v1`; EN `Allbirds` audit `6c33123d-3fe8-485e-8e4d-874c689cacd5` completed score `93`, locale `en`, prompt version `stable_recipient_locale_v1`.
 - Same-brand rerun proof: Allbirds audit `3d87d947-c66f-4f2f-8c32-d9c08b29c139` returned `cached=true`, `cached_from_audit_id=6c33123d-3fe8-485e-8e4d-874c689cacd5`, same score `93`, locale `en`, prompt version `stable_recipient_locale_v1`.
 - Proof email previews are saved in `artifacts/email-proof/20260715063853/fr-email.md`, `artifacts/email-proof/20260715063853/en-email.md`, `artifacts/email-proof/20260715063853/rerun-email.md`, with summary `artifacts/email-proof/20260715063853/proof-summary.json`.
+
+## 2026-07-15 — P0 audit reliability hardening
+
+### Findings
+- Read existing `DOCS.md` first and followed the local Next.js 16 docs under `node_modules/next/dist/docs/01-app/...` before touching App Router code.
+- Root cause for Bombas-style incoherence was that category inference used full homepage HTML after title/meta/JSON-LD, so navigation/footer words like Package, Giving Back, Careers, Affiliates could outweigh relevant product text.
+- The free report page selected language from request headers, not the stored audit locale, and the free Agent teaser forced English proof copy even on French reports.
+
+### Changes
+- `src/lib/audit-engine.ts`: category inference now strips nav/header/footer/script noise, prioritizes title/meta/H1-H3/product-ish blocks/JSON-LD, removes navigation/footer terms, and recognizes socks/hosiery so Bombas maps to `socks and apparel` instead of backpacks.
+- `src/lib/audit-engine.ts`: buyer-intent prompts are sanitized with a banned navigation/footer term list, no longer append `companies vendors platforms`, and only add a location suffix when a real city/location is detected.
+- `src/lib/audit-engine.ts`: stored audit locale is honored during `runAudit`, email bodies include detected category plus one clear score-explanation sentence, and sock/apparel competitor extraction has real brand names available.
+- `src/app/audit/[id]/page.tsx` and `src/lib/i18n.ts`: report rendering now uses stored audit locale first, localizes unavailable messages and the free teaser, and shows detected category plus one clear score-explanation sentence.
+
+### Validation
+- `npm run lint` passes with two existing warnings: unused `isAuditedBrandName` and `categoryFromWebsite` in `src/lib/audit-engine.ts`.
+- `npm run build` passed locally after the main patch.

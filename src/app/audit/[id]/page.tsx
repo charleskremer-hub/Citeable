@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { AGENT_CHECKOUT_URL, MONITOR_CHECKOUT_URL } from "@/lib/checkout-links";
 import { ensureAuditSchema, pool } from "@/lib/db";
 import { recordFunnelEvent } from "@/lib/funnel";
-import { auditCopy, brandSentimentText, localeFromHeaders, localizePlainAction, recommendationText, type Locale } from "@/lib/i18n";
+import { auditCopy, brandSentimentText, localeFromHeaders, localeFromUnknown, localizePlainAction, recommendationText, type Locale } from "@/lib/i18n";
 import type { BrandSentiment, BuyerIntentPromptResult, IcpSegmentMetadata, PlainAction } from "@/lib/audit-engine";
 import AuditPoller from "./AuditPoller";
 import AgentAuditChat from "./AgentAuditChat";
@@ -27,6 +27,7 @@ type AuditRow = {
     auditTier?: string;
     answerEngine?: { engine?: string; model?: string; realLlmCall?: boolean };
     brandSentiment?: BrandSentiment;
+    locale?: string;
     buyerIntentPrompts?: BuyerIntentPromptResult[];
     monitoring?: { actions?: PlainAction[] };
   } | null;
@@ -73,6 +74,15 @@ function competitorCounts(names: string[]) {
     .slice(0, 12);
 }
 
+
+function localizedUnavailableReason(reason: string | undefined, locale: Locale, engine = "Gemini") {
+  if (!reason) return locale === "fr" ? `${engine} est indisponible ; réessaie.` : `${engine} unavailable; try again.`;
+  if (reason.includes("Native NanoCorp web_search unavailable")) return locale === "fr" ? "Recherche web native indisponible ; ce rapport utilise uniquement les vérifications terminées." : reason;
+  if (reason.includes("Gemini indisponible")) return locale === "fr" ? reason : "Gemini unavailable; try again.";
+  if (reason.includes("ChatGPT indisponible")) return locale === "fr" ? reason : "ChatGPT unavailable; try again.";
+  return reason;
+}
+
 function questionEngineSummary(question: BuyerIntentPromptResult, locale: Locale) {
   const aiSurface = question.surfaces.find((surface) => surface.kind === "ai_engine");
 
@@ -82,7 +92,7 @@ function questionEngineSummary(question: BuyerIntentPromptResult, locale: Locale
     const competitors = question.competitors.length
       ? locale === "fr" ? ` · Concurrents cités : ${question.competitors.join(", ")}` : ` · Competitors cited: ${question.competitors.join(", ")}`
       : locale === "fr" ? " · Aucun concurrent clair cité" : " · No clear competitor cited";
-    return aiSurface.status === "checked" ? `${label}${competitors}` : (aiSurface.unavailableReason ?? (locale === "fr" ? `${engine} est indisponible ; réessaie.` : `${engine} unavailable; try again.`));
+    return aiSurface.status === "checked" ? `${label}${competitors}` : localizedUnavailableReason(aiSurface.unavailableReason, locale, engine);
   }
 
   const checked = question.surfaces.filter((surface) => surface.kind === "supplementary" && surface.status === "checked");
@@ -92,7 +102,7 @@ function questionEngineSummary(question: BuyerIntentPromptResult, locale: Locale
     return checked.map((surface) => `${surface.surface}: ${surface.brandMentioned ? (locale === "fr" ? "marque/domaine trouvé" : "brand/domain found") : (locale === "fr" ? "marque/domaine non trouvé" : "brand/domain not found")}`).join(" · ");
   }
 
-  return unavailable[0]?.unavailableReason ?? (locale === "fr" ? "web_search natif indisponible ; ce rapport utilise uniquement les vérifications terminées." : "Native web_search unavailable; this report uses only checks that completed.");
+  return localizedUnavailableReason(unavailable[0]?.unavailableReason, locale);
 }
 
 function checkedQuestions(questions: BuyerIntentPromptResult[]) {
@@ -217,14 +227,16 @@ function StatusPill({ failed, complete, locale }: { failed: boolean; complete: b
 
 export default async function AuditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const locale = localeFromHeaders(await headers());
-  const copy = auditCopy[locale];
+  const headerLocale = localeFromHeaders(await headers());
   await ensureAuditSchema();
 
   const result = await pool.query<AuditRow>(`SELECT * FROM audits WHERE id = $1`, [id]);
   const audit = result.rows[0];
 
   if (!audit) notFound();
+
+  const locale = audit.raw_results?.locale ? localeFromUnknown(audit.raw_results.locale) : headerLocale;
+  const copy = auditCopy[locale];
 
   const failed = audit.raw_results?.status === "failed";
   const icpSegment = audit.raw_results?.icpSegment;
@@ -255,12 +267,22 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const score = audit.score ?? 0;
   const color = scoreColor(score);
   const freeGapQuestion = complete && !failed && isFreeReport ? priorityGapQuestions(questions)[0] ?? null : null;
-  const freeSampleProof = freeGapQuestion ? treatmentProofForQuestion(audit.brand_name, audit.raw_results?.category, freeGapQuestion, competitors, answerEngineName, "en", icpSegment) : null;
+  const freeSampleProof = freeGapQuestion ? treatmentProofForQuestion(audit.brand_name, audit.raw_results?.category, freeGapQuestion, competitors, answerEngineName, locale, icpSegment) : null;
   const honestNoGapTeaser = complete && !failed && isFreeReport && !freeSampleProof;
   const proof = complete && !failed && !isFreeReport ? treatmentProof(audit.brand_name, audit.raw_results?.category, questions, competitors, answerEngineName, locale, icpSegment) : null;
   const monitorActions = (audit.raw_results?.monitoring?.actions?.slice(0, 3) ?? []).map((action) => localizePlainAction(action, locale));
   const sentimentLine = brandSentimentText(audit.raw_results?.brandSentiment ?? { label: "not_enough_signal", justification: "not enough signal" }, locale);
+  const scoreExplanation = complete
+    ? locale === "fr"
+      ? `Score expliqué : ${score}/100 combine ${brandMentionCount}/${questionCount || 0} recommandations, le sentiment IA, les concurrents cités et les bases techniques vérifiées.`
+      : `Score explained: ${score}/100 combines ${brandMentionCount}/${questionCount || 0} recommendations, AI sentiment, cited competitors, and verified technical basics.`
+    : "";
+  const categoryLine = complete && audit.raw_results?.category
+    ? locale === "fr" ? `Catégorie détectée : ${audit.raw_results.category}.` : `Detected category: ${audit.raw_results.category}.`
+    : "";
   const phrases = [
+    categoryLine,
+    scoreExplanation,
     questionCount > 0
       ? isAnswerEngineReport
         ? `${recommendationText(answerEngineName, brandMentionCount > 0, locale)} (${brandMentionCount}/${questionCount} ${locale === "fr" ? "questions" : "questions"}).`
@@ -275,7 +297,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
       : isMonitorReport
         ? locale === "fr" ? "Monitor ajoute 3 actions prioritaires pour cette semaine." : "Monitor adds 3 priority actions for this week."
         : locale === "fr" ? "Diagnostic gratuit : score, sentiment IA, statut de recommandation Gemini et concurrents cités." : "Free diagnostic: score, AI sentiment, Gemini recommendation status, and cited competitors.",
-  ];
+  ].filter(Boolean);
 
   return (
     <main className="min-h-screen bg-[#09090B] text-[#F0F0EC]" style={{ fontFamily: "var(--font-sans)" }}>
@@ -349,12 +371,12 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
               <section className="mt-6 overflow-hidden rounded-[1.5rem] border border-[#CAFF3C]/35 bg-[radial-gradient(circle_at_top_left,rgba(202,255,60,0.16),rgba(10,10,12,0.96)_46%)] p-4 shadow-2xl shadow-[#CAFF3C]/5 sm:p-5" data-testid="agent-fix-teaser">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="m-0 text-xs font-black uppercase tracking-[0.14em] text-[#CAFF3C]">Real fix from this audit</p>
+                    <p className="m-0 text-xs font-black uppercase tracking-[0.14em] text-[#CAFF3C]">{copy.freeFixEyebrow}</p>
                     <h2 className="m-0 mt-2 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                      One fix Citeable Agent can ship for {audit.brand_name}
+                      {copy.freeFixTitle(audit.brand_name)}
                     </h2>
                   </div>
-                  <span className="rounded-full border border-[#CAFF3C]/25 bg-[#CAFF3C]/10 px-3 py-1 text-xs font-black text-[#CAFF3C]">Verified gap</span>
+                  <span className="rounded-full border border-[#CAFF3C]/25 bg-[#CAFF3C]/10 px-3 py-1 text-xs font-black text-[#CAFF3C]">{copy.freeFixBadge}</span>
                 </div>
 
                 <div className="mt-4 rounded-2xl border border-white/[0.08] bg-black/25 p-4">
@@ -373,7 +395,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                         source="report_teaser"
                         className="inline-flex rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline shadow-2xl shadow-[#CAFF3C]/20 transition hover:brightness-110"
                       >
-                        Unlock your fixes — Citeable Agent 19€/mo
+                        {copy.unlockFixesCta}
                       </FunnelCheckoutLink>
                     </div>
                   </div>
@@ -381,12 +403,12 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
               </section>
             ) : honestNoGapTeaser ? (
               <section className="mt-6 rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-4 sm:p-5" data-testid="agent-fix-teaser">
-                <p className="m-0 text-xs font-black uppercase tracking-[0.14em] text-[#8E8E9A]">No fake fixes</p>
+                <p className="m-0 text-xs font-black uppercase tracking-[0.14em] text-[#8E8E9A]">{copy.noFakeFixes}</p>
                 <h2 className="m-0 mt-2 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                  No verified gap was found in this free audit.
+                  {copy.noVerifiedGapTitle}
                 </h2>
                 <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#D6D6DF]">
-                  Citeable will not invent a correction. This report found no missing recommendation or cited-competitor gap in the checked prompts.
+                  {copy.noVerifiedGapBody}
                 </p>
               </section>
             ) : null}
