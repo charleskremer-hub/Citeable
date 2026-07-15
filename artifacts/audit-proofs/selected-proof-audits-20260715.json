@@ -19,22 +19,19 @@
     ]
   },
   {
-    "brand": "Glossier",
-    "url": "https://getciteable.nanocorp.app/audit/6733e11b-f892-4f29-9e68-d9ea95b532d6",
+    "brand": "Paula's Choice",
+    "url": "https://getciteable.nanocorp.app/audit/7aa9b9bb-8cd5-4cc4-af0a-9d6fd956c4a1",
     "category": "beauty brand",
     "locale": "en",
-    "score": 100,
+    "score": 93,
     "prompts": [
-      "best beauty brand in New York",
-      "best beauty brand brand",
-      "best beauty brand for daily routines"
+      "best beauty brand",
+      "best beauty brand for daily routines",
+      "Paula's Choice reviews"
     ],
     "competitors": [
-      "Rare Beauty",
-      "Milk Makeup",
-      "Kiehl's",
-      "Fenty Beauty",
-      "Merit Beauty"
+      "CeraVe",
+      "La Roche-Posay"
     ]
   },
   {
