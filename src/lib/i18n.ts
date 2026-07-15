@@ -302,6 +302,34 @@ export const auditCopy = {
   },
 } as const;
 
+
+export function localizeCategoryLabel(category: string | undefined, locale: Locale) {
+  const clean = (category ?? "").trim();
+  if (!clean || locale === "en") return clean;
+
+  const lower = clean.toLowerCase();
+  const translations: Array<[RegExp, string]> = [
+    [/socks? and apparel|hosiery/, "chaussettes et vêtements"],
+    [/dtc footwear brand|footwear|shoe|sneaker/, "marque de chaussures"],
+    [/backpacks? and outdoor gear/, "sacs à dos et équipement outdoor"],
+    [/beauty brand|skincare|cosmetic/, "marque de beauté"],
+    [/fashion brand|apparel|clothing/, "marque de vêtements"],
+    [/coffee brand/, "marque de café"],
+    [/food & beverage|food and beverage/, "alimentation et boissons"],
+    [/bakery \/ restaurant/, "boulangerie / restaurant"],
+    [/fitness coach/, "coach sportif"],
+    [/web agency/, "agence web"],
+    [/law firm/, "cabinet d'avocat"],
+    [/accounting firm/, "expert-comptable"],
+    [/real estate agency/, "agence immobilière"],
+    [/hair salon/, "salon de coiffure"],
+    [/auto repair shop/, "garage auto"],
+    [/architecture firm/, "architecte"],
+  ];
+
+  return translations.find(([pattern]) => pattern.test(lower))?.[1] ?? clean;
+}
+
 export function recommendationText(engine: string, brandMentioned: boolean, locale: Locale) {
   if (locale === "fr") return brandMentioned ? `${engine} te recommande` : `${engine} ne te cite pas`;
   return brandMentioned ? `${engine} recommends you` : `${engine} does not mention you`;

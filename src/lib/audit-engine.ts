@@ -1,7 +1,7 @@
 import { createHash, timingSafeEqual } from "crypto";
 import { pool } from "./db";
 import { recordFunnelEvent } from "./funnel";
-import { localizePlainAction, type Locale } from "./i18n";
+import { localizeCategoryLabel, localizePlainAction, type Locale } from "./i18n";
 
 const USER_AGENT = "Mozilla/5.0 (compatible; CiteeableBot/1.0)";
 const CHECK_TIMEOUT_MS = 8_000;
@@ -2857,6 +2857,7 @@ function buildAuditResultEmail(email: string, brandName: string, report: AuditRe
   const totalPrompts = report.buyerIntentPrompts.length || 1;
   const brandMentions = report.buyerIntentPrompts.filter((prompt) => prompt.brandMentioned).length;
   const scoreLine = scoreExplanationLine(report.score, brandMentions, totalPrompts, locale);
+  const localizedCategory = localizeCategoryLabel(report.category, locale);
   const subject = locale === "fr" ? `${brandName}: score ${report.score}/100` : `${brandName}: ${report.score}/100 score`;
 
   const body = locale === "fr"
@@ -2864,7 +2865,7 @@ function buildAuditResultEmail(email: string, brandName: string, report: AuditRe
         `${brandName}: score IA`,
         "",
         `# ${report.score}/100`,
-        `Catégorie détectée : ${report.category}`,
+        `Catégorie détectée : ${localizedCategory}`,
         scoreLine,
         "",
         competitorSignal
@@ -2886,7 +2887,7 @@ function buildAuditResultEmail(email: string, brandName: string, report: AuditRe
         `${brandName}: AI score`,
         "",
         `# ${report.score}/100`,
-        `Detected category: ${report.category}`,
+        `Detected category: ${localizedCategory}`,
         scoreLine,
         "",
         competitorSignal
@@ -3187,6 +3188,7 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
   const actionLines = postAuditActionLines(report, locale);
   const totalPrompts = report.buyerIntentPrompts.length;
   const brandMentions = report.buyerIntentPrompts.filter((prompt) => prompt.brandMentioned).length;
+  const localizedCategory = localizeCategoryLabel(report.category, locale);
   const reportUrl = followupClickUrl(report.audit_id, step, "report");
   const agentCheckoutUrl = followupClickUrl(report.audit_id, step, "agent_checkout");
   const unsubscribeUrl = unsubscribeUrlForEmail(email);
@@ -3200,7 +3202,7 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
           `Dernière relance sur ton audit Citeable pour ${brandName}.`,
           "",
           `Score réel de l'audit : ${report.score}/100`,
-          `Catégorie détectée : ${report.category}`,
+          `Catégorie détectée : ${localizedCategory}`,
           scoreExplanationLine(report.score, brandMentions, totalPrompts, locale),
           competitorSignal
             ? competitorSignal.replacement
@@ -3218,7 +3220,7 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
           `Final follow-up on your Citeable audit for ${brandName}.`,
           "",
           `Real audit score: ${report.score}/100`,
-          `Detected category: ${report.category}`,
+          `Detected category: ${localizedCategory}`,
           scoreExplanationLine(report.score, brandMentions, totalPrompts, locale),
           competitorSignal
             ? competitorSignal.replacement
@@ -3242,7 +3244,7 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
   const body = locale === "fr"
     ? [
         `Hier, ton audit Citeable a donné ${report.score}/100 à ${brandName}.`,
-        `Catégorie détectée : ${report.category}`,
+        `Catégorie détectée : ${localizedCategory}`,
         scoreExplanationLine(report.score, brandMentions, totalPrompts, locale),
         `Sur ${totalPrompts} questions posées à ${answerEngineName}, ta marque a été citée ${brandMentions} fois.`,
         competitorSignal
@@ -3260,7 +3262,7 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
       ].join("\n")
     : [
         `Yesterday, your Citeable audit gave ${brandName} ${report.score}/100.`,
-        `Detected category: ${report.category}`,
+        `Detected category: ${localizedCategory}`,
         scoreExplanationLine(report.score, brandMentions, totalPrompts, locale),
         `Across ${totalPrompts} questions asked to ${answerEngineName}, your brand was cited ${brandMentions} times.`,
         competitorSignal

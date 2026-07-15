@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { AGENT_CHECKOUT_URL, MONITOR_CHECKOUT_URL } from "@/lib/checkout-links";
 import { ensureAuditSchema, pool } from "@/lib/db";
 import { recordFunnelEvent } from "@/lib/funnel";
-import { auditCopy, brandSentimentText, localeFromHeaders, localeFromUnknown, localizePlainAction, recommendationText, type Locale } from "@/lib/i18n";
+import { auditCopy, brandSentimentText, localeFromHeaders, localeFromUnknown, localizeCategoryLabel, localizePlainAction, recommendationText, type Locale } from "@/lib/i18n";
 import type { BrandSentiment, BuyerIntentPromptResult, IcpSegmentMetadata, PlainAction } from "@/lib/audit-engine";
 import AuditPoller from "./AuditPoller";
 import AgentAuditChat from "./AgentAuditChat";
@@ -264,12 +264,13 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   });
 
   const topCompetitor = rankedCompetitors[0]?.name ?? competitors[0];
+  const displayCategory = localizeCategoryLabel(audit.raw_results?.category, locale);
   const score = audit.score ?? 0;
   const color = scoreColor(score);
   const freeGapQuestion = complete && !failed && isFreeReport ? priorityGapQuestions(questions)[0] ?? null : null;
-  const freeSampleProof = freeGapQuestion ? treatmentProofForQuestion(audit.brand_name, audit.raw_results?.category, freeGapQuestion, competitors, answerEngineName, locale, icpSegment) : null;
+  const freeSampleProof = freeGapQuestion ? treatmentProofForQuestion(audit.brand_name, displayCategory, freeGapQuestion, competitors, answerEngineName, locale, icpSegment) : null;
   const honestNoGapTeaser = complete && !failed && isFreeReport && !freeSampleProof;
-  const proof = complete && !failed && !isFreeReport ? treatmentProof(audit.brand_name, audit.raw_results?.category, questions, competitors, answerEngineName, locale, icpSegment) : null;
+  const proof = complete && !failed && !isFreeReport ? treatmentProof(audit.brand_name, displayCategory, questions, competitors, answerEngineName, locale, icpSegment) : null;
   const monitorActions = (audit.raw_results?.monitoring?.actions?.slice(0, 3) ?? []).map((action) => localizePlainAction(action, locale));
   const sentimentLine = brandSentimentText(audit.raw_results?.brandSentiment ?? { label: "not_enough_signal", justification: "not enough signal" }, locale);
   const scoreExplanation = complete
@@ -277,8 +278,8 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
       ? `Score expliqué : ${score}/100 combine ${brandMentionCount}/${questionCount || 0} recommandations, le sentiment IA, les concurrents cités et les bases techniques vérifiées.`
       : `Score explained: ${score}/100 combines ${brandMentionCount}/${questionCount || 0} recommendations, AI sentiment, cited competitors, and verified technical basics.`
     : "";
-  const categoryLine = complete && audit.raw_results?.category
-    ? locale === "fr" ? `Catégorie détectée : ${audit.raw_results.category}.` : `Detected category: ${audit.raw_results.category}.`
+  const categoryLine = complete && displayCategory
+    ? locale === "fr" ? `Catégorie détectée : ${displayCategory}.` : `Detected category: ${displayCategory}.`
     : "";
   const phrases = [
     categoryLine,
@@ -293,7 +294,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
       ? locale === "fr" ? `${topCompetitor} apparaît là où tu devrais apparaître.` : `${topCompetitor} is showing up where you should be.`
       : locale === "fr" ? "Aucun concurrent clair n'apparaît à ta place." : "No competitor clearly appears in your place.",
     isAgentReport
-      ? fixSentence(audit.raw_results?.category, competitors.length > 0, locale, icpSegment)
+      ? fixSentence(displayCategory, competitors.length > 0, locale, icpSegment)
       : isMonitorReport
         ? locale === "fr" ? "Monitor ajoute 3 actions prioritaires pour cette semaine." : "Monitor adds 3 priority actions for this week."
         : locale === "fr" ? "Diagnostic gratuit : score, sentiment IA, statut de recommandation Gemini et concurrents cités." : "Free diagnostic: score, AI sentiment, Gemini recommendation status, and cited competitors.",
