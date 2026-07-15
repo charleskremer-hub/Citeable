@@ -1742,9 +1742,9 @@ const LOCATION_HINTS = [
 function inferLocationFromHomepage(text: string) {
   const normalized = text.replace(/\s+/g, " ");
   const postalMatch = normalized.match(/\b\d{5}\s+([A-ZÀ-Ÿ][A-Za-zÀ-ÿ' -]{2,38})\b/);
-  const nearMatch = normalized.match(/\b(?:à|in|near|based in|situ[eé]\s+[aà])\s+([A-ZÀ-Ÿ][A-Za-zÀ-ÿ' -]{2,38})\b/);
-  const knownCity = LOCATION_HINTS.find((city) => new RegExp(`\\b${escapedRegex(city)}\\b`, "i").test(normalized));
-  const city = postalMatch?.[1] ?? nearMatch?.[1] ?? knownCity;
+  const explicitLocationMatch = normalized.match(/\b(?:based in|located in|situ[eé]\s+[aà])\s+([A-ZÀ-Ÿ][A-Za-zÀ-ÿ' -]{2,38})\b/);
+  const knownCity = LOCATION_HINTS.find((city) => new RegExp(`\b${escapedRegex(city)}\b`, "i").test(normalized));
+  const city = postalMatch?.[1] ?? knownCity ?? explicitLocationMatch?.[1];
 
   if (city) {
     return city
@@ -1755,6 +1755,7 @@ function inferLocationFromHomepage(text: string) {
 
   return null;
 }
+
 
 function inferAudienceFromHomepage(text: string, language: "en" | "fr") {
   const lower = text.toLowerCase();
