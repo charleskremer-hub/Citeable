@@ -46,12 +46,54 @@ export async function ensureAuditSchema() {
   await pool.query(`ALTER TABLE audits ADD COLUMN IF NOT EXISTS previous_audit_id UUID`);
   await pool.query(`ALTER TABLE audits ADD COLUMN IF NOT EXISTS followup_1_sent_at TIMESTAMPTZ`);
   await pool.query(`ALTER TABLE audits ADD COLUMN IF NOT EXISTS followup_2_sent_at TIMESTAMPTZ`);
+  await pool.query(`ALTER TABLE audits ADD COLUMN IF NOT EXISTS dedupe_domain TEXT`);
+  await pool.query(`UPDATE audits SET dedupe_domain = lower(split_part(regexp_replace(regexp_replace(website_url, '^https?://', ''), '^www\\.', ''), '/', 1)) WHERE dedupe_domain IS NULL`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS audits_dedupe_domain_created_idx ON audits (dedupe_domain, created_at DESC)`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS audit_email_unsubscribes (
       email TEXT PRIMARY KEY,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     )
   `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS audit_email_suppression_list (
+      kind TEXT NOT NULL CHECK (kind IN ('email', 'domain')),
+      value TEXT NOT NULL,
+      reason TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (kind, value)
+    )
+  `);
+  await pool.query(
+    `INSERT INTO audit_email_suppression_list (kind, value, reason)
+     VALUES
+       ('domain', 'keyban.fr', 'internal Keyban domain'),
+       ('domain', 'getciteable.nanocorp.app', 'internal Citeable/NanoCorp domain'),
+       ('domain', 'nanocorp.app', 'internal NanoCorp domain'),
+       ('email', 'charles@getciteable.nanocorp.app', 'Charles internal address')
+     ON CONFLICT (kind, value) DO NOTHING`
+  );
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS audit_email_delivery_log (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      audit_id UUID REFERENCES audits(id) ON DELETE SET NULL,
+      email TEXT NOT NULL,
+      brand_domain TEXT,
+      step TEXT NOT NULL,
+      send_day DATE NOT NULL DEFAULT CURRENT_DATE,
+      subject TEXT,
+      status TEXT NOT NULL,
+      reason TEXT,
+      provider_message_id TEXT,
+      provider_status TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS audit_email_delivery_one_step_per_prospect_idx ON audit_email_delivery_log (email, step) WHERE status IN ('claimed', 'sent', 'failed')`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS audit_email_delivery_one_day_per_prospect_idx ON audit_email_delivery_log (email, send_day) WHERE status IN ('claimed', 'sent', 'failed')`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS audit_email_delivery_one_brand_step_day_idx ON audit_email_delivery_log (brand_domain, step, send_day) WHERE brand_domain IS NOT NULL AND status IN ('claimed', 'sent', 'failed')`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS audit_email_delivery_email_created_idx ON audit_email_delivery_log (email, created_at DESC)`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS audit_email_sequence_jobs (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -106,6 +148,7 @@ export async function ensureAuditSchema() {
   await pool.query(`CREATE INDEX IF NOT EXISTS audits_followup_1_due_idx ON audits (created_at) WHERE score IS NOT NULL AND followup_1_sent_at IS NULL`);
   await pool.query(`CREATE INDEX IF NOT EXISTS audits_followup_2_due_idx ON audits (created_at) WHERE score IS NOT NULL AND followup_2_sent_at IS NULL`);
   await pool.query(`CREATE INDEX IF NOT EXISTS audits_brand_site_created_idx ON audits (lower(brand_name), website_url, created_at DESC)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS audits_domain_score_created_idx ON audits (dedupe_domain, created_at DESC) WHERE score IS NOT NULL`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS audit_funnel_events (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

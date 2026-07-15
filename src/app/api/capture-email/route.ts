@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
-import { auditTierFromPayload, checkFreeAuditQuota, findFreshFreeGeminiAudit, createCachedFreeAuditForLead, runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
+import { auditTierFromPayload, checkFreeAuditQuota, findFreshFreeGeminiAudit, brandDedupeDomain, createCachedFreeAuditForLead, recipientLocaleFromSignals, runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
 import { recordFunnelEvent } from "@/lib/funnel";
-import { localeFromHeaders, localeFromUnknown } from "@/lib/i18n";
+import { localeFromUnknown } from "@/lib/i18n";
 
 export const maxDuration = 60;
 
@@ -12,7 +12,8 @@ export async function POST(req: NextRequest) {
     const payload = await req.json();
     const { email, brandName, websiteUrl } = validateAuditInput(payload);
     const auditTier = auditTierFromPayload(payload);
-    const locale = payload && typeof payload === "object" && "locale" in payload ? localeFromUnknown((payload as Record<string, unknown>).locale) : localeFromHeaders(req.headers);
+    const locale = payload && typeof payload === "object" && "locale" in payload ? localeFromUnknown((payload as Record<string, unknown>).locale) : recipientLocaleFromSignals(email, websiteUrl);
+    const dedupeDomain = brandDedupeDomain(websiteUrl);
 
     await pool.query(
       `INSERT INTO email_captures (email, brand_name, website_url)
@@ -72,10 +73,10 @@ export async function POST(req: NextRequest) {
     }
 
     const audit = await pool.query<{ id: string }>(
-      `INSERT INTO audits (email, brand_name, website_url, raw_results)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO audits (email, brand_name, website_url, dedupe_domain, raw_results)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING id`,
-      [email, brandName, websiteUrl, { status: "running", queuedAt: new Date().toISOString(), auditTier, locale }]
+      [email, brandName, websiteUrl, dedupeDomain, { status: "running", queuedAt: new Date().toISOString(), auditTier, locale }]
     );
 
     const auditId = audit.rows[0].id;

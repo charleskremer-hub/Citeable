@@ -1,0 +1,23 @@
+{
+  "fr": [
+    "Boulangerie Paul: score 6/100",
+    6,
+    "fr",
+    null,
+    "stable_recipient_locale_v1"
+  ],
+  "en": [
+    "Allbirds: 93/100 score",
+    93,
+    "en",
+    null,
+    "stable_recipient_locale_v1"
+  ],
+  "rerun": [
+    "Allbirds: 93/100 score",
+    93,
+    "en",
+    "6c33123d-3fe8-485e-8e4d-874c689cacd5",
+    "stable_recipient_locale_v1"
+  ]
+}

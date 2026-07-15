@@ -1,7 +1,7 @@
 import { createHash, timingSafeEqual } from "crypto";
 import { pool } from "./db";
 import { recordFunnelEvent } from "./funnel";
-import { brandSentimentText, localizePlainAction, recommendationText, type Locale } from "./i18n";
+import { localizePlainAction, type Locale } from "./i18n";
 
 const USER_AGENT = "Mozilla/5.0 (compatible; CiteeableBot/1.0)";
 const CHECK_TIMEOUT_MS = 8_000;
@@ -10,8 +10,9 @@ const WEB_SEARCH_UNAVAILABLE = "Native NanoCorp web_search unavailable; this rep
 const GEMINI_UNAVAILABLE = "Gemini indisponible, réessaie.";
 const OPENAI_UNAVAILABLE = "ChatGPT indisponible, réessaie.";
 const FREE_AUDIT_CACHE_HOURS = 24;
-const FREE_AUDIT_EMAIL_DAILY_LIMIT = 3;
-const FREE_AUDIT_DOMAIN_DAILY_LIMIT = 10;
+const FREE_AUDIT_EMAIL_DAILY_LIMIT = 1;
+const FREE_AUDIT_DOMAIN_DAILY_LIMIT = 1;
+const BUYER_PROMPT_SET_VERSION = "stable_recipient_locale_v1";
 const DEFAULT_GEMINI_MODEL = "gemini-flash-latest";
 const DEFAULT_OPENAI_MODEL = ["gpt", "4o", "mini"].join("-");
 const COMPETITOR_EXTRACTION_VERSION = "gemini_recommended_brands_sentiment_v5_icp_segments";
@@ -170,6 +171,7 @@ export type AuditReport = {
   monitoring: MonitoringSnapshot;
   auditTier: AuditTier;
   brandSentiment: BrandSentiment;
+  locale: Locale;
   answerEngine?: {
     engine: string;
     model: string;
@@ -196,6 +198,7 @@ type AuditRawResults = {
   monitoring?: MonitoringSnapshot;
   auditTier?: AuditTier;
   brandSentiment?: BrandSentiment;
+  locale?: Locale;
   answerEngine?: {
     engine: string;
     model: string;
@@ -203,9 +206,9 @@ type AuditRawResults = {
   };
   geoAgentDescription?: string;
   competitorExtractionVersion?: string;
+  buyerPromptSetVersion?: string;
   weeklyEmailSent?: boolean;
   weeklyEmailError?: string;
-  locale?: Locale;
   startedAt?: string;
   completedAt?: string;
   failedAt?: string;
@@ -274,6 +277,17 @@ type ClaimedPostAuditEmailJob = {
   step: PostAuditEmailStep;
   attempts: number;
   scheduled_at: Date;
+};
+
+type EmailDeliveryStep = "audit_result" | PostAuditEmailStep | "weekly_monitoring";
+
+type NativeEmailSendResult = {
+  sent: boolean;
+  error?: string;
+  id?: string;
+  status?: number;
+  providerStatus?: string;
+  attempts?: NanoCorpToolAttempt[];
 };
 
 type PostAuditEmailSendResult = {
@@ -345,9 +359,10 @@ export async function findFreshFreeGeminiAudit(brandName: string, websiteUrl: st
        AND COALESCE((raw_results->'answerEngine'->>'realLlmCall')::boolean, false) = true
        AND raw_results->'answerEngine'->>'engine' = 'Gemini'
        AND raw_results->>'competitorExtractionVersion' = $3
+       AND raw_results->>'buyerPromptSetVersion' = $4
      ORDER BY created_at DESC
      LIMIT 20`,
-    [brandName.trim(), String(FREE_AUDIT_CACHE_HOURS), COMPETITOR_EXTRACTION_VERSION]
+    [brandName.trim(), String(FREE_AUDIT_CACHE_HOURS), COMPETITOR_EXTRACTION_VERSION, BUYER_PROMPT_SET_VERSION]
   );
 
   return cached.rows.find((row) => safeDomainFromWebsite(row.website_url) === domain) ?? null;
@@ -433,6 +448,7 @@ function reportFromRow(row: AuditRow): AuditReport {
     },
     auditTier,
     brandSentiment: normalizeBrandSentiment(row.raw_results?.brandSentiment ?? bestBrandSentimentFromPrompts(buyerIntentPrompts)),
+    locale: row.raw_results?.locale ?? recipientLocaleFromSignals(row.email, row.website_url),
     answerEngine: row.raw_results?.answerEngine,
   };
 }
@@ -2113,6 +2129,137 @@ function safeDomainFromWebsite(websiteUrl: string) {
   }
 }
 
+function emailDomain(email: string) {
+  return normalizedEmailAddress(email).split("@")[1] ?? "";
+}
+
+function registrableDomain(domain: string) {
+  const clean = domain.toLowerCase().replace(/^www\./, "");
+  const parts = clean.split(".").filter(Boolean);
+
+  if (parts.length <= 2) return clean;
+
+  const lastTwo = parts.slice(-2).join(".");
+  const secondLevelCountryCode = parts.at(-2)?.length === 2 && parts.at(-1)?.length === 2;
+  if (secondLevelCountryCode && parts.length >= 3) return parts.slice(-3).join(".");
+
+  return lastTwo;
+}
+
+export function brandDedupeDomain(websiteUrl: string) {
+  return registrableDomain(safeDomainFromWebsite(websiteUrl));
+}
+
+function domainMatchesSuppression(domain: string, suppressedDomain: string) {
+  return domain === suppressedDomain || domain.endsWith(`.${suppressedDomain}`);
+}
+
+function isInternalRootDomain(domain: string) {
+  const labels = domain.toLowerCase().split(".").filter(Boolean);
+  return labels[0] === "keyban" || labels[0] === "getciteable" || labels.includes("nanocorp");
+}
+
+function isPersonalEmailDomain(domain: string) {
+  return new Set([
+    "gmail.com",
+    "googlemail.com",
+    "yahoo.com",
+    "outlook.com",
+    "hotmail.com",
+    "live.com",
+    "icloud.com",
+    "me.com",
+    "mac.com",
+    "aol.com",
+    "proton.me",
+    "protonmail.com",
+    "pm.me",
+    "hey.com",
+    "fastmail.com",
+  ]).has(domain);
+}
+
+export function recipientLocaleFromSignals(email: string, websiteUrl: string, homepageText = ""): Locale {
+  const domain = safeDomainFromWebsite(websiteUrl);
+  const recipientDomain = emailDomain(email);
+  const combinedText = `${domain} ${recipientDomain} ${homepageText}`.toLowerCase();
+  const francophoneTlds = [".fr", ".be", ".ch", ".lu", ".mc", ".re", ".gp", ".mq", ".gf", ".pf", ".nc"];
+  const francophoneSignals = /\b(france|français|francaise|françaises|paris|lyon|marseille|bordeaux|lille|toulouse|nantes|strasbourg|belgique|suisse|luxembourg|devis|tarif|rendez-vous|accueil|mentions légales|siret|tva intracommunautaire)\b/;
+
+  return francophoneTlds.some((tld) => domain.endsWith(tld) || recipientDomain.endsWith(tld)) || francophoneSignals.test(combinedText) ? "fr" : "en";
+}
+
+async function shouldSuppressEmail(email: string, websiteUrl: string) {
+  const normalizedEmail = normalizedEmailAddress(email);
+  const recipientDomain = emailDomain(normalizedEmail);
+  const brandDomain = brandDedupeDomain(websiteUrl);
+  const builtInSuppressedDomains = ["keyban.fr", "getciteable.nanocorp.app", "nanocorp.app", "getciteable.com"];
+
+  if (normalizedEmail === "charles@getciteable.nanocorp.app") return "Suppressed: Charles internal address.";
+  if (recipientDomain && isPersonalEmailDomain(recipientDomain)) return "Suppressed: personal email domain.";
+  if (isInternalRootDomain(recipientDomain) || isInternalRootDomain(brandDomain) || builtInSuppressedDomains.some((domain) => domainMatchesSuppression(recipientDomain, domain) || domainMatchesSuppression(brandDomain, domain))) {
+    return "Suppressed: internal/test domain.";
+  }
+
+  const suppressions = await pool.query<{ kind: "email" | "domain"; value: string; reason: string }>(
+    `SELECT kind, value, reason FROM audit_email_suppression_list`
+  );
+
+  for (const suppression of suppressions.rows) {
+    const value = suppression.value.trim().toLowerCase();
+    if (suppression.kind === "email" && normalizedEmail === value) return `Suppressed: ${suppression.reason}.`;
+    if (suppression.kind === "domain" && (domainMatchesSuppression(recipientDomain, value) || domainMatchesSuppression(brandDomain, value))) {
+      return `Suppressed: ${suppression.reason}.`;
+    }
+  }
+
+  return null;
+}
+
+async function claimEmailDelivery(args: { auditId?: string; email: string; websiteUrl: string; step: EmailDeliveryStep; subject: string }) {
+  const normalizedEmail = normalizedEmailAddress(args.email);
+  const brandDomain = brandDedupeDomain(args.websiteUrl);
+  const suppressedReason = await shouldSuppressEmail(normalizedEmail, args.websiteUrl);
+
+  if (suppressedReason) {
+    await pool.query(
+      `INSERT INTO audit_email_delivery_log (audit_id, email, brand_domain, step, subject, status, reason)
+       VALUES ($1, $2, $3, $4, $5, 'suppressed', $6)`,
+      [args.auditId ?? null, normalizedEmail, brandDomain || null, args.step, args.subject, suppressedReason]
+    );
+    return { allowed: false as const, reason: suppressedReason };
+  }
+
+  const claim = await pool.query<{ id: string }>(
+    `INSERT INTO audit_email_delivery_log (audit_id, email, brand_domain, step, subject, status)
+     VALUES ($1, $2, $3, $4, $5, 'claimed')
+     ON CONFLICT DO NOTHING
+     RETURNING id`,
+    [args.auditId ?? null, normalizedEmail, brandDomain || null, args.step, args.subject]
+  );
+
+  if ((claim.rowCount ?? 0) === 0) {
+    return { allowed: false as const, reason: "Skipped: email/prospect/step or same-day dedupe already claimed." };
+  }
+
+  return { allowed: true as const, deliveryLogId: claim.rows[0].id };
+}
+
+async function updateEmailDelivery(deliveryLogId: string | undefined, status: "sent" | "failed", result: { id?: string; providerStatus?: string; status?: number; error?: string }) {
+  if (!deliveryLogId) return;
+
+  await pool.query(
+    `UPDATE audit_email_delivery_log
+     SET status = $2,
+         provider_message_id = $3,
+         provider_status = $4,
+         reason = $5,
+         updated_at = now()
+     WHERE id = $1`,
+    [deliveryLogId, status, result.id ?? null, result.providerStatus ?? (result.status ? String(result.status) : null), result.error ?? null]
+  );
+}
+
 function checkToEngine(result: AuditCheckResult): EngineResult {
   const mentioned = Boolean(result.found || (result.score ?? 0) > 0);
 
@@ -2496,23 +2643,6 @@ function categoryFromWebsite(websiteHtmlCheck: AuditCheckResult) {
   return "website category";
 }
 
-function buyerIntentSummaryText(report: Pick<AuditReport, "buyerIntentPrompts" | "competitors">, locale: Locale = "en") {
-  const total = report.buyerIntentPrompts.length;
-  const namedCount = report.buyerIntentPrompts.filter((prompt) => prompt.brandMentioned).length;
-  const brands = report.competitors.length ? report.competitors.join(", ") : locale === "fr" ? "Aucun trouvé" : "None found";
-  const answerEngine = report.buyerIntentPrompts.flatMap((prompt) => prompt.surfaces).find((surface) => surface.kind === "ai_engine")?.engine;
-
-  if (answerEngine) {
-    return locale === "fr"
-      ? `Sur ${total} questions d'achat posées à ${answerEngine}, ${answerEngine} a cité ta marque ou ton domaine ${namedCount} fois. Autres marques citées par ${answerEngine} : ${brands}.`
-      : `In ${total} buyer-intent ${answerEngine} prompts, ${answerEngine} cited your brand/domain ${namedCount} times. Other brands ${answerEngine} named: ${brands}.`;
-  }
-
-  return locale === "fr"
-    ? `Sur ${total} recherches d'achat, ta marque ou ton domaine est apparu ${namedCount} fois. Autres marques trouvées dans les mêmes extraits : ${brands}.`
-    : `In ${total} buyer-intent web searches, your brand/domain appeared ${namedCount} times. Other brands found in the same result snippets: ${brands}.`;
-}
-
 function buildFixes(checks: AuditCheckResult[], segment: IcpSegmentMetadata = ICP_SEGMENTS.small_brand_ecommerce, category = "your type of business") {
   const byName = new Map(checks.map((check) => [check.check, check]));
   const fixes: string[] = [];
@@ -2566,7 +2696,7 @@ function buildFixes(checks: AuditCheckResult[], segment: IcpSegmentMetadata = IC
   return fixes.slice(0, 5);
 }
 
-async function sendNativeEmail(to: string, subject: string, body: string) {
+async function sendNativeEmail(to: string, subject: string, body: string): Promise<NativeEmailSendResult> {
   try {
     const result = await executeNanoCorpTool<{ id?: string; status?: string }>("send_email", { to, subject, body }, ANSWER_TIMEOUT_MS);
 
@@ -2580,7 +2710,78 @@ async function sendNativeEmail(to: string, subject: string, body: string) {
   }
 }
 
-export async function sendAuditEmail(email: string, brandName: string, report: AuditReport, locale: Locale = "en") {
+async function sendGuardedEmail(args: { auditId?: string; email: string; websiteUrl: string; step: EmailDeliveryStep; subject: string; body: string }): Promise<NativeEmailSendResult> {
+  const claim = await claimEmailDelivery(args);
+
+  if (!claim.allowed) {
+    return { sent: false, error: claim.reason };
+  }
+
+  const result = await sendNativeEmail(args.email, args.subject, args.body);
+  await updateEmailDelivery(claim.deliveryLogId, result.sent ? "sent" : "failed", result);
+  return result;
+}
+
+function compactText(value: string, fallback: string) {
+  return value.replace(/\s+/g, " ").trim().slice(0, 220) || fallback;
+}
+
+function buildAuditResultEmail(email: string, brandName: string, report: AuditReport, locale: Locale) {
+  const answerEngineName = answerEngineNameForReport(report);
+  const competitorSignal = competitorSignalForReport(report);
+  const actionLines = postAuditActionLines(report, locale);
+  const unsubscribeUrl = unsubscribeUrlForEmail(email);
+  const reportUrl = `${siteBaseUrl()}/audit/${report.audit_id}`;
+  const totalPrompts = report.buyerIntentPrompts.length || 1;
+  const brandMentions = report.buyerIntentPrompts.filter((prompt) => prompt.brandMentioned).length;
+  const subject = locale === "fr" ? `${brandName}: score ${report.score}/100` : `${brandName}: ${report.score}/100 score`;
+
+  const body = locale === "fr"
+    ? [
+        `${brandName}: score IA`,
+        "",
+        `# ${report.score}/100`,
+        "",
+        competitorSignal
+          ? competitorSignal.replacement
+            ? `${answerEngineName} choisit ${competitorSignal.competitor} à ta place pour: “${compactText(competitorSignal.prompt, "une question d'achat réelle")}".`
+            : `${answerEngineName} cite aussi ${competitorSignal.competitor} pour: “${compactText(competitorSignal.prompt, "une question d'achat réelle")}".`
+          : `${answerEngineName} t'a cité ${brandMentions}/${totalPrompts} fois; aucun concurrent n'a été ajouté artificiellement.`,
+        "",
+        `Correctif échantillon: ${actionLines[0]}`,
+        actionLines[1] ? compactText(actionLines[1], "") : "",
+        "",
+        "CTA unique:",
+        `Voir le rapport: ${reportUrl}`,
+        "",
+        "Réassurance: audit basé sur des questions stables et des données réelles; Citeable n'invente pas de résultat. Agent 19 €/mois peut préparer les correctifs si tu veux déléguer.",
+        `Désinscription: ${unsubscribeUrl}`,
+      ].filter(Boolean).join("\n")
+    : [
+        `${brandName}: AI score`,
+        "",
+        `# ${report.score}/100`,
+        "",
+        competitorSignal
+          ? competitorSignal.replacement
+            ? `${answerEngineName} chooses ${competitorSignal.competitor} instead of you for: “${compactText(competitorSignal.prompt, "a real buyer question")}".`
+            : `${answerEngineName} also cites ${competitorSignal.competitor} for: “${compactText(competitorSignal.prompt, "a real buyer question")}".`
+          : `${answerEngineName} cited you ${brandMentions}/${totalPrompts} times; no competitor was added artificially.`,
+        "",
+        `Sample fix: ${actionLines[0]}`,
+        actionLines[1] ? compactText(actionLines[1], "") : "",
+        "",
+        "One CTA:",
+        `View the report: ${reportUrl}`,
+        "",
+        "Reassurance: this audit uses stable questions and real data; Citeable does not invent results. Agent €19/month can prepare the fixes if you want to delegate.",
+        `Unsubscribe: ${unsubscribeUrl}`,
+      ].filter(Boolean).join("\n");
+
+  return { subject, body };
+}
+
+export async function sendAuditEmail(email: string, brandName: string, websiteUrl: string, report: AuditReport, locale: Locale = "en") {
   const claim = await pool.query<{ id: string }>(
     `UPDATE audits
      SET raw_results = COALESCE(raw_results, '{}'::jsonb) || $2::jsonb
@@ -2605,53 +2806,8 @@ export async function sendAuditEmail(email: string, brandName: string, report: A
     };
   }
 
-  const answerEngineName = report.answerEngine?.engine ?? report.buyerIntentPrompts.flatMap((prompt) => prompt.surfaces).find((surface) => surface.kind === "ai_engine")?.engine;
-  const isAnswerEngineReport = Boolean(answerEngineName);
-  const sentimentLine = brandSentimentText(report.brandSentiment, locale);
-  const localizedActions = report.monitoring.actions.slice(0, 3).map((action) => localizePlainAction(action, locale));
-  const actionLines = report.auditTier === "free"
-    ? [
-        "",
-        locale === "fr" ? "3 actions à faire cette semaine : incluses dans Monitor 9 €." : "3 actions to do this week: included in Monitor €9.",
-      ]
-    : [
-        "",
-        locale === "fr" ? "3 choses à faire cette semaine :" : "3 things to do this week:",
-        ...localizedActions.flatMap((action, index) => [
-          `${index + 1}. ${action.title}`,
-          locale === "fr" ? `   À faire : ${action.doThis}` : `   What to do: ${action.doThis}`,
-          locale === "fr" ? `   Où : ${action.where}` : `   Where: ${action.where}`,
-        ]),
-      ];
-
-  return sendNativeEmail(
-    email,
-    locale === "fr" ? `Ton audit de visibilité Citeable pour ${brandName}` : `Your Citeable visibility audit for ${brandName}`,
-    [
-      locale === "fr" ? `Ton audit de visibilité Citeable pour ${brandName}` : `Your Citeable visibility audit for ${brandName}`,
-      "",
-      `Score: ${report.score}/100`,
-      sentimentLine,
-      "",
-      isAnswerEngineReport
-        ? locale === "fr" ? `Ce que ${answerEngineName} a trouvé :` : `What ${answerEngineName} found:`
-        : locale === "fr" ? "Ce que web_search natif a trouvé :" : "What native web_search found:",
-      buyerIntentSummaryText(report, locale),
-      ...report.buyerIntentPrompts.flatMap((prompt) => [
-        `- ${prompt.prompt}`,
-        isAnswerEngineReport
-          ? `  ${recommendationText(answerEngineName ?? "Gemini", prompt.brandMentioned, locale)}`
-          : locale === "fr" ? `  Ta marque ou ton domaine dans les extraits : ${prompt.brandMentioned ? "oui" : "non"}` : `  Your brand/domain in snippets: ${prompt.brandMentioned ? "yes" : "no"}`,
-        locale === "fr" ? `  Autres marques trouvées : ${prompt.competitors.length ? prompt.competitors.join(", ") : "Aucune trouvée"}` : `  Other brands found: ${prompt.competitors.length ? prompt.competitors.join(", ") : "None found"}`,
-      ]),
-      ...actionLines,
-      "",
-      isAnswerEngineReport
-        ? locale === "fr" ? `Note : cet audit vérifie ta visibilité avec ${answerEngineName} ; si ${answerEngineName} est indisponible, Citeable le dit et n'invente pas de données.` : `Note: this audit checks your visibility with ${answerEngineName}; if ${answerEngineName} is unavailable, Citeable says so and does not invent data.`
-        : locale === "fr" ? "Note : cet audit utilise les extraits web_search natifs de NanoCorp et des vérifications directes du site ; il n'invente pas de réponses d'IA." : "Note: this audit uses native NanoCorp web_search result snippets and direct site checks; it does not invent answer-engine responses.",
-      locale === "fr" ? `Voir le rapport : https://getciteable.nanocorp.app/audit/${report.audit_id}` : `View the report: https://getciteable.nanocorp.app/audit/${report.audit_id}`,
-    ].join("\n")
-  );
+  const message = buildAuditResultEmail(email, brandName, report, locale);
+  return sendGuardedEmail({ auditId: report.audit_id, email, websiteUrl, step: "audit_result", subject: message.subject, body: message.body });
 }
 
 function siteBaseUrl() {
@@ -2727,6 +2883,11 @@ async function isPostAuditUnsubscribed(email: string) {
 }
 
 export async function schedulePostAuditSequence(auditId: string) {
+  const auditForSuppression = await pool.query<{ email: string; website_url: string }>(`SELECT email, website_url FROM audits WHERE id = $1`, [auditId]);
+  const audit = auditForSuppression.rows[0];
+
+  if (!audit || (await shouldSuppressEmail(audit.email, audit.website_url))) return [];
+
   const result = await pool.query<ScheduledPostAuditEmail>(
     `INSERT INTO audit_email_sequence_jobs (audit_id, email, step, scheduled_at)
      SELECT audits.id, audits.email, sequence.step, now() + sequence.delay
@@ -2804,7 +2965,7 @@ export async function createCachedFreeAuditForLead(args: {
     ...(source.raw_results ?? {}),
     status: "completed",
     auditTier: "free" as AuditTier,
-    locale: args.locale,
+    locale: source.raw_results?.locale ?? args.locale,
     cachedFromAuditId: args.cachedAuditId,
     cachedForLeadAt: new Date().toISOString(),
     emailSent: false,
@@ -2817,13 +2978,14 @@ export async function createCachedFreeAuditForLead(args: {
   delete rawResults.weeklyEmailError;
 
   const inserted = await pool.query<AuditRow>(
-    `INSERT INTO audits (email, brand_name, website_url, score, engines_checked, competitors_found, fixes, raw_results)
-     VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb, $8::jsonb)
+    `INSERT INTO audits (email, brand_name, website_url, dedupe_domain, score, engines_checked, competitors_found, fixes, raw_results)
+     VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8::jsonb, $9::jsonb)
      RETURNING *`,
     [
       args.email,
       args.brandName,
       args.websiteUrl,
+      brandDedupeDomain(args.websiteUrl),
       source.score,
       JSON.stringify(source.engines_checked ?? []),
       JSON.stringify(source.competitors_found ?? []),
@@ -2834,7 +2996,8 @@ export async function createCachedFreeAuditForLead(args: {
 
   const audit = inserted.rows[0];
   const report = reportFromRow(audit);
-  const emailResult = await sendAuditEmail(args.email, args.brandName, report, args.locale);
+  const cloneLocale = source.raw_results?.locale ?? args.locale;
+  const emailResult = await sendAuditEmail(args.email, args.brandName, args.websiteUrl, report, cloneLocale);
 
   await pool.query(
     `UPDATE audits
@@ -2921,7 +3084,6 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
           `Démarrer Agent : ${agentCheckoutUrl}`,
           "Réassurance : tu gardes la main, et on ne part que des données réelles de ton audit — rien n'est inventé.",
           "",
-          `Voir le rapport : ${reportUrl}`,
           `Se désinscrire : ${unsubscribeUrl}`,
         ].join("\n")
       : [
@@ -2939,7 +3101,6 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
           `Start Agent: ${agentCheckoutUrl}`,
           "Reassurance: you stay in control, and we only use the real data from your audit — nothing is invented.",
           "",
-          `View the report: ${reportUrl}`,
           `Unsubscribe: ${unsubscribeUrl}`,
         ].join("\n");
 
@@ -2988,8 +3149,16 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
   return { subject, body };
 }
 
+function postAuditOutboundPaused() {
+  return (envValue("POST_AUDIT_OUTBOUND_PAUSED") ?? "true").toLowerCase() !== "false";
+}
+
 export async function runDuePostAuditEmails(limit = 10): Promise<PostAuditEmailSendResult[]> {
-  await backfillDuePostAuditSequenceJobs(limit);
+  const sendLimit = Math.max(1, Math.min(1, limit));
+
+  if (postAuditOutboundPaused()) return [];
+
+  await backfillDuePostAuditSequenceJobs(sendLimit);
 
   const claimed = await pool.query<ClaimedPostAuditEmailJob>(
     `WITH due AS (
@@ -3013,7 +3182,7 @@ export async function runDuePostAuditEmails(limit = 10): Promise<PostAuditEmailS
      FROM due
      WHERE jobs.id = due.id
      RETURNING jobs.id, jobs.audit_id, jobs.email, jobs.step, jobs.attempts, jobs.scheduled_at`,
-    [limit]
+    [sendLimit]
   );
 
   const results: PostAuditEmailSendResult[] = [];
@@ -3039,7 +3208,7 @@ export async function runDuePostAuditEmails(limit = 10): Promise<PostAuditEmailS
     const report = reportFromRow(audit);
     const locale = audit.raw_results?.locale ?? "en";
     const message = buildPostAuditEmail(job.step, job.email, audit.brand_name, report, locale);
-    const sendResult = await sendNativeEmail(job.email, message.subject, message.body);
+    const sendResult = await sendGuardedEmail({ auditId: job.audit_id, email: job.email, websiteUrl: audit.website_url, step: job.step, subject: message.subject, body: message.body });
     const preview = message.body.split("\n").slice(0, 10).join("\n");
 
     if (sendResult.sent) {
@@ -3083,8 +3252,14 @@ export async function runDuePostAuditEmails(limit = 10): Promise<PostAuditEmailS
       });
     } else {
       const error = sendResult.error ?? "Post-audit email send failed.";
-      await pool.query(`UPDATE audit_email_sequence_jobs SET error = $2 WHERE id = $1`, [job.id, error]);
-      results.push({ job_id: job.id, audit_id: job.audit_id, step: job.step, email: job.email, status: "failed", error, subject: message.subject, preview });
+      const skipped = error.startsWith("Skipped:") || error.startsWith("Suppressed:");
+      await pool.query(
+        skipped
+          ? `UPDATE audit_email_sequence_jobs SET sent_at = now(), error = $2 WHERE id = $1`
+          : `UPDATE audit_email_sequence_jobs SET error = $2 WHERE id = $1`,
+        [job.id, error]
+      );
+      results.push({ job_id: job.id, audit_id: job.audit_id, step: job.step, email: job.email, status: skipped ? "skipped" : "failed", error, subject: message.subject, preview });
     }
   }
 
@@ -3287,13 +3462,11 @@ function monitoringSummaryText(snapshot: MonitoringSnapshot) {
   return { deltaText, movements, topAction };
 }
 
-export async function sendWeeklyMonitoringEmail(email: string, brandName: string, report: AuditReport) {
+export async function sendWeeklyMonitoringEmail(email: string, brandName: string, websiteUrl: string, report: AuditReport) {
   const summary = monitoringSummaryText(report.monitoring);
 
-  return sendNativeEmail(
-    email,
-    `Monthly Citeable Monitor — ${brandName}`,
-    [
+  const subject = `Monthly Citeable Monitor — ${brandName}`;
+  const body = [
       `Monthly Citeable Monitor for ${brandName}`,
       "",
       `Score: ${report.score}/100 (${summary.deltaText})`,
@@ -3312,8 +3485,9 @@ export async function sendWeeklyMonitoringEmail(email: string, brandName: string
       ]),
       "",
       `View the report: https://getciteable.nanocorp.app/audit/${report.audit_id}`,
-    ].join("\n")
-  );
+    ].join("\n");
+
+  return sendGuardedEmail({ auditId: report.audit_id, email, websiteUrl, step: "weekly_monitoring", subject, body });
 }
 
 export async function runDueWeeklyRescans(limit = 3) {
@@ -3330,13 +3504,14 @@ export async function runDueWeeklyRescans(limit = 3) {
 
   for (const brand of due.rows) {
     const auditResult = await pool.query<{ id: string }>(
-      `INSERT INTO audits (email, brand_name, website_url, monitored_brand_id, run_type, previous_audit_id, raw_results)
-       VALUES ($1, $2, $3, $4, 'weekly_rescan', $5, $6)
+      `INSERT INTO audits (email, brand_name, website_url, dedupe_domain, monitored_brand_id, run_type, previous_audit_id, raw_results)
+       VALUES ($1, $2, $3, $4, $5, 'weekly_rescan', $6, $7)
        RETURNING id`,
       [
         brand.email,
         brand.brand_name,
         brand.website_url,
+        brandDedupeDomain(brand.website_url),
         brand.id,
         brand.last_audit_id,
         { status: "queued", queuedAt: new Date().toISOString(), runType: "weekly_rescan" },
@@ -3348,7 +3523,7 @@ export async function runDueWeeklyRescans(limit = 3) {
     if (result.status === "complete") {
       const monitoring = await getAuditMonitoringSnapshot(auditId);
       const report = { ...result.report, monitoring };
-      const emailResult = await sendWeeklyMonitoringEmail(brand.email, brand.brand_name, report);
+      const emailResult = await sendWeeklyMonitoringEmail(brand.email, brand.brand_name, brand.website_url, report);
 
       await pool.query(
         `UPDATE audits
@@ -3403,7 +3578,8 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
   const structuredDataFound = (foundationChecks.find((check) => check.check === "structured_data")?.score ?? 0) > 0;
   const inferred = await inferCategory(args.brandName, args.websiteUrl, foundationChecks.find((check) => check.check === "structured_data") ?? foundationChecks[0]);
   const icpSegment = detectIcpSegment(args.brandName, args.websiteUrl, inferred.category, inferred.homepageText);
-  const buyerIntentPrompts = await analyzeBuyerIntentPrompts(args.brandName, args.websiteUrl, domain, inferred.category, inferred.homepageText, auditTier, args.locale);
+  const auditLocale = recipientLocaleFromSignals(args.email, args.websiteUrl, inferred.homepageText);
+  const buyerIntentPrompts = await analyzeBuyerIntentPrompts(args.brandName, args.websiteUrl, domain, inferred.category, inferred.homepageText, auditTier, auditLocale);
   const checkedAnswerEnginePrompts = buyerIntentPrompts.filter((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine" && surface.status === "checked"));
   const failedAnswerEnginePrompts = buyerIntentPrompts.filter((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine" && surface.status !== "checked"));
 
@@ -3444,9 +3620,10 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
     },
     auditTier,
     brandSentiment: bestBrandSentimentFromPrompts(buyerIntentPrompts),
+    locale: auditLocale,
     answerEngine,
   };
-  const emailResult = await sendAuditEmail(args.email, args.brandName, reportWithoutEmail, args.locale ?? "en");
+  const emailResult = await sendAuditEmail(args.email, args.brandName, args.websiteUrl, reportWithoutEmail, auditLocale);
 
   return {
     ...reportWithoutEmail,
@@ -3514,10 +3691,11 @@ export async function completeQueuedAudit(auditId: string): Promise<QueuedAuditR
           icpSegment: report.icpSegment,
           buyerIntentPrompts: report.buyerIntentPrompts,
           auditTier: report.auditTier,
-          locale: row.raw_results?.locale,
+          locale: report.locale,
           brandSentiment: report.brandSentiment,
           answerEngine: report.answerEngine,
           competitorExtractionVersion: COMPETITOR_EXTRACTION_VERSION,
+          buyerPromptSetVersion: BUYER_PROMPT_SET_VERSION,
           structuredDataFound: report.structuredDataFound,
           emailSent: report.emailSent,
           emailError: report.emailError,
@@ -3531,7 +3709,7 @@ export async function completeQueuedAudit(auditId: string): Promise<QueuedAuditR
       eventName: "audit_completed",
       auditId,
       source: "run_queued_audit",
-      metadata: { brandName: row.brand_name, websiteUrl: row.website_url, auditTier, score: report.score, locale: row.raw_results?.locale },
+      metadata: { brandName: row.brand_name, websiteUrl: row.website_url, auditTier, score: report.score, locale: report.locale },
       dedupeKey: `audit_completed:${auditId}`,
     });
 

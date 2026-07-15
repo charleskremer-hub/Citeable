@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
   }
 
   await ensureAuditSchema();
-  const limit = Math.max(1, Math.min(10, Number(req.nextUrl.searchParams.get("limit") ?? 5) || 5));
+  const limit = Math.max(1, Math.min(1, Number(req.nextUrl.searchParams.get("limit") ?? 1) || 1));
   const results = await runDuePostAuditEmails(limit);
 
   return NextResponse.json({ ok: true, checked_at: new Date().toISOString(), results });

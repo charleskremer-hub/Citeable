@@ -1559,3 +1559,27 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 ### Validation
 - `npm run lint` passed with the two pre-existing warnings only: unused `isAuditedBrandName` and `categoryFromWebsite` in `src/lib/audit-engine.ts`.
 - `npm run build` passed on Next.js 16.2.10 / Turbopack and lists the new dynamic route `/api/funnel/followup-click`.
+
+## 2026-07-15 — Email locale, anti-spam dedupe, stable audit cache, and template refactor
+
+### Findings
+- Read existing `DOCS.md` first. The email send path is `src/lib/audit-engine.ts`: audit completion calls `sendAuditEmail()` -> NanoCorp `send_email`; follow-ups are driven by `/api/cron/post-audit-emails` and `audit_email_sequence_jobs`.
+- Per repo instructions, `node_modules/next/dist/docs/` was initially absent; after `npm install`, read Next.js 16.2.10 route-handler docs at `node_modules/next/dist/docs/01-app/01-getting-started/15-route-handlers.md` before final validation.
+- Charles/Keyban incident risk was real in the code: old follow-up jobs only deduped by `(audit_id, step)`, cached audit clones could re-email the same brand, and outbound cron defaulted to up to 5/10 sends per run.
+
+### Changes made
+- Added recipient/site language detection in `recipientLocaleFromSignals()`: francophone TLDs/site signals resolve to `fr`; everything else defaults to `en`. `runAudit()` now derives prompt and email language from recipient/site signals instead of browser request headers.
+- Added DB-level delivery audit/dedupe tables in `src/lib/db.ts`: `audit_email_delivery_log` with unique guards for one email/prospect/step, one email/prospect/day, and one brand/domain/step/day; `audit_email_suppression_list` seeded with internal domains/Charles suppression.
+- Added runtime suppression for internal/test/personal domains: `keyban.*`, `getciteable.*`, `nanocorp.*`, Charles' getciteable address, and common personal email providers are skipped before `send_email` is called.
+- Paused/throttled mass post-audit follow-ups: `/api/cron/post-audit-emails` is capped at 1, `runDuePostAuditEmails()` returns no sends unless `POST_AUDIT_OUTBOUND_PAUSED=false`, and suppressed audits no longer schedule follow-up jobs.
+- Stabilized free audit coherence with `BUYER_PROMPT_SET_VERSION=stable_recipient_locale_v1`, 24h Gemini cache matching that version, one free audit per email/domain/day, and exact cached-result reuse for same brand/domain reruns.
+- Rebuilt the main audit email template: short subject, hero score, one “AI chose/cited X” line, one sample fix, one CTA, reassurance, unsubscribe, and recipient language. Final offer follow-up now has only one CTA.
+- Added `locale` to `/api/audit-status` responses so QA can confirm recipient-language behavior.
+
+### Validation and proof
+- `./node_modules/.bin/tsc --noEmit --pretty false` passed.
+- `npm run lint` passed with only the two pre-existing warnings: `isAuditedBrandName` and `categoryFromWebsite` unused in `src/lib/audit-engine.ts`.
+- `npm run build` passed on Next.js 16.2.10 / Turbopack.
+- Local smoke proof used real audits and internal suppressed recipients so no external email was sent: FR `Boulangerie Paul` audit `033030ca-2662-4b7a-a223-54cb3d636a2d` completed score `6`, locale `fr`, prompt version `stable_recipient_locale_v1`; EN `Allbirds` audit `6c33123d-3fe8-485e-8e4d-874c689cacd5` completed score `93`, locale `en`, prompt version `stable_recipient_locale_v1`.
+- Same-brand rerun proof: Allbirds audit `3d87d947-c66f-4f2f-8c32-d9c08b29c139` returned `cached=true`, `cached_from_audit_id=6c33123d-3fe8-485e-8e4d-874c689cacd5`, same score `93`, locale `en`, prompt version `stable_recipient_locale_v1`.
+- Proof email previews are saved in `artifacts/email-proof/20260715063853/fr-email.md`, `artifacts/email-proof/20260715063853/en-email.md`, `artifacts/email-proof/20260715063853/rerun-email.md`, with summary `artifacts/email-proof/20260715063853/proof-summary.json`.

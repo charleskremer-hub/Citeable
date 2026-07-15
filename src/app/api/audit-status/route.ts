@@ -12,7 +12,7 @@ type AuditRow = {
   engines_checked: unknown;
   competitors_found: unknown;
   fixes: unknown;
-  raw_results: { status?: string; error?: string; checks?: unknown; emailSent?: boolean; emailError?: string; category?: string; icpSegment?: unknown; buyerIntentPrompts?: unknown; auditTier?: string; answerEngine?: unknown; brandSentiment?: unknown } | null;
+  raw_results: { status?: string; error?: string; checks?: unknown; emailSent?: boolean; emailError?: string; category?: string; icpSegment?: unknown; buyerIntentPrompts?: unknown; auditTier?: string; answerEngine?: unknown; brandSentiment?: unknown; locale?: string } | null;
 };
 
 export async function GET(req: NextRequest) {
@@ -50,6 +50,7 @@ export async function GET(req: NextRequest) {
     fixes: audit.fixes ?? [],
     email_sent: Boolean(audit.raw_results?.emailSent),
     email_error: audit.raw_results?.emailError,
+    locale: audit.raw_results?.locale ?? "en",
     error: audit.raw_results?.error,
   });
 }

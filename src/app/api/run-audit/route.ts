@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
-import { auditTierFromPayload, checkFreeAuditQuota, findFreshFreeGeminiAudit, createCachedFreeAuditForLead, runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
+import { auditTierFromPayload, checkFreeAuditQuota, findFreshFreeGeminiAudit, brandDedupeDomain, createCachedFreeAuditForLead, recipientLocaleFromSignals, runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
 import { recordFunnelEvent } from "@/lib/funnel";
-import { localeFromHeaders, localeFromUnknown } from "@/lib/i18n";
+import { localeFromUnknown } from "@/lib/i18n";
 
 export const maxDuration = 60;
 
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     await ensureAuditSchema();
     const payload = await req.json();
     const auditTier = auditTierFromPayload(payload);
-    const locale = payload && typeof payload === "object" && "locale" in payload ? localeFromUnknown((payload as Record<string, unknown>).locale) : localeFromHeaders(req.headers);
+    const requestedLocale = payload && typeof payload === "object" && "locale" in payload ? localeFromUnknown((payload as Record<string, unknown>).locale) : undefined;
     const auditId = typeof payload.audit_id === "string" ? payload.audit_id : undefined;
 
     if (auditId) {
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
           checks: row.raw_results?.checks ?? [],
           email_sent: Boolean(row.raw_results?.emailSent),
           email_error: row.raw_results?.emailError,
-          locale: row.raw_results?.locale ?? locale,
+          locale: row.raw_results?.locale ?? "en",
         });
       }
 
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
           `UPDATE audits
            SET raw_results = COALESCE(raw_results, '{}'::jsonb) || $2::jsonb
            WHERE id = $1`,
-          [auditId, { auditTier: auditTier !== "free" ? auditTier : row.raw_results?.auditTier ?? "free", locale: row.raw_results?.locale ?? locale }]
+          [auditId, { auditTier: auditTier !== "free" ? auditTier : row.raw_results?.auditTier ?? "free", locale: row.raw_results?.locale ?? "en" }]
         );
       }
 
@@ -92,6 +92,8 @@ export async function POST(req: NextRequest) {
     }
 
     const { email, brandName, websiteUrl } = validateAuditInput(payload);
+    const locale = requestedLocale ?? recipientLocaleFromSignals(email, websiteUrl);
+    const dedupeDomain = brandDedupeDomain(websiteUrl);
 
     if (auditTier === "free") {
       const cachedAudit = await findFreshFreeGeminiAudit(brandName, websiteUrl);
@@ -136,10 +138,10 @@ export async function POST(req: NextRequest) {
     }
 
     const audit = await pool.query<{ id: string }>(
-      `INSERT INTO audits (email, brand_name, website_url, raw_results)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO audits (email, brand_name, website_url, dedupe_domain, raw_results)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING id`,
-      [email, brandName, websiteUrl, { status: "queued", queuedAt: new Date().toISOString(), auditTier, locale }]
+      [email, brandName, websiteUrl, dedupeDomain, { status: "queued", queuedAt: new Date().toISOString(), auditTier, locale }]
     );
     const createdAuditId = audit.rows[0].id;
 
