@@ -1861,7 +1861,8 @@ function promptCategoryTerms(category: string) {
 
   if (/fashion|apparel|clothing/.test(lower)) return { categoryTerm: cleanCategory, useCase: "everyday clothing", leader: "Everlane" };
   if (/beauty|skincare|cosmetic/.test(lower)) return { categoryTerm: cleanCategory, useCase: "daily routines", leader: "Glossier" };
-  if (/food|beverage|coffee|tea|drink/.test(lower)) return { categoryTerm: cleanCategory, useCase: "daily consumption", leader: "Starbucks" };
+  if (/coffee|espresso|roaster|café/.test(lower)) return { categoryTerm: "coffee brand", useCase: "specialty coffee", leader: "Starbucks" };
+  if (/food|beverage|tea|drink/.test(lower)) return { categoryTerm: cleanCategory, useCase: "daily consumption", leader: "Starbucks" };
   if (/creator|influencer/.test(lower)) return { categoryTerm: cleanCategory, useCase: "audiences looking for people to follow", leader: "top creators" };
 
   if (lower.includes("digital product passport")) {
@@ -2064,11 +2065,10 @@ function generateBuyerIntentPrompts(brandName: string, websiteUrl: string, categ
   if (language === "fr") {
     return cleanPromptList([
       `meilleur ${buyerCategory}${ecommerceLocationSuffix}`,
-      `meilleure marque de ${buyerCategory}${ecommerceLocationSuffix}`,
       `marque ${buyerCategory} recommandée`,
+      `avis ${brandName}`,
       `${buyerCategory} pas cher`,
       `prix ${buyerCategory}`,
-      `avis ${brandName}`,
       `${brandName} est-il fiable`,
       `alternative à ${leader}`,
       `${buyerCategory} pour ${audience}`,
@@ -2080,12 +2080,11 @@ function generateBuyerIntentPrompts(brandName: string, websiteUrl: string, categ
 
   return cleanPromptList([
     `best ${buyerCategory}${ecommerceLocationSuffix}`,
-    `best ${buyerCategory} brand`,
     `best ${buyerCategory} for ${useCase}`,
+    `${brandName} reviews`,
     `top ${buyerCategory} brands 2026`,
     `affordable ${buyerCategory}`,
     `${buyerCategory} pricing`,
-    `${brandName} reviews`,
     `is ${brandName} reliable`,
     `${buyerCategory} alternatives to ${leader}`,
     `${buyerCategory} for ${audience}`,

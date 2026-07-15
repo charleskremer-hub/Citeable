@@ -1,0 +1,100 @@
+[
+  {
+    "brand": "Bombas",
+    "url": "https://getciteable.nanocorp.app/audit/7ffaff8a-3e49-44f7-a699-8d1a9e21e8fb",
+    "category": "socks and apparel",
+    "locale": "en",
+    "score": 96,
+    "prompts": [
+      "best socks and apparel",
+      "best socks and apparel brand",
+      "best socks and apparel for comfortable everyday basics"
+    ],
+    "competitors": [
+      "Darn Tough",
+      "Smartwool",
+      "Vuori",
+      "Patagonia",
+      "Stance"
+    ]
+  },
+  {
+    "brand": "Glossier",
+    "url": "https://getciteable.nanocorp.app/audit/6733e11b-f892-4f29-9e68-d9ea95b532d6",
+    "category": "beauty brand",
+    "locale": "en",
+    "score": 100,
+    "prompts": [
+      "best beauty brand in New York",
+      "best beauty brand brand",
+      "best beauty brand for daily routines"
+    ],
+    "competitors": [
+      "Rare Beauty",
+      "Milk Makeup",
+      "Kiehl's",
+      "Fenty Beauty",
+      "Merit Beauty"
+    ]
+  },
+  {
+    "brand": "Osprey",
+    "url": "https://getciteable.nanocorp.app/audit/a4e9e571-62e2-4152-9d9f-31027587c75c",
+    "category": "backpacks and outdoor gear",
+    "locale": "en",
+    "score": 87,
+    "prompts": [
+      "What is the best hiking backpack brand?",
+      "Best travel backpack brand for carry-on?",
+      "Is Osprey a good backpack brand?"
+    ],
+    "competitors": [
+      "Gregory",
+      "Deuter",
+      "Patagonia",
+      "REI Co-op",
+      "Arc'teryx",
+      "Peak Design",
+      "Aer",
+      "Nomatic"
+    ]
+  },
+  {
+    "brand": "Le Slip Français",
+    "url": "https://getciteable.nanocorp.app/audit/3a0dc19e-a391-4eba-8472-b7a89fa48e35",
+    "category": "socks and apparel",
+    "locale": "fr",
+    "score": 94,
+    "prompts": [
+      "meilleur chaussettes et vêtements",
+      "meilleure marque de chaussettes et vêtements",
+      "marque chaussettes et vêtements recommandée"
+    ],
+    "competitors": [
+      "Loom",
+      "Saint James",
+      "Falke",
+      "Armor Lux",
+      "BonneGueule",
+      "Asphalte"
+    ]
+  },
+  {
+    "brand": "Rothy's",
+    "url": "https://getciteable.nanocorp.app/audit/f6e4d787-060c-4ac5-9476-0ddd118127b5",
+    "category": "DTC footwear brand",
+    "locale": "en",
+    "score": 75,
+    "prompts": [
+      "What is the best sustainable sneaker brand?",
+      "Best eco-friendly running shoe brand?",
+      "Is Rothy's a good sustainable shoe brand?"
+    ],
+    "competitors": [
+      "Veja",
+      "Allbirds",
+      "Cariuma",
+      "Vivaia"
+    ]
+  }
+]

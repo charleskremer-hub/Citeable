@@ -1600,3 +1600,13 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 ### Validation
 - `npm run lint` passes with two existing warnings: unused `isAuditedBrandName` and `categoryFromWebsite` in `src/lib/audit-engine.ts`.
 - `npm run build` passed locally after the main patch.
+
+### Live proof audits after deployment
+- Commit `c7894d0` was pushed to `main`; production opened successfully at `https://getciteable.nanocorp.app` after the Vercel wait. Chrome had to be installed once for `agent-browser` because the first verification returned `Chrome not found`.
+- Selected proof artifact: `artifacts/audit-proofs/selected-proof-audits-20260715.json`.
+- Bombas report `7ffaff8a-3e49-44f7-a699-8d1a9e21e8fb`: category `socks and apparel`; prompts `best socks and apparel`, `best socks and apparel brand`, `best socks and apparel for comfortable everyday basics`; competitors `Darn Tough`, `Smartwool`, `Vuori`, `Patagonia`, `Stance`; locale `en`.
+- Glossier report `6733e11b-f892-4f29-9e68-d9ea95b532d6`: category `beauty brand`; prompts had no banned nav/footer terms; competitors `Rare Beauty`, `Milk Makeup`, `Kiehl's`, `Fenty Beauty`, `Merit Beauty`; locale `en`.
+- Osprey report `a4e9e571-62e2-4152-9d9f-31027587c75c`: category `backpacks and outdoor gear`; prompts focused on backpack questions; competitors `Gregory`, `Deuter`, `Patagonia`, `REI Co-op`, `Arc'teryx`, `Peak Design`; locale `en`.
+- Le Slip Français report `3a0dc19e-a391-4eba-8472-b7a89fa48e35`: category `socks and apparel`; prompts `meilleur chaussettes et vêtements`, `meilleure marque de chaussettes et vêtements`, `marque chaussettes et vêtements recommandée`; competitors `Loom`, `Saint James`, `Falke`, `Armor Lux`, `BonneGueule`, `Asphalte`; locale `fr`.
+- Rothy's report `f6e4d787-060c-4ac5-9476-0ddd118127b5`: category `DTC footwear brand`; prompts focused on sustainable shoes; competitors `Veja`, `Allbirds`, `Cariuma`, `Vivaia`; locale `en`.
+- A final template cleanup after these proofs removed generic `brand brand` prompts and added a dedicated coffee-brand prompt path; `npm run lint` and `npm run build` passed again, with only the two existing unused-helper warnings.
