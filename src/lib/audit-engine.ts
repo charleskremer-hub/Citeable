@@ -2750,13 +2750,25 @@ async function generateBuyerIntentPromptsAI(
 
       if (response.ok) {
         const answer = geminiAnswerText(parsed);
-        const json = safeJsonParse<{ questions?: unknown }>(answer, {});
-        const raw = Array.isArray(json.questions) ? json.questions : [];
+        // Tolerant extraction: Gemini may return {"questions":[...]}, a bare array,
+        // another key, or newline-delimited text. Accept all of them.
+        const jsonAny = safeJsonParse<unknown>(answer, null);
+        let rawList: unknown[] = [];
+        if (Array.isArray(jsonAny)) {
+          rawList = jsonAny;
+        } else if (jsonAny && typeof jsonAny === "object") {
+          const obj = jsonAny as Record<string, unknown>;
+          const arr = obj.questions ?? obj.prompts ?? obj.buyer_questions ?? obj.buyerQuestions ?? obj.queries;
+          if (Array.isArray(arr)) rawList = arr;
+        }
+        if (rawList.length === 0 && answer) {
+          rawList = answer.split(/\r?\n/).map((line) => line.replace(/^\s*[-*\d.)\]]+\s*/, "").trim()).filter(Boolean);
+        }
         // NOTE: deliberately NOT using cleanPromptList here — its navigation-footer
-        // filter (shipping, delivery, shop, returns, contact...) would wrongly drop
-        // legitimate buyer questions. LLM output is already clean prose. We also keep
-        // brand-mentioning questions (reputation checks are valid) rather than nuking them.
-        const cleaned = raw
+        // filter (shipping, delivery, shop, returns...) would wrongly drop legitimate
+        // buyer questions. LLM output is already clean prose. Brand-mentioning questions
+        // are kept (reputation checks are valid).
+        const cleaned = rawList
           .filter((item): item is string => typeof item === "string")
           .map((item) => item.replace(/^["'\s]+|["'\s]+$/g, "").replace(/\s+/g, " ").trim())
           .filter((item) => item.length >= 10 && item.length <= 200);
