@@ -10,8 +10,14 @@ import AuditPoller from "./AuditPoller";
 import AgentAuditChat from "./AgentAuditChat";
 import FunnelCheckoutLink from "./FunnelCheckoutLink";
 import { VisibilityMonitorCard } from "./VisibilityMonitorCard";
+import CopyBlock from "./CopyBlock";
 
 export const dynamic = "force-dynamic";
+
+function extractPasteable(text: string) {
+  const match = text.match(/[«"“]([\s\S]+?)[»"”]/);
+  return (match ? match[1] : text).trim();
+}
 
 type AuditRow = {
   id: string;
@@ -281,6 +287,11 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const freeSampleProof = freeGapQuestion ? treatmentProofForQuestion(audit.brand_name, displayCategory, freeGapQuestion, competitors, answerEngineName, locale, icpSegment) : null;
   const honestNoGapTeaser = complete && !failed && isFreeReport && !freeSampleProof;
   const proof = complete && !failed && !isFreeReport ? treatmentProof(audit.brand_name, displayCategory, questions, competitors, answerEngineName, locale, icpSegment) : null;
+  const monitorContentBlocks = complete && !failed && isMonitorReport
+    ? priorityGapQuestions(questions).slice(0, 3).map((question) => treatmentProofForQuestion(audit.brand_name, displayCategory, question, competitors, answerEngineName, locale, icpSegment))
+    : [];
+  const copyLabel = locale === "fr" ? "Copier" : "Copy";
+  const copiedLabel = locale === "fr" ? "Copié ✓" : "Copied ✓";
   const monitorActions = (audit.raw_results?.monitoring?.actions?.slice(0, 3) ?? []).map((action) => localizePlainAction(action, locale));
   const monitoringTrend = (audit.raw_results?.monitoring?.trend ?? [])
     .filter((point) => point && typeof point.score === "number")
@@ -551,11 +562,42 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
 
           {complete && !failed && isMonitorReport ? (
             <section className="rounded-[1.5rem] border border-[#CAFF3C]/20 bg-[#CAFF3C]/[0.055] p-5 sm:p-6">
-              <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.monitorEyebrow}</p>
+              <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">
+                {locale === "fr" ? "Monitor · contenu à coller" : "Monitor · content to paste"}
+              </p>
               <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                {copy.monitorTitle}
+                {locale === "fr" ? "Ton contenu prêt à coller cette semaine" : "Your ready-to-paste content this week"}
               </h2>
-              {monitorActions.length ? (
+              <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#D6D6DF]">
+                {locale === "fr"
+                  ? "Colle ces textes sur ton site et ta fiche Google Business. Ils répondent aux questions d'achat où l'IA ne te cite pas encore. Relis-les avant publication."
+                  : "Paste these onto your site and Google Business Profile. They answer the buyer questions where AI doesn't cite you yet. Review before publishing."}
+              </p>
+
+              {monitorContentBlocks.length ? (
+                <div className="mt-4 grid gap-4">
+                  {monitorContentBlocks.map((block, index) => (
+                    <div key={`${block.title}-${index}`} className="rounded-2xl border border-white/[0.08] bg-black/20 p-4">
+                      <p className="m-0 text-sm font-black text-[#CAFF3C]">{index + 1}. {block.title}</p>
+                      <p className="m-0 mt-1 text-xs font-bold leading-5 text-[#8E8E9A]">{block.gap}</p>
+                      <div className="mt-3 grid gap-2.5">
+                        <CopyBlock
+                          label={locale === "fr" ? "Réponse FAQ / section de page" : "FAQ answer / page section"}
+                          text={extractPasteable(block.draft)}
+                          copyLabel={copyLabel}
+                          copiedLabel={copiedLabel}
+                        />
+                        <CopyBlock
+                          label={locale === "fr" ? "Phrase fiche Google Business" : "Google Business sentence"}
+                          text={extractPasteable(block.google)}
+                          copyLabel={copyLabel}
+                          copiedLabel={copiedLabel}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : monitorActions.length ? (
                 <ol className="m-0 mt-4 grid list-none gap-3 p-0">
                   {monitorActions.map((action, index) => (
                     <li key={`${action.title}-${index}`} className="rounded-2xl border border-white/[0.08] bg-black/20 p-4">
@@ -636,7 +678,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             </section>
           ) : null}
 
-          {proof ? (
+          {isAgentReport && proof ? (
             <section className="rounded-[1.5rem] border border-[#CAFF3C]/20 bg-[#CAFF3C]/[0.055] p-5 sm:p-6">
               <p className="m-0 mb-3 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.proofEyebrow}</p>
               <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
