@@ -1804,35 +1804,83 @@ function localizedCategoryTerm(categoryTerm: string, language: "en" | "fr") {
   return translations.find(([pattern]) => pattern.test(lower))?.[1] ?? cleanTerm;
 }
 
+async function inferCategoryAI(brandName: string, domain: string, homepageText: string): Promise<string | null> {
+  const apiKey = geminiApiKey();
+  if (!apiKey) return null;
+
+  const model = currentGeminiModel();
+  const context = homepageText.replace(/\s+/g, " ").trim().slice(0, 1200);
+  const instruction = [
+    "Identify the product or service category a business sells, for a marketing audit.",
+    `Business name: ${brandName}`,
+    `Domain: ${domain}`,
+    context ? `Website context (may be noisy): ${context}` : "",
+    'Return a SHORT, concrete category phrase a buyer would use (2 to 4 words), e.g. "olive oil", "running shoes", "skincare", "project management software", "physiotherapy clinic".',
+    "Do NOT include the brand name. If you are not confident, return an empty string.",
+    'Return ONLY valid JSON: {"category":"..."}',
+  ]
+    .filter(Boolean)
+    .join("\n");
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: instruction }] }],
+        generationConfig: { temperature: 0.1, maxOutputTokens: 80, responseMimeType: "application/json" },
+      }),
+      signal: AbortSignal.timeout(ANSWER_TIMEOUT_MS),
+    });
+    if (!response.ok) return null;
+    const parsed = safeJsonParse<GeminiGenerateContentResponse>(await response.text(), {});
+    const json = safeJsonParse<{ category?: unknown }>(geminiAnswerText(parsed), {});
+    const raw = typeof json.category === "string" ? json.category.trim() : "";
+    if (raw.length < 2 || raw.length > 60) return null;
+    const cleaned = cleanCategoryText(raw);
+    const brandKey = brandName.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const catKey = cleaned.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (brandKey.length > 0 && catKey.includes(brandKey)) return null;
+    if (isGenericCategory(cleaned)) return null;
+    return cleaned;
+  } catch {
+    return null;
+  }
+}
+
 async function inferCategory(brandName: string, websiteUrl: string, fallbackCheck: AuditCheckResult) {
   const domain = domainFromWebsite(websiteUrl);
   const fallbackText = `${fallbackCheck.detail} ${fallbackCheck.evidence ?? ""}`;
+  let signals = "";
 
   try {
     const response = await withTimeout(normalizeWebsiteUrl(websiteUrl));
 
     if (response.ok) {
       const html = await response.text();
-      const signals = extractHomepageSignals(html);
+      signals = extractHomepageSignals(html);
       const fallbackCategory = categoryFromHomepageText(`${brandName} ${domain} ${signals}`, domain);
       const category = categoryLooksLikeTechStack(fallbackCategory, signals) ? "DTC footwear brand" : fallbackCategory;
 
       if (!isGenericCategory(category)) return { category, homepageText: signals };
 
       const secondPassCategory = categoryFromHomepageText(`${brandName} ${domain} ${signals} ${fallbackText}`, domain);
-      return {
-        category: isGenericCategory(secondPassCategory) ? "your type of business" : secondPassCategory,
-        homepageText: signals,
-      };
+      if (!isGenericCategory(secondPassCategory)) return { category: secondPassCategory, homepageText: signals };
     }
   } catch (error) {
     console.log(`[citeable] category homepage fetch failed: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 
+  // Phrase rules could not determine a category (e.g. Shopify/anti-bot sites returning little text).
+  // Ask the LLM — it usually recognises the brand from its name + domain.
+  const aiCategory = await inferCategoryAI(brandName, domain, signals);
+  if (aiCategory) return { category: aiCategory, homepageText: signals || fallbackText };
+
   const fallbackCategory = categoryFromHomepageText(`${brandName} ${domain} ${fallbackText}`, domain);
   return {
     category: isGenericCategory(fallbackCategory) ? "your type of business" : fallbackCategory,
-    homepageText: fallbackText,
+    homepageText: signals || fallbackText,
   };
 }
 
