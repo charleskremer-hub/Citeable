@@ -30,7 +30,7 @@ type AuditRow = {
     brandSentiment?: BrandSentiment;
     locale?: string;
     buyerIntentPrompts?: BuyerIntentPromptResult[];
-    monitoring?: { actions?: PlainAction[] };
+    monitoring?: { actions?: PlainAction[]; trend?: { score: number; createdAt: string }[]; scoreDelta?: number | null };
   } | null;
 };
 
@@ -278,6 +278,10 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const honestNoGapTeaser = complete && !failed && isFreeReport && !freeSampleProof;
   const proof = complete && !failed && !isFreeReport ? treatmentProof(audit.brand_name, displayCategory, questions, competitors, answerEngineName, locale, icpSegment) : null;
   const monitorActions = (audit.raw_results?.monitoring?.actions?.slice(0, 3) ?? []).map((action) => localizePlainAction(action, locale));
+  const monitoringTrend = (audit.raw_results?.monitoring?.trend ?? [])
+    .filter((point) => point && typeof point.score === "number")
+    .map((point) => ({ score: point.score, createdAt: point.createdAt }));
+  const monitoringScoreDelta = audit.raw_results?.monitoring?.scoreDelta ?? null;
   const sentimentLine = brandSentimentText(audit.raw_results?.brandSentiment ?? { label: "not_enough_signal", justification: "not enough signal" }, locale);
   const scoreExplanation = complete
     ? locale === "fr"
@@ -304,7 +308,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
     isAgentReport
       ? fixSentence(displayCategory, competitors.length > 0, locale, icpSegment)
       : isMonitorReport
-        ? locale === "fr" ? "Monitor ajoute 3 actions prioritaires pour cette semaine." : "Monitor adds 3 priority actions for this week."
+        ? locale === "fr" ? "Ton dashboard de suivi et tes 3 actions de la semaine sont ci-dessous." : "Your tracking dashboard and 3 actions for this week are below."
         : locale === "fr" ? "Diagnostic gratuit : score, sentiment IA, statut de recommandation Gemini et concurrents cités." : "Free diagnostic: score, AI sentiment, Gemini recommendation status, and cited competitors.",
   ].filter(Boolean);
 
@@ -376,7 +380,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
               )}
             </div>
 
-            {complete && !failed && isFreeReport ? (
+            {complete && !failed && (isFreeReport || isMonitorReport) ? (
               <VisibilityMonitorCard
                 auditId={audit.id}
                 websiteUrl={audit.website_url}
@@ -391,6 +395,9 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                 competitors={rankedCompetitors.map((item) => ({ name: item.name, count: item.count }))}
                 monitorUrl={MONITOR_CHECKOUT_URL}
                 locale={locale}
+                variant={isMonitorReport ? "dashboard" : "teaser"}
+                trend={isMonitorReport ? monitoringTrend : undefined}
+                scoreDelta={isMonitorReport ? monitoringScoreDelta : undefined}
               />
             ) : null}
 
