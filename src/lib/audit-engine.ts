@@ -165,6 +165,7 @@ export type AuditReport = {
   category: string;
   icpSegment: IcpSegmentMetadata;
   buyerIntentPrompts: BuyerIntentPromptResult[];
+  promptDebug?: string;
   emailSent: boolean;
   emailError?: string;
   checks: AuditCheckResult[];
@@ -2704,9 +2705,9 @@ async function generateBuyerIntentPromptsAI(
   homepageText: string,
   count: number,
   preferredLocale?: Locale
-): Promise<string[] | null> {
+): Promise<{ prompts: string[] | null; debug: string }> {
   const apiKey = geminiApiKey();
-  if (!apiKey) return null;
+  if (!apiKey) return { prompts: null, debug: "no_api_key" };
 
   const model = currentGeminiModel();
   const domain = domainFromWebsite(websiteUrl);
@@ -2733,6 +2734,7 @@ async function generateBuyerIntentPromptsAI(
     .join("\n");
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  let lastDebug = "unknown";
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
@@ -2773,24 +2775,30 @@ async function generateBuyerIntentPromptsAI(
           .map((item) => item.replace(/^["'\s]+|["'\s]+$/g, "").replace(/\s+/g, " ").trim())
           .filter((item) => item.length >= 10 && item.length <= 200);
         const questions = uniqueInOrder(cleaned, count);
-        if (questions.length >= 2) return questions;
-      } else if (response.status !== 429 && response.status < 500) {
-        return null;
+        if (questions.length >= 2) return { prompts: questions, debug: `ok:${questions.length}` };
+        lastDebug = `ok_but_few:raw${rawList.length}_clean${questions.length}_ans${answer.length}`;
+      } else {
+        lastDebug = `http_${response.status}`;
+        if (response.status !== 429 && response.status < 500) {
+          return { prompts: null, debug: lastDebug };
+        }
       }
-    } catch {
-      // fall through to retry / fallback
+    } catch (error) {
+      lastDebug = `ex:${error instanceof Error ? error.message.slice(0, 80) : "unknown"}`;
     }
     if (attempt < 1) await delay(500);
   }
 
-  return null;
+  return { prompts: null, debug: lastDebug };
 }
 
-async function analyzeBuyerIntentPrompts(brandName: string, websiteUrl: string, domain: string, category: string, homepageText: string, tier: AuditTier, locale?: Locale): Promise<BuyerIntentPromptResult[]> {
+async function analyzeBuyerIntentPrompts(brandName: string, websiteUrl: string, domain: string, category: string, homepageText: string, tier: AuditTier, locale?: Locale): Promise<{ prompts: BuyerIntentPromptResult[]; promptDebug: string }> {
   const count = tier === "free" ? 3 : 12;
-  const aiPrompts = await generateBuyerIntentPromptsAI(brandName, websiteUrl, category, homepageText, count, locale);
-  const prompts = (aiPrompts && aiPrompts.length >= 3
-    ? aiPrompts
+  const ai = await generateBuyerIntentPromptsAI(brandName, websiteUrl, category, homepageText, count, locale);
+  const usedAi = Boolean(ai.prompts && ai.prompts.length >= 3);
+  const promptDebug = usedAi ? `ai:${ai.prompts?.length}` : `template(${ai.debug})`;
+  const prompts = (usedAi && ai.prompts
+    ? ai.prompts
     : generateBuyerIntentPrompts(brandName, websiteUrl, category, homepageText, locale)
   ).slice(0, count);
   const results: BuyerIntentPromptResult[] = [];
@@ -2814,7 +2822,7 @@ async function analyzeBuyerIntentPrompts(brandName: string, websiteUrl: string, 
     if (answerEngine && searchSurface.status !== "checked") break;
   }
 
-  return results;
+  return { prompts: results, promptDebug };
 }
 
 async function checkTechnicalSEO(websiteUrl: string): Promise<AuditCheckResult> {
@@ -3830,7 +3838,7 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
   const inferred = await inferCategory(args.brandName, args.websiteUrl, foundationChecks.find((check) => check.check === "structured_data") ?? foundationChecks[0]);
   const icpSegment = detectIcpSegment(args.brandName, args.websiteUrl, inferred.category, inferred.homepageText);
   const auditLocale = args.locale ?? recipientLocaleFromSignals(args.email, args.websiteUrl, inferred.homepageText);
-  const buyerIntentPrompts = await analyzeBuyerIntentPrompts(args.brandName, args.websiteUrl, domain, inferred.category, inferred.homepageText, auditTier, auditLocale);
+  const { prompts: buyerIntentPrompts, promptDebug } = await analyzeBuyerIntentPrompts(args.brandName, args.websiteUrl, domain, inferred.category, inferred.homepageText, auditTier, auditLocale);
   const checkedAnswerEnginePrompts = buyerIntentPrompts.filter((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine" && surface.status === "checked"));
   const failedAnswerEnginePrompts = buyerIntentPrompts.filter((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine" && surface.status !== "checked"));
 
@@ -3873,6 +3881,7 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
     brandSentiment: bestBrandSentimentFromPrompts(buyerIntentPrompts),
     locale: auditLocale,
     answerEngine,
+    promptDebug,
   };
   const emailResult = await sendAuditEmail(args.email, args.brandName, args.websiteUrl, reportWithoutEmail, auditLocale);
 
@@ -3941,6 +3950,7 @@ export async function completeQueuedAudit(auditId: string): Promise<QueuedAuditR
           category: report.category,
           icpSegment: report.icpSegment,
           buyerIntentPrompts: report.buyerIntentPrompts,
+          promptDebug: report.promptDebug,
           auditTier: report.auditTier,
           locale: report.locale,
           brandSentiment: report.brandSentiment,
