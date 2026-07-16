@@ -488,17 +488,56 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
           ) : null}
 
           {complete && !failed && isFreeReport ? (
-            <section className="rounded-[1.5rem] border border-[#CAFF3C]/20 bg-[#CAFF3C]/[0.055] p-5 sm:p-6">
-              <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.secondaryEyebrow}</p>
+            <section className="rounded-[1.5rem] border border-[#CAFF3C]/20 bg-[#CAFF3C]/[0.055] p-5 sm:p-6" data-testid="monitor-actions-gate">
+              <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">
+                {locale === "fr" ? "Monitor · 9 € / mois" : "Monitor · €9 / month"}
+              </p>
               <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                {copy.secondaryTitle}
+                {locale === "fr" ? "Tes 3 actions prioritaires cette semaine" : "Your 3 priority actions this week"}
               </h2>
               <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#D6D6DF]">
-                {copy.secondaryBody}
+                {locale === "fr"
+                  ? "Le gratuit te montre le diagnostic. Monitor te donne la liste d'actions concrètes à faire — reclassée chaque semaine selon ce que l'IA voit."
+                  : "Free shows you the diagnosis. Monitor gives you the concrete action list to run — re-ranked every week from what AI sees."}
               </p>
-              <a href={MONITOR_CHECKOUT_URL} className="mt-5 inline-flex rounded-xl border border-white/15 px-5 py-3 text-sm font-black text-[#D6D6DF] no-underline transition hover:border-[#CAFF3C]/40 hover:text-[#CAFF3C]" data-ph-capture-attribute-plan="monitor_9eur" data-ph-capture-attribute-source="free_audit_report_secondary">
-                {copy.secondaryCta}
-              </a>
+
+              {monitorActions.length ? (
+                <>
+                  <ol className="m-0 mt-4 grid list-none gap-2 p-0">
+                    {monitorActions.map((action, index) => (
+                      <li key={`${action.title}-${index}`} className="rounded-2xl border border-white/[0.08] bg-black/25 p-4 text-sm font-black text-[#F0F0EC]">
+                        <span className="mr-2 text-[#CAFF3C]">{index + 1}.</span>
+                        {action.title}
+                      </li>
+                    ))}
+                  </ol>
+
+                  <div className="relative mt-3 overflow-hidden rounded-2xl border border-white/[0.08] bg-[#09090B]/80">
+                    <div className="grid gap-2 p-4 blur-[6px] select-none" aria-hidden="true">
+                      <p className="m-0 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">
+                        {locale === "fr" ? "Action 1 · comment faire" : "Action 1 · how to do it"}
+                      </p>
+                      <p className="m-0 text-sm font-bold leading-6 text-[#D6D6DF]">{monitorActions[0].doThis}</p>
+                      <p className="m-0 text-sm font-bold leading-6 text-[#D6D6DF]">{copy.where} {monitorActions[0].where}</p>
+                    </div>
+                    <div className="absolute inset-0 grid place-items-center gap-2 bg-[#09090B]/55 p-4 text-center backdrop-blur-[1px]">
+                      <div className="text-xl">🔒</div>
+                      <FunnelCheckoutLink
+                        auditId={audit.id}
+                        href={MONITOR_CHECKOUT_URL}
+                        source="report_monitor_actions"
+                        className="inline-flex rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline shadow-2xl shadow-[#CAFF3C]/20 transition hover:brightness-110"
+                      >
+                        {locale === "fr" ? "Débloquer mes 3 actions — 9 € →" : "Unlock my 3 actions — €9 →"}
+                      </FunnelCheckoutLink>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <a href={MONITOR_CHECKOUT_URL} className="mt-5 inline-flex rounded-xl border border-white/15 px-5 py-3 text-sm font-black text-[#D6D6DF] no-underline transition hover:border-[#CAFF3C]/40 hover:text-[#CAFF3C]" data-ph-capture-attribute-plan="monitor_9eur" data-ph-capture-attribute-source="free_audit_report_secondary">
+                  {copy.secondaryCta}
+                </a>
+              )}
               <p className="m-0 mt-3 text-xs font-bold leading-5 text-[#8E8E9A]">{copy.reportReassurance}</p>
             </section>
           ) : null}
