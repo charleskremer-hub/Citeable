@@ -1829,7 +1829,7 @@ async function inferCategoryAI(brandName: string, domain: string, homepageText: 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ role: "user", parts: [{ text: instruction }] }],
-        generationConfig: { temperature: 0.1, maxOutputTokens: 80, responseMimeType: "application/json" },
+        generationConfig: { temperature: 0.1, maxOutputTokens: 1024, responseMimeType: "application/json" },
       }),
       signal: AbortSignal.timeout(ANSWER_TIMEOUT_MS),
     });
