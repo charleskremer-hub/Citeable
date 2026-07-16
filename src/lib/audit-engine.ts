@@ -1712,7 +1712,10 @@ function categoryFromHomepageText(text: string, domain: string) {
 }
 
 function isGenericCategory(category: string) {
-  return /^(general business|business|company|website|online store|ecommerce platform|software platform|developer platform|unknown|your type of business)$/i.test(category.trim());
+  const trimmed = category.trim();
+  // "{Brand} alternatives" is a last-resort placeholder, not a real category.
+  if (/\balternatives?$/i.test(trimmed)) return true;
+  return /^(general business|business|company|website|online store|ecommerce platform|software platform|developer platform|unknown|your type of business)$/i.test(trimmed);
 }
 
 function categoryLooksLikeTechStack(category: string, homepageText: string) {
@@ -1817,7 +1820,7 @@ async function inferCategory(brandName: string, websiteUrl: string, fallbackChec
 
       const secondPassCategory = categoryFromHomepageText(`${brandName} ${domain} ${signals} ${fallbackText}`, domain);
       return {
-        category: isGenericCategory(secondPassCategory) ? `${displayNameFromDomain(domain)} category` : secondPassCategory,
+        category: isGenericCategory(secondPassCategory) ? "your type of business" : secondPassCategory,
         homepageText: signals,
       };
     }
@@ -1827,7 +1830,7 @@ async function inferCategory(brandName: string, websiteUrl: string, fallbackChec
 
   const fallbackCategory = categoryFromHomepageText(`${brandName} ${domain} ${fallbackText}`, domain);
   return {
-    category: isGenericCategory(fallbackCategory) ? `${displayNameFromDomain(domain)} category` : fallbackCategory,
+    category: isGenericCategory(fallbackCategory) ? "your type of business" : fallbackCategory,
     homepageText: fallbackText,
   };
 }
@@ -2508,8 +2511,28 @@ async function checkSchemaMarkup(websiteUrl: string): Promise<AuditCheckResult> 
 async function checkWikiPresence(brandName: string): Promise<AuditCheckResult> {
   const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(brandName)}`;
   const response = await withTimeout(url, { headers: { Accept: "application/json" } });
-  const found = response.status === 200;
-  const evidence = found ? await response.text() : `Wikipedia returned HTTP ${response.status}`;
+  const rawText = response.status === 200 ? await response.text() : "";
+
+  // Only count as a real brand article: a HTTP 200 summary that is NOT a
+  // disambiguation/homonym page and whose title actually matches the brand.
+  // Prevents false positives like "Respire" matching the "Respiration" page.
+  let found = false;
+  if (response.status === 200 && rawText) {
+    try {
+      const data = JSON.parse(rawText) as { type?: string; title?: string };
+      const pageType = typeof data.type === "string" ? data.type : "";
+      const normalize = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const brandKey = normalize(brandName);
+      const titleKey = normalize(data.title ?? "");
+      const isRealArticle = pageType !== "disambiguation" && pageType !== "no-extract";
+      const titleMatchesBrand = brandKey.length > 0 && (titleKey === brandKey || titleKey.startsWith(brandKey));
+      found = isRealArticle && titleMatchesBrand;
+    } catch {
+      found = false;
+    }
+  }
+
+  const evidence = response.status === 200 ? rawText : `Wikipedia returned HTTP ${response.status}`;
 
   return {
     check: "wikipedia",

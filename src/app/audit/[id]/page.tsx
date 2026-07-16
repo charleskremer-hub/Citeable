@@ -284,7 +284,9 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
       ? `Score expliqué : ${score}/100 combine ${brandMentionCount}/${questionCount || 0} recommandations, le sentiment IA, les concurrents cités et les bases techniques vérifiées.`
       : `Score explained: ${score}/100 combines ${brandMentionCount}/${questionCount || 0} recommendations, AI sentiment, cited competitors, and verified technical basics.`
     : "";
-  const categoryLine = complete && displayCategory
+  const rawCategory = audit.raw_results?.category ?? "";
+  const categoryIsGeneric = !rawCategory || /your type of business|type of business| category$/i.test(rawCategory);
+  const categoryLine = complete && displayCategory && !categoryIsGeneric
     ? locale === "fr" ? `Catégorie détectée : ${displayCategory}.` : `Detected category: ${displayCategory}.`
     : "";
   const phrases = [
