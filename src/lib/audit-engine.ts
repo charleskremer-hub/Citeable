@@ -2769,7 +2769,7 @@ function formulaTextForTier(tier: AuditTier) {
   }
 
   if (tier === "monitor_9eur") {
-    return "Your Monitor €9 report watches visibility with Gemini: does Gemini recommend your brand/domain, or cite competitors instead? Monitor adds 3 priority actions to do this week and monthly re-checks.";
+    return "Your Monitor €9 report watches visibility with Gemini: does Gemini recommend your brand/domain, or cite competitors instead? Monitor adds 3 priority actions to do this week and weekly re-checks.";
   }
 
   return formulaText();
