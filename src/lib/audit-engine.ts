@@ -2743,7 +2743,7 @@ async function generateBuyerIntentPromptsAI(
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ role: "user", parts: [{ text: instruction }] }],
-          generationConfig: { temperature: 0.7, maxOutputTokens: 900, responseMimeType: "application/json" },
+          generationConfig: { temperature: 0.7, maxOutputTokens: 2048, responseMimeType: "application/json" },
         }),
         signal: AbortSignal.timeout(ANSWER_TIMEOUT_MS),
       });
@@ -2795,7 +2795,8 @@ async function generateBuyerIntentPromptsAI(
 async function analyzeBuyerIntentPrompts(brandName: string, websiteUrl: string, domain: string, category: string, homepageText: string, tier: AuditTier, locale?: Locale): Promise<{ prompts: BuyerIntentPromptResult[]; promptDebug: string }> {
   const count = tier === "free" ? 3 : 12;
   const ai = await generateBuyerIntentPromptsAI(brandName, websiteUrl, category, homepageText, count, locale);
-  const usedAi = Boolean(ai.prompts && ai.prompts.length >= 3);
+  const minAi = tier === "free" ? 2 : 4;
+  const usedAi = Boolean(ai.prompts && ai.prompts.length >= minAi);
   const promptDebug = usedAi ? `ai:${ai.prompts?.length}` : `template(${ai.debug})`;
   const prompts = (usedAi && ai.prompts
     ? ai.prompts
