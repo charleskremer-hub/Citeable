@@ -9,6 +9,7 @@ import type { BrandSentiment, BuyerIntentPromptResult, IcpSegmentMetadata, Plain
 import AuditPoller from "./AuditPoller";
 import AgentAuditChat from "./AgentAuditChat";
 import FunnelCheckoutLink from "./FunnelCheckoutLink";
+import { VisibilityMonitorCard } from "./VisibilityMonitorCard";
 
 export const dynamic = "force-dynamic";
 
@@ -249,6 +250,11 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
     ...questions.flatMap((question) => question.competitors),
   ]).slice(0, 12);
   const rankedCompetitors = competitorCounts(questions.flatMap((question) => question.competitors));
+  const totalCompetitorMentions = rankedCompetitors.reduce((sum, item) => sum + item.count, 0);
+  const shareOfVoicePct =
+    brandMentionCount + totalCompetitorMentions > 0
+      ? Math.round((brandMentionCount / (brandMentionCount + totalCompetitorMentions)) * 100)
+      : 0;
   const answerEngine = audit.raw_results?.answerEngine;
   const answerEngineName = answerEngine?.engine ?? questions.flatMap((question) => question.surfaces).find((surface) => surface.kind === "ai_engine")?.engine ?? "Gemini";
   const isAnswerEngineReport = questions.some((question) => question.surfaces.some((surface) => surface.kind === "ai_engine"));
@@ -367,6 +373,24 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                 </ol>
               )}
             </div>
+
+            {complete && !failed && isFreeReport ? (
+              <VisibilityMonitorCard
+                auditId={audit.id}
+                websiteUrl={audit.website_url}
+                engine={answerEngineName}
+                score={score}
+                scoreColor={color}
+                recommended={brandMentionCount > 0}
+                brandMentionCount={brandMentionCount}
+                questionCount={questionCount}
+                shareOfVoicePct={shareOfVoicePct}
+                sentimentLabel={audit.raw_results?.brandSentiment?.label ?? "not_enough_signal"}
+                competitors={rankedCompetitors.map((item) => ({ name: item.name, count: item.count }))}
+                monitorUrl={MONITOR_CHECKOUT_URL}
+                locale={locale}
+              />
+            ) : null}
 
             {freeSampleProof ? (
               <section className="mt-6 overflow-hidden rounded-[1.5rem] border border-[#CAFF3C]/35 bg-[radial-gradient(circle_at_top_left,rgba(202,255,60,0.16),rgba(10,10,12,0.96)_46%)] p-4 shadow-2xl shadow-[#CAFF3C]/5 sm:p-5" data-testid="agent-fix-teaser">
