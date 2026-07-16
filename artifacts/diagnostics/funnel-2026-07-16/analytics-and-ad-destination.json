@@ -1,0 +1,204 @@
+{
+"ads_list":{
+  "campaigns": [
+    {
+      "campaign_local_id": "49b54812-ad64-42d0-bcd2-09344457d29f",
+      "status": "ACTIVE",
+      "effective_status": "ACTIVE",
+      "creative_status": "READY",
+      "daily_cap_usd": 5,
+      "spend_usd": 21.99,
+      "destination_url": "https://getciteable.nanocorp.app?utm_source=facebook&utm_medium=paid_social&utm_campaign=49b54812-ad64-42d0-bcd2-09344457d29f",
+      "countries": [
+        "US",
+        "GB",
+        "CA",
+        "AU"
+      ],
+      "last_synced_at": "2026-07-16T18:19:14.657503",
+      "created_at": "2026-07-04T22:06:18.333508"
+    }
+  ]
+}
+,
+"analytics_summary_30d":{
+  "since": "2026-06-16T00:00:00",
+  "until": "2026-07-16T18:20:40.836275",
+  "total_events": 2377,
+  "pageviews": 746,
+  "unique_visitors": 411,
+  "unique_sessions": 694,
+  "exceptions": 0
+}
+,
+"top_pages_30d":{
+  "since": "2026-06-16T00:00:00",
+  "until": "2026-07-16T18:20:41.264449",
+  "pages": [
+    {
+      "path": "/",
+      "pageviews": 701,
+      "unique_visitors": 357
+    },
+    {
+      "path": "/audit/2e4466cd-5b73-4ed9-9222-3e1e3c421156",
+      "pageviews": 6,
+      "unique_visitors": 2
+    },
+    {
+      "path": "/audit/37237082-af94-47c8-a291-d8ff48718f74",
+      "pageviews": 3,
+      "unique_visitors": 1
+    },
+    {
+      "path": "/en",
+      "pageviews": 3,
+      "unique_visitors": 3
+    },
+    {
+      "path": "/audit/6dc5e31e-c946-4001-8c85-7c2480ee0f64",
+      "pageviews": 3,
+      "unique_visitors": 1
+    },
+    {
+      "path": "/fr/ia-recommande-chaussures-sneakers-dtc",
+      "pageviews": 2,
+      "unique_visitors": 2
+    },
+    {
+      "path": "/audit",
+      "pageviews": 2,
+      "unique_visitors": 2
+    },
+    {
+      "path": "/audit/4dfc7ae6-123f-418a-98c2-c9dd848566b4",
+      "pageviews": 2,
+      "unique_visitors": 1
+    },
+    {
+      "path": "/audit/60f6f14c-4ecc-4ba2-be80-d90418f75382",
+      "pageviews": 2,
+      "unique_visitors": 1
+    },
+    {
+      "path": "/audit/930fe232-6213-4384-a625-1039caaddcf5",
+      "pageviews": 2,
+      "unique_visitors": 1
+    },
+    {
+      "path": "/audit/da264f96-94bc-4ca2-bd20-0e1d9df8b826",
+      "pageviews": 2,
+      "unique_visitors": 2
+    },
+    {
+      "path": "/en/does-ai-recommend-dtc-sneakers",
+      "pageviews": 2,
+      "unique_visitors": 2
+    },
+    {
+      "path": "/audit/5d5c4946-10ec-4691-9c42-11a1e75f5301",
+      "pageviews": 1,
+      "unique_visitors": 1
+    },
+    {
+      "path": "/audit/0891808c-f4b5-4357-8944-11fb1b63f2b2",
+      "pageviews": 1,
+      "unique_visitors": 1
+    },
+    {
+      "path": "/audit/69feda01-eea0-4eca-8c5e-2fba39d068ac",
+      "pageviews": 1,
+      "unique_visitors": 1
+    },
+    {
+      "path": "/audit/26219621-0a04-469e-b892-42fc0fa204a4",
+      "pageviews": 1,
+      "unique_visitors": 1
+    },
+    {
+      "path": "/audit/880aeb2e-7e16-4ce1-afd0-fd6128c5b323",
+      "pageviews": 1,
+      "unique_visitors": 1
+    },
+    {
+      "path": "/audit/8cfcbc94-5d7d-4ff0-a4d4-28276a9cbeb7",
+      "pageviews": 1,
+      "unique_visitors": 1
+    },
+    {
+      "path": "/fr",
+      "pageviews": 1,
+      "unique_visitors": 1
+    },
+    {
+      "path": "/fr/ia-recommande-cafe-specialite",
+      "pageviews": 1,
+      "unique_visitors": 1
+    }
+  ]
+}
+,
+"top_referrers_30d":{
+  "since": "2026-06-16T00:00:00",
+  "until": "2026-07-16T18:20:41.885703",
+  "referrers": [
+    {
+      "referrer_host": "(direct)",
+      "visits": 469,
+      "unique_visitors": 140
+    },
+    {
+      "referrer_host": "l.facebook.com",
+      "visits": 247,
+      "unique_visitors": 193
+    },
+    {
+      "referrer_host": "www.google.com",
+      "visits": 20,
+      "unique_visitors": 20
+    },
+    {
+      "referrer_host": "instagram.com",
+      "visits": 7,
+      "unique_visitors": 7
+    },
+    {
+      "referrer_host": "www.facebook.com",
+      "visits": 2,
+      "unique_visitors": 2
+    },
+    {
+      "referrer_host": "facebook.com",
+      "visits": 1,
+      "unique_visitors": 1
+    }
+  ]
+}
+,
+"top_events_30d":{
+  "since": "2026-06-16T00:00:00",
+  "until": "2026-07-16T18:20:42.571898",
+  "events": [
+    {
+      "event_name": "audit_requested",
+      "count": 24,
+      "unique_visitors": 1
+    },
+    {
+      "event_name": "$rageclick",
+      "count": 11,
+      "unique_visitors": 2
+    },
+    {
+      "event_name": "purchase_started",
+      "count": 3,
+      "unique_visitors": 1
+    },
+    {
+      "event_name": "subscribe_clicked",
+      "count": 1,
+      "unique_visitors": 1
+    }
+  ]
+}
+}

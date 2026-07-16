@@ -1,3 +1,26 @@
+## 2026-07-16 — Funnel step 1 diagnostic for Facebook ad traffic
+
+### Findings
+- Read existing `DOCS.md` first, then ran a focused diagnostic of the live landing page, client analytics wiring, NanoCorp analytics, and active Meta ad destination.
+- Fresh `agent-browser` mobile test at 390x844 showed the audit form is visible above the fold: business input y=248, website y=312, email y=376, submit button y=440. Desktop at 1440x900 also showed the form above the fold: business input y=206, submit y=398.
+- A real mobile submission using `Allbirds` / `allbirds.com` generated audit `3e389183-385d-46b7-bc49-0c3c6f66dbbc` and rendered the report at `/audit/3e389183-385d-46b7-bc49-0c3c6f66dbbc` with score `100/100`.
+- Instrumentation is not broken for successful submissions: `audit_requested` is emitted in `src/app/HomeClient.tsx:49` after `/api/capture-email` returns a successful response and redirect URL. This means the event can undercount attempts because it does not fire on raw submit clicks, HTML5 validation blocks, API errors, or rage-click/abandonment before success.
+- The mobile form has a likely trust/friction issue: the form card title/subtitle/free badge are hidden on mobile by the `hidden ... sm:flex` block at `src/app/HomeClient.tsx:96`, while all three fields including email are required before value is shown (`src/app/HomeClient.tsx:110` through `src/app/HomeClient.tsx:150`).
+- Fresh mobile and desktop `agent-browser` loads had no client-side console/page errors. Production runtime logs are noisy with PostgreSQL SSL warnings and occasional `terminating connection due to administrator command`, but the tested capture still returned 201 and generated an audit.
+- `nanocorp ads list` shows the active Facebook ad destination is `https://getciteable.nanocorp.app?utm_source=facebook&utm_medium=paid_social&utm_campaign=49b54812-ad64-42d0-bcd2-09344457d29f`, which lands on `/`; it is not sending users to a route that hides the form.
+- 30-day NanoCorp analytics at investigation time: `/` had 701 pageviews / 357 unique visitors; `l.facebook.com` had 247 visits / 193 unique visitors; `audit_requested` had 24 events / 1 unique visitor; `$rageclick` had 11 events / 2 unique visitors.
+
+### Artifacts
+- Written diagnosis: `artifacts/diagnostics/funnel-2026-07-16/diagnosis.md`.
+- Screenshots: `artifacts/diagnostics/funnel-2026-07-16/mobile-above-fold.png`, `artifacts/diagnostics/funnel-2026-07-16/desktop-above-fold.png`, and `artifacts/diagnostics/funnel-2026-07-16/mobile-filled-form.png`.
+- Event proof: `artifacts/diagnostics/funnel-2026-07-16/mobile-posthog-event-sequence.json` includes `audit_requested` with `source: hero_cta`, `brand_name: Allbirds`, audit id `3e389183-385d-46b7-bc49-0c3c6f66dbbc`, and `locale: en`.
+- Analytics/ad proof: `artifacts/diagnostics/funnel-2026-07-16/analytics-and-ad-destination.json`.
+
+### Recommended follow-ups
+- Add `audit_form_started`, `audit_submit_clicked`, `audit_validation_blocked`, and `audit_submit_failed` events so the next ad spend distinguishes no intent from validation/API friction.
+- Make a small mobile trust fix by showing the form title/subtitle/free badge on mobile and testing a two-step flow that asks for email after preview/sample value.
+- Add capture attributes or raw rageclick inspection for the form fields, submit button, and nav CTA to identify the exact rageclick target.
+
 ## 2026-07-11 — Final Charles delivery: 3 live audit proofs + Meta ad sets
 
 ### Findings

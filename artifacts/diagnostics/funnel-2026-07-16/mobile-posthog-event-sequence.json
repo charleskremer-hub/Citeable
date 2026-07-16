@@ -1,0 +1,682 @@
+[
+  {
+    "event": "$autocapture",
+    "href": "https://getciteable.nanocorp.app/?diag=funnel-20260716-mobile-event-seq",
+    "properties": {
+      "$ce_version": 1,
+      "$elements": [
+        {
+          "$el_text": "",
+          "attr__id": "brand-name",
+          "nth_child": 2,
+          "nth_of_type": 1,
+          "tag_name": "input"
+        },
+        {
+          "$el_text": "",
+          "attr__class": "flex flex-col gap-3",
+          "classes": [
+            "flex",
+            "flex-col",
+            "gap-3"
+          ],
+          "nth_child": 2,
+          "nth_of_type": 1,
+          "tag_name": "form"
+        },
+        {
+          "attr__class": "rounded-[1.35rem] border border-white/10 bg-[#111116]/95 p-4 shadow-2xl shadow-black/30 sm:p-6",
+          "attr__id": "audit",
+          "classes": [
+            "rounded-[1.35rem]",
+            "border",
+            "border-white/10",
+            "bg-[#111116]/95",
+            "p-4",
+            "shadow-2xl",
+            "shadow-black/30",
+            "sm:p-6"
+          ],
+          "nth_child": 2,
+          "nth_of_type": 2,
+          "tag_name": "div"
+        },
+        {
+          "attr__class": "relative grid gap-3 sm:gap-5 lg:grid-cols-[1.02fr_0.78fr] lg:items-center lg:gap-12",
+          "classes": [
+            "relative",
+            "grid",
+            "gap-3",
+            "sm:gap-5",
+            "lg:grid-cols-[1.02fr_0.78fr]",
+            "lg:items-center",
+            "lg:gap-12"
+          ],
+          "nth_child": 2,
+          "nth_of_type": 2,
+          "tag_name": "div"
+        },
+        {
+          "attr__class": "relative mx-auto max-w-5xl overflow-hidden px-5 pb-12 pt-3 sm:px-6 sm:pb-20 sm:pt-12",
+          "attr__id": "hero",
+          "classes": [
+            "relative",
+            "mx-auto",
+            "max-w-5xl",
+            "overflow-hidden",
+            "px-5",
+            "pb-12",
+            "pt-3",
+            "sm:px-6",
+            "sm:pb-20",
+            "sm:pt-12"
+          ],
+          "nth_child": 1,
+          "nth_of_type": 1,
+          "tag_name": "section"
+        },
+        {
+          "nth_child": 2,
+          "nth_of_type": 1,
+          "tag_name": "main"
+        },
+        {
+          "attr__class": "min-h-screen bg-[#09090B] text-[#F0F0EC]",
+          "attr__style": "font-family:var(--font-sans)",
+          "classes": [
+            "min-h-screen",
+            "bg-[#09090B]",
+            "text-[#F0F0EC]"
+          ],
+          "nth_child": 2,
+          "nth_of_type": 2,
+          "tag_name": "div"
+        },
+        {
+          "attr__class": "min-h-full bg-[#09090B] text-[#F0F0EC] antialiased",
+          "classes": [
+            "min-h-full",
+            "bg-[#09090B]",
+            "text-[#F0F0EC]",
+            "antialiased"
+          ],
+          "nth_child": 2,
+          "nth_of_type": 1,
+          "tag_name": "body"
+        }
+      ],
+      "$elements_chain": "input:attr__id=\"brand-name\"attr_id=\"brand-name\"nth-child=\"2\"nth-of-type=\"1\";form.flex.flex-col.gap-3:attr__class=\"flex flex-col gap-3\"nth-child=\"2\"nth-of-type=\"1\";div.bg-[#111116]/95.border.border-white/10.p-4.rounded-[1.35rem].shadow-2xl.shadow-black/30.sm:p-6:attr__class=\"rounded-[1.35rem] border border-white/10 bg-[#111116]/95 p-4 shadow-2xl shadow-black/30 sm:p-6\"attr__id=\"audit\"attr_id=\"audit\"nth-child=\"2\"nth-of-type=\"2\";div.gap-3.grid.lg:gap-12.lg:grid-cols-[1.02fr_0.78fr].lg:items-center.relative.sm:gap-5:attr__class=\"relative grid gap-3 sm:gap-5 lg:grid-cols-[1.02fr_0.78fr] lg:items-center lg:gap-12\"nth-child=\"2\"nth-of-type=\"2\";section.max-w-5xl.mx-auto.overflow-hidden.pb-12.pt-3.px-5.relative.sm:pb-20.sm:pt-12.sm:px-6:attr__class=\"relative mx-auto max-w-5xl overflow-hidden px-5 pb-12 pt-3 sm:px-6 sm:pb-20 sm:pt-12\"attr__id=\"hero\"attr_id=\"hero\"nth-child=\"1\"nth-of-type=\"1\";main:nth-child=\"2\"nth-of-type=\"1\";div.bg-[#09090B].min-h-screen.text-[#F0F0EC]:attr__class=\"min-h-screen bg-[#09090B] text-[#F0F0EC]\"attr__style=\"font-family:var(--font-sans)\"nth-child=\"2\"nth-of-type=\"2\";body.antialiased.bg-[#09090B].min-h-full.text-[#F0F0EC]:attr__class=\"min-h-full bg-[#09090B] text-[#F0F0EC] antialiased\"nth-child=\"2\"nth-of-type=\"1\"",
+      "$event_type": "change"
+    },
+    "ts": 1784225883857
+  },
+  {
+    "event": "$autocapture",
+    "href": "https://getciteable.nanocorp.app/?diag=funnel-20260716-mobile-event-seq",
+    "properties": {
+      "$ce_version": 1,
+      "$elements": [
+        {
+          "$el_text": "",
+          "attr__id": "website-url",
+          "nth_child": 4,
+          "nth_of_type": 2,
+          "tag_name": "input"
+        },
+        {
+          "$el_text": "",
+          "attr__class": "flex flex-col gap-3",
+          "classes": [
+            "flex",
+            "flex-col",
+            "gap-3"
+          ],
+          "nth_child": 2,
+          "nth_of_type": 1,
+          "tag_name": "form"
+        },
+        {
+          "attr__class": "rounded-[1.35rem] border border-white/10 bg-[#111116]/95 p-4 shadow-2xl shadow-black/30 sm:p-6",
+          "attr__id": "audit",
+          "classes": [
+            "rounded-[1.35rem]",
+            "border",
+            "border-white/10",
+            "bg-[#111116]/95",
+            "p-4",
+            "shadow-2xl",
+            "shadow-black/30",
+            "sm:p-6"
+          ],
+          "nth_child": 2,
+          "nth_of_type": 2,
+          "tag_name": "div"
+        },
+        {
+          "attr__class": "relative grid gap-3 sm:gap-5 lg:grid-cols-[1.02fr_0.78fr] lg:items-center lg:gap-12",
+          "classes": [
+            "relative",
+            "grid",
+            "gap-3",
+            "sm:gap-5",
+            "lg:grid-cols-[1.02fr_0.78fr]",
+            "lg:items-center",
+            "lg:gap-12"
+          ],
+          "nth_child": 2,
+          "nth_of_type": 2,
+          "tag_name": "div"
+        },
+        {
+          "attr__class": "relative mx-auto max-w-5xl overflow-hidden px-5 pb-12 pt-3 sm:px-6 sm:pb-20 sm:pt-12",
+          "attr__id": "hero",
+          "classes": [
+            "relative",
+            "mx-auto",
+            "max-w-5xl",
+            "overflow-hidden",
+            "px-5",
+            "pb-12",
+            "pt-3",
+            "sm:px-6",
+            "sm:pb-20",
+            "sm:pt-12"
+          ],
+          "nth_child": 1,
+          "nth_of_type": 1,
+          "tag_name": "section"
+        },
+        {
+          "nth_child": 2,
+          "nth_of_type": 1,
+          "tag_name": "main"
+        },
+        {
+          "attr__class": "min-h-screen bg-[#09090B] text-[#F0F0EC]",
+          "attr__style": "font-family:var(--font-sans)",
+          "classes": [
+            "min-h-screen",
+            "bg-[#09090B]",
+            "text-[#F0F0EC]"
+          ],
+          "nth_child": 2,
+          "nth_of_type": 2,
+          "tag_name": "div"
+        },
+        {
+          "attr__class": "min-h-full bg-[#09090B] text-[#F0F0EC] antialiased",
+          "classes": [
+            "min-h-full",
+            "bg-[#09090B]",
+            "text-[#F0F0EC]",
+            "antialiased"
+          ],
+          "nth_child": 2,
+          "nth_of_type": 1,
+          "tag_name": "body"
+        }
+      ],
+      "$elements_chain": "input:attr__id=\"website-url\"attr_id=\"website-url\"nth-child=\"4\"nth-of-type=\"2\";form.flex.flex-col.gap-3:attr__class=\"flex flex-col gap-3\"nth-child=\"2\"nth-of-type=\"1\";div.bg-[#111116]/95.border.border-white/10.p-4.rounded-[1.35rem].shadow-2xl.shadow-black/30.sm:p-6:attr__class=\"rounded-[1.35rem] border border-white/10 bg-[#111116]/95 p-4 shadow-2xl shadow-black/30 sm:p-6\"attr__id=\"audit\"attr_id=\"audit\"nth-child=\"2\"nth-of-type=\"2\";div.gap-3.grid.lg:gap-12.lg:grid-cols-[1.02fr_0.78fr].lg:items-center.relative.sm:gap-5:attr__class=\"relative grid gap-3 sm:gap-5 lg:grid-cols-[1.02fr_0.78fr] lg:items-center lg:gap-12\"nth-child=\"2\"nth-of-type=\"2\";section.max-w-5xl.mx-auto.overflow-hidden.pb-12.pt-3.px-5.relative.sm:pb-20.sm:pt-12.sm:px-6:attr__class=\"relative mx-auto max-w-5xl overflow-hidden px-5 pb-12 pt-3 sm:px-6 sm:pb-20 sm:pt-12\"attr__id=\"hero\"attr_id=\"hero\"nth-child=\"1\"nth-of-type=\"1\";main:nth-child=\"2\"nth-of-type=\"1\";div.bg-[#09090B].min-h-screen.text-[#F0F0EC]:attr__class=\"min-h-screen bg-[#09090B] text-[#F0F0EC]\"attr__style=\"font-family:var(--font-sans)\"nth-child=\"2\"nth-of-type=\"2\";body.antialiased.bg-[#09090B].min-h-full.text-[#F0F0EC]:attr__class=\"min-h-full bg-[#09090B] text-[#F0F0EC] antialiased\"nth-child=\"2\"nth-of-type=\"1\"",
+      "$event_type": "change"
+    },
+    "ts": 1784225884018
+  },
+  {
+    "event": "$autocapture",
+    "href": "https://getciteable.nanocorp.app/?diag=funnel-20260716-mobile-event-seq",
+    "properties": {
+      "$ce_version": 1,
+      "$elements": [
+        {
+          "$el_text": "",
+          "attr__id": "email",
+          "nth_child": 6,
+          "nth_of_type": 3,
+          "tag_name": "input"
+        },
+        {
+          "$el_text": "",
+          "attr__class": "flex flex-col gap-3",
+          "classes": [
+            "flex",
+            "flex-col",
+            "gap-3"
+          ],
+          "nth_child": 2,
+          "nth_of_type": 1,
+          "tag_name": "form"
+        },
+        {
+          "attr__class": "rounded-[1.35rem] border border-white/10 bg-[#111116]/95 p-4 shadow-2xl shadow-black/30 sm:p-6",
+          "attr__id": "audit",
+          "classes": [
+            "rounded-[1.35rem]",
+            "border",
+            "border-white/10",
+            "bg-[#111116]/95",
+            "p-4",
+            "shadow-2xl",
+            "shadow-black/30",
+            "sm:p-6"
+          ],
+          "nth_child": 2,
+          "nth_of_type": 2,
+          "tag_name": "div"
+        },
+        {
+          "attr__class": "relative grid gap-3 sm:gap-5 lg:grid-cols-[1.02fr_0.78fr] lg:items-center lg:gap-12",
+          "classes": [
+            "relative",
+            "grid",
+            "gap-3",
+            "sm:gap-5",
+            "lg:grid-cols-[1.02fr_0.78fr]",
+            "lg:items-center",
+            "lg:gap-12"
+          ],
+          "nth_child": 2,
+          "nth_of_type": 2,
+          "tag_name": "div"
+        },
+        {
+          "attr__class": "relative mx-auto max-w-5xl overflow-hidden px-5 pb-12 pt-3 sm:px-6 sm:pb-20 sm:pt-12",
+          "attr__id": "hero",
+          "classes": [
+            "relative",
+            "mx-auto",
+            "max-w-5xl",
+            "overflow-hidden",
+            "px-5",
+            "pb-12",
+            "pt-3",
+            "sm:px-6",
+            "sm:pb-20",
+            "sm:pt-12"
+          ],
+          "nth_child": 1,
+          "nth_of_type": 1,
+          "tag_name": "section"
+        },
+        {
+          "nth_child": 2,
+          "nth_of_type": 1,
+          "tag_name": "main"
+        },
+        {
+          "attr__class": "min-h-screen bg-[#09090B] text-[#F0F0EC]",
+          "attr__style": "font-family:var(--font-sans)",
+          "classes": [
+            "min-h-screen",
+            "bg-[#09090B]",
+            "text-[#F0F0EC]"
+          ],
+          "nth_child": 2,
+          "nth_of_type": 2,
+          "tag_name": "div"
+        },
+        {
+          "attr__class": "min-h-full bg-[#09090B] text-[#F0F0EC] antialiased",
+          "classes": [
+            "min-h-full",
+            "bg-[#09090B]",
+            "text-[#F0F0EC]",
+            "antialiased"
+          ],
+          "nth_child": 2,
+          "nth_of_type": 1,
+          "tag_name": "body"
+        }
+      ],
+      "$elements_chain": "input:attr__id=\"email\"attr_id=\"email\"nth-child=\"6\"nth-of-type=\"3\";form.flex.flex-col.gap-3:attr__class=\"flex flex-col gap-3\"nth-child=\"2\"nth-of-type=\"1\";div.bg-[#111116]/95.border.border-white/10.p-4.rounded-[1.35rem].shadow-2xl.shadow-black/30.sm:p-6:attr__class=\"rounded-[1.35rem] border border-white/10 bg-[#111116]/95 p-4 shadow-2xl shadow-black/30 sm:p-6\"attr__id=\"audit\"attr_id=\"audit\"nth-child=\"2\"nth-of-type=\"2\";div.gap-3.grid.lg:gap-12.lg:grid-cols-[1.02fr_0.78fr].lg:items-center.relative.sm:gap-5:attr__class=\"relative grid gap-3 sm:gap-5 lg:grid-cols-[1.02fr_0.78fr] lg:items-center lg:gap-12\"nth-child=\"2\"nth-of-type=\"2\";section.max-w-5xl.mx-auto.overflow-hidden.pb-12.pt-3.px-5.relative.sm:pb-20.sm:pt-12.sm:px-6:attr__class=\"relative mx-auto max-w-5xl overflow-hidden px-5 pb-12 pt-3 sm:px-6 sm:pb-20 sm:pt-12\"attr__id=\"hero\"attr_id=\"hero\"nth-child=\"1\"nth-of-type=\"1\";main:nth-child=\"2\"nth-of-type=\"1\";div.bg-[#09090B].min-h-screen.text-[#F0F0EC]:attr__class=\"min-h-screen bg-[#09090B] text-[#F0F0EC]\"attr__style=\"font-family:var(--font-sans)\"nth-child=\"2\"nth-of-type=\"2\";body.antialiased.bg-[#09090B].min-h-full.text-[#F0F0EC]:attr__class=\"min-h-full bg-[#09090B] text-[#F0F0EC] antialiased\"nth-child=\"2\"nth-of-type=\"1\"",
+      "$event_type": "change"
+    },
+    "ts": 1784225884184
+  },
+  {
+    "event": "$autocapture",
+    "href": "https://getciteable.nanocorp.app/?diag=funnel-20260716-mobile-event-seq",
+    "properties": {
+      "$ce_version": 1,
+      "$el_text": "Run my free audit",
+      "$elements": [
+        {
+          "$el_text": "Run my free audit",
+          "attr__class": "rounded-[14px] bg-[#CAFF3C] px-5 py-3.5 text-base font-black tracking-[-0.01em] text-[#09090B] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60",
+          "attr__type": "submit",
+          "classes": [
+            "rounded-[14px]",
+            "bg-[#CAFF3C]",
+            "px-5",
+            "py-3.5",
+            "text-base",
+            "font-black",
+            "tracking-[-0.01em]",
+            "text-[#09090B]",
+            "transition",
+            "hover:brightness-110",
+            "disabled:cursor-not-allowed",
+            "disabled:opacity-60"
+          ],
+          "nth_child": 7,
+          "nth_of_type": 1,
+          "tag_name": "button"
+        },
+        {
+          "$el_text": "",
+          "attr__class": "flex flex-col gap-3",
+          "classes": [
+            "flex",
+            "flex-col",
+            "gap-3"
+          ],
+          "nth_child": 2,
+          "nth_of_type": 1,
+          "tag_name": "form"
+        },
+        {
+          "attr__class": "rounded-[1.35rem] border border-white/10 bg-[#111116]/95 p-4 shadow-2xl shadow-black/30 sm:p-6",
+          "attr__id": "audit",
+          "classes": [
+            "rounded-[1.35rem]",
+            "border",
+            "border-white/10",
+            "bg-[#111116]/95",
+            "p-4",
+            "shadow-2xl",
+            "shadow-black/30",
+            "sm:p-6"
+          ],
+          "nth_child": 2,
+          "nth_of_type": 2,
+          "tag_name": "div"
+        },
+        {
+          "attr__class": "relative grid gap-3 sm:gap-5 lg:grid-cols-[1.02fr_0.78fr] lg:items-center lg:gap-12",
+          "classes": [
+            "relative",
+            "grid",
+            "gap-3",
+            "sm:gap-5",
+            "lg:grid-cols-[1.02fr_0.78fr]",
+            "lg:items-center",
+            "lg:gap-12"
+          ],
+          "nth_child": 2,
+          "nth_of_type": 2,
+          "tag_name": "div"
+        },
+        {
+          "attr__class": "relative mx-auto max-w-5xl overflow-hidden px-5 pb-12 pt-3 sm:px-6 sm:pb-20 sm:pt-12",
+          "attr__id": "hero",
+          "classes": [
+            "relative",
+            "mx-auto",
+            "max-w-5xl",
+            "overflow-hidden",
+            "px-5",
+            "pb-12",
+            "pt-3",
+            "sm:px-6",
+            "sm:pb-20",
+            "sm:pt-12"
+          ],
+          "nth_child": 1,
+          "nth_of_type": 1,
+          "tag_name": "section"
+        },
+        {
+          "nth_child": 2,
+          "nth_of_type": 1,
+          "tag_name": "main"
+        },
+        {
+          "attr__class": "min-h-screen bg-[#09090B] text-[#F0F0EC]",
+          "attr__style": "font-family:var(--font-sans)",
+          "classes": [
+            "min-h-screen",
+            "bg-[#09090B]",
+            "text-[#F0F0EC]"
+          ],
+          "nth_child": 2,
+          "nth_of_type": 2,
+          "tag_name": "div"
+        },
+        {
+          "attr__class": "min-h-full bg-[#09090B] text-[#F0F0EC] antialiased",
+          "classes": [
+            "min-h-full",
+            "bg-[#09090B]",
+            "text-[#F0F0EC]",
+            "antialiased"
+          ],
+          "nth_child": 2,
+          "nth_of_type": 1,
+          "tag_name": "body"
+        }
+      ],
+      "$elements_chain": "button.bg-[#CAFF3C].disabled:cursor-not-allowed.disabled:opacity-60.font-black.hover:brightness-110.px-5.py-3.5.rounded-[14px].text-[#09090B].text-base.tracking-[-0.01em].transition:attr__class=\"rounded-[14px] bg-[#CAFF3C] px-5 py-3.5 text-base font-black tracking-[-0.01em] text-[#09090B] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60\"attr__type=\"submit\"nth-child=\"7\"nth-of-type=\"1\"text=\"Run my free audit\";form.flex.flex-col.gap-3:attr__class=\"flex flex-col gap-3\"nth-child=\"2\"nth-of-type=\"1\";div.bg-[#111116]/95.border.border-white/10.p-4.rounded-[1.35rem].shadow-2xl.shadow-black/30.sm:p-6:attr__class=\"rounded-[1.35rem] border border-white/10 bg-[#111116]/95 p-4 shadow-2xl shadow-black/30 sm:p-6\"attr__id=\"audit\"attr_id=\"audit\"nth-child=\"2\"nth-of-type=\"2\";div.gap-3.grid.lg:gap-12.lg:grid-cols-[1.02fr_0.78fr].lg:items-center.relative.sm:gap-5:attr__class=\"relative grid gap-3 sm:gap-5 lg:grid-cols-[1.02fr_0.78fr] lg:items-center lg:gap-12\"nth-child=\"2\"nth-of-type=\"2\";section.max-w-5xl.mx-auto.overflow-hidden.pb-12.pt-3.px-5.relative.sm:pb-20.sm:pt-12.sm:px-6:attr__class=\"relative mx-auto max-w-5xl overflow-hidden px-5 pb-12 pt-3 sm:px-6 sm:pb-20 sm:pt-12\"attr__id=\"hero\"attr_id=\"hero\"nth-child=\"1\"nth-of-type=\"1\";main:nth-child=\"2\"nth-of-type=\"1\";div.bg-[#09090B].min-h-screen.text-[#F0F0EC]:attr__class=\"min-h-screen bg-[#09090B] text-[#F0F0EC]\"attr__style=\"font-family:var(--font-sans)\"nth-child=\"2\"nth-of-type=\"2\";body.antialiased.bg-[#09090B].min-h-full.text-[#F0F0EC]:attr__class=\"min-h-full bg-[#09090B] text-[#F0F0EC] antialiased\"nth-child=\"2\"nth-of-type=\"1\"",
+      "$event_type": "click"
+    },
+    "ts": 1784225884186
+  },
+  {
+    "event": "$autocapture",
+    "href": "https://getciteable.nanocorp.app/?diag=funnel-20260716-mobile-event-seq",
+    "properties": {
+      "$ce_version": 1,
+      "$elements": [
+        {
+          "$el_text": "",
+          "attr__class": "flex flex-col gap-3",
+          "classes": [
+            "flex",
+            "flex-col",
+            "gap-3"
+          ],
+          "nth_child": 2,
+          "nth_of_type": 1,
+          "tag_name": "form"
+        },
+        {
+          "attr__class": "rounded-[1.35rem] border border-white/10 bg-[#111116]/95 p-4 shadow-2xl shadow-black/30 sm:p-6",
+          "attr__id": "audit",
+          "classes": [
+            "rounded-[1.35rem]",
+            "border",
+            "border-white/10",
+            "bg-[#111116]/95",
+            "p-4",
+            "shadow-2xl",
+            "shadow-black/30",
+            "sm:p-6"
+          ],
+          "nth_child": 2,
+          "nth_of_type": 2,
+          "tag_name": "div"
+        },
+        {
+          "attr__class": "relative grid gap-3 sm:gap-5 lg:grid-cols-[1.02fr_0.78fr] lg:items-center lg:gap-12",
+          "classes": [
+            "relative",
+            "grid",
+            "gap-3",
+            "sm:gap-5",
+            "lg:grid-cols-[1.02fr_0.78fr]",
+            "lg:items-center",
+            "lg:gap-12"
+          ],
+          "nth_child": 2,
+          "nth_of_type": 2,
+          "tag_name": "div"
+        },
+        {
+          "attr__class": "relative mx-auto max-w-5xl overflow-hidden px-5 pb-12 pt-3 sm:px-6 sm:pb-20 sm:pt-12",
+          "attr__id": "hero",
+          "classes": [
+            "relative",
+            "mx-auto",
+            "max-w-5xl",
+            "overflow-hidden",
+            "px-5",
+            "pb-12",
+            "pt-3",
+            "sm:px-6",
+            "sm:pb-20",
+            "sm:pt-12"
+          ],
+          "nth_child": 1,
+          "nth_of_type": 1,
+          "tag_name": "section"
+        },
+        {
+          "nth_child": 2,
+          "nth_of_type": 1,
+          "tag_name": "main"
+        },
+        {
+          "attr__class": "min-h-screen bg-[#09090B] text-[#F0F0EC]",
+          "attr__style": "font-family:var(--font-sans)",
+          "classes": [
+            "min-h-screen",
+            "bg-[#09090B]",
+            "text-[#F0F0EC]"
+          ],
+          "nth_child": 2,
+          "nth_of_type": 2,
+          "tag_name": "div"
+        },
+        {
+          "attr__class": "min-h-full bg-[#09090B] text-[#F0F0EC] antialiased",
+          "classes": [
+            "min-h-full",
+            "bg-[#09090B]",
+            "text-[#F0F0EC]",
+            "antialiased"
+          ],
+          "nth_child": 2,
+          "nth_of_type": 1,
+          "tag_name": "body"
+        }
+      ],
+      "$elements_chain": "form.flex.flex-col.gap-3:attr__class=\"flex flex-col gap-3\"nth-child=\"2\"nth-of-type=\"1\";div.bg-[#111116]/95.border.border-white/10.p-4.rounded-[1.35rem].shadow-2xl.shadow-black/30.sm:p-6:attr__class=\"rounded-[1.35rem] border border-white/10 bg-[#111116]/95 p-4 shadow-2xl shadow-black/30 sm:p-6\"attr__id=\"audit\"attr_id=\"audit\"nth-child=\"2\"nth-of-type=\"2\";div.gap-3.grid.lg:gap-12.lg:grid-cols-[1.02fr_0.78fr].lg:items-center.relative.sm:gap-5:attr__class=\"relative grid gap-3 sm:gap-5 lg:grid-cols-[1.02fr_0.78fr] lg:items-center lg:gap-12\"nth-child=\"2\"nth-of-type=\"2\";section.max-w-5xl.mx-auto.overflow-hidden.pb-12.pt-3.px-5.relative.sm:pb-20.sm:pt-12.sm:px-6:attr__class=\"relative mx-auto max-w-5xl overflow-hidden px-5 pb-12 pt-3 sm:px-6 sm:pb-20 sm:pt-12\"attr__id=\"hero\"attr_id=\"hero\"nth-child=\"1\"nth-of-type=\"1\";main:nth-child=\"2\"nth-of-type=\"1\";div.bg-[#09090B].min-h-screen.text-[#F0F0EC]:attr__class=\"min-h-screen bg-[#09090B] text-[#F0F0EC]\"attr__style=\"font-family:var(--font-sans)\"nth-child=\"2\"nth-of-type=\"2\";body.antialiased.bg-[#09090B].min-h-full.text-[#F0F0EC]:attr__class=\"min-h-full bg-[#09090B] text-[#F0F0EC] antialiased\"nth-child=\"2\"nth-of-type=\"1\"",
+      "$event_type": "submit"
+    },
+    "ts": 1784225884187
+  },
+  {
+    "event": "audit_requested",
+    "href": "https://getciteable.nanocorp.app/?diag=funnel-20260716-mobile-event-seq",
+    "properties": {
+      "audit_id": "3e389183-385d-46b7-bc49-0c3c6f66dbbc",
+      "brand_name": "Allbirds",
+      "locale": "en",
+      "source": "hero_cta"
+    },
+    "ts": 1784225884465
+  },
+  {
+    "event": "$pageleave",
+    "href": "https://getciteable.nanocorp.app/?diag=funnel-20260716-mobile-event-seq",
+    "ts": 1784225884760
+  },
+  {
+    "event": "$web_vitals",
+    "href": "https://getciteable.nanocorp.app/?diag=funnel-20260716-mobile-event-seq",
+    "properties": {
+      "$web_vitals_CLS_event": {
+        "$current_url": "https://getciteable.nanocorp.app/?diag=funnel-20260716-mobile-event-seq",
+        "$session_id": "019f6c25-8216-787e-a672-1d5b2ab7ab04",
+        "$window_id": "019f6c25-8216-787e-a672-1d5c5bb43b59",
+        "delta": 0,
+        "entries": [],
+        "id": "v5-1784225881738-4016274276152",
+        "name": "CLS",
+        "navigationType": "navigate",
+        "rating": "good",
+        "timestamp": 1784225884761,
+        "value": 0
+      },
+      "$web_vitals_CLS_value": 0,
+      "$web_vitals_FCP_event": {
+        "$current_url": "https://getciteable.nanocorp.app/?diag=funnel-20260716-mobile-event-seq",
+        "$session_id": "019f6c25-8216-787e-a672-1d5b2ab7ab04",
+        "$window_id": "019f6c25-8216-787e-a672-1d5c5bb43b59",
+        "delta": 244,
+        "entries": [
+          {
+            "duration": 0,
+            "entryType": "paint",
+            "name": "first-contentful-paint",
+            "navigationId": 5978,
+            "paintTime": 216,
+            "presentationTime": 244,
+            "startTime": 244
+          }
+        ],
+        "id": "v5-1784225881720-5465322140701",
+        "name": "FCP",
+        "navigationType": "navigate",
+        "rating": "good",
+        "timestamp": 1784225881738,
+        "value": 244
+      },
+      "$web_vitals_FCP_value": 244,
+      "$web_vitals_INP_event": {
+        "$current_url": "https://getciteable.nanocorp.app/?diag=funnel-20260716-mobile-event-seq",
+        "$session_id": "019f6c25-8216-787e-a672-1d5b2ab7ab04",
+        "$window_id": "019f6c25-8216-787e-a672-1d5c5bb43b59",
+        "delta": 8,
+        "entries": [
+          {
+            "cancelable": true,
+            "duration": 8,
+            "entryType": "first-input",
+            "interactionId": 7448,
+            "name": "pointerdown",
+            "navigationId": 5978,
+            "processingEnd": 2703,
+            "processingStart": 2702.899999999994,
+            "startTime": 2702.399999999994
+          }
+        ],
+        "id": "v5-1784225881720-6891031916253",
+        "name": "INP",
+        "navigationType": "navigate",
+        "rating": "good",
+        "timestamp": 1784225884761,
+        "value": 8
+      },
+      "$web_vitals_INP_value": 8,
+      "$web_vitals_LCP_event": {
+        "$current_url": "https://getciteable.nanocorp.app/?diag=funnel-20260716-mobile-event-seq",
+        "$session_id": "019f6c25-8216-787e-a672-1d5b2ab7ab04",
+        "$window_id": "019f6c25-8216-787e-a672-1d5c5bb43b59",
+        "delta": 244,
+        "entries": [
+          {
+            "duration": 0,
+            "entryType": "largest-contentful-paint",
+            "id": "",
+            "loadTime": 0,
+            "name": "",
+            "navigationId": 5978,
+            "paintTime": 216,
+            "presentationTime": 244,
+            "renderTime": 244,
+            "size": 25680,
+            "startTime": 244,
+            "url": ""
+          }
+        ],
+        "id": "v5-1784225881719-5762767659116",
+        "name": "LCP",
+        "navigationType": "navigate",
+        "rating": "good",
+        "timestamp": 1784225884191,
+        "value": 244
+      },
+      "$web_vitals_LCP_value": 244
+    },
+    "ts": 1784225884761
+  }
+]
