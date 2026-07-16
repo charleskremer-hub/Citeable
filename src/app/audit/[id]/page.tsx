@@ -84,26 +84,30 @@ function localizedUnavailableReason(reason: string | undefined, locale: Locale, 
   return reason;
 }
 
-function questionEngineSummary(question: BuyerIntentPromptResult, locale: Locale) {
+type PromptState = "recommended" | "missing" | "unchecked";
+
+function promptAnalysis(question: BuyerIntentPromptResult): { state: PromptState; competitors: string[]; reason?: string } {
   const aiSurface = question.surfaces.find((surface) => surface.kind === "ai_engine");
 
   if (aiSurface) {
-    const engine = aiSurface.engine ?? "Gemini";
-    const label = recommendationText(engine, aiSurface.brandMentioned, locale);
-    const competitors = question.competitors.length
-      ? locale === "fr" ? ` · Concurrents cités : ${question.competitors.join(", ")}` : ` · Competitors cited: ${question.competitors.join(", ")}`
-      : locale === "fr" ? " · Aucun concurrent clair cité" : " · No clear competitor cited";
-    return aiSurface.status === "checked" ? `${label}${competitors}` : localizedUnavailableReason(aiSurface.unavailableReason, locale, engine);
+    if (aiSurface.status !== "checked") {
+      return { state: "unchecked", competitors: [], reason: aiSurface.unavailableReason };
+    }
+    return { state: aiSurface.brandMentioned ? "recommended" : "missing", competitors: question.competitors };
   }
 
-  const checked = question.surfaces.filter((surface) => surface.kind === "supplementary" && surface.status === "checked");
-  const unavailable = question.surfaces.filter((surface) => surface.kind === "supplementary" && surface.status !== "checked");
-
-  if (checked.length > 0) {
-    return checked.map((surface) => `${surface.surface}: ${surface.brandMentioned ? (locale === "fr" ? "marque/domaine trouvé" : "brand/domain found") : (locale === "fr" ? "marque/domaine non trouvé" : "brand/domain not found")}`).join(" · ");
+  const checked = question.surfaces.find((surface) => surface.kind === "supplementary" && surface.status === "checked");
+  if (checked) {
+    return { state: checked.brandMentioned ? "recommended" : "missing", competitors: question.competitors };
   }
 
-  return localizedUnavailableReason(unavailable[0]?.unavailableReason, locale);
+  return { state: "unchecked", competitors: [], reason: question.surfaces.find((surface) => surface.unavailableReason)?.unavailableReason };
+}
+
+function promptStatusPill(state: PromptState, locale: Locale): { label: string; color: string; bg: string } {
+  if (state === "recommended") return { label: locale === "fr" ? "✓ Recommandé" : "✓ Recommended", color: "#CAFF3C", bg: "rgba(202,255,60,0.12)" };
+  if (state === "missing") return { label: locale === "fr" ? "✗ Pas cité" : "✗ Not cited", color: "#FF8F6B", bg: "rgba(255,143,107,0.12)" };
+  return { label: locale === "fr" ? "— Non vérifié" : "— Not checked", color: "#9A9AA8", bg: "rgba(255,255,255,0.05)" };
 }
 
 function checkedQuestions(questions: BuyerIntentPromptResult[]) {
@@ -282,6 +286,12 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
     .filter((point) => point && typeof point.score === "number")
     .map((point) => ({ score: point.score, createdAt: point.createdAt }));
   const monitoringScoreDelta = audit.raw_results?.monitoring?.scoreDelta ?? null;
+  const promptRows = questions.map((question) => ({ question, analysis: promptAnalysis(question) }));
+  const recommendedPromptCount = promptRows.filter((row) => row.analysis.state === "recommended").length;
+  const gapPromptCount = promptRows.filter((row) => row.analysis.state === "missing").length;
+  const checkedPromptCount = promptRows.filter((row) => row.analysis.state !== "unchecked").length;
+  const promptRank = (state: PromptState) => (state === "missing" ? 0 : state === "recommended" ? 1 : 2);
+  const sortedPromptRows = [...promptRows].sort((a, b) => promptRank(a.analysis.state) - promptRank(b.analysis.state));
   const sentimentLine = brandSentimentText(audit.raw_results?.brandSentiment ?? { label: "not_enough_signal", justification: "not enough signal" }, locale);
   const scoreExplanation = complete
     ? locale === "fr"
@@ -573,23 +583,60 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
 
           {complete && !failed && !isFreeReport ? (
             <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6">
-              <div className="mb-4 flex items-end justify-between gap-4">
+              <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
                 <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
                   {isAnswerEngineReport ? copy.questionsTitle(answerEngineName) : copy.webQuestionsTitle}
                 </h2>
-                <span className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-black text-[#BCBCC8]">
-                  {isAnswerEngineReport ? answerEngineName : copy.nativeWebSearch}
-                </span>
+                {checkedPromptCount > 0 ? (
+                  <span className="rounded-full border border-[#CAFF3C]/25 bg-[#CAFF3C]/10 px-3 py-1 text-xs font-black text-[#CAFF3C]">
+                    {locale === "fr" ? `Recommandé sur ${recommendedPromptCount}/${checkedPromptCount}` : `Recommended on ${recommendedPromptCount}/${checkedPromptCount}`}
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-black text-[#BCBCC8]">
+                    {isAnswerEngineReport ? answerEngineName : copy.nativeWebSearch}
+                  </span>
+                )}
               </div>
 
-              {questions.length ? (
+              {gapPromptCount > 0 ? (
+                <p className="m-0 mb-4 rounded-xl border border-[#FF8F6B]/20 bg-[#FF8F6B]/[0.06] px-4 py-3 text-sm font-bold leading-6 text-[#F3C7B7]">
+                  {locale === "fr"
+                    ? `${gapPromptCount} question${gapPromptCount > 1 ? "s" : ""} d'achat où l'IA cite un concurrent à ta place (en orange ci-dessous). Ce sont exactement celles que tes actions prioritaires corrigent.`
+                    : `${gapPromptCount} buyer question${gapPromptCount > 1 ? "s" : ""} where AI cites a competitor instead of you (in orange below). These are exactly what your priority actions fix.`}
+                </p>
+              ) : null}
+
+              {sortedPromptRows.length ? (
                 <ol className="m-0 grid list-none gap-2 p-0">
-                  {questions.map((question) => (
-                    <li key={question.prompt} className="rounded-2xl border border-white/[0.07] bg-black/20 p-4">
-                      <p className="m-0 text-sm font-black text-[#F0F0EC]">{question.prompt}</p>
-                      <p className="m-0 mt-2 text-sm font-bold text-[#BCBCC8]">{questionEngineSummary(question, locale)}</p>
-                    </li>
-                  ))}
+                  {sortedPromptRows.map(({ question, analysis }) => {
+                    const pill = promptStatusPill(analysis.state, locale);
+                    const isGap = analysis.state === "missing";
+                    return (
+                      <li key={question.prompt} className={`rounded-2xl border p-4 ${isGap ? "border-[#FF8F6B]/25 bg-[#FF8F6B]/[0.05]" : "border-white/[0.07] bg-black/20"}`}>
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <p className="m-0 max-w-[80%] text-sm font-black text-[#F0F0EC]">{question.prompt}</p>
+                          <span className="shrink-0 rounded-full px-2.5 py-1 text-xs font-black" style={{ color: pill.color, background: pill.bg }}>
+                            {pill.label}
+                          </span>
+                        </div>
+                        {analysis.state === "unchecked" ? (
+                          <p className="m-0 mt-2 text-xs font-bold text-[#8E8E9A]">{localizedUnavailableReason(analysis.reason, locale, answerEngineName)}</p>
+                        ) : analysis.competitors.length ? (
+                          <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                            <span className="text-[11px] font-bold text-[#8E9A8F]">{locale === "fr" ? "Cité à ta place :" : "Cited instead of you:"}</span>
+                            {analysis.competitors.slice(0, 5).map((competitor) => (
+                              <span key={competitor} className="rounded-full border border-white/10 bg-white/[0.03] px-2 py-0.5 text-xs font-black text-[#DFE7DB]">{competitor}</span>
+                            ))}
+                          </div>
+                        ) : null}
+                        {isGap ? (
+                          <p className="m-0 mt-2.5 text-xs font-black text-[#CAFF3C]">
+                            {locale === "fr" ? "→ Ta 1re action prioritaire (FAQ) répond mot pour mot à cette question." : "→ Your #1 priority action (FAQ) answers this exact question."}
+                          </p>
+                        ) : null}
+                      </li>
+                    );
+                  })}
                 </ol>
               ) : (
                 <div className="rounded-2xl border border-[#FF8A8A]/20 bg-[#FF5F5F]/10 p-4 text-sm font-bold text-[#FFB1B1]">
