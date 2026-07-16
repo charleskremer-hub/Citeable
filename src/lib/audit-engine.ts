@@ -2697,8 +2697,94 @@ function lockedProEngineSurface(): BuyerIntentSurfaceResult {
   };
 }
 
+async function generateBuyerIntentPromptsAI(
+  brandName: string,
+  websiteUrl: string,
+  category: string,
+  homepageText: string,
+  count: number,
+  preferredLocale?: Locale
+): Promise<string[] | null> {
+  const apiKey = geminiApiKey();
+  if (!apiKey) return null;
+
+  const model = currentGeminiModel();
+  const domain = domainFromWebsite(websiteUrl);
+  const language = preferredLocale ?? detectBuyerQuestionLanguage(homepageText, domain);
+  const languageName = language === "fr" ? "French" : "English";
+  const context = homepageText.replace(/\s+/g, " ").trim().slice(0, 1500);
+
+  const instruction = [
+    "You generate realistic buyer-intent questions for an AI-visibility audit.",
+    `Business name: ${brandName}`,
+    `Domain: ${domain}`,
+    `Category: ${category}`,
+    context ? `Website context (may be noisy, use it to understand what they sell): ${context}` : "",
+    `Task: write ${count} DISTINCT, complete, natural-language questions a real potential customer would type into an AI assistant (ChatGPT, Gemini) when looking to choose or buy a product/service like this business offers.`,
+    "Rules:",
+    "- Full grammatical sentences ending with a question mark, the way a real buyer phrases them — not keywords.",
+    "- Specific to THIS business: its exact products, use cases, audience, price/delivery concerns, and buying criteria. Vary the angle across the list (best/comparison, use-case, buying criteria, delivery or price, trust/reviews, alternatives).",
+    `- Do NOT mention "${brandName}" or "${domain}" in any question — these are demand-side questions used to test whether the AI recommends the brand on its own.`,
+    `- Write them in natural ${languageName}.`,
+    "- No numbering, no surrounding quotes, no preamble, no duplicates.",
+    'Return ONLY valid JSON with this exact shape: {"questions":["...","..."]}',
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: instruction }] }],
+          generationConfig: { temperature: 0.7, maxOutputTokens: 900, responseMimeType: "application/json" },
+        }),
+        signal: AbortSignal.timeout(ANSWER_TIMEOUT_MS),
+      });
+      const responseText = await response.text();
+      const parsed = safeJsonParse<GeminiGenerateContentResponse>(responseText, {});
+
+      if (response.ok) {
+        const answer = geminiAnswerText(parsed);
+        const json = safeJsonParse<{ questions?: unknown }>(answer, {});
+        const raw = Array.isArray(json.questions) ? json.questions : [];
+        const brandKey = brandName.toLowerCase().replace(/[^a-z0-9]/g, "");
+        const domainKey = domain.toLowerCase().replace(/[^a-z0-9]/g, "");
+        const questions = cleanPromptList(
+          raw
+            .filter((item): item is string => typeof item === "string")
+            .map((item) => item.trim())
+            .filter((item) => item.length >= 12 && item.length <= 200)
+            .filter((item) => {
+              const key = item.toLowerCase().replace(/[^a-z0-9]/g, "");
+              return brandKey.length > 0 ? !key.includes(brandKey) && !key.includes(domainKey) : true;
+            }),
+          count
+        );
+        if (questions.length >= 3) return questions;
+      } else if (response.status !== 429 && response.status < 500) {
+        return null;
+      }
+    } catch {
+      // fall through to retry / fallback
+    }
+    if (attempt < 1) await delay(500);
+  }
+
+  return null;
+}
+
 async function analyzeBuyerIntentPrompts(brandName: string, websiteUrl: string, domain: string, category: string, homepageText: string, tier: AuditTier, locale?: Locale): Promise<BuyerIntentPromptResult[]> {
-  const prompts = generateBuyerIntentPrompts(brandName, websiteUrl, category, homepageText, locale).slice(0, tier === "free" ? 3 : 12);
+  const count = tier === "free" ? 3 : 12;
+  const aiPrompts = await generateBuyerIntentPromptsAI(brandName, websiteUrl, category, homepageText, count, locale);
+  const prompts = (aiPrompts && aiPrompts.length >= 3
+    ? aiPrompts
+    : generateBuyerIntentPrompts(brandName, websiteUrl, category, homepageText, locale)
+  ).slice(0, count);
   const results: BuyerIntentPromptResult[] = [];
   const answerEngine = answerEngineForTier(tier);
 
