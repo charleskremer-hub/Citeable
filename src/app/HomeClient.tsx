@@ -156,6 +156,19 @@ export default function HomeClient({ locale }: HomeClientProps) {
           </div>
         </section>
 
+        <section className="mx-auto max-w-5xl px-5 pb-2 pt-2 sm:px-6">
+          <div className="relative overflow-hidden rounded-[1.6rem] border border-[#CAFF3C]/25 bg-[#CAFF3C]/[0.05] p-6 sm:p-8">
+            <div className="pointer-events-none absolute -left-16 -top-16 h-48 w-48 rounded-full bg-[#CAFF3C]/10 blur-3xl" />
+            <div className="relative max-w-3xl">
+              <p className="mb-3 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.whyNowEyebrow}</p>
+              <h2 className="text-[clamp(1.6rem,4vw,2.5rem)] leading-[1.05] tracking-[-0.03em] text-[#F0F0EC]" style={{ fontFamily: "var(--font-display)" }}>
+                {copy.whyNowTitle}
+              </h2>
+              <p className="mt-4 text-base leading-7 text-[#B8B8C4] sm:text-lg">{copy.whyNowBody}</p>
+            </div>
+          </div>
+        </section>
+
         <section className="mx-auto max-w-5xl px-5 py-8 sm:px-6 sm:py-10">
           <div className="relative overflow-hidden rounded-[1.6rem] border border-white/[0.08] bg-[#111116] p-6 shadow-2xl shadow-black/20 sm:p-8">
             <div className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-[#CAFF3C]/10 blur-3xl" />

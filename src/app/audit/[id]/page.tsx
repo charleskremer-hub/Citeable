@@ -34,6 +34,7 @@ type AuditRow = {
     auditTier?: string;
     answerEngine?: { engine?: string; model?: string; realLlmCall?: boolean };
     brandSentiment?: BrandSentiment;
+    structuredDataFound?: boolean;
     locale?: string;
     buyerIntentPrompts?: BuyerIntentPromptResult[];
     monitoring?: { actions?: PlainAction[]; trend?: { score: number; createdAt: string }[]; scoreDelta?: number | null };
@@ -304,6 +305,27 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const promptRank = (state: PromptState) => (state === "missing" ? 0 : state === "recommended" ? 1 : 2);
   const sortedPromptRows = [...promptRows].sort((a, b) => promptRank(a.analysis.state) - promptRank(b.analysis.state));
   const sentimentLine = brandSentimentText(audit.raw_results?.brandSentiment ?? { label: "not_enough_signal", justification: "not enough signal" }, locale);
+  const agentSentimentLabel = audit.raw_results?.brandSentiment?.label ?? "not_enough_signal";
+  const agentReadyPillars = complete && !failed
+    ? [
+        {
+          ok: Boolean(audit.raw_results?.structuredDataFound),
+          label: locale === "fr" ? "Comprise par l'IA" : "Understood by AI",
+          hint: locale === "fr" ? "Données structurées lisibles" : "Structured data readable",
+        },
+        {
+          ok: brandMentionCount > 0,
+          label: locale === "fr" ? "Recommandée par l'IA" : "Recommended by AI",
+          hint: `${brandMentionCount}/${questionCount || 0}`,
+        },
+        {
+          ok: agentSentimentLabel === "positive" || agentSentimentLabel === "neutral",
+          label: locale === "fr" ? "Décrite positivement" : "Positively described",
+          hint: locale === "fr" ? "Sentiment IA" : "AI sentiment",
+        },
+      ]
+    : [];
+  const agentReadyScore = agentReadyPillars.filter((pillar) => pillar.ok).length;
 
   return (
     <main className="min-h-screen bg-[#09090B] text-[#F0F0EC]" style={{ fontFamily: "var(--font-sans)" }}>
@@ -470,6 +492,37 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             </div>
             <p className="m-0 mt-3 text-xs font-bold leading-5 text-[#8E8E9A]">{copy.reportReassurance}</p>
           </div>
+
+          {agentReadyPillars.length ? (
+            <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="m-0 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">
+                    {locale === "fr" ? "Prêt pour les agents acheteurs" : "Ready for AI shopping agents"}
+                  </p>
+                  <p className="m-0 mt-1 text-sm font-bold leading-6 text-[#A7A7B4]">
+                    {locale === "fr"
+                      ? "Bientôt, des agents IA achèteront pour tes clients. Voici où tu en es."
+                      : "Soon, AI agents will buy for your customers. Here's where you stand."}
+                  </p>
+                </div>
+                <div className="text-3xl font-black" style={{ color: agentReadyScore >= 2 ? "#CAFF3C" : "#FF8F6B", fontFamily: "var(--font-display)" }}>
+                  {agentReadyScore}/3
+                </div>
+              </div>
+              <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
+                {agentReadyPillars.map((pillar) => (
+                  <div key={pillar.label} className="rounded-2xl border border-white/[0.07] bg-black/20 p-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base font-black" style={{ color: pillar.ok ? "#CAFF3C" : "#FF8F6B" }}>{pillar.ok ? "✓" : "✗"}</span>
+                      <span className="text-sm font-black text-[#F0F0EC]">{pillar.label}</span>
+                    </div>
+                    <p className="m-0 mt-1 text-xs font-bold text-[#8E8E9A]">{pillar.hint}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
 
           {complete && !failed ? (
             <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6">
