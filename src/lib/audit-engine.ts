@@ -2752,21 +2752,16 @@ async function generateBuyerIntentPromptsAI(
         const answer = geminiAnswerText(parsed);
         const json = safeJsonParse<{ questions?: unknown }>(answer, {});
         const raw = Array.isArray(json.questions) ? json.questions : [];
-        const brandKey = brandName.toLowerCase().replace(/[^a-z0-9]/g, "");
-        const domainKey = domain.toLowerCase().replace(/[^a-z0-9]/g, "");
         // NOTE: deliberately NOT using cleanPromptList here — its navigation-footer
         // filter (shipping, delivery, shop, returns, contact...) would wrongly drop
-        // legitimate buyer questions. LLM output is already clean prose.
+        // legitimate buyer questions. LLM output is already clean prose. We also keep
+        // brand-mentioning questions (reputation checks are valid) rather than nuking them.
         const cleaned = raw
           .filter((item): item is string => typeof item === "string")
           .map((item) => item.replace(/^["'\s]+|["'\s]+$/g, "").replace(/\s+/g, " ").trim())
-          .filter((item) => item.length >= 12 && item.length <= 200)
-          .filter((item) => {
-            const key = item.toLowerCase().replace(/[^a-z0-9]/g, "");
-            return brandKey.length > 0 ? !key.includes(brandKey) && !key.includes(domainKey) : true;
-          });
+          .filter((item) => item.length >= 10 && item.length <= 200);
         const questions = uniqueInOrder(cleaned, count);
-        if (questions.length >= 3) return questions;
+        if (questions.length >= 2) return questions;
       } else if (response.status !== 429 && response.status < 500) {
         return null;
       }
