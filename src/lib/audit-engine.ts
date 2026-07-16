@@ -2754,17 +2754,18 @@ async function generateBuyerIntentPromptsAI(
         const raw = Array.isArray(json.questions) ? json.questions : [];
         const brandKey = brandName.toLowerCase().replace(/[^a-z0-9]/g, "");
         const domainKey = domain.toLowerCase().replace(/[^a-z0-9]/g, "");
-        const questions = cleanPromptList(
-          raw
-            .filter((item): item is string => typeof item === "string")
-            .map((item) => item.trim())
-            .filter((item) => item.length >= 12 && item.length <= 200)
-            .filter((item) => {
-              const key = item.toLowerCase().replace(/[^a-z0-9]/g, "");
-              return brandKey.length > 0 ? !key.includes(brandKey) && !key.includes(domainKey) : true;
-            }),
-          count
-        );
+        // NOTE: deliberately NOT using cleanPromptList here — its navigation-footer
+        // filter (shipping, delivery, shop, returns, contact...) would wrongly drop
+        // legitimate buyer questions. LLM output is already clean prose.
+        const cleaned = raw
+          .filter((item): item is string => typeof item === "string")
+          .map((item) => item.replace(/^["'\s]+|["'\s]+$/g, "").replace(/\s+/g, " ").trim())
+          .filter((item) => item.length >= 12 && item.length <= 200)
+          .filter((item) => {
+            const key = item.toLowerCase().replace(/[^a-z0-9]/g, "");
+            return brandKey.length > 0 ? !key.includes(brandKey) && !key.includes(domainKey) : true;
+          });
+        const questions = uniqueInOrder(cleaned, count);
         if (questions.length >= 3) return questions;
       } else if (response.status !== 429 && response.status < 500) {
         return null;
