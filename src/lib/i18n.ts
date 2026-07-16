@@ -225,7 +225,7 @@ export const auditCopy = {
   en: {
     navCta: "Start Agent — €19/month →",
     status: { failed: "Failed", complete: "Complete", running: "Running" },
-    title: (brandName: string) => `Simple report for ${brandName}`,
+    title: (brandName: string) => `${brandName} — your AI visibility`,
     scoreAria: (score: number) => `score ${score} out of 100`,
     scoreRunningAria: "score running",
     failedPrefix: "Could not run the report:",
@@ -264,7 +264,7 @@ export const auditCopy = {
   fr: {
     navCta: "Démarrer Agent — 19 €/mois →",
     status: { failed: "Échec", complete: "Terminé", running: "En cours" },
-    title: (brandName: string) => `Rapport simple pour ${brandName}`,
+    title: (brandName: string) => `${brandName} — ta visibilité dans l'IA`,
     scoreAria: (score: number) => `score ${score} sur 100`,
     scoreRunningAria: "score en cours",
     failedPrefix: "Impossible de lancer le rapport :",

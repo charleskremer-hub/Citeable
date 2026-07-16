@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { AGENT_CHECKOUT_URL, MONITOR_CHECKOUT_URL } from "@/lib/checkout-links";
 import { ensureAuditSchema, pool } from "@/lib/db";
 import { recordFunnelEvent } from "@/lib/funnel";
-import { auditCopy, brandSentimentText, localeFromHeaders, localeFromUnknown, localizeCategoryLabel, localizePlainAction, recommendationText, type Locale } from "@/lib/i18n";
+import { auditCopy, brandSentimentText, localeFromHeaders, localeFromUnknown, localizeCategoryLabel, localizePlainAction, type Locale } from "@/lib/i18n";
 import type { BrandSentiment, BuyerIntentPromptResult, IcpSegmentMetadata, PlainAction } from "@/lib/audit-engine";
 import AuditPoller from "./AuditPoller";
 import AgentAuditChat from "./AgentAuditChat";
@@ -293,34 +293,6 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const promptRank = (state: PromptState) => (state === "missing" ? 0 : state === "recommended" ? 1 : 2);
   const sortedPromptRows = [...promptRows].sort((a, b) => promptRank(a.analysis.state) - promptRank(b.analysis.state));
   const sentimentLine = brandSentimentText(audit.raw_results?.brandSentiment ?? { label: "not_enough_signal", justification: "not enough signal" }, locale);
-  const scoreExplanation = complete
-    ? locale === "fr"
-      ? `Score expliqué : ${score}/100 combine ${brandMentionCount}/${questionCount || 0} recommandations, le sentiment IA, les concurrents cités et les bases techniques vérifiées.`
-      : `Score explained: ${score}/100 combines ${brandMentionCount}/${questionCount || 0} recommendations, AI sentiment, cited competitors, and verified technical basics.`
-    : "";
-  const rawCategory = audit.raw_results?.category ?? "";
-  const categoryIsGeneric = !rawCategory || /your type of business|type of business| category$/i.test(rawCategory);
-  const categoryLine = complete && displayCategory && !categoryIsGeneric
-    ? locale === "fr" ? `Catégorie détectée : ${displayCategory}.` : `Detected category: ${displayCategory}.`
-    : "";
-  const phrases = [
-    categoryLine,
-    scoreExplanation,
-    questionCount > 0
-      ? isAnswerEngineReport
-        ? `${recommendationText(answerEngineName, brandMentionCount > 0, locale)} (${brandMentionCount}/${questionCount} ${locale === "fr" ? "questions" : "questions"}).`
-        : locale === "fr" ? `Tu es cité ${brandMentionCount} fois sur ${questionCount} questions.` : `You are cited ${brandMentionCount} times across ${questionCount} questions.`
-      : locale === "fr" ? "Aucune question d'achat n'a encore pu être vérifiée." : "No buyer question could be checked yet.",
-    sentimentLine,
-    topCompetitor
-      ? locale === "fr" ? `${topCompetitor} apparaît là où tu devrais apparaître.` : `${topCompetitor} is showing up where you should be.`
-      : locale === "fr" ? "Aucun concurrent clair n'apparaît à ta place." : "No competitor clearly appears in your place.",
-    isAgentReport
-      ? fixSentence(displayCategory, competitors.length > 0, locale, icpSegment)
-      : isMonitorReport
-        ? locale === "fr" ? "Ton dashboard de suivi et tes 3 actions de la semaine sont ci-dessous." : "Your tracking dashboard and 3 actions for this week are below."
-        : locale === "fr" ? "Diagnostic gratuit : score, sentiment IA, statut de recommandation Gemini et concurrents cités." : "Free diagnostic: score, AI sentiment, Gemini recommendation status, and cited competitors.",
-  ].filter(Boolean);
 
   return (
     <main className="min-h-screen bg-[#09090B] text-[#F0F0EC]" style={{ fontFamily: "var(--font-sans)" }}>
@@ -379,14 +351,32 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                   {copy.runningText}
                 </div>
               ) : (
-                <ol className="m-0 grid list-none gap-3 p-0">
-                  {phrases.map((phrase, index) => (
-                    <li key={phrase} className="rounded-2xl border border-white/[0.07] bg-black/20 p-4 text-base font-black leading-6 text-[#F0F0EC]">
-                      <span className="mr-2 text-[#CAFF3C]">{index + 1}.</span>
-                      {phrase}
-                    </li>
-                  ))}
-                </ol>
+                <div className="flex flex-col justify-center gap-3">
+                  <span
+                    className="inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-black uppercase tracking-[0.12em]"
+                    style={{
+                      color: brandMentionCount > 0 ? "#CAFF3C" : "#FF8F6B",
+                      background: brandMentionCount > 0 ? "rgba(202,255,60,0.1)" : "rgba(255,143,107,0.1)",
+                    }}
+                  >
+                    {brandMentionCount > 0
+                      ? locale === "fr" ? "Recommandé par l'IA" : "Recommended by AI"
+                      : locale === "fr" ? "Pas encore recommandé" : "Not recommended yet"}
+                  </span>
+                  <h2 className="m-0 text-[1.7rem] leading-[1.08] tracking-[-0.03em] sm:text-[2rem]" style={{ fontFamily: "var(--font-display)" }}>
+                    {brandMentionCount > 0
+                      ? locale === "fr" ? "Bonne nouvelle : l'IA te recommande." : "Good news — AI recommends you."
+                      : locale === "fr" ? "L'IA ne te recommande pas encore." : "AI doesn't recommend you yet."}
+                  </h2>
+                  <p className="m-0 text-base font-bold leading-6 text-[#C7C7D1]">
+                    {questionCount > 0
+                      ? locale === "fr"
+                        ? `Gemini te cite sur ${brandMentionCount} des ${questionCount} questions d'achat qu'on a testées${topCompetitor ? `, et cite ${topCompetitor} à ta place` : ""}.`
+                        : `Gemini cites you on ${brandMentionCount} of ${questionCount} buyer questions we tested${topCompetitor ? `, and cites ${topCompetitor} in your place` : ""}.`
+                      : locale === "fr" ? "Aucune question d'achat n'a encore pu être vérifiée." : "No buyer question could be checked yet."}
+                  </p>
+                  <p className="m-0 text-sm font-bold leading-6 text-[#8E8E9A]">{sentimentLine}</p>
+                </div>
               )}
             </div>
 
