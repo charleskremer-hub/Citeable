@@ -266,6 +266,8 @@ export const auditCopy = {
     noFakeFixes: "No fake fixes",
     noVerifiedGapTitle: "No verified gap was found in this free audit.",
     noVerifiedGapBody: "Citeable will not invent a correction. This report found no missing recommendation or cited-competitor gap in the checked prompts.",
+    liveCheckLabel: "Live check, not simulated",
+    liveCheckDetail: (engine: string) => `A real question was sent to ${engine} at audit time — no simulated prompts, no cached guesses.`,
   },
   fr: {
     navCta: "Démarrer Agent — 19 €/mois →",
@@ -305,6 +307,8 @@ export const auditCopy = {
     noFakeFixes: "Aucun correctif inventé",
     noVerifiedGapTitle: "Aucun écart vérifié trouvé dans cet audit gratuit.",
     noVerifiedGapBody: "Citeable n'invente pas de correction. Ce rapport n'a trouvé aucun manque de recommandation ni concurrent cité dans les questions vérifiées.",
+    liveCheckLabel: "Vérification en direct, pas simulée",
+    liveCheckDetail: (engine: string) => `Une vraie question a été envoyée à ${engine} au moment de l'audit — aucun prompt simulé, aucune estimation en cache.`,
   },
 } as const;
 

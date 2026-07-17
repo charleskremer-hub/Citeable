@@ -409,6 +409,15 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                       : locale === "fr" ? "Aucune question d'achat n'a encore pu être vérifiée." : "No buyer question could be checked yet."}
                   </p>
                   <p className="m-0 text-sm font-bold leading-6 text-[#8E8E9A]">{sentimentLine}</p>
+                  {isAnswerEngineReport && answerEngine?.realLlmCall ? (
+                    <p
+                      className="m-0 flex w-fit items-center gap-1.5 text-xs font-black text-[#8FBF6B]"
+                      title={copy.liveCheckDetail(answerEngineName)}
+                    >
+                      <span aria-hidden="true" className="inline-block h-1.5 w-1.5 rounded-full bg-[#8FBF6B]" />
+                      {copy.liveCheckLabel}
+                    </p>
+                  ) : null}
                 </div>
               )}
             </div>

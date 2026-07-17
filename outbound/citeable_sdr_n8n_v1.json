@@ -1,0 +1,147 @@
+{
+  "name": "Citeable SDR v1 — audit → qualify → draft → review",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "a1000000-0000-4000-8000-000000000001",
+      "name": "Start",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-120, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// v1 : liste de prospects en dur. Remplacer par Google Sheets / Clay / CSV / notre /source.\nreturn [\n  { brand: 'Bubble Skincare', website: 'https://bubbleskincare.com', first_name: '' },\n  { brand: 'Topicals', website: 'https://topicals.com', first_name: '' },\n  { brand: 'Cometeer', website: 'https://cometeer.com', first_name: '' }\n].map(p => ({ json: p }));"
+      },
+      "id": "a1000000-0000-4000-8000-000000000002",
+      "name": "Prospects",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [100, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8787/start-audit",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"brand\":\"{{ $json.brand }}\",\"website\":\"{{ $json.website }}\"}",
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000003",
+      "name": "Start Audit",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [320, 300]
+    },
+    {
+      "parameters": {
+        "amount": 90,
+        "unit": "seconds"
+      },
+      "id": "a1000000-0000-4000-8000-000000000004",
+      "name": "Wait 90s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [540, 300],
+      "webhookId": "sdr-wait-90s"
+    },
+    {
+      "parameters": {
+        "url": "=http://localhost:8787/finding?audit_id={{ $json.audit_id }}&brand={{ encodeURIComponent($json.brand) }}&website={{ encodeURIComponent($json.website) }}",
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000005",
+      "name": "Get Finding",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [760, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8787/qualify",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000006",
+      "name": "Qualify",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [980, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "loose", "version": 2 },
+          "conditions": [
+            {
+              "id": "cond-hook",
+              "leftValue": "={{ $json.hook }}",
+              "rightValue": "",
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000007",
+      "name": "IF hook",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1200, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8787/draft",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"finding\":{{ JSON.stringify($('Get Finding').item.json) }},\"first_name\":\"{{ $('Get Finding').item.json.first_name || '' }}\"}",
+        "options": {}
+      },
+      "id": "a1000000-0000-4000-8000-000000000008",
+      "name": "Draft",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1420, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ligne prête pour la revue humaine (à écrire dans Airtable/Sheets ci-après).\nconst f = $('Get Finding').item.json;\nconst d = $json;\nreturn [{ json: {\n  company: f.brand,\n  website: f.website,\n  email: '',\n  first_name: f.first_name || '',\n  score: f.score,\n  recommended: `${f.recommended}/${f.checked}`,\n  top_competitor: (f.competitors || [])[0] || '',\n  report_url: f.report_url,\n  subject: d.subject,\n  body: d.body,\n  status: 'to_review'\n} }];"
+      },
+      "id": "a1000000-0000-4000-8000-000000000009",
+      "name": "Prepare Review Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1640, 200]
+    },
+    {
+      "parameters": {
+        "content": "## Citeable SDR v1\n\n**Avant de lancer :**\n1. Démarre le SDR Service : `python3 sdr_service.py` (port 8787). Remplace `localhost:8787` par l'URL du service si déployé.\n2. Branche **Prepare Review Row** → un node **Airtable/Google Sheets** (create) pour stocker les drafts avec `status = to_review`.\n3. Validation humaine : tu relis dans Airtable, tu passes `status = approved` → un 2e workflow pousse vers Smartlead.\n\n**Le service N'ENVOIE PAS.** L'envoi est une brique séparée (domaine warmé).\n\n*La sortie IF hook = false n'est pas connectée : les non-hooks sont ignorés (voulu).*",
+        "height": 300,
+        "width": 360
+      },
+      "id": "a1000000-0000-4000-8000-00000000000a",
+      "name": "README",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-120, -60]
+    }
+  ],
+  "connections": {
+    "Start": { "main": [[{ "node": "Prospects", "type": "main", "index": 0 }]] },
+    "Prospects": { "main": [[{ "node": "Start Audit", "type": "main", "index": 0 }]] },
+    "Start Audit": { "main": [[{ "node": "Wait 90s", "type": "main", "index": 0 }]] },
+    "Wait 90s": { "main": [[{ "node": "Get Finding", "type": "main", "index": 0 }]] },
+    "Get Finding": { "main": [[{ "node": "Qualify", "type": "main", "index": 0 }]] },
+    "Qualify": { "main": [[{ "node": "IF hook", "type": "main", "index": 0 }]] },
+    "IF hook": { "main": [[{ "node": "Draft", "type": "main", "index": 0 }], []] },
+    "Draft": { "main": [[{ "node": "Prepare Review Row", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "active": false
+}

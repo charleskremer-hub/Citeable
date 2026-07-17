@@ -1,0 +1,8 @@
+# Secrets et sorties générées — jamais commités
+.env
+keys.env
+sdr_state.json
+sdr_prospects_enriched.csv
+sdr_output.csv
+sdr_output_enriched.csv
+sdr_review*.md
