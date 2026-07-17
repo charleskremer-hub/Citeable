@@ -1636,3 +1636,32 @@ On 1280×577px viewport, the email capture form was positioned at ~587px from th
 - Follow-up fix before final delivery: stored categories are now localized at report/email render time, so French reports display `chaussettes et vêtements` instead of the raw English `socks and apparel` while keeping the underlying audit category stable for analytics.
 - Follow-up fix before final delivery: location inference no longer treats generic phrases like `in Science` as a real place; prompts only add a location when a known city, postal-city pattern, or explicit `based/located in` phrase is detected.
 - Final selected beauty proof uses Paula's Choice report `7aa9b9bb-8cd5-4cc4-af0a-9d6fd956c4a1` instead of the earlier Glossier proof, because it was generated after the generic prompt cleanup and shows clean prompts: `best beauty brand`, `best beauty brand for daily routines`, and `Paula's Choice reviews`.
+
+## 2026-07-17 — Pricing/CTA consistency audit for €19 Agent and €9 Monitor
+
+### Findings
+- Read Next.js 16 bundled `page.md` and `layout.md` file-convention docs after installing dependencies, before editing App Router routes.
+- `nanocorp products list` confirmed exactly two active live EUR products: Citeable Agent — 19 EUR/mois at checkout `https://checkout.nanocorp.so/c/zuJCYwhaUnzJGWIrB1dz` and Citeable Monitor at checkout `https://checkout.nanocorp.so/c/xJT8uIncksTRVDi6UcmU`.
+- Source scan of `src/`, `README.md`, `LINKEDIN_POST.md`, `CLAUDE.md`, and `AGENTS.md` found no public €49/49 EUR price copy; remaining `agent_49eur` strings under `src/` are legacy audit-tier compatibility identifiers only.
+- Live `/` displayed the canonical public prices: Agent €19/month and Monitor €9/month; live `/en` returned the Next.js 404 page before this task.
+- Live report `https://getciteable.nanocorp.app/audit/7ffaff8a-3e49-44f7-a699-8d1a9e21e8fb` displayed report CTAs for Agent €19/month and Monitor €9, with the report teaser CTA href set to the Agent checkout URL.
+- `agent-browser` direct checkout verification confirmed Agent checkout renders `Citeable Agent — 19 EUR/mois` at `€19.00`, and Monitor checkout renders `Citeable Monitor` at `€9.00`.
+- `agent-browser` new-tab click on the report upsell CTA `Unlock your fixes — Citeable Agent €19/mo` reached Stripe Checkout for `Citeable Agent — 19 EUR/mois` at `€19.00`.
+
+### Changes made
+- Added `src/app/en/page.tsx` so `/en` renders the English landing page instead of a 404.
+- Added `https://getciteable.nanocorp.app/en` to `src/app/sitemap.ts`.
+
+### Price/CTA audit table
+| Location | Before | After | Checkout URL |
+| --- | --- | --- | --- |
+| Landing `/` Agent hero/pricing | Already `€19/month` | `€19/month` retained | `https://checkout.nanocorp.so/c/zuJCYwhaUnzJGWIrB1dz` |
+| Landing `/` Monitor pricing | Already `€9/month` | `€9/month` retained | `https://checkout.nanocorp.so/c/xJT8uIncksTRVDi6UcmU` |
+| Landing `/en` | 404, no valid pricing/CTA page | English landing route with Agent `€19/month` and Monitor `€9/month` | Agent: `https://checkout.nanocorp.so/c/zuJCYwhaUnzJGWIrB1dz`; Monitor: `https://checkout.nanocorp.so/c/xJT8uIncksTRVDi6UcmU` |
+| Audit report primary Agent CTA | Already `Start Agent — €19/month →` | `Start Agent — €19/month →` retained | `https://checkout.nanocorp.so/c/zuJCYwhaUnzJGWIrB1dz` |
+| Audit report teaser unlock CTA | Already `Unlock your fixes — Citeable Agent €19/mo` | `Unlock your fixes — Citeable Agent €19/mo` retained; browser click verified | `https://checkout.nanocorp.so/c/zuJCYwhaUnzJGWIrB1dz` |
+| Audit report Monitor CTAs | Already `€9` / `€9 →` | `€9` / `€9 →` retained | `https://checkout.nanocorp.so/c/xJT8uIncksTRVDi6UcmU` |
+
+### Validation
+- `npm run lint` passed with existing warnings only: unused `fixSentence` in `src/app/audit/[id]/page.tsx`, and unused `isAuditedBrandName` / `categoryFromWebsite` in `src/lib/audit-engine.ts`.
+- `npm run build` passed on Next.js 16.2.10 / Turbopack, including the new dynamic `/en` route.
