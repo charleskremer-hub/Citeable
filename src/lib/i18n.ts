@@ -268,6 +268,15 @@ export const auditCopy = {
     noVerifiedGapBody: "Citeable will not invent a correction. This report found no missing recommendation or cited-competitor gap in the checked prompts.",
     liveCheckLabel: "Live check, not simulated",
     liveCheckDetail: (engine: string) => `A real question was sent to ${engine} at audit time — no simulated prompts, no cached guesses.`,
+    sovEyebrow: "Share of voice",
+    sovYouLabel: "You",
+    sovLead: (brandPct: number, engine: string) =>
+      `Out of every brand ${engine} named on the buyer questions we tested, ${brandPct}% of the mentions were yours.`,
+    sovLeaderLine: (leader: string, leaderPct: number) =>
+      `${leader} takes ${leaderPct}% — that's the share you're competing for.`,
+    sovInvisibleLine: (engine: string) =>
+      `${engine} never named you. Every mention went to someone else.`,
+    sovWinningLine: "You're the most-cited brand on these questions. Hold it.",
   },
   fr: {
     navCta: "Démarrer Agent — 19 €/mois →",
@@ -309,6 +318,15 @@ export const auditCopy = {
     noVerifiedGapBody: "Citeable n'invente pas de correction. Ce rapport n'a trouvé aucun manque de recommandation ni concurrent cité dans les questions vérifiées.",
     liveCheckLabel: "Vérification en direct, pas simulée",
     liveCheckDetail: (engine: string) => `Une vraie question a été envoyée à ${engine} au moment de l'audit — aucun prompt simulé, aucune estimation en cache.`,
+    sovEyebrow: "Part de voix",
+    sovYouLabel: "Toi",
+    sovLead: (brandPct: number, engine: string) =>
+      `Sur toutes les marques citées par ${engine} dans les questions d'achat testées, ${brandPct}% des mentions sont les tiennes.`,
+    sovLeaderLine: (leader: string, leaderPct: number) =>
+      `${leader} en prend ${leaderPct}% — c'est cette part que tu vas chercher.`,
+    sovInvisibleLine: (engine: string) =>
+      `${engine} ne t'a jamais cité. Chaque mention est partie chez un concurrent.`,
+    sovWinningLine: "Tu es la marque la plus citée sur ces questions. Garde cette place.",
   },
 } as const;
 

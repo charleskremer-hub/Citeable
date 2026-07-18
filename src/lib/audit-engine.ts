@@ -2821,7 +2821,11 @@ async function generateBuyerIntentPromptsAI(
         const cleaned = rawList
           .filter((item): item is string => typeof item === "string")
           .map((item) => item.replace(/^["'\s]+|["'\s]+$/g, "").replace(/\s+/g, " ").trim())
-          .filter((item) => item.length >= 10 && item.length <= 200);
+          .filter((item) => item.length >= 10 && item.length <= 200)
+          // Le fallback "découpage par lignes" (JSON tronqué) peut ramasser la
+          // structure JSON elle-même — ex. `questions": [` — qui se retrouvait
+          // affichée aux clients comme une vraie question d'acheteur.
+          .filter(isLikelyBuyerQuestion);
         const questions = uniqueInOrder(cleaned, count);
         if (questions.length >= 2) return { prompts: questions, debug: `ok:${questions.length}` };
         lastDebug = `ok_but_few:raw${rawList.length}_clean${questions.length}_ans${answer.length}`;
@@ -2872,6 +2876,17 @@ async function analyzeBuyerIntentPrompts(brandName: string, websiteUrl: string, 
   }
 
   return { prompts: results, promptDebug };
+}
+
+// Rejette les résidus de structure JSON que le fallback ligne-à-ligne peut
+// ramasser quand la réponse du LLM est tronquée (ex. `questions": [`, `}`, "```json").
+// Une vraie question d'acheteur fait plusieurs mots et ne porte pas d'accolades.
+function isLikelyBuyerQuestion(item: string) {
+  if (/^[[\]{},]*$/.test(item)) return false;
+  if (/^`{3}/.test(item)) return false;
+  if (/^"?[\w-]+"?\s*:\s*[[{]?$/.test(item)) return false;
+  if (/[{}[\]]/.test(item) && !item.includes("?")) return false;
+  return item.split(/\s+/).filter(Boolean).length >= 4;
 }
 
 async function checkTechnicalSEO(websiteUrl: string): Promise<AuditCheckResult> {

@@ -47,6 +47,78 @@ function scoreColor(score: number) {
   return "#CAFF3C";
 }
 
+// --- Lisibilité par les crawlers IA -----------------------------------------
+// Si les bots des moteurs IA sont bloqués par robots.txt, la marque ne peut pas
+// être citée, quel que soit son contenu. C'est le check le plus actionnable qui
+// soit : binaire, vérifiable, et corrigeable en une ligne de robots.txt.
+// Volontairement isolé dans la page (aucun impact sur le scoring ni sur le
+// pipeline d'audit) pour rester additif et sans risque pour le funnel.
+const AI_CRAWLERS = ["GPTBot", "OAI-SearchBot", "ChatGPT-User", "ClaudeBot", "PerplexityBot", "Google-Extended"] as const;
+
+type RobotsGroup = { agents: string[]; disallowAll: boolean };
+
+function parseRobotsGroups(robots: string): RobotsGroup[] {
+  const groups: RobotsGroup[] = [];
+  let current: RobotsGroup | null = null;
+  let previousLineWasAgent = false;
+
+  for (const rawLine of robots.split(/\r?\n/)) {
+    const line = rawLine.replace(/#.*$/, "").trim();
+    if (!line) continue;
+
+    const separator = line.indexOf(":");
+    if (separator === -1) continue;
+
+    const key = line.slice(0, separator).trim().toLowerCase();
+    const value = line.slice(separator + 1).trim();
+
+    if (key === "user-agent") {
+      // Des User-agent consécutifs partagent le même bloc de règles.
+      if (!current || !previousLineWasAgent) {
+        current = { agents: [], disallowAll: false };
+        groups.push(current);
+      }
+      current.agents.push(value.toLowerCase());
+      previousLineWasAgent = true;
+      continue;
+    }
+
+    previousLineWasAgent = false;
+    if (current && key === "disallow" && value === "/") current.disallowAll = true;
+  }
+
+  return groups;
+}
+
+function blockedAiCrawlers(robots: string) {
+  const groups = parseRobotsGroups(robots);
+  const wildcardBlocked = groups.some((group) => group.agents.includes("*") && group.disallowAll);
+
+  return AI_CRAWLERS.filter((crawler) => {
+    const named = groups.filter((group) => group.agents.includes(crawler.toLowerCase()));
+    // Une règle nommée l'emporte toujours sur la règle générique "*".
+    if (named.length) return named.some((group) => group.disallowAll);
+    return wildcardBlocked;
+  });
+}
+
+async function checkAiCrawlability(websiteUrl: string) {
+  const load = async (path: string) => {
+    try {
+      const response = await fetch(new URL(path, websiteUrl).toString(), { signal: AbortSignal.timeout(4000) });
+      return response.ok ? await response.text() : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const [robots, llms] = await Promise.all([load("/robots.txt"), load("/llms.txt")]);
+  // Pas de robots.txt = tout est autorisé par défaut : ce n'est pas un blocage.
+  const blocked = robots ? blockedAiCrawlers(robots) : [];
+
+  return { reachable: robots !== null || llms !== null, blocked, llmsFound: llms !== null };
+}
+
 function uniqueNames(names: string[]) {
   const seen = new Set<string>();
 
@@ -306,8 +378,29 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const sortedPromptRows = [...promptRows].sort((a, b) => promptRank(a.analysis.state) - promptRank(b.analysis.state));
   const sentimentLine = brandSentimentText(audit.raw_results?.brandSentiment ?? { label: "not_enough_signal", justification: "not enough signal" }, locale);
   const agentSentimentLabel = audit.raw_results?.brandSentiment?.label ?? "not_enough_signal";
+  const aiCrawl = complete && !failed ? await checkAiCrawlability(audit.website_url) : null;
+  const aiCrawlOk = Boolean(aiCrawl && aiCrawl.blocked.length === 0);
+  const aiCrawlHint = !aiCrawl
+    ? ""
+    : aiCrawl.blocked.length
+      ? locale === "fr"
+        ? `Bloqués : ${aiCrawl.blocked.join(", ")}`
+        : `Blocked: ${aiCrawl.blocked.join(", ")}`
+      : aiCrawl.llmsFound
+        ? locale === "fr"
+          ? "Aucun bot bloqué · llms.txt présent"
+          : "No bot blocked · llms.txt present"
+        : locale === "fr"
+          ? "Aucun bot IA bloqué"
+          : "No AI bot blocked";
+
   const agentReadyPillars = complete && !failed
     ? [
+        {
+          ok: aiCrawlOk,
+          label: locale === "fr" ? "Lisible par les IA" : "Readable by AI",
+          hint: aiCrawlHint,
+        },
         {
           ok: Boolean(audit.raw_results?.structuredDataFound),
           label: locale === "fr" ? "Comprise par l'IA" : "Understood by AI",
@@ -326,6 +419,23 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
       ]
     : [];
   const agentReadyScore = agentReadyPillars.filter((pillar) => pillar.ok).length;
+
+  // Share of voice ranking: the brand ranked against every competitor the engine named,
+  // using the exact same mention counts already computed above (no new data source).
+  const sovTotalMentions = brandMentionCount + totalCompetitorMentions;
+  const sovRows =
+    complete && !failed && sovTotalMentions > 0
+      ? [
+          { name: audit.brand_name, count: brandMentionCount, isBrand: true },
+          ...rankedCompetitors.slice(0, 5).map((item) => ({ name: item.name, count: item.count, isBrand: false })),
+        ]
+          .filter((row) => row.count > 0 || row.isBrand)
+          .map((row) => ({ ...row, pct: Math.round((row.count / sovTotalMentions) * 100) }))
+          .sort((a, b) => b.count - a.count)
+      : [];
+  const sovLeader = sovRows.find((row) => !row.isBrand) ?? null;
+  const sovBrandLeads = sovRows.length > 0 && sovRows[0].isBrand && brandMentionCount > 0;
+  const sovMaxPct = sovRows.reduce((max, row) => Math.max(max, row.pct), 0) || 100;
 
   return (
     <main className="min-h-screen bg-[#09090B] text-[#F0F0EC]" style={{ fontFamily: "var(--font-sans)" }}>
@@ -515,11 +625,14 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                       : "Soon, AI agents will buy for your customers. Here's where you stand."}
                   </p>
                 </div>
-                <div className="text-3xl font-black" style={{ color: agentReadyScore >= 2 ? "#CAFF3C" : "#FF8F6B", fontFamily: "var(--font-display)" }}>
-                  {agentReadyScore}/3
+                <div
+                  className="text-3xl font-black"
+                  style={{ color: agentReadyScore >= agentReadyPillars.length - 1 ? "#CAFF3C" : "#FF8F6B", fontFamily: "var(--font-display)" }}
+                >
+                  {agentReadyScore}/{agentReadyPillars.length}
                 </div>
               </div>
-              <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
+              <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
                 {agentReadyPillars.map((pillar) => (
                   <div key={pillar.label} className="rounded-2xl border border-white/[0.07] bg-black/20 p-4">
                     <div className="flex items-center gap-2">
@@ -541,6 +654,50 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                 </h2>
                 <span className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-black text-[#BCBCC8]">{rankedCompetitors.length || competitors.length}</span>
               </div>
+
+              {sovRows.length ? (
+                <div className="mb-5 rounded-2xl border border-white/[0.07] bg-black/20 p-4" data-testid="share-of-voice">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <p className="m-0 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.sovEyebrow}</p>
+                    <p className="m-0 text-3xl font-black leading-none tracking-[-0.05em]" style={{ color: shareOfVoicePct > 0 ? "#CAFF3C" : "#FF8F6B", fontFamily: "var(--font-display)" }}>
+                      {shareOfVoicePct}%
+                    </p>
+                  </div>
+
+                  <ul className="m-0 mt-4 grid list-none gap-2.5 p-0">
+                    {sovRows.map((row) => (
+                      <li key={`${row.isBrand ? "brand" : "competitor"}-${row.name}`} className="grid gap-1.5">
+                        <div className="flex items-baseline justify-between gap-3">
+                          <span className={`truncate text-sm font-black ${row.isBrand ? "text-[#CAFF3C]" : "text-[#D6D6DF]"}`}>
+                            {row.name}
+                            {row.isBrand ? <span className="ml-2 text-xs font-black uppercase tracking-[0.12em] text-[#8E8E9A]">{copy.sovYouLabel}</span> : null}
+                          </span>
+                          <span className={`shrink-0 text-sm font-black ${row.isBrand ? "text-[#CAFF3C]" : "text-[#8E8E9A]"}`}>
+                            {row.pct}% <span className="text-[#777787]">({row.count}x)</span>
+                          </span>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
+                          <div
+                            className="h-full rounded-full"
+                            style={{
+                              width: `${Math.max(row.pct === 0 ? 0 : 4, Math.round((row.pct / sovMaxPct) * 100))}%`,
+                              background: row.isBrand ? "#CAFF3C" : "rgba(240,240,236,0.28)",
+                            }}
+                          />
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <p className="m-0 mt-4 text-sm font-bold leading-6 text-[#C7C7D1]">
+                    {brandMentionCount === 0
+                      ? copy.sovInvisibleLine(answerEngineName)
+                      : `${copy.sovLead(shareOfVoicePct, answerEngineName)} ${
+                          sovBrandLeads || !sovLeader ? copy.sovWinningLine : copy.sovLeaderLine(sovLeader.name, sovLeader.pct)
+                        }`}
+                  </p>
+                </div>
+              ) : null}
 
               {rankedCompetitors.length ? (
                 <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
