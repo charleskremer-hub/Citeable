@@ -50,6 +50,9 @@ Format : {titre} — source/concurrent inspirant — valeur ICP — effort (S/M/
 - **"Win rate" + "prix cité vs prix réel" sur 1-2 produits phares** — Peec AI Shopping Analytics (juin 2026) — LA feature la plus alignée sur notre ICP DTC : deux chiffres qui ne demandent aucune explication à un fondateur ("mon produit sort-il en 1er ?" / "l'IA raconte-t-elle un prix périmé ?"). Version légère : pas de connexion catalogue complète, juste 1-2 SKU phares détectés depuis le site. — Effort M — **Should, priorité haute** — Todo.
 - **Message "prix fixe, pas de crédits"** sur la landing — veille pricing (tous les concurrents facturent en crédits/prompts/add-ons et ont dû construire des calculateurs) — retourner la complexité du marché en argument : "Pas de crédits. Pas de calculateur. 9 €." — Effort S — Todo.
 
+- **`<html lang>` suit les headers Accept-Language, pas la route** — un visiteur FR sur `/en` reçoit `lang="fr"` sur du contenu anglais. Particulièrement gênant pour NOUS : c'est un signal que les moteurs IA utilisent pour interpréter une page, et on vend précisément de la visibilité IA. Demande de toucher au routing/layout — à faire avec un test, pas à l'aveugle. — Effort M — **Should** — Todo.
+- **Analytics funnel : plan mal étiqueté (corrigé 2026-07-18)** — `FunnelCheckoutLink` codait en dur `data-ph-capture-attribute-plan="agent_19eur"` alors que 2 des 3 boutons pointent vers Monitor 9 €. Tous les clics Monitor remontaient donc sous `agent_19eur` dans PostHog — en plein diagnostic de conversion. **Done** : plan déduit de la destination réelle (`planFromHref`) + ajouté aux métadonnées des events funnel côté serveur. À garder en tête : les chiffres de conversion par plan d'AVANT le 18/07 sont faux.
+
 ### Nice
 
 - **Tip contenu "YouTube = signal #1"** — étude Ahrefs 75k marques — ajouter une recommandation ponctuelle dans les actions Monitor quand pertinent (marque sans présence vidéo) suggérant du contenu YouTube. — Effort S — Todo.

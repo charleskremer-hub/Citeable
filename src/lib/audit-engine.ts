@@ -1306,12 +1306,25 @@ function emptyMonitoringSnapshot(currentPrompts: BuyerIntentPromptResult[] = [])
   };
 }
 
+/** Internal sentinel used when category detection fails. Never render it as-is. */
+export const UNKNOWN_CATEGORY = "your type of business";
+
+/**
+ * Customer-facing label for a detected category.
+ * Guarantees no unresolved placeholder ever reaches a report, action, or email.
+ */
+export function categoryLabel(category: string | undefined | null) {
+  const trimmed = (category ?? "").trim();
+  return trimmed && trimmed !== UNKNOWN_CATEGORY ? trimmed : "this category";
+}
+
 export function buildPlainActions(
   prompts: BuyerIntentPromptResult[] = [],
-  category = "your type of business",
+  category = UNKNOWN_CATEGORY,
   competitors: string[] = [],
   segment: IcpSegmentMetadata = ICP_SEGMENTS.small_brand_ecommerce
 ): PlainAction[] {
+  const categoryText = categoryLabel(category);
   const testedQuestions = uniqueInOrder(
     prompts.filter((prompt) => prompt.available).map((prompt) => prompt.prompt),
     5
@@ -1339,7 +1352,7 @@ export function buildPlainActions(
       },
       {
         title: "Create a 'why choose me' local proof page",
-        doThis: `Publish one page for ${category} that explains who you help, where you operate, reviews, qualifications, and when to book you.`,
+        doThis: `Publish one page about ${categoryText} that explains who you help, where you operate, reviews, qualifications, and when to book you.`,
         where: "Your website, linked from homepage, contact page, Google Business Profile, and directory bios.",
       },
     ];
@@ -1355,7 +1368,7 @@ export function buildPlainActions(
       },
       {
         title: "Get included in top-creator listicles",
-        doThis: `Pitch or update credible 'top ${category} creators' pages with a concise bio, niche, audience proof, best content links, and why ${category} audiences follow you. ${compareText}`,
+        doThis: `Pitch or update credible 'top creators' pages in ${categoryText} with a concise bio, niche, audience proof, best content links, and why those audiences follow you. ${compareText}`,
         where: "Top creator listicles, niche blogs, podcast roundups, newsletter directories, and media lists.",
       },
       {
@@ -1375,7 +1388,7 @@ export function buildPlainActions(
     },
     {
       title: "Earn listicle and review mentions",
-      doThis: `Create or refresh proof for ${category}. Prioritise one relevant listicle, one review page, and one comparison page that AI can cite. ${compareText}`,
+      doThis: `Create or refresh proof for ${categoryText}. Prioritise one relevant listicle, one review page, and one comparison page that AI can cite. ${compareText}`,
       where: "Industry listicles, review pages, comparison guides, marketplaces, and trusted community threads.",
     },
     {
@@ -1541,7 +1554,7 @@ function monitoringSnapshotFromRuns(current: StoredPromptRow, runs: StoredPrompt
     trend,
     scoreDelta: previousTrendPoint && current.score !== null && current.score !== undefined ? current.score - previousTrendPoint.score : null,
     competitorMovements: compareCompetitorMovement(currentPrompts, previousPrompts),
-    actions: buildPlainActions(currentPrompts, current.raw_results?.category ?? "your type of business", [], current.raw_results?.icpSegment ?? ICP_SEGMENTS.small_brand_ecommerce),
+    actions: buildPlainActions(currentPrompts, current.raw_results?.category ?? UNKNOWN_CATEGORY, [], current.raw_results?.icpSegment ?? ICP_SEGMENTS.small_brand_ecommerce),
     sources: extractSourceCitationReports(currentPrompts),
     previousAuditId: previousRun?.id,
   };
@@ -1674,6 +1687,9 @@ function categoryFromHomepageText(text: string, domain: string) {
     [/\ballbirds\b|sustainable sneakers?|eco-?friendly shoes?|wool shoes?|tree runners?|running shoes?|walking shoes?|sneakers?|footwear|chaussures?/, "DTC footwear brand"],
     [/boulangerie|bakery|p[aâ]tisserie|pastry|restaurant|bistro|brasserie|traiteur|catering/, "bakery / restaurant"],
     [/\bmkbhd\b|marques brownlee|youtube|youtuber|tiktok|instagram|newsletter|podcast|substack|streamer|content creator|creator|influencer|créateur|créatrice|influenceur|influenceuse/, "creator"],
+    [/\beyewear\b|\bglasses\b|sunglasses|eyeglasses|prescription lenses?|progressive lenses?|\boptical\b|opticien|lunettes?|contact lenses?|frames? (?:for|and) lenses?/, "eyewear brand"],
+    [/\bjewell?ery\b|\bbijoux\b|engagement rings?|necklaces?|bracelets?/, "jewelry brand"],
+    [/mattress(?:es)?|bedding|\bduvet\b|\bpillows?\b|\bliterie\b/, "mattress and bedding brand"],
     [/apparel|clothing|fashion|garments?|menswear|womenswear/, "fashion brand"],
     [/skin care|skincare|beauty|cosmetics/, "beauty brand"],
     [/coffee|tea|beverage|drinks?|snacks?|food & beverage|food and beverage/, "food & beverage"],
@@ -1700,7 +1716,9 @@ function categoryFromHomepageText(text: string, domain: string) {
     [/accounting|bookkeeping/, "accounting software"],
     [/e-?commerce|online store/, "ecommerce platform"],
     [/blockchain|crypto|web3/, "blockchain infrastructure"],
-    [/api|developer platform|sdk/, "developer platform"],
+    // Word-bounded: an unbounded /api/ matched "capital", "rapid", "therapist"…
+    // and mislabelled consumer brands as developer platforms.
+    [/\bapis?\b|developer platform|\bsdks?\b/, "developer platform"],
     [/software|saas|logiciel/, "software platform"],
   ];
 
@@ -1879,7 +1897,7 @@ async function inferCategory(brandName: string, websiteUrl: string, fallbackChec
 
   const fallbackCategory = categoryFromHomepageText(`${brandName} ${domain} ${fallbackText}`, domain);
   return {
-    category: isGenericCategory(fallbackCategory) ? "your type of business" : fallbackCategory,
+    category: isGenericCategory(fallbackCategory) ? UNKNOWN_CATEGORY : fallbackCategory,
     homepageText: signals || fallbackText,
   };
 }
@@ -2949,7 +2967,8 @@ function categoryFromWebsite(websiteHtmlCheck: AuditCheckResult) {
   return "website category";
 }
 
-function buildFixes(checks: AuditCheckResult[], segment: IcpSegmentMetadata = ICP_SEGMENTS.small_brand_ecommerce, category = "your type of business") {
+function buildFixes(checks: AuditCheckResult[], segment: IcpSegmentMetadata = ICP_SEGMENTS.small_brand_ecommerce, category = UNKNOWN_CATEGORY) {
+  const categoryText = categoryLabel(category);
   const byName = new Map(checks.map((check) => [check.check, check]));
   const fixes: string[] = [];
 
@@ -2975,9 +2994,9 @@ function buildFixes(checks: AuditCheckResult[], segment: IcpSegmentMetadata = IC
 
   if ((byName.get("ai_visibility")?.score ?? 0) < 15) {
     if (segment.key === "local_independent") {
-      fixes.push(`Publish a local 'why choose me' page for ${category}, then collect reviews that mention city, service, problem solved, and outcome.`);
+      fixes.push(`Publish a local 'why choose me' page about ${categoryText}, then collect reviews that mention city, service, problem solved, and outcome.`);
     } else if (segment.key === "creator_influencer") {
-      fixes.push(`Earn mentions in credible 'top ${category} creators' listicles, podcast/newsletter directories, interviews, and press pages.`);
+      fixes.push(`Earn mentions in credible 'top creators' listicles in ${categoryText}, podcast/newsletter directories, interviews, and press pages.`);
     } else {
       fixes.push("Earn mentions on trusted product listicles, review pages, comparison guides, community threads, and marketplaces that answer engines can cite.");
     }
@@ -3687,7 +3706,7 @@ export function generateGeoAgentAssetsFromAudit(audit: {
 }): GeoAgentAssets {
   const prompts = audit.raw_results?.buyerIntentPrompts ?? [];
   const availablePromptTexts = uniqueInOrder(prompts.filter((prompt) => prompt.available).map((prompt) => prompt.prompt), 5);
-  const category = audit.raw_results?.category ?? "your type of business";
+  const category = audit.raw_results?.category ?? UNKNOWN_CATEGORY;
   const competitors = uniqueInOrder(audit.competitors_found ?? prompts.flatMap((prompt) => prompt.competitors), 8);
   const description = descriptionFromAudit(audit.raw_results);
   const faqPrompts = prompts.filter((prompt) => prompt.available).slice(0, 5);

@@ -337,6 +337,11 @@ export function localizeCategoryLabel(category: string | undefined, locale: Loca
 
   const lower = clean.toLowerCase();
   const translations: Array<[RegExp, string]> = [
+    // Safety net: the internal sentinel must never surface in a FR report either.
+    [/your type of business/, "cette catégorie"],
+    [/eyewear brand|eyewear|glasses/, "marque de lunettes"],
+    [/jewelry brand|jewell?ery/, "marque de bijoux"],
+    [/mattress and bedding brand|mattress|bedding/, "marque de literie"],
     [/socks? and apparel|hosiery/, "chaussettes et vêtements"],
     [/dtc footwear brand|footwear|shoe|sneaker/, "marque de chaussures"],
     [/backpacks? and outdoor gear/, "sacs à dos et équipement outdoor"],

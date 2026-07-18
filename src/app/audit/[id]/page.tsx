@@ -5,6 +5,7 @@ import { AGENT_CHECKOUT_URL, MONITOR_CHECKOUT_URL } from "@/lib/checkout-links";
 import { ensureAuditSchema, pool } from "@/lib/db";
 import { recordFunnelEvent } from "@/lib/funnel";
 import { auditCopy, brandSentimentText, localeFromHeaders, localeFromUnknown, localizeCategoryLabel, localizePlainAction, type Locale } from "@/lib/i18n";
+import { UNKNOWN_CATEGORY } from "@/lib/audit-engine";
 import type { BrandSentiment, BuyerIntentPromptResult, IcpSegmentMetadata, PlainAction } from "@/lib/audit-engine";
 import AuditPoller from "./AuditPoller";
 import AgentAuditChat from "./AgentAuditChat";
@@ -194,8 +195,23 @@ function checkedQuestions(questions: BuyerIntentPromptResult[]) {
   return available.length ? available : questions;
 }
 
+/**
+ * Noun phrase used in every customer-facing fix sentence.
+ * When category detection fails we fall back to a segment-appropriate phrase —
+ * never a placeholder like "your business type", which reads as a broken template
+ * in the exact sample that is supposed to sell the Agent plan.
+ * Every call site below must keep it in a prepositional slot (about/around/in ${business}).
+ */
+function businessPhrase(category: string | undefined, locale: Locale, segment?: IcpSegmentMetadata) {
+  const trimmed = (category ?? "").trim();
+  if (trimmed && trimmed !== UNKNOWN_CATEGORY) return trimmed;
+  if (segment?.key === "local_independent") return locale === "fr" ? "ce service" : "this service";
+  if (segment?.key === "creator_influencer") return locale === "fr" ? "cette niche" : "this niche";
+  return locale === "fr" ? "cette catégorie" : "this category";
+}
+
 function fixSentence(category: string | undefined, hasCompetitors: boolean, locale: Locale, segment?: IcpSegmentMetadata) {
-  const business = category && category !== "your type of business" ? category : locale === "fr" ? "ton activité" : "your business type";
+  const business = businessPhrase(category, locale, segment);
 
   if (segment?.key === "local_independent") {
     return locale === "fr"
@@ -212,7 +228,7 @@ function fixSentence(category: string | undefined, hasCompetitors: boolean, loca
   if (hasCompetitors) {
     return locale === "fr"
       ? `À corriger : ajoute une page claire sur ${business}, avec FAQ, pages produit, avis et réponses directes aux questions d'achat.`
-      : `What to fix: add clear ${business} FAQ/product pages with reviews and direct answers to buyer questions.`;
+      : `What to fix: add a clear FAQ/product page about ${business}, with reviews and direct answers to buyer questions.`;
   }
 
   return locale === "fr"
@@ -221,7 +237,7 @@ function fixSentence(category: string | undefined, hasCompetitors: boolean, loca
 }
 
 function treatmentProofForQuestion(brandName: string, category: string | undefined, question: BuyerIntentPromptResult, competitors: string[], engine: string, locale: Locale, segment?: IcpSegmentMetadata) {
-  const business = category && category !== "your type of business" ? category : locale === "fr" ? "ton activité" : "your business type";
+  const business = businessPhrase(category, locale, segment);
   const citedCompetitors = uniqueNames([...question.competitors, ...competitors]).slice(0, 3);
 
   if (locale === "fr") {
@@ -239,12 +255,12 @@ function treatmentProofForQuestion(brandName: string, category: string | undefin
       draft: segment?.key === "local_independent"
         ? `Brouillon local à publier après relecture : « ${brandName} accompagne les clients qui cherchent ${business} près de chez eux. Explique la ville servie, les cas traités, les qualifications, les avis vérifiables et la prochaine étape pour réserver. ${competitorText} »`
         : segment?.key === "creator_influencer"
-          ? `Brouillon profil/listicle à publier après relecture : « ${brandName} est un profil ${business} à suivre pour son angle, ses contenus utiles et ses preuves publiques. Ajoute la niche, les plateformes actives, les meilleures preuves et les liens presse/profils. ${competitorText} »`
-          : `Brouillon FAQ à publier après relecture : « Si tu compares ${business}, commence par ton besoin, les preuves disponibles et la prochaine étape. ${brandName} doit présenter ses cas d'usage, ses avis ou preuves vérifiables, puis répondre directement à cette question. ${competitorText} »`,
+          ? `Brouillon profil/listicle à publier après relecture : « ${brandName} est un profil à suivre dans ${business} pour son angle, ses contenus utiles et ses preuves publiques. Ajoute la niche, les plateformes actives, les meilleures preuves et les liens presse/profils. ${competitorText} »`
+          : `Brouillon FAQ à publier après relecture : « Si tu compares les options dans ${business}, commence par ton besoin, les preuves disponibles et la prochaine étape. ${brandName} doit présenter ses cas d'usage, ses avis ou preuves vérifiables, puis répondre directement à cette question. ${competitorText} »`,
       google: segment?.key === "local_independent"
         ? `Phrase Google Business à coller : « ${brandName} aide les clients à choisir ${business} avec une prise de rendez-vous claire, des avis vérifiables et des informations locales à jour. »`
         : segment?.key === "creator_influencer"
-          ? `Phrase bio/profil à coller : « ${brandName} crée du contenu ${business} à suivre pour des conseils clairs, des preuves publiques et des liens vers les meilleurs contenus et interviews. »`
+          ? `Phrase bio/profil à coller : « ${brandName} crée du contenu sur ${business} à suivre pour des conseils clairs, des preuves publiques et des liens vers les meilleurs contenus et interviews. »`
           : `Phrase page produit à coller : « ${brandName} aide les clients à comparer ${business} avec des informations claires, des avis vérifiables et une prochaine étape simple. »`,
     };
   }
@@ -263,12 +279,12 @@ function treatmentProofForQuestion(brandName: string, category: string | undefin
     draft: segment?.key === "local_independent"
       ? `Local draft to publish after review: “${brandName} helps clients looking for ${business} nearby. State the city served, cases handled, qualifications, verifiable reviews, and the next booking step. ${competitorText}”`
       : segment?.key === "creator_influencer"
-        ? `Profile/listicle draft to publish after review: “${brandName} is a ${business} creator worth following for a clear angle, useful content, and public proof. Add the niche, active platforms, best proof, and press/profile links. ${competitorText}”`
-        : `FAQ draft to publish after review: “If you are comparing ${business}, start with your use case, available proof, and the next step. ${brandName} should present its use cases, reviews or verifiable proof, and a direct answer to this question. ${competitorText}”`,
+        ? `Profile/listicle draft to publish after review: “${brandName} is a creator worth following in ${business} for a clear angle, useful content, and public proof. Add the niche, active platforms, best proof, and press/profile links. ${competitorText}”`
+        : `FAQ draft to publish after review: “If you are comparing options in ${business}, start with your use case, available proof, and the next step. ${brandName} should present its use cases, reviews or verifiable proof, and a direct answer to this question. ${competitorText}”`,
     google: segment?.key === "local_independent"
       ? `Google Business sentence to paste: “${brandName} helps clients choose ${business} with clear booking steps, verifiable reviews, and up-to-date local information.”`
       : segment?.key === "creator_influencer"
-        ? `Social/profile sentence to paste: “${brandName} creates ${business} content worth following for clear advice, public proof, and links to the best content and interviews.”`
+        ? `Social/profile sentence to paste: “${brandName} creates content about ${business} worth following for clear advice, public proof, and links to the best content and interviews.”`
         : `Product-page sentence to paste: “${brandName} helps buyers compare ${business} with clear information, verifiable reviews, and a simple next step.”`,
   };
 }
