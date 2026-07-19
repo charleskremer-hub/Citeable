@@ -12,6 +12,7 @@ import AgentAuditChat from "./AgentAuditChat";
 import FunnelCheckoutLink from "./FunnelCheckoutLink";
 import { VisibilityMonitorCard } from "./VisibilityMonitorCard";
 import CopyBlock from "./CopyBlock";
+import ClaimReportGate from "./ClaimReportGate";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,7 @@ type AuditRow = {
     category?: string;
     icpSegment?: IcpSegmentMetadata;
     auditTier?: string;
+    anonymous?: boolean;
     answerEngine?: { engine?: string; model?: string; realLlmCall?: boolean };
     brandSentiment?: BrandSentiment;
     structuredDataFound?: boolean;
@@ -394,6 +396,10 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const sortedPromptRows = [...promptRows].sort((a, b) => promptRank(a.analysis.state) - promptRank(b.analysis.state));
   const sentimentLine = brandSentimentText(audit.raw_results?.brandSentiment ?? { label: "not_enough_signal", justification: "not enough signal" }, locale);
   const agentSentimentLabel = audit.raw_results?.brandSentiment?.label ?? "not_enough_signal";
+  // Audit lancé sans email : le verdict reste visible, le détail est échangé
+  // contre l'email (voir ClaimReportGate). Une fois réclamé, le rapport s'ouvre.
+  const reportLocked = Boolean(audit.raw_results?.anonymous) && complete && !failed;
+
   const aiCrawl = complete && !failed ? await checkAiCrawlability(audit.website_url) : null;
   const aiCrawlOk = Boolean(aiCrawl && aiCrawl.blocked.length === 0);
   const aiCrawlHint = !aiCrawl
@@ -686,7 +692,9 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             </section>
           ) : null}
 
-          {complete && !failed ? (
+          {reportLocked ? <ClaimReportGate auditId={audit.id} locale={locale} /> : null}
+
+          {complete && !failed && !reportLocked ? (
             <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6">
               <div className="mb-4 flex items-end justify-between gap-4">
                 <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>

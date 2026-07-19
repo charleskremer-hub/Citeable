@@ -32,7 +32,9 @@ export default function HomeClient({ locale }: HomeClientProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!email || !brandName || !websiteUrl) return;
+    // L'email n'est plus requis pour lancer l'audit : c'était le frein d'entrée
+    // du funnel. Il est demandé sur le rapport, une fois le verdict montré.
+    if (!brandName || !websiteUrl) return;
     setStatus("loading");
     setErrorMsg("");
     try {
@@ -131,12 +133,14 @@ export default function HomeClient({ locale }: HomeClientProps) {
                     onChange={(e) => setWebsiteUrl(e.target.value)}
                     style={inputStyle}
                   />
+                  {/* Email volontairement OPTIONNEL : exiger une adresse avant
+                      d'avoir rien montré était le frein d'entrée du funnel. On
+                      la demande sur le rapport, une fois le verdict affiché. */}
                   <label className="sr-only" htmlFor="email">{copy.emailLabel}</label>
                   <input
                     id="email"
                     type="email"
-                    required
-                    placeholder={copy.emailPlaceholder}
+                    placeholder={locale === "fr" ? "Email (optionnel)" : "Email (optional)"}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     style={inputStyle}

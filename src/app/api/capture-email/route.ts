@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
-import { auditTierFromPayload, checkFreeAuditQuota, findFreshFreeGeminiAudit, brandDedupeDomain, createCachedFreeAuditForLead, recipientLocaleFromSignals, runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
+import { auditTierFromPayload, checkFreeAuditQuota, findFreshFreeGeminiAudit, brandDedupeDomain, createCachedFreeAuditForLead, recipientLocaleFromSignals, runQueuedAudit, validateAuditInputAllowAnonymous } from "@/lib/audit-engine";
 import { recordFunnelEvent } from "@/lib/funnel";
 import { localeFromUnknown } from "@/lib/i18n";
 
@@ -10,19 +10,23 @@ export async function POST(req: NextRequest) {
   try {
     await ensureAuditSchema();
     const payload = await req.json();
-    const { email, brandName, websiteUrl } = validateAuditInput(payload);
+    const { email, brandName, websiteUrl, anonymous } = validateAuditInputAllowAnonymous(payload);
     const auditTier = auditTierFromPayload(payload);
     const locale = payload && typeof payload === "object" && "locale" in payload ? localeFromUnknown((payload as Record<string, unknown>).locale) : recipientLocaleFromSignals(email, websiteUrl);
     const dedupeDomain = brandDedupeDomain(websiteUrl);
 
-    await pool.query(
-      `INSERT INTO email_captures (email, brand_name, website_url)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (email) DO UPDATE
-       SET brand_name = EXCLUDED.brand_name,
-           website_url = EXCLUDED.website_url`,
-      [email, brandName, websiteUrl]
-    );
+    // Un audit anonyme n'a pas de lead à enregistrer : l'email est collecté plus
+    // tard, une fois le verdict montré (/api/claim-audit).
+    if (!anonymous) {
+      await pool.query(
+        `INSERT INTO email_captures (email, brand_name, website_url)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (email) DO UPDATE
+         SET brand_name = EXCLUDED.brand_name,
+             website_url = EXCLUDED.website_url`,
+        [email, brandName, websiteUrl]
+      );
+    }
 
     if (auditTier === "free") {
       const cachedAudit = await findFreshFreeGeminiAudit(brandName, websiteUrl);
@@ -76,7 +80,7 @@ export async function POST(req: NextRequest) {
       `INSERT INTO audits (email, brand_name, website_url, dedupe_domain, raw_results)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING id`,
-      [email, brandName, websiteUrl, dedupeDomain, { status: "running", queuedAt: new Date().toISOString(), auditTier, locale }]
+      [email, brandName, websiteUrl, dedupeDomain, { status: "running", queuedAt: new Date().toISOString(), auditTier, locale, anonymous }]
     );
 
     const auditId = audit.rows[0].id;

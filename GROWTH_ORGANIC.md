@@ -73,6 +73,29 @@ le donner, pas le cacher derrière un formulaire.
 
 Effort M. **C'est la priorité n°1 du pilier acquisition.**
 
+**Fait le 19/07** :
+- `validateAuditInputAllowAnonymous()` dans `audit-engine.ts` — l'email devient
+  facultatif pour LANCER un audit. Un identifiant synthétique
+  (`anon-<uuid>@anonymous.citeable.invalid`) satisfait le schéma ; son domaine est
+  dans la liste de suppression, donc **aucun email ne part vers un audit anonyme**.
+- `/api/capture-email` — n'insère plus de lead quand l'audit est anonyme, et marque
+  `raw_results.anonymous = true`. Le chemin avec email est **inchangé** (rétro-compatible).
+- `/api/claim-audit` (nouveau) — rattache un email à un audit anonyme, crée le lead,
+  émet l'event funnel `email_captured`. Idempotent : un audit déjà nominatif n'est
+  jamais réattribué.
+- `ClaimReportGate.tsx` (nouveau) — la porte affichée sur le rapport anonyme.
+- `page.tsx` — `reportLocked` : le verdict reste visible, le bloc concurrents est
+  échangé contre l'email.
+- `HomeClient.tsx` — champ email marqué « (optionnel) », plus de `required`.
+
+**Garde-fou coût** : le quota `checkFreeAuditQuota` limite déjà par **domaine audité**
+en plus de l'email. La limitation par domaine subsiste donc en anonyme, et le cache
+`findFreshFreeGeminiAudit` évite de relancer Gemini sur une marque déjà auditée.
+
+**À surveiller après déploiement** : le volume d'audits anonymes (coût Gemini) et le
+taux de réclamation (part des audits anonymes qui donnent un email). Si le taux de
+réclamation est faible, durcir la porte ; s'il est élevé, l'assouplir encore.
+
 ---
 
 ## Pilier 3 — Étude de données originales

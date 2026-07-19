@@ -422,6 +422,39 @@ export function validateAuditInput(input: Record<string, unknown>) {
   return { email, brandName, websiteUrl: normalizeWebsiteUrl(rawWebsiteUrl) };
 }
 
+/**
+ * Audit sans friction : l'email n'est plus exigé pour LANCER un audit.
+ *
+ * Demander l'email avant d'avoir rien montré est le principal frein d'entrée du
+ * funnel — les concurrents (Otterly, Ahrefs) donnent un premier résultat sans
+ * inscription. On lance donc l'audit anonymement, on montre le verdict, et on ne
+ * demande l'email que pour débloquer le détail (voir /api/claim-audit).
+ *
+ * Un identifiant synthétique est généré pour satisfaire le schéma sans jamais
+ * ressembler à une vraie adresse ; son domaine est dans la liste de suppression,
+ * donc aucun email ne part vers un audit anonyme.
+ */
+export const ANONYMOUS_EMAIL_DOMAIN = "anonymous.citeable.invalid";
+
+export function isAnonymousEmail(email: string) {
+  return email.trim().toLowerCase().endsWith(`@${ANONYMOUS_EMAIL_DOMAIN}`);
+}
+
+export function validateAuditInputAllowAnonymous(input: Record<string, unknown>) {
+  const rawEmail = String(input.email ?? "").trim().toLowerCase();
+  const brandName = String(input.brand_name ?? "").trim();
+  const rawWebsiteUrl = String(input.website_url ?? "").trim();
+
+  if (!brandName) throw new Error("Brand name is required.");
+  if (!rawWebsiteUrl) throw new Error("Website URL is required.");
+  if (rawEmail && !rawEmail.includes("@")) throw new Error("A valid email is required.");
+
+  const anonymous = !rawEmail;
+  const email = anonymous ? `anon-${crypto.randomUUID()}@${ANONYMOUS_EMAIL_DOMAIN}` : rawEmail;
+
+  return { email, brandName, websiteUrl: normalizeWebsiteUrl(rawWebsiteUrl), anonymous };
+}
+
 function reportFromRow(row: AuditRow): AuditReport {
   const checks = row.raw_results?.checks ?? checksFromEngines(row.engines_checked ?? []);
   const buyerIntentPrompts = row.raw_results?.buyerIntentPrompts ?? [];
@@ -2380,7 +2413,8 @@ async function shouldSuppressEmail(email: string, websiteUrl: string) {
   const normalizedEmail = normalizedEmailAddress(email);
   const recipientDomain = emailDomain(normalizedEmail);
   const brandDomain = brandDedupeDomain(websiteUrl);
-  const builtInSuppressedDomains = ["keyban.fr", "getciteable.nanocorp.app", "nanocorp.app", "getciteable.com"];
+  // ANONYMOUS_EMAIL_DOMAIN : un audit anonyme n'a pas de destinataire réel.
+  const builtInSuppressedDomains = ["keyban.fr", "getciteable.nanocorp.app", "nanocorp.app", "getciteable.com", ANONYMOUS_EMAIL_DOMAIN];
 
   if (normalizedEmail === "charles@getciteable.nanocorp.app") return "Suppressed: Charles internal address.";
   if (recipientDomain && isPersonalEmailDomain(recipientDomain)) return "Suppressed: personal email domain.";
