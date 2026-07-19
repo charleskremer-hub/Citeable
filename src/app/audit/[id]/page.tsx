@@ -6,6 +6,7 @@ import { ensureAuditSchema, pool } from "@/lib/db";
 import { recordFunnelEvent } from "@/lib/funnel";
 import { auditCopy, brandSentimentText, localeFromHeaders, localeFromUnknown, localizeCategoryLabel, localizePlainAction, type Locale } from "@/lib/i18n";
 import { UNKNOWN_CATEGORY } from "@/lib/audit-engine";
+import { isAnonymousEmail } from "@/lib/audit-engine";
 import type { BrandSentiment, BuyerIntentPromptResult, IcpSegmentMetadata, PlainAction } from "@/lib/audit-engine";
 import AuditPoller from "./AuditPoller";
 import AgentAuditChat from "./AgentAuditChat";
@@ -398,7 +399,12 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const agentSentimentLabel = audit.raw_results?.brandSentiment?.label ?? "not_enough_signal";
   // Audit lancé sans email : le verdict reste visible, le détail est échangé
   // contre l'email (voir ClaimReportGate). Une fois réclamé, le rapport s'ouvre.
-  const reportLocked = Boolean(audit.raw_results?.anonymous) && complete && !failed;
+  //
+  // On se base sur l'EMAIL de l'audit, pas sur un drapeau `raw_results.anonymous` :
+  // la réclamation met à jour l'email, et un drapeau maintenu en parallèle serait
+  // resté à true, laissant le rapport verrouillé pour toujours. L'email est la
+  // seule source de vérité.
+  const reportLocked = isAnonymousEmail(audit.email) && complete && !failed;
 
   const aiCrawl = complete && !failed ? await checkAiCrawlability(audit.website_url) : null;
   const aiCrawlOk = Boolean(aiCrawl && aiCrawl.blocked.length === 0);
