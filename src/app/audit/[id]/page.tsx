@@ -453,6 +453,30 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const sovBrandLeads = sovRows.length > 0 && sovRows[0].isBrand && brandMentionCount > 0;
   const sovMaxPct = sovRows.reduce((max, row) => Math.max(max, row.pct), 0) || 100;
 
+  // Fair-share benchmark: with N brands named on these questions, an even split gives each 100/N.
+  // Deliberately relative to the actual competitive set instead of a fixed "<15% is bad" threshold —
+  // a 12% share against 8 brands is fine, against 2 brands it is a hole.
+  const sovBrandCount = sovRows.length;
+  const sovFairSharePct = sovBrandCount > 0 ? Math.round(100 / sovBrandCount) : 0;
+  const sovBandLabel =
+    sovBrandCount === 0
+      ? null
+      : brandMentionCount === 0
+        ? copy.sovBandInvisible
+        : shareOfVoicePct < sovFairSharePct * 0.5
+          ? copy.sovBandFarBelow
+          : shareOfVoicePct < sovFairSharePct * 0.9
+            ? copy.sovBandBelow
+            : shareOfVoicePct < sovFairSharePct * 1.25
+              ? copy.sovBandFair
+              : copy.sovBandAbove;
+  const sovBandColor =
+    brandMentionCount === 0 || shareOfVoicePct < sovFairSharePct * 0.5
+      ? "#FF8F6B"
+      : shareOfVoicePct < sovFairSharePct * 0.9
+        ? "#FFD166"
+        : "#CAFF3C";
+
   return (
     <main className="min-h-screen bg-[#09090B] text-[#F0F0EC]" style={{ fontFamily: "var(--font-sans)" }}>
       <AuditPoller
@@ -680,6 +704,20 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                     </p>
                   </div>
 
+                  {sovBandLabel ? (
+                    <div className="mt-3 flex flex-wrap items-center gap-2" data-testid="share-of-voice-benchmark">
+                      <span
+                        className="rounded-full px-2.5 py-1 text-[0.6875rem] font-black uppercase tracking-[0.1em]"
+                        style={{ color: sovBandColor, background: `${sovBandColor}1F`, border: `1px solid ${sovBandColor}33` }}
+                      >
+                        {sovBandLabel}
+                      </span>
+                      <span className="text-xs font-bold leading-5 text-[#8E8E9A]">
+                        {copy.sovFairShareLine(sovFairSharePct, sovBrandCount)}
+                      </span>
+                    </div>
+                  ) : null}
+
                   <ul className="m-0 mt-4 grid list-none gap-2.5 p-0">
                     {sovRows.map((row) => (
                       <li key={`${row.isBrand ? "brand" : "competitor"}-${row.name}`} className="grid gap-1.5">
@@ -692,7 +730,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                             {row.pct}% <span className="text-[#777787]">({row.count}x)</span>
                           </span>
                         </div>
-                        <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
+                        <div className="relative h-2 overflow-hidden rounded-full bg-white/[0.06]">
                           <div
                             className="h-full rounded-full"
                             style={{
@@ -700,6 +738,13 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                               background: row.isBrand ? "#CAFF3C" : "rgba(240,240,236,0.28)",
                             }}
                           />
+                          {row.isBrand && sovFairSharePct > 0 && sovFairSharePct <= sovMaxPct ? (
+                            <span
+                              aria-hidden
+                              className="absolute top-0 h-full w-px bg-[#F0F0EC]/55"
+                              style={{ left: `${Math.min(100, Math.round((sovFairSharePct / sovMaxPct) * 100))}%` }}
+                            />
+                          ) : null}
                         </div>
                       </li>
                     ))}

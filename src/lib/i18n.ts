@@ -277,6 +277,13 @@ export const auditCopy = {
     sovInvisibleLine: (engine: string) =>
       `${engine} never named you. Every mention went to someone else.`,
     sovWinningLine: "You're the most-cited brand on these questions. Hold it.",
+    sovFairShareLine: (fairPct: number, brandCount: number) =>
+      `Benchmark: with ${brandCount} brands named here, an even split would give each one ${fairPct}%.`,
+    sovBandInvisible: "Invisible",
+    sovBandFarBelow: "Far below your fair share",
+    sovBandBelow: "Below your fair share",
+    sovBandFair: "At your fair share",
+    sovBandAbove: "Above your fair share",
   },
   fr: {
     navCta: "Démarrer Agent — 19 €/mois →",
@@ -327,6 +334,13 @@ export const auditCopy = {
     sovInvisibleLine: (engine: string) =>
       `${engine} ne t'a jamais cité. Chaque mention est partie chez un concurrent.`,
     sovWinningLine: "Tu es la marque la plus citée sur ces questions. Garde cette place.",
+    sovFairShareLine: (fairPct: number, brandCount: number) =>
+      `Repère : avec ${brandCount} marques citées ici, un partage à parts égales donnerait ${fairPct}% à chacune.`,
+    sovBandInvisible: "Invisible",
+    sovBandFarBelow: "Très en dessous de ta part équitable",
+    sovBandBelow: "En dessous de ta part équitable",
+    sovBandFair: "À ta part équitable",
+    sovBandAbove: "Au-dessus de ta part équitable",
   },
 } as const;
 

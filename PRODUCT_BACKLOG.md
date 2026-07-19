@@ -4,6 +4,14 @@ Backlog tenu à jour par l'agent produit autonome (run quotidien 7h). Ne garder 
 
 Format : {titre} — source/concurrent inspirant — valeur ICP — effort (S/M/L) — priorité (Must/Should/Nice) — statut (Todo/Done/Blocked)
 
+## Veille — signaux notés (2026-07-19)
+
+- **Peec.ai (changelog 6 juillet)** — **Branding & intent tags** : chaque prompt est classé automatiquement branded/non-branded + intention (informational / transactional / commercial), disponible en filtre. → Le marché formalise l'idée que *tous les prompts ne se valent pas*. Nous, on ne teste déjà QUE des questions d'achat (buyer intent) — c'est un choix produit qu'on ne raconte nulle part dans le rapport. Angle copy gratuit. [peec.ai/changelog]
+- **Peec.ai — Query Fanouts** (6 juillet) : expose les recherches web que le moteur lance *avant* de rédiger sa réponse, avec les marques qu'il croise dedans. Feature d'analyste, pas de fondateur DTC — à écarter, mais confirme la course à la profondeur de données chez les concurrents.
+- **Peec.ai — fixes révélateurs** : « citations comptées à tort comme mentions de marque », « taux de citation URL affiché au double de la valeur réelle, corrigé rétroactivement ». → Même les leaders à 95 $/mois se plantent sur le comptage de mentions. Notre discipline « on montre le compte brut (2x, 1x) à côté du % » est un vrai signal de confiance : le client peut recompter à la main.
+- **Benchmarks share of voice — le consensus 2026 est *relatif*, pas absolu** : taux moyen de mention de marque ≈ 17,2 % ; leaders 35–50 % en catégorie consolidée mais 15 %+ déjà fort en catégorie fragmentée ; plusieurs sources concluent explicitement que « le nombre de concurrents décide de ce que veut dire bon ». → **Invalide partiellement l'item backlog du 18/07** qui prévoyait des seuils fixes (« < 15 % = déficit »). Corrigé : on benchmarke contre la part équitable du set réel. [gigawattgroup.com, llmpulse.ai, optimizegeo.ai]
+- **Consolidation confirmée** — Scrunch AI absorbé par Sitecore (juin 2026) ; Profound à 1 Md$ de valo. Le milieu self-serve simple continue de se vider par le haut.
+
 ## Veille — signaux notés (2026-07-18)
 
 - **Peec.ai** — Vague de features "power user" : MCP (connecte les données Peec à Claude/Cursor/n8n), Agent Analytics (tracking des bots IA), Source Bookmarks, palette Cmd-K, ajout DeepSeek/Qwen, et **Instant Pitch Projects** pour agences (10 chats/prompt instantanés au lieu de 7 jours de collecte). → Ils partent vers l'outillage agence/analyste. Confirme notre couloir : le founder DTC qui veut un verdict, pas un IDE de données. [peec.ai/changelog]
@@ -45,7 +53,7 @@ Format : {titre} — source/concurrent inspirant — valeur ICP — effort (S/M/
 - **Rappel du delta de prix vs agences GEO** sur la landing/page pricing ("Les agences GEO facturent 2 000 à 10 000€/mois pour ça. Monitor : 9€.") — issu de la veille agences — renforce le positionnement prix. — Effort S — Todo.
 - **Segment "AI Shopping" léger pour DTC/e-commerce** — Peec AI Shopping Analytics — trop lourd à répliquer tel quel, mais on pourrait ajouter 1-2 prompts "shopping" (ex: "où acheter [produit] pas cher") dans le buyer prompt set pour les marques e-commerce. — Effort M — Todo.
 
-- **Repère de benchmark sous la part de voix** ("< 15% = déficit de citation, 25–40% = zone compétitive") — standard de reporting GEO 2026 — donne au founder DTC un référentiel pour interpréter son % sans jargon. Suite naturelle du bloc livré le 18/07. — Effort S — Todo.
+- **Repère de benchmark sous la part de voix** — standard de reporting GEO 2026 — donne au founder DTC un référentiel pour interpréter son % sans jargon. Suite naturelle du bloc livré le 18/07. — Effort S — **Done (2026-07-19)**. **Écart assumé vs la spec d'origine** : la veille du 19/07 montre que les seuils fixes (« < 15 % = déficit ») sont faux — le nombre de concurrents décide de ce qui est bon. Livré à la place un **repère de part équitable** : avec N marques citées, un partage à parts égales donne 100/N à chacune ; le rapport affiche une pastille verdict (Invisible / Très en dessous / En dessous / À ta part équitable / Au-dessus) + une phrase de repère + un trait de part équitable sur la barre de la marque. Fichiers : `src/app/audit/[id]/page.tsx` (calcul `sovFairSharePct` / `sovBandLabel` / `sovBandColor` + bloc `data-testid="share-of-voice-benchmark"` + marqueur sur la barre), copy FR/EN dans `src/lib/i18n.ts` (`sovFairShareLine`, `sovBand*`). **Zéro donnée nouvelle, zéro appel réseau, page-only** — aucun risque funnel. Visible sur les 3 tiers.
 
 - **"Win rate" + "prix cité vs prix réel" sur 1-2 produits phares** — Peec AI Shopping Analytics (juin 2026) — LA feature la plus alignée sur notre ICP DTC : deux chiffres qui ne demandent aucune explication à un fondateur ("mon produit sort-il en 1er ?" / "l'IA raconte-t-elle un prix périmé ?"). Version légère : pas de connexion catalogue complète, juste 1-2 SKU phares détectés depuis le site. — Effort M — **Should, priorité haute** — Todo.
 - **Message "prix fixe, pas de crédits"** sur la landing — veille pricing (tous les concurrents facturent en crédits/prompts/add-ons et ont dû construire des calculateurs) — retourner la complexité du marché en argument : "Pas de crédits. Pas de calculateur. 9 €." — Effort S — Todo.
@@ -55,6 +63,7 @@ Format : {titre} — source/concurrent inspirant — valeur ICP — effort (S/M/
 
 ### Nice
 
+- **Dire qu'on ne teste QUE des questions d'achat** — Peec vient de sortir la classification d'intention (informational/transactional/commercial) comme feature payante ; nous, c'est notre parti pris depuis le départ mais on ne l'écrit nulle part. Une ligne dans le rapport et sur la landing : « On ne teste pas "c'est quoi une chaussure en laine". On teste les questions que pose quelqu'un qui va acheter. » — Effort S — **Should** — Todo.
 - **Tip contenu "YouTube = signal #1"** — étude Ahrefs 75k marques — ajouter une recommandation ponctuelle dans les actions Monitor quand pertinent (marque sans présence vidéo) suggérant du contenu YouTube. — Effort S — Todo.
 - **Segmentation "Personas" façon Profound** — trop enterprise/complexe pour notre ICP self-serve, à ne considérer que si demandé explicitement par des clients Agent. — Effort L — Todo (probablement à écarter, hors value prop simplicité).
 
