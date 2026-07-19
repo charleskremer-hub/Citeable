@@ -4,6 +4,9 @@ export const FUNNEL_EVENTS = [
   "audit_started",
   "audit_completed",
   "report_viewed",
+  // Audit sans friction : l'audit démarre sans email, le lead est capturé plus
+  // tard sur le rapport en échange du détail (voir /api/claim-audit).
+  "email_captured",
   "teaser_cta_click",
   "checkout_opened",
   "followup_1_sent",
