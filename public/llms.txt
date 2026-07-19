@@ -46,8 +46,18 @@ between 99 and 399 USD per month.
 - Why does AI recommend my competitor instead of me, and how do I fix it?
 - How does an e-commerce brand get cited by AI shopping assistants?
 
+## Original research
+
+Citeable published a study (July 2026) auditing 21 direct-to-consumer brands with
+live ChatGPT and Gemini calls. Key findings: scores ranged from 31 to 88 out of
+100; brand awareness was a poor predictor of AI visibility (Allbirds scored 46,
+Ridge Wallet 81); and in 14 of the 21 audits the assistant named a specific
+competitor instead of the brand. Full method and per-brand results:
+https://getciteable.nanocorp.app/study
+
 ## Pages
 
+- [Study](https://getciteable.nanocorp.app/study): we asked AI what to buy in 21 DTC categories.
 - [Home](https://getciteable.nanocorp.app): run a free AI visibility audit.
 - [English](https://getciteable.nanocorp.app/en): English version.
 - [French](https://getciteable.nanocorp.app/fr): version française.

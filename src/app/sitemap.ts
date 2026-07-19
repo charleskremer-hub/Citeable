@@ -25,6 +25,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       priority: 0.95,
     },
+    {
+      // Étude de données propriétaires : c'est le contenu le plus susceptible
+      // d'être cité par les moteurs IA et de générer des liens entrants.
+      url: `${siteUrl}/study`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.9,
+    },
     ...answerPages.map((page) => ({
       url: `${siteUrl}/${page.locale}/${page.slug}`,
       lastModified: now,
