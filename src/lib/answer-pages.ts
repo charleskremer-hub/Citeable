@@ -15,8 +15,8 @@ export type AnswerPage = {
   verificationTitle: string;
   verificationIntro: string;
   verificationSteps: string[];
-  citeableTitle: string;
-  citeableBody: string;
+  getpickTitle: string;
+  getpickBody: string;
   sourceTitle: string;
   sourceIntro: string;
   sources: { label: string; href: string; note: string }[];
@@ -137,8 +137,8 @@ function createPage(seed: CategorySeed, locale: AnswerLocale): AnswerPage {
     title,
     metaTitle: title,
     metaDescription: isFr
-      ? `Réponse claire : quand l'IA recommande des ${category}, quels signaux elle utilise et comment Citeable vérifie ou corrige ta visibilité.`
-      : `Clear answer: when AI recommends ${category}, which signals it uses, and how Citeable checks or fixes your visibility.`,
+      ? `Réponse claire : quand l'IA recommande des ${category}, quels signaux elle utilise et comment GetPick vérifie ou corrige ta visibilité.`
+      : `Clear answer: when AI recommends ${category}, which signals it uses, and how GetPick checks or fixes your visibility.`,
     eyebrow: isFr ? "Réponse SEO/GEO" : "SEO/GEO answer",
     directAnswer,
     featuredListIntro: isFr ? "Pour apparaître dans une réponse IA, une marque doit rendre ses preuves faciles à extraire :" : "To appear in an AI answer, a brand needs to make its proof easy to extract:",
@@ -152,10 +152,10 @@ function createPage(seed: CategorySeed, locale: AnswerLocale): AnswerPage {
     verificationSteps: isFr
       ? ["Demande une recommandation large : meilleur choix, alternative locale, option durable ou rapport qualité-prix.", "Note les marques citées en premier, les arguments utilisés et les sources visibles.", "Compare avec ton site : la réponse IA peut-elle trouver la même preuve en moins de deux clics ?", "Ajoute ou corrige les pages qui manquent : FAQ, comparatif, preuve, Google Business, mentions."]
       : ["Ask a broad recommendation question: best choice, local alternative, sustainable option or value pick.", "Record which brands appear first, which arguments are used and which visible sources are cited.", "Compare the answer with your site: can the AI find the same proof in fewer than two clicks?", "Add or fix the missing assets: FAQ, comparison, proof, Google Business and mentions."],
-    citeableTitle: isFr ? "L'angle Citeable" : "The Citeable angle",
-    citeableBody: isFr
-      ? `Citeable lance un audit gratuit qui pose les questions que tes clients posent à l'IA, repère si ta marque est recommandée, identifie les concurrents cités, puis transforme les manques en corrections prêtes à publier.`
-      : `Citeable runs a free audit that asks the questions your customers ask AI, checks whether your brand is recommended, identifies cited competitors, and turns the gaps into fixes ready to publish.`,
+    getpickTitle: isFr ? "L'angle GetPick" : "The GetPick angle",
+    getpickBody: isFr
+      ? `GetPick lance un audit gratuit qui pose les questions que tes clients posent à l'IA, repère si ta marque est recommandée, nomme les concurrents cités à ta place, puis écrit les corrections prêtes à publier.`
+      : `GetPick runs a free audit that asks the questions your customers ask AI, checks whether your brand is recommended, names the competitors cited in your place, and writes the fixes ready to publish.`,
     sourceTitle: isFr ? "Pourquoi ça compte maintenant" : "Why this matters now",
     sourceIntro: isFr
       ? "Les recommandations IA ne sont plus marginales dans le parcours d'achat. Les sources ci-dessous montrent pourquoi les marques doivent mesurer leur présence dans les réponses, pas seulement leurs positions Google."
@@ -169,8 +169,8 @@ function createPage(seed: CategorySeed, locale: AnswerLocale): AnswerPage {
     proofSignals: isFr ? seed.frSignals : seed.enSignals,
     ctaTitle: isFr ? "Audit gratuit : vois si l'IA te cite" : "Free audit: see whether AI cites you",
     ctaBody: isFr
-      ? "Entre ton entreprise et ton site. Citeable vérifie les réponses IA, montre les concurrents cités et indique quoi corriger en premier."
-      : "Enter your business and website. Citeable checks AI answers, shows cited competitors and tells you what to fix first.",
+      ? "Entre ton entreprise et ton site. GetPick vérifie les réponses IA, montre les concurrents cités et indique quoi corriger en premier."
+      : "Enter your business and website. GetPick checks AI answers, shows cited competitors and tells you what to fix first.",
     ctaLabel: isFr ? "Lancer l'audit gratuit" : "Run the free audit",
     relatedTitle: isFr ? "Autres catégories" : "Other categories",
     faq: [

@@ -29,7 +29,7 @@ function runAuditAfterResponse(auditId: string) {
   after(async () => {
     const result = await runQueuedAudit(auditId);
     if (result.status === "failed") {
-      console.error(`[citeable] audit ${auditId} failed: ${result.error}`);
+      console.error(`[getpick] audit ${auditId} failed: ${result.error}`);
     }
   });
 }

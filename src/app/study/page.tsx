@@ -4,10 +4,10 @@ import Link from "next/link";
 export const dynamic = "force-static";
 
 const PUBLISHED = "2026-07-19";
-const URL = "https://getciteable.nanocorp.app/study";
+const URL = "https://getpick.ai/study";
 
 export const metadata: Metadata = {
-  title: "We asked AI what to buy in 21 DTC categories — Citeable study",
+  title: "We asked AI what to buy in 21 DTC categories — GetPick study",
   description:
     "We audited 21 direct-to-consumer brands with live ChatGPT and Gemini calls. Brand awareness barely predicted AI visibility: Allbirds scored 46, Ridge Wallet 81. In 14 of 21 audits, AI named a competitor instead.",
   alternates: { canonical: URL },
@@ -32,7 +32,7 @@ const ROWS: Row[] = [
   { brand: "Topicals", score: 51, instead: "Paula's Choice" },
   { brand: "Spot & Tango", score: 55, cited: "7/12", instead: "Ollie" },
   { brand: "De Soi", score: 57, cited: "8/12", instead: "Ghia" },
-  { brand: "Citeable (us)", score: 61, cited: "9/12", instead: "BrightLocal", us: true },
+  { brand: "GetPick (us, formerly Citeable)", score: 61, cited: "9/12", instead: "BrightLocal", us: true },
   { brand: "Versed", score: 63, cited: "7/12", instead: "Cocokind" },
   { brand: "Baboon to the Moon", score: 65, lowRes: true },
   { brand: "Cometeer", score: 66, instead: "Jot" },
@@ -54,7 +54,7 @@ function scoreColor(score: number) {
 }
 
 // Schéma Article : c'est ce qui permet aux moteurs IA d'attribuer l'étude à
-// Citeable quand ils reprennent ses chiffres. Sans lui, on produit de la donnée
+// GetPick quand ils reprennent ses chiffres. Sans lui, on produit de la donnée
 // citée sans être cité — l'erreur exacte que l'étude décrit.
 const ARTICLE_SCHEMA = {
   "@context": "https://schema.org",
@@ -62,8 +62,8 @@ const ARTICLE_SCHEMA = {
   headline: "We asked AI what to buy in 21 DTC categories. Brand awareness had almost nothing to do with the answer.",
   datePublished: PUBLISHED,
   url: URL,
-  author: { "@type": "Organization", name: "Citeable", url: "https://getciteable.nanocorp.app" },
-  publisher: { "@type": "Organization", name: "Citeable" },
+  author: { "@type": "Organization", name: "GetPick", url: "https://getpick.ai" },
+  publisher: { "@type": "Organization", name: "GetPick" },
   about: "AI visibility of direct-to-consumer brands in ChatGPT and Gemini answers",
   description:
     "A study of 21 direct-to-consumer brands audited with live ChatGPT and Gemini calls. Scores ranged from 31 to 88 out of 100. In 14 of 21 audits, the assistant named a specific competitor instead of the brand.",
@@ -78,7 +78,7 @@ export default function StudyPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ARTICLE_SCHEMA) }} />
 
       <Link href="/" className="text-sm font-black text-[#CAFF3C] no-underline">
-        ← Citeable
+        ← GetPick
       </Link>
 
       <p className="m-0 mt-8 text-xs font-black uppercase tracking-[0.14em] text-[#CAFF3C]">Study · July 2026</p>
@@ -107,7 +107,7 @@ export default function StudyPage() {
 
       <h2 className={H2} style={{ fontFamily: "var(--font-display)" }}>How we ran this</h2>
       <p className={P}>
-        We make Citeable, an AI visibility tool. This study uses our own engine, and you should know exactly what it does
+        We make GetPick, a GEO agent for DTC brands. This study uses our own engine, and you should know exactly what it does
         before you trust the numbers.
       </p>
       <p className={P}>
@@ -224,9 +224,14 @@ export default function StudyPage() {
         We scored 61, and AI recommends us on 9 of 12 buyer questions — respectable.
       </p>
       <p className={P}>
-        The problem was what it said about us. Asked to describe Citeable, the assistant called us{" "}
+        The problem was what it said about us. Asked to describe GetPick — formerly Citeable — the assistant called us{" "}
         <em>&ldquo;an intuitive no-code solution for local businesses.&rdquo;</em> The buyer questions it generated for
         us were about local restaurants and food brands.
+      </p>
+      <p className={P}>
+        The audit also caught a naming problem, which explains the signature change on this study: it is now signed
+        GetPick, formerly Citeable. Our old name was already carried by two other players in this exact category — the
+        same attribution failure we measure for everyone else — so we renamed. The data in the table is unchanged.
       </p>
       <p className={P}>
         We do not sell to local businesses. We sell to DTC and e-commerce brands. The AI had us filed in the wrong

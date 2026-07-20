@@ -7,7 +7,7 @@ type SeoAnswerPageProps = {
   params: Promise<{ locale: string; slug: string }>;
 };
 
-const siteUrl = "https://getciteable.nanocorp.app";
+const siteUrl = "https://getpick.ai";
 
 export function generateStaticParams() {
   return answerPages.map((page) => ({ locale: page.locale, slug: page.slug }));
@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: SeoAnswerPageProps): Promise<
       title: page.metaTitle,
       description: page.metaDescription,
       url: canonical,
-      siteName: "Citeable",
+      siteName: "GetPick",
       locale: page.locale === "fr" ? "fr_FR" : "en_US",
       type: "article",
     },
@@ -71,7 +71,7 @@ export default async function SeoAnswerPage({ params }: SeoAnswerPageProps) {
         <div className="relative mx-auto max-w-5xl px-5 py-6 sm:px-6 sm:py-8">
           <nav className="flex items-center justify-between gap-4 text-sm">
             <Link href="/" className="font-serif text-xl tracking-[-0.02em] text-[#F0F0EC] no-underline" style={{ fontFamily: "var(--font-display)" }}>
-              Citeable
+              GetPick
             </Link>
             <div className="flex items-center gap-3">
               {alternate && (
@@ -124,9 +124,9 @@ export default async function SeoAnswerPage({ params }: SeoAnswerPageProps) {
 
       <section className="mx-auto grid max-w-5xl gap-6 border-t border-white/[0.06] px-5 py-12 sm:px-6 sm:py-16 lg:grid-cols-2">
         <article className="rounded-[1.5rem] border border-[#CAFF3C]/25 bg-[#CAFF3C]/[0.055] p-6 sm:p-7">
-          <p className="m-0 text-xs font-black uppercase tracking-[0.14em] text-[#CAFF3C]">Citeable</p>
-          <h2 className="mt-4 text-3xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>{page.citeableTitle}</h2>
-          <p className="mt-5 text-base font-bold leading-7 text-[#EFFFE0]">{page.citeableBody}</p>
+          <p className="m-0 text-xs font-black uppercase tracking-[0.14em] text-[#CAFF3C]">GetPick</p>
+          <h2 className="mt-4 text-3xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>{page.getpickTitle}</h2>
+          <p className="mt-5 text-base font-bold leading-7 text-[#EFFFE0]">{page.getpickBody}</p>
           <Link href="/#audit" className="mt-6 inline-flex rounded-full bg-[#CAFF3C] px-5 py-3 font-black text-[#09090B] no-underline transition hover:brightness-110">
             {page.ctaLabel}
           </Link>

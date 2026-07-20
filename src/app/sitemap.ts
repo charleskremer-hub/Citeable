@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { answerPages } from "@/lib/answer-pages";
 
-const siteUrl = "https://getciteable.nanocorp.app";
+const siteUrl = "https://getpick.ai";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

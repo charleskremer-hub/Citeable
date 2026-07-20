@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const BASE_URL = "https://getciteable.nanocorp.app";
+const BASE_URL = "https://getpick.ai";
 
 /**
  * robots.txt servi par Next.

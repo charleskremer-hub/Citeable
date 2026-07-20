@@ -20,14 +20,14 @@ export async function generateMetadata(): Promise<Metadata> {
 
   if (locale === "fr") {
     return {
-      title: "Citeable — Audit gratuit de recommandation IA",
-      description: "Entre le nom de ton entreprise et ton site, puis vois si l'IA te recommande.",
+      title: "GetPick — L'agent GEO des marques DTC",
+      description: "Il fait recommander ta marque par ChatGPT et Gemini — diagnostic, contenu, suivi. Sans agence. Audit gratuit en 2 minutes.",
     };
   }
 
   return {
-    title: "Citeable — Free AI Recommendation Audit",
-    description: "Enter your business name and website, then see whether AI recommends you.",
+    title: "GetPick — The GEO agent for DTC brands",
+    description: "It gets your brand recommended by ChatGPT and Gemini — diagnosis, content, monitoring. No agency needed. Free audit in 2 minutes.",
   };
 }
 
@@ -36,7 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
  *
  * La home ne servait aucun JSON-LD : notre propre audit pénalise les marques qui
  * n'en ont pas, et nous échouions à notre propre check. Surtout, notre audit de
- * dogfooding a montré que les IA décrivaient Citeable comme « une solution no-code
+ * dogfooding a montré que les IA décrivaient le produit comme « une solution no-code
  * pour les commerces locaux » — alors que l'ICP est la marque DTC / e-commerce.
  * Ce schéma déclare explicitement la catégorie et l'audience pour corriger ce
  * mauvais cadrage à la source.
@@ -44,13 +44,13 @@ export async function generateMetadata(): Promise<Metadata> {
 const STRUCTURED_DATA = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  name: "Citeable",
-  url: "https://getciteable.nanocorp.app",
+  name: "GetPick",
+  url: "https://getpick.ai",
   applicationCategory: "BusinessApplication",
-  applicationSubCategory: "AI visibility monitoring (GEO / AEO)",
+  applicationSubCategory: "GEO agent (AI visibility / AEO)",
   operatingSystem: "Web",
   description:
-    "Citeable checks whether AI assistants like ChatGPT and Gemini recommend your brand when shoppers ask what to buy, names the competitors cited in your place, and gives you copy-paste fixes. Built for DTC and e-commerce brands.",
+    "GetPick is the GEO agent for DTC brands. It gets your brand recommended by AI assistants like ChatGPT and Gemini: it sends real buying questions to the AIs live, names the rival recommended in your place, writes the copy-paste fixes, and monitors weekly. The work a GEO agency charges 2,000-20,000 EUR/month for, at a flat tool price.",
   audience: {
     "@type": "Audience",
     audienceType: "Direct-to-consumer and e-commerce brands",

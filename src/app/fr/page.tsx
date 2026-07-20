@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import HomeClient from "../HomeClient";
 
 export const metadata: Metadata = {
-  title: "Citeable — Audit gratuit de visibilité IA",
-  description: "Lance l'audit gratuit, vois ton score, puis reçois les correctifs rédigés pour toi.",
+  title: "GetPick — L'agent GEO des marques DTC",
+  description: "Il fait recommander ta marque par ChatGPT et Gemini — diagnostic, contenu, suivi. Sans agence. Audit gratuit en 2 minutes.",
 };
 
 export default function FrenchHome() {

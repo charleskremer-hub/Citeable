@@ -503,7 +503,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
       <section className="mx-auto flex min-h-screen w-full max-w-3xl flex-col px-4 py-5 sm:px-6 sm:py-8">
         <nav className="mb-6 flex items-center justify-between gap-4">
           <Link href="/" className="text-xl text-[#F0F0EC] no-underline" style={{ fontFamily: "var(--font-display)" }}>
-            Citeable
+            GetPick
           </Link>
           <a href={AGENT_CHECKOUT_URL} className="text-sm font-black text-[#CAFF3C] no-underline" data-ph-capture-attribute-plan="agent_19eur" data-ph-capture-attribute-source="audit_report_nav">
             {copy.navCta}
@@ -923,6 +923,23 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                   </span>
                 )}
               </div>
+
+              {sortedPromptRows.length ? (
+                <div className="mb-4 rounded-2xl border border-white/[0.07] bg-black/20 p-4" data-testid="prompt-methodology">
+                  <p className="m-0 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.methodEyebrow}</p>
+                  <p className="m-0 mt-1.5 text-base font-black leading-6 text-[#F0F0EC]">{copy.methodTitle}</p>
+                  <p className="m-0 mt-2 text-sm font-bold leading-6 text-[#A7A7B4]">
+                    {copy.methodBody(isAnswerEngineReport ? answerEngineName : copy.nativeWebSearch)}
+                  </p>
+                  <ul className="m-0 mt-3 flex list-none flex-wrap gap-2 p-0">
+                    {[copy.methodChipUnbranded, copy.methodChipIntent, copy.methodChipLive].map((chip) => (
+                      <li key={chip} className="rounded-full border border-white/[0.09] bg-white/[0.05] px-2.5 py-1 text-[0.6875rem] font-black uppercase tracking-[0.1em] text-[#BCBCC8]">
+                        {chip}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
 
               {gapPromptCount > 0 ? (
                 <p className="m-0 mb-4 rounded-xl border border-[#FF8F6B]/20 bg-[#FF8F6B]/[0.06] px-4 py-3 text-sm font-bold leading-6 text-[#F3C7B7]">

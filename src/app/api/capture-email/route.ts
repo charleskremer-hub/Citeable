@@ -97,11 +97,11 @@ export async function POST(req: NextRequest) {
       const result = await runQueuedAudit(auditId);
 
       if (result.status === "failed") {
-        console.error(`[citeable] audit ${auditId} failed after capture: ${result.error}`);
+        console.error(`[getpick] audit ${auditId} failed after capture: ${result.error}`);
       }
     });
 
-    console.log(`[citeable] audit queued immediately: ${auditId} for ${email}`);
+    console.log(`[getpick] audit queued immediately: ${auditId} for ${email}`);
 
     return NextResponse.json(
       {

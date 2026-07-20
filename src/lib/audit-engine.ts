@@ -679,7 +679,7 @@ async function executeNanoCorpTool<T>(tool: string, args: Record<string, unknown
     return firstResult;
   }
 
-  console.warn(`[citeable] NanoCorp ${tool} auth failed; refreshing runtime token once`, {
+  console.warn(`[getpick] NanoCorp ${tool} auth failed; refreshing runtime token once`, {
     status: firstResult.status,
     message: firstResult.message,
   });
@@ -687,7 +687,7 @@ async function executeNanoCorpTool<T>(tool: string, args: Record<string, unknown
   const refreshedCredential = nanoCorpRuntimeCredential(firstCredential.token);
 
   if (!refreshedCredential || refreshedCredential.token === firstCredential.token) {
-    console.error(`[citeable] NanoCorp ${tool} auth retry skipped; no fresh runtime token available`, {
+    console.error(`[getpick] NanoCorp ${tool} auth retry skipped; no fresh runtime token available`, {
       status: firstResult.status,
       message: firstResult.message,
     });
@@ -698,13 +698,13 @@ async function executeNanoCorpTool<T>(tool: string, args: Record<string, unknown
   const attempts = [...firstResult.attempts, ...retryResult.attempts];
 
   if (retryResult.ok) {
-    console.info(`[citeable] NanoCorp ${tool} retry succeeded after runtime token refresh`, {
+    console.info(`[getpick] NanoCorp ${tool} retry succeeded after runtime token refresh`, {
       status: retryResult.status,
     });
     return { ...retryResult, attempts };
   }
 
-  console.error(`[citeable] NanoCorp ${tool} retry failed after runtime token refresh`, {
+  console.error(`[getpick] NanoCorp ${tool} retry failed after runtime token refresh`, {
     status: retryResult.status,
     message: retryResult.message,
   });
@@ -1234,7 +1234,7 @@ async function fetchNanoCorpSearch(source: string, query: string): Promise<Surfa
     const toolResult = await executeNanoCorpTool<{ results?: NanoCorpSearchResult[] }>("web_search", { query, max_results: 8 }, ANSWER_TIMEOUT_MS);
 
     if (!toolResult.ok) {
-      console.log(`[citeable] surface fetch ${source}: ${toolResult.error}`);
+      console.log(`[getpick] surface fetch ${source}: ${toolResult.error}`);
       return { source, url: "nanocorp:web_search", ok: false, status: toolResult.status, error: toolResult.error };
     }
 
@@ -1245,11 +1245,11 @@ async function fetchNanoCorpSearch(source: string, query: string): Promise<Surfa
       return { source, url: "nanocorp:web_search", ok: false, error: "NanoCorp web_search returned no usable results" };
     }
 
-    console.log(`[citeable] surface fetch ${source}: NanoCorp web_search ok (${results.length} results)`);
+    console.log(`[getpick] surface fetch ${source}: NanoCorp web_search ok (${results.length} results)`);
     return { source, url: "nanocorp:web_search", ok: true, status: toolResult.status, html: text, text };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown NanoCorp web_search error";
-    console.log(`[citeable] surface fetch ${source}: NanoCorp web_search failed ${message}`);
+    console.log(`[getpick] surface fetch ${source}: NanoCorp web_search failed ${message}`);
     return { source, url: "nanocorp:web_search", ok: false, error: message };
   }
 }
@@ -1920,7 +1920,7 @@ async function inferCategory(brandName: string, websiteUrl: string, fallbackChec
       if (!isGenericCategory(secondPassCategory)) return { category: secondPassCategory, homepageText: signals };
     }
   } catch (error) {
-    console.log(`[citeable] category homepage fetch failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+    console.log(`[getpick] category homepage fetch failed: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 
   // Phrase rules could not determine a category (e.g. Shopify/anti-bot sites returning little text).
@@ -2978,12 +2978,12 @@ function computeScore(checks: AuditCheckResult[], buyerIntentPrompts: BuyerInten
 }
 
 function formulaText() {
-  return "Your free score comes from real Gemini recommendation calls for buyer questions: does Gemini recommend your brand/domain, or does it cite competitors instead? If Gemini is unavailable, Citeable asks you to retry and never fabricates data or scores empty checks.";
+  return "Your free score comes from real Gemini recommendation calls for buyer questions: does Gemini recommend your brand/domain, or does it cite competitors instead? If Gemini is unavailable, GetPick asks you to retry and never fabricates data or scores empty checks.";
 }
 
 function formulaTextForTier(tier: AuditTier) {
   if (tier === "agent_19eur" || tier === "agent_49eur") {
-    return "Your Agent €19/month report checks visibility with Gemini + ChatGPT and shows whether they name your brand or cite competitors instead. If a check is unavailable, Citeable says so and never fabricates data.";
+    return "Your Agent €19/month report checks visibility with Gemini + ChatGPT and shows whether they name your brand or cite competitors instead. If a check is unavailable, GetPick says so and never fabricates data.";
   }
 
   if (tier === "monitor_9eur") {
@@ -3123,7 +3123,7 @@ function buildAuditResultEmail(email: string, brandName: string, report: AuditRe
         "CTA unique:",
         `Voir le rapport: ${reportUrl}`,
         "",
-        "Réassurance: audit basé sur des questions stables et des données réelles; Citeable n'invente pas de résultat. Agent 19 €/mois peut préparer les correctifs si tu veux déléguer.",
+        "Réassurance: audit basé sur des questions stables et des données réelles; GetPick n'invente pas de résultat. Agent 19 €/mois peut préparer les correctifs si tu veux déléguer.",
         `Désinscription: ${unsubscribeUrl}`,
       ].filter(Boolean).join("\n")
     : [
@@ -3145,7 +3145,7 @@ function buildAuditResultEmail(email: string, brandName: string, report: AuditRe
         "One CTA:",
         `View the report: ${reportUrl}`,
         "",
-        "Reassurance: this audit uses stable questions and real data; Citeable does not invent results. Agent €19/month can prepare the fixes if you want to delegate.",
+        "Reassurance: this audit uses stable questions and real data; GetPick does not invent results. Agent €19/month can prepare the fixes if you want to delegate.",
         `Unsubscribe: ${unsubscribeUrl}`,
       ].filter(Boolean).join("\n");
 
@@ -3182,7 +3182,7 @@ export async function sendAuditEmail(email: string, brandName: string, websiteUr
 }
 
 function siteBaseUrl() {
-  return (envValue("NEXT_PUBLIC_SITE_URL") ?? envValue("VERCEL_PROJECT_URL") ?? "https://getciteable.nanocorp.app").replace(/\/$/, "");
+  return (envValue("NEXT_PUBLIC_SITE_URL") ?? envValue("VERCEL_PROJECT_URL") ?? "https://getpick.ai").replace(/\/$/, "");
 }
 
 function normalizedEmailAddress(email: string) {
@@ -3442,7 +3442,7 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
       : `${brandName}: we can fix it for you`;
     const body = locale === "fr"
       ? [
-          `Dernière relance sur ton audit Citeable pour ${brandName}.`,
+          `Dernière relance sur ton audit GetPick pour ${brandName}.`,
           "",
           `Score réel de l'audit : ${report.score}/100`,
           `Catégorie détectée : ${localizedCategory}`,
@@ -3453,14 +3453,14 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
               : `${answerEngineName} a aussi cité ${competitorSignal.competitor} sur : “${competitorSignal.prompt}”.`
             : `${answerEngineName} n'a cité aucun concurrent dans cet audit ; il t'a cité ${brandMentions}/${totalPrompts} fois.`,
           "",
-          "Si tu veux éviter de tout faire toi-même : Citeable Agent 19 €/mois prépare les correctifs copy-paste, le plan de mentions et le chat à partir de ces signaux réels. Sans engagement, résiliable à tout moment.",
+          "Si tu veux éviter de tout faire toi-même : GetPick Agent 19 €/mois prépare les correctifs copy-paste, le plan de mentions et le chat à partir de ces signaux réels. Sans engagement, résiliable à tout moment.",
           `Démarrer Agent : ${agentCheckoutUrl}`,
           "Réassurance : tu gardes la main, et on ne part que des données réelles de ton audit — rien n'est inventé.",
           "",
           `Se désinscrire : ${unsubscribeUrl}`,
         ].join("\n")
       : [
-          `Final follow-up on your Citeable audit for ${brandName}.`,
+          `Final follow-up on your GetPick audit for ${brandName}.`,
           "",
           `Real audit score: ${report.score}/100`,
           `Detected category: ${localizedCategory}`,
@@ -3471,7 +3471,7 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
               : `${answerEngineName} also cited ${competitorSignal.competitor} for: “${competitorSignal.prompt}”.`
             : `${answerEngineName} did not cite a competitor in this audit; it cited you ${brandMentions}/${totalPrompts} times.`,
           "",
-          "If you do not want to fix everything yourself: Citeable Agent €19/month prepares copy-paste fixes, a mention plan, and chat from these real signals. No commitment, cancel anytime.",
+          "If you do not want to fix everything yourself: GetPick Agent €19/month prepares copy-paste fixes, a mention plan, and chat from these real signals. No commitment, cancel anytime.",
           `Start Agent: ${agentCheckoutUrl}`,
           "Reassurance: you stay in control, and we only use the real data from your audit — nothing is invented.",
           "",
@@ -3486,7 +3486,7 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
     : `${brandName}: your ${report.score}/100 score and one free action`;
   const body = locale === "fr"
     ? [
-        `Hier, ton audit Citeable a donné ${report.score}/100 à ${brandName}.`,
+        `Hier, ton audit GetPick a donné ${report.score}/100 à ${brandName}.`,
         `Catégorie détectée : ${localizedCategory}`,
         scoreExplanationLine(report.score, brandMentions, totalPrompts, locale),
         `Sur ${totalPrompts} questions posées à ${answerEngineName}, ta marque a été citée ${brandMentions} fois.`,
@@ -3504,7 +3504,7 @@ function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName:
         `Se désinscrire : ${unsubscribeUrl}`,
       ].join("\n")
     : [
-        `Yesterday, your Citeable audit gave ${brandName} ${report.score}/100.`,
+        `Yesterday, your GetPick audit gave ${brandName} ${report.score}/100.`,
         `Detected category: ${localizedCategory}`,
         scoreExplanationLine(report.score, brandMentions, totalPrompts, locale),
         `Across ${totalPrompts} questions asked to ${answerEngineName}, your brand was cited ${brandMentions} times.`,
@@ -3841,9 +3841,9 @@ function monitoringSummaryText(snapshot: MonitoringSnapshot) {
 export async function sendWeeklyMonitoringEmail(email: string, brandName: string, websiteUrl: string, report: AuditReport) {
   const summary = monitoringSummaryText(report.monitoring);
 
-  const subject = `Monthly Citeable Monitor — ${brandName}`;
+  const subject = `Monthly GetPick Monitor — ${brandName}`;
   const body = [
-      `Monthly Citeable Monitor for ${brandName}`,
+      `Monthly GetPick Monitor for ${brandName}`,
       "",
       `Score: ${report.score}/100 (${summary.deltaText})`,
       "",
@@ -3860,7 +3860,7 @@ export async function sendWeeklyMonitoringEmail(email: string, brandName: string
         `   Where: ${action.where}`,
       ]),
       "",
-      `View the report: https://getciteable.nanocorp.app/audit/${report.audit_id}`,
+      `View the report: https://getpick.ai/audit/${report.audit_id}`,
     ].join("\n");
 
   return sendGuardedEmail({ auditId: report.audit_id, email, websiteUrl, step: "weekly_monitoring", subject, body });

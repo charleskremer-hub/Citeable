@@ -13,5 +13,5 @@ export async function GET(req: NextRequest) {
     return new NextResponse("Invalid unsubscribe link.", { status: 400, headers: { "Content-Type": "text/plain; charset=utf-8" } });
   }
 
-  return new NextResponse("You have been unsubscribed from Citeable post-audit emails.", { headers: { "Content-Type": "text/plain; charset=utf-8" } });
+  return new NextResponse("You have been unsubscribed from GetPick post-audit emails.", { headers: { "Content-Type": "text/plain; charset=utf-8" } });
 }
