@@ -2636,25 +2636,23 @@ function isInternalRootDomain(domain: string) {
   return labels[0] === "keyban" || labels[0] === "getciteable" || labels.includes("nanocorp");
 }
 
-function isPersonalEmailDomain(domain: string) {
-  return new Set([
-    "gmail.com",
-    "googlemail.com",
-    "yahoo.com",
-    "outlook.com",
-    "hotmail.com",
-    "live.com",
-    "icloud.com",
-    "me.com",
-    "mac.com",
-    "aol.com",
-    "proton.me",
-    "protonmail.com",
-    "pm.me",
-    "hey.com",
-    "fastmail.com",
-  ]).has(domain);
-}
+/**
+ * Les domaines email personnels (gmail, yahoo, outlook, icloud, proton…) ne sont
+ * PLUS supprimés — décision Charles du 21/07/2026.
+ *
+ * Historique : ils étaient bloqués en amont de l'envoi, ce qui faisait que tout
+ * prospect inscrit avec une adresse Gmail ne recevait ni son rapport ni ses
+ * relances, silencieusement (ligne `suppressed` en base, aucun appel au
+ * fournisseur). Or une large part des fondateurs DTC de notre ICP s'inscrit
+ * précisément avec une adresse personnelle : la règle coupait la relation avec
+ * une partie importante des leads réels.
+ *
+ * Restent supprimés, volontairement : les domaines internes/test (keyban,
+ * getciteable, nanocorp), les audits anonymes, et la liste de suppression
+ * dynamique `audit_email_suppression_list` — qui reste le bon endroit pour
+ * bloquer une adresse ou un domaine au cas par cas (désabonnement, plainte,
+ * bounce dur) sans redéploiement.
+ */
 
 export function recipientLocaleFromSignals(email: string, websiteUrl: string, homepageText = ""): Locale {
   const domain = safeDomainFromWebsite(websiteUrl);
@@ -2674,7 +2672,6 @@ async function shouldSuppressEmail(email: string, websiteUrl: string) {
   const builtInSuppressedDomains = ["keyban.fr", "getciteable.nanocorp.app", "nanocorp.app", "getciteable.com", ANONYMOUS_EMAIL_DOMAIN];
 
   if (normalizedEmail === "charles@getciteable.nanocorp.app") return "Suppressed: Charles internal address.";
-  if (recipientDomain && isPersonalEmailDomain(recipientDomain)) return "Suppressed: personal email domain.";
   if (isInternalRootDomain(recipientDomain) || isInternalRootDomain(brandDomain) || builtInSuppressedDomains.some((domain) => domainMatchesSuppression(recipientDomain, domain) || domainMatchesSuppression(brandDomain, domain))) {
     return "Suppressed: internal/test domain.";
   }
