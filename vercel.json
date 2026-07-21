@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/post-audit-emails",
-      "schedule": "0 * * * *"
+      "schedule": "0 9 * * *"
     }
   ]
 }
