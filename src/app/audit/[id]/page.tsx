@@ -6,7 +6,7 @@ import { ensureAuditSchema, pool } from "@/lib/db";
 import { recordFunnelEvent } from "@/lib/funnel";
 import { auditCopy, brandSentimentText, localeFromHeaders, localeFromUnknown, localizeCategoryLabel, localizePlainAction, type Locale } from "@/lib/i18n";
 import { UNKNOWN_CATEGORY } from "@/lib/audit-engine";
-import { isAnonymousEmail } from "@/lib/audit-engine";
+import { fetchWithHostFallback, isAnonymousEmail } from "@/lib/audit-engine";
 import type { BrandSentiment, BuyerIntentPromptResult, IcpSegmentMetadata, PlainAction } from "@/lib/audit-engine";
 import AuditPoller from "./AuditPoller";
 import AgentAuditChat from "./AgentAuditChat";
@@ -106,21 +106,44 @@ function blockedAiCrawlers(robots: string) {
   });
 }
 
-async function checkAiCrawlability(websiteUrl: string) {
+// Trois états distincts — c'est le cœur du correctif :
+//  - "blocked"     : le site répond ET bloque explicitement un crawler IA (vrai négatif)
+//  - "ok"          : le site répond et ne bloque personne
+//  - "unreachable" : ni l'apex ni le www ne répondent (DNS/hébergement), PAS un blocage
+type AiCrawlState = "ok" | "blocked" | "unreachable";
+
+async function checkAiCrawlability(websiteUrl: string): Promise<{
+  state: AiCrawlState;
+  blocked: string[];
+  llmsFound: boolean;
+  resolvedHost: string | null;
+}> {
+  // fetchWithHostFallback bascule apex ↔ www sur échec réseau uniquement
+  // (un 404 sur /llms.txt reste un 404, on ne retente pas l'autre hôte).
   const load = async (path: string) => {
-    try {
-      const response = await fetch(new URL(path, websiteUrl).toString(), { signal: AbortSignal.timeout(4000) });
-      return response.ok ? await response.text() : null;
-    } catch {
-      return null;
-    }
+    const target = new URL(path, websiteUrl).toString();
+    const result = await fetchWithHostFallback(target);
+    if (!result.response) return { text: null, reachable: false, host: null as string | null };
+    const text = result.response.ok ? await result.response.text().catch(() => null) : null;
+    return { text, reachable: true, host: result.host };
   };
 
   const [robots, llms] = await Promise.all([load("/robots.txt"), load("/llms.txt")]);
-  // Pas de robots.txt = tout est autorisé par défaut : ce n'est pas un blocage.
-  const blocked = robots ? blockedAiCrawlers(robots) : [];
 
-  return { reachable: robots !== null || llms !== null, blocked, llmsFound: llms !== null };
+  // Aucune variante d'hôte n'a répondu sur aucun des deux fichiers : injoignable.
+  if (!robots.reachable && !llms.reachable) {
+    return { state: "unreachable", blocked: [], llmsFound: false, resolvedHost: null };
+  }
+
+  // Pas de robots.txt = tout est autorisé par défaut : ce n'est pas un blocage.
+  const blocked = robots.text ? blockedAiCrawlers(robots.text) : [];
+
+  return {
+    state: blocked.length ? "blocked" : "ok",
+    blocked,
+    llmsFound: llms.text !== null,
+    resolvedHost: robots.host ?? llms.host,
+  };
 }
 
 function uniqueNames(names: string[]) {
@@ -407,46 +430,62 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const reportLocked = isAnonymousEmail(audit.email) && complete && !failed;
 
   const aiCrawl = complete && !failed ? await checkAiCrawlability(audit.website_url) : null;
-  const aiCrawlOk = Boolean(aiCrawl && aiCrawl.blocked.length === 0);
+  const aiCrawlOk = aiCrawl?.state === "ok";
+  const aiCrawlUnreachable = aiCrawl?.state === "unreachable";
+  // « injoignable » n'est PAS « bloqué » : libellé et couleur distincts, sinon on
+  // annonce à une marque bien configurée qu'elle bloque les IA alors que c'est son DNS.
+  const aiCrawlLabel = aiCrawlUnreachable
+    ? locale === "fr" ? "Site injoignable" : "Site unreachable"
+    : locale === "fr" ? "Lisible par les IA" : "Readable by AI";
   const aiCrawlHint = !aiCrawl
     ? ""
-    : aiCrawl.blocked.length
+    : aiCrawl.state === "unreachable"
       ? locale === "fr"
-        ? `Bloqués : ${aiCrawl.blocked.join(", ")}`
-        : `Blocked: ${aiCrawl.blocked.join(", ")}`
-      : aiCrawl.llmsFound
+        ? "Site injoignable — vérifie ton DNS (ni l'apex ni le www ne répondent)"
+        : "Site unreachable — check your DNS (neither apex nor www responds)"
+      : aiCrawl.blocked.length
         ? locale === "fr"
-          ? "Aucun bot bloqué · llms.txt présent"
-          : "No bot blocked · llms.txt present"
-        : locale === "fr"
-          ? "Aucun bot IA bloqué"
-          : "No AI bot blocked";
+          ? `Bloqués : ${aiCrawl.blocked.join(", ")}`
+          : `Blocked: ${aiCrawl.blocked.join(", ")}`
+        : aiCrawl.llmsFound
+          ? locale === "fr"
+            ? "Aucun bot bloqué · llms.txt présent"
+            : "No bot blocked · llms.txt present"
+          : locale === "fr"
+            ? "Aucun bot IA bloqué"
+            : "No AI bot blocked";
 
-  const agentReadyPillars = complete && !failed
+  type PillarStatus = "ok" | "fail" | "unknown";
+  const agentReadyPillars: { status: PillarStatus; label: string; hint: string }[] = complete && !failed
     ? [
         {
-          ok: aiCrawlOk,
-          label: locale === "fr" ? "Lisible par les IA" : "Readable by AI",
+          status: aiCrawlUnreachable ? "unknown" : aiCrawlOk ? "ok" : "fail",
+          label: aiCrawlLabel,
           hint: aiCrawlHint,
         },
         {
-          ok: Boolean(audit.raw_results?.structuredDataFound),
+          status: audit.raw_results?.structuredDataFound ? "ok" : "fail",
           label: locale === "fr" ? "Comprise par l'IA" : "Understood by AI",
           hint: locale === "fr" ? "Données structurées lisibles" : "Structured data readable",
         },
         {
-          ok: brandMentionCount > 0,
+          status: brandMentionCount > 0 ? "ok" : "fail",
           label: locale === "fr" ? "Recommandée par l'IA" : "Recommended by AI",
           hint: `${brandMentionCount}/${questionCount || 0}`,
         },
         {
-          ok: agentSentimentLabel === "positive" || agentSentimentLabel === "neutral",
+          status: agentSentimentLabel === "positive" || agentSentimentLabel === "neutral" ? "ok" : "fail",
           label: locale === "fr" ? "Décrite positivement" : "Positively described",
           hint: locale === "fr" ? "Sentiment IA" : "AI sentiment",
         },
       ]
     : [];
-  const agentReadyScore = agentReadyPillars.filter((pillar) => pillar.ok).length;
+  const agentReadyScore = agentReadyPillars.filter((pillar) => pillar.status === "ok").length;
+  // Un pilier « injoignable » n'est ni acquis ni raté : il sort du dénominateur
+  // plutôt que de compter comme un échec qu'on ne peut pas prouver.
+  const agentReadyTotal = agentReadyPillars.filter((pillar) => pillar.status !== "unknown").length;
+  const pillarColor = (status: PillarStatus) => (status === "ok" ? "#CAFF3C" : status === "unknown" ? "#FFB84D" : "#FF8F6B");
+  const pillarIcon = (status: PillarStatus) => (status === "ok" ? "✓" : status === "unknown" ? "!" : "✗");
 
   // Share of voice ranking: the brand ranked against every competitor the engine named,
   // using the exact same mention counts already computed above (no new data source).
@@ -679,16 +718,16 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                 </div>
                 <div
                   className="text-3xl font-black"
-                  style={{ color: agentReadyScore >= agentReadyPillars.length - 1 ? "#CAFF3C" : "#FF8F6B", fontFamily: "var(--font-display)" }}
+                  style={{ color: agentReadyScore >= agentReadyTotal - 1 ? "#CAFF3C" : "#FF8F6B", fontFamily: "var(--font-display)" }}
                 >
-                  {agentReadyScore}/{agentReadyPillars.length}
+                  {agentReadyScore}/{agentReadyTotal}
                 </div>
               </div>
               <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
                 {agentReadyPillars.map((pillar) => (
                   <div key={pillar.label} className="rounded-2xl border border-white/[0.07] bg-black/20 p-4">
                     <div className="flex items-center gap-2">
-                      <span className="text-base font-black" style={{ color: pillar.ok ? "#CAFF3C" : "#FF8F6B" }}>{pillar.ok ? "✓" : "✗"}</span>
+                      <span className="text-base font-black" style={{ color: pillarColor(pillar.status) }}>{pillarIcon(pillar.status)}</span>
                       <span className="text-sm font-black text-[#F0F0EC]">{pillar.label}</span>
                     </div>
                     <p className="m-0 mt-1 text-xs font-bold text-[#8E8E9A]">{pillar.hint}</p>

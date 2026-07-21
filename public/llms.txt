@@ -27,7 +27,10 @@ credits, no per-engine add-ons, no seat pricing and no setup.
 - A plain-language verdict: does AI recommend you, yes or no.
 - The rival AI names in your place — by name.
 - Your share of voice against those competitors.
-- Whether AI crawlers can read your site at all (robots.txt, llms.txt).
+- Whether AI crawlers can read your site at all (robots.txt, llms.txt). The
+  check tries both the apex domain and the www variant, and reports "blocked"
+  (a crawler is explicitly disallowed) separately from "unreachable" (neither
+  host answers, which is a DNS or hosting issue, not a blocking rule).
 - Copy-paste fixes written by the agent from your real gaps.
 - Weekly re-checks, so you know when an answer flips.
 
@@ -38,6 +41,10 @@ credits, no per-engine add-ons, no seat pricing and no setup.
   copy-paste fixes written from your real gaps.
 - Agent — 19 EUR per month: everything in Monitor, Gemini + ChatGPT checks,
   a mention plan, and an interactive chat over your audit data.
+
+Paid plans are monthly and cancellable at any time. They are refunded on
+request within 30 days, with no questions asked and no justification required:
+email hello@getpick.ai and the subscription is refunded.
 
 For comparison, GEO agencies — the only alternative that actually does the
 work rather than just reporting on it — typically charge 2,000 to 20,000 EUR

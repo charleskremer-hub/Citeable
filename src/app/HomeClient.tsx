@@ -317,6 +317,15 @@ export default function HomeClient({ locale }: HomeClientProps) {
               );
             })}
           </div>
+
+          {/* Garantie 30 jours — lève l'objection « et si ça ne marche pas ? » sans dépendre de NanoCorp */}
+          <p
+            data-testid="pricing-guarantee"
+            className="m-0 mt-6 inline-flex items-center gap-2 rounded-xl border border-[#CAFF3C]/25 bg-[#CAFF3C]/[0.05] px-4 py-3 text-sm font-bold text-[#D6D6DF]"
+          >
+            <span className="text-[#CAFF3C]">✓</span>
+            {copy.pricingGuarantee}
+          </p>
         </section>
 
         {/* 7. EN BREF — paragraphe dense, lisible par les IA */}

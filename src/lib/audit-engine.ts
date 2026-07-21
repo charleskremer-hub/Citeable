@@ -499,6 +499,97 @@ function withTimeout(url: string, init: RequestInit = {}) {
   });
 }
 
+// --- Bascule d'hôte apex ↔ www ----------------------------------------------
+// Beaucoup de sites ne répondent que sur UNE des deux variantes (apex OU www).
+// Interroger uniquement l'URL saisie produisait des faux négatifs « robots.txt
+// absent » / « pas lisible par les IA » sur des sites parfaitement configurés.
+//
+// Règle : on ne bascule QUE sur un échec RÉSEAU (DNS, connexion, timeout).
+// Un 404 ou un 403 est une réponse HTTP valide — le serveur existe, il répond,
+// il n'y a rien à retenter sur l'autre hôte.
+
+/** Retourne l'autre variante d'hôte (ajoute `www.` ou le retire), ou null si impossible. */
+export function alternateHostUrl(url: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+
+  const host = parsed.hostname.toLowerCase();
+
+  if (host.startsWith("www.")) {
+    const stripped = host.slice(4);
+    // `www.com` n'a pas d'apex utilisable : on ne fabrique pas un hôte invalide.
+    if (stripped.split(".").filter(Boolean).length < 2) return null;
+    parsed.hostname = stripped;
+  } else {
+    parsed.hostname = `www.${host}`;
+  }
+
+  return parsed.toString();
+}
+
+export type HostFallbackResult = {
+  /** Réponse HTTP obtenue (quel que soit son code), ou null si aucun hôte n'a répondu. */
+  response: Response | null;
+  /** URL qui a effectivement répondu (ou l'URL d'origine si personne n'a répondu). */
+  url: string;
+  /** Hôte qui a effectivement répondu, ou null si aucun. */
+  host: string | null;
+  /** false = aucune des deux variantes n'a répondu (DNS/hébergement), PAS un blocage. */
+  reachable: boolean;
+  /** true si on a dû basculer sur l'autre variante d'hôte. */
+  usedFallback: boolean;
+  error?: string;
+};
+
+/**
+ * Fetch avec bascule automatique apex ↔ www en cas d'échec RÉSEAU uniquement.
+ * Une réponse HTTP — même 404 ou 403 — est considérée comme définitive.
+ */
+export async function fetchWithHostFallback(url: string, init: RequestInit = {}): Promise<HostFallbackResult> {
+  const primaryHost = (() => {
+    try {
+      return new URL(url).hostname;
+    } catch {
+      return null;
+    }
+  })();
+
+  try {
+    const response = await withTimeout(url, init);
+    return { response, url, host: primaryHost, reachable: true, usedFallback: false };
+  } catch (primaryError) {
+    const alternate = alternateHostUrl(url);
+    if (!alternate) {
+      return {
+        response: null,
+        url,
+        host: null,
+        reachable: false,
+        usedFallback: false,
+        error: primaryError instanceof Error ? primaryError.message : String(primaryError),
+      };
+    }
+
+    try {
+      const response = await withTimeout(alternate, init);
+      return { response, url: alternate, host: new URL(alternate).hostname, reachable: true, usedFallback: true };
+    } catch (fallbackError) {
+      return {
+        response: null,
+        url,
+        host: null,
+        reachable: false,
+        usedFallback: true,
+        error: fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
+      };
+    }
+  }
+}
+
 type SurfaceFetchResult = {
   source: string;
   url: string;
@@ -2943,22 +3034,30 @@ function isLikelyBuyerQuestion(item: string) {
 
 async function checkTechnicalSEO(websiteUrl: string): Promise<AuditCheckResult> {
   const base = normalizeWebsiteUrl(websiteUrl).replace(/\/$/, "");
-  const [robotsResult, sitemapResult] = await Promise.allSettled([
-    withTimeout(`${base}/robots.txt`),
-    withTimeout(`${base}/sitemap.xml`),
+  // Bascule apex ↔ www : un site qui ne répond que sur www ne doit plus être
+  // noté « robots.txt/sitemap absents » alors que les fichiers existent.
+  const [robots, sitemap] = await Promise.all([
+    fetchWithHostFallback(`${base}/robots.txt`),
+    fetchWithHostFallback(`${base}/sitemap.xml`),
   ]);
-  const hasRobots = robotsResult.status === "fulfilled" && robotsResult.value.status === 200;
-  const hasSitemap = sitemapResult.status === "fulfilled" && sitemapResult.value.status === 200;
+  const hasRobots = robots.response?.status === 200;
+  const hasSitemap = sitemap.response?.status === 200;
+  // Injoignable ≠ mal configuré : aucune des deux variantes d'hôte n'a répondu.
+  const unreachable = !robots.reachable && !sitemap.reachable;
   const score = (hasRobots ? 5 : 0) + (hasSitemap ? 10 : 0);
+  const statusOf = (result: HostFallbackResult) => (result.response ? String(result.response.status) : "unreachable");
+  const resolvedHost = robots.host ?? sitemap.host;
 
   return {
     check: "technical_seo",
     score,
     maxScore: 15,
-    detail: `robots.txt: ${hasRobots}, sitemap.xml: ${hasSitemap}`,
+    detail: unreachable
+      ? "site unreachable (no DNS/HTTP response on apex or www)"
+      : `robots.txt: ${hasRobots}, sitemap.xml: ${hasSitemap}`,
     found: hasRobots || hasSitemap,
-    reachable: true,
-    evidence: `robots.txt: ${robotsResult.status === "fulfilled" ? robotsResult.value.status : "failed"}; sitemap.xml: ${sitemapResult.status === "fulfilled" ? sitemapResult.value.status : "failed"}`,
+    reachable: !unreachable,
+    evidence: `robots.txt: ${statusOf(robots)}; sitemap.xml: ${statusOf(sitemap)}${resolvedHost ? `; host: ${resolvedHost}` : ""}${robots.usedFallback || sitemap.usedFallback ? " (host fallback used)" : ""}`,
   };
 }
 

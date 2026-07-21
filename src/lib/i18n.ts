@@ -134,9 +134,10 @@ export const homeCopy = {
       },
     ],
     pricingReassurance: "No commitment, cancel anytime.",
+    pricingGuarantee: "Refunded on request within 30 days. No questions asked.",
     // 7. TL;DR — dense paragraph for AI readers
     tldrEyebrow: "In short",
-    tldrBody: "GetPick is the GEO agent for direct-to-consumer and e-commerce brands. It gets brands recommended by AI assistants like ChatGPT and Gemini. Concretely: it sends real buying questions to the AIs — live, never simulated — and reports whether you or a rival gets recommended, naming that rival. It then writes the copy-paste fixes that close the gap, and re-checks everything weekly. It is built for DTC founders without an agency budget: free audit, monitoring at €9/month, full agent at €19/month — flat prices, no credits, no seats. GEO agencies charge €2,000 to €20,000 per month for this category of work.",
+    tldrBody: "GetPick is the GEO agent for direct-to-consumer and e-commerce brands. It gets brands recommended by AI assistants like ChatGPT and Gemini. Concretely: it sends real buying questions to the AIs — live, never simulated — and reports whether you or a rival gets recommended, naming that rival. It then writes the copy-paste fixes that close the gap, and re-checks everything weekly. It is built for DTC founders without an agency budget: free audit, monitoring at €9/month, full agent at €19/month — flat prices, no credits, no seats. Paid plans are cancellable at any time and refunded on request within 30 days, no questions asked. GEO agencies charge €2,000 to €20,000 per month for this category of work.",
     // 8. Founder
     founderEyebrow: "Who's behind this",
     founderBody: "I'm Charles. I build GetPick and I run every audit pipeline myself. No sales team, no support bot: if you have a question, you email me and I answer.",
@@ -164,6 +165,10 @@ export const homeCopy = {
       {
         question: "Does it work in French and English?",
         answer: "Yes. Audits, fixes and reports come in both languages, and the buying questions are asked in the language your shoppers actually use.",
+      },
+      {
+        question: "What if it doesn't work for me?",
+        answer: "You get refunded on request within 30 days. Email hello@getpick.ai and say you want your money back — no justification asked, no form to fill in, no call to sit through. The subscription is monthly and cancellable at any time, so the most you ever have at risk is one month.",
       },
     ],
     // 10. Closing — loss aversion
@@ -274,9 +279,10 @@ export const homeCopy = {
       },
     ],
     pricingReassurance: "Sans engagement, résiliable à tout moment.",
+    pricingGuarantee: "Remboursé sur simple demande sous 30 jours. Pas de question.",
     // 7. En bref — paragraphe dense pour les lecteurs IA
     tldrEyebrow: "En bref",
-    tldrBody: "GetPick est l'agent GEO des marques DTC et e-commerce. Il fait recommander ta marque par les assistants IA comme ChatGPT et Gemini. Concrètement : il envoie de vraies questions d'achat aux IA — en direct, jamais simulées — puis te dit si c'est toi ou un rival qui est recommandé, en nommant ce rival. Il écrit ensuite les correctifs à copier-coller qui comblent l'écart, et re-vérifie tout chaque semaine. C'est pensé pour les fondateurs DTC sans budget agence : audit gratuit, suivi à 9 €/mois, agent complet à 19 €/mois — prix fixes, sans crédits ni calculateur. Une agence GEO facture 2 000 à 20 000 € par mois pour cette catégorie de travail.",
+    tldrBody: "GetPick est l'agent GEO des marques DTC et e-commerce. Il fait recommander ta marque par les assistants IA comme ChatGPT et Gemini. Concrètement : il envoie de vraies questions d'achat aux IA — en direct, jamais simulées — puis te dit si c'est toi ou un rival qui est recommandé, en nommant ce rival. Il écrit ensuite les correctifs à copier-coller qui comblent l'écart, et re-vérifie tout chaque semaine. C'est pensé pour les fondateurs DTC sans budget agence : audit gratuit, suivi à 9 €/mois, agent complet à 19 €/mois — prix fixes, sans crédits ni calculateur. Les offres payantes sont résiliables à tout moment et remboursées sur simple demande sous 30 jours, sans question. Une agence GEO facture 2 000 à 20 000 € par mois pour cette catégorie de travail.",
     // 8. Fondateur
     founderEyebrow: "Qui est derrière",
     founderBody: "Je m'appelle Charles. Je construis GetPick et je fais tourner chaque audit moi-même. Pas d'équipe commerciale, pas de chatbot : une question ? C'est moi qui réponds.",
@@ -304,6 +310,10 @@ export const homeCopy = {
       {
         question: "Ça marche en français et en anglais ?",
         answer: "Oui. Audits, correctifs et rapports existent dans les deux langues, et les questions d'achat sont posées dans la langue que tes clients utilisent vraiment.",
+      },
+      {
+        question: "Et si ça ne marche pas pour moi ?",
+        answer: "Tu es remboursé sur simple demande sous 30 jours. Un email à hello@getpick.ai en disant que tu veux être remboursé suffit — aucune justification demandée, pas de formulaire, pas d'appel à subir. L'abonnement est mensuel et résiliable à tout moment : au pire, tu risques un mois.",
       },
     ],
     // 10. Clôture — aversion à la perte

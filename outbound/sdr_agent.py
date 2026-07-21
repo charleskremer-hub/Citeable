@@ -33,7 +33,10 @@ import urllib.error
 from collections import Counter
 from datetime import datetime
 
-API_BASE = "https://getciteable.nanocorp.app"
+# www.getpick.ai sert la même app (rebrand 20/07) — les liens de rapport envoyés
+# aux prospects doivent porter la nouvelle marque. L'apex getpick.ai n'est pas
+# encore propagé, on passe par www.
+API_BASE = "https://www.getpick.ai"
 AUDIT_TIER = "monitor_9eur"          # 12 questions d'achat -> findings riches
 DEFAULT_THRESHOLD = 75               # score < seuil => douleur exploitable
 POLL_TIMEOUT = 150                   # secondes max d'attente par audit
@@ -173,7 +176,7 @@ def draft_email(f, first_name=""):
         f"More shoppers ask AI before buying (and soon agents will buy for them). "
         f"When AI doesn't name you, no ad budget wins that sale.\n\n"
         f"Here's your full AI-visibility report (free, 30s): {f['report_url']}\n\n"
-        f"If useful, Citeable writes the copy-paste fixes to climb. Want me to show one?"
+        f"If useful, GetPick writes the copy-paste fixes to climb. Want me to show one?"
     )
     return subject, body
 
