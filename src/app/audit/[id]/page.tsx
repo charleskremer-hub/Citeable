@@ -6,7 +6,7 @@ import { ensureAuditSchema, pool } from "@/lib/db";
 import { recordFunnelEvent } from "@/lib/funnel";
 import { auditCopy, brandSentimentText, localeFromHeaders, localeFromUnknown, localizeCategoryLabel, localizePlainAction, type Locale } from "@/lib/i18n";
 import { UNKNOWN_CATEGORY } from "@/lib/audit-engine";
-import { fetchWithHostFallback, generateGeoAgentAssetsFromAudit, isAnonymousEmail, robotsTxtFixForBlockedCrawlers } from "@/lib/audit-engine";
+import { fetchWithHostFallback, generateGeoAgentAssetsFromAudit, isAnonymousEmail, isAuditedBrandName, robotsTxtFixForBlockedCrawlers } from "@/lib/audit-engine";
 import type { BrandSentiment, BuyerIntentPromptResult, IcpSegmentMetadata, PlainAction } from "@/lib/audit-engine";
 import AuditPoller from "./AuditPoller";
 import AgentAuditChat from "./AgentAuditChat";
@@ -367,14 +367,32 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const failed = audit.raw_results?.status === "failed";
   const icpSegment = audit.raw_results?.icpSegment;
   const complete = audit.score !== null;
-  const questions = checkedQuestions(audit.raw_results?.buyerIntentPrompts ?? []);
+  // Filet de sécurité à l'affichage : les audits déjà en base ont été calculés avant le
+  // correctif du 21/07 et peuvent contenir la marque elle-même dans ses concurrents
+  // (« Pick » pour « GetPick »). On ne réécrit pas la base, on ne l'affiche plus.
+  const auditDomain = (() => {
+    try {
+      return new URL(audit.website_url).hostname;
+    } catch {
+      return audit.website_url.replace(/^https?:\/\//i, "").split("/")[0] ?? "";
+    }
+  })();
+  const isSelf = (name: string) => isAuditedBrandName(name, audit.brand_name, auditDomain);
+  const questions = checkedQuestions(audit.raw_results?.buyerIntentPrompts ?? []).map((question) => ({
+    ...question,
+    competitors: question.competitors.filter((name) => !isSelf(name)),
+  }));
   const questionCount = complete ? questions.length : 0;
   const brandMentionCount = complete ? questions.filter((question) => question.brandMentioned).length : 0;
   const competitors = uniqueNames([
     ...(audit.competitors_found ?? []),
     ...questions.flatMap((question) => question.competitors),
-  ]).slice(0, 12);
-  const rankedCompetitors = competitorCounts(questions.flatMap((question) => question.competitors));
+  ])
+    .filter((name) => !isSelf(name))
+    .slice(0, 12);
+  const rankedCompetitors = competitorCounts(
+    questions.flatMap((question) => question.competitors).filter((name) => !isSelf(name))
+  );
   const totalCompetitorMentions = rankedCompetitors.reduce((sum, item) => sum + item.count, 0);
   const shareOfVoicePct =
     brandMentionCount + totalCompetitorMentions > 0

@@ -2374,6 +2374,83 @@ function brandIdentityKeys(brandName: string, domain: string) {
   return keys;
 }
 
+// Forme "compacte" d'un nom : minuscules, accents retirés, ponctuation et espaces
+// supprimés. "Ridge Wallet" → "ridgewallet", "Nom Nom" → "nomnom", "Café" → "cafe".
+// Sert à comparer une marque à ses variantes d'écriture sans dépendre des espaces.
+function compactBrandKey(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
+const BRAND_TLD_SUFFIXES = ["com", "ai", "co", "io", "fr", "net", "shop", "store", "eu", "app"];
+// Préfixes commerciaux qu'une marque ajoute/retire librement dans son nom et son domaine.
+const BRAND_AFFIXES = ["get", "try", "join", "shop", "buy", "the", "my", "hey", "use"];
+
+// Toutes les écritures compactes sous lesquelles la marque auditée peut apparaître.
+// Corrige le bug trouvé le 21/07 en auditant GetPick avec GetPick : l'IA citait
+// « Pick » comme concurrent de « GetPick », et le rapport affichait
+// « cites Pick in your place » — la marque dans sa propre liste de rivaux.
+// On énumère les variantes plutôt que de faire une comparaison par sous-chaîne libre :
+// une sous-chaîne libre écarterait « Smartwool » d'un audit « Smart ». Sont couverts :
+//   - nom collé, sans espaces ni ponctuation ("Ridge Wallet" → "ridgewallet") ;
+//   - nom sans préfixe commercial ("GetPick" → "pick") et AVEC ("Pick" → "getpick") ;
+//   - nom + suffixe de domaine ("getpickai") et le domaine lui-même ;
+//   - groupes de mots en tête/queue du nom ("Ridge" et "Wallet" pour "Ridge Wallet"),
+//     à partir de 4 caractères pour ne pas neutraliser une marque très courte.
+function brandCompactKeys(brandName: string, domain: string) {
+  const compacts = new Set<string>();
+  const roots = new Set<string>();
+
+  const addRoot = (value: string) => {
+    const key = compactBrandKey(value);
+    if (key.length >= 2) roots.add(key);
+  };
+
+  addRoot(brandName);
+  addRoot(normalizeCompetitorName(brandName));
+  addRoot(brandName.replace(COMPANY_SUFFIXES, " "));
+
+  const bare = domain.replace(/^www\./i, "").toLowerCase();
+  if (bare) {
+    addRoot(bare.split(".")[0]);
+    compacts.add(compactBrandKey(bare));
+  }
+
+  // Groupes de mots en tête et en queue du nom saisi : "Ridge Wallet" → "ridge", "wallet".
+  const nameTokens = normalizeCompetitorName(brandName)
+    .split(/\s+/)
+    .map(compactBrandKey)
+    .filter(Boolean);
+  if (nameTokens.length > 1) {
+    for (let size = 1; size < nameTokens.length; size += 1) {
+      const head = nameTokens.slice(0, size).join("");
+      const tail = nameTokens.slice(nameTokens.length - size).join("");
+      if (head.length >= 4) compacts.add(head);
+      if (tail.length >= 4) compacts.add(tail);
+    }
+  }
+
+  for (const root of roots) {
+    compacts.add(root);
+    for (const affix of BRAND_AFFIXES) {
+      if (root.startsWith(affix) && root.length - affix.length >= 3) compacts.add(root.slice(affix.length));
+      compacts.add(`${affix}${root}`);
+    }
+    for (const tld of BRAND_TLD_SUFFIXES) compacts.add(`${root}${tld}`);
+  }
+
+  return compacts;
+}
+
+function isBrandWritingVariant(candidateCompact: string, brandName: string, domain: string) {
+  if (candidateCompact.length < 2) return false;
+
+  return brandCompactKeys(brandName, domain).has(candidateCompact);
+}
+
 // Exporté pour les tests (self_competitor_tests) — pas d'usage app externe attendu.
 export function isAuditedBrandName(name: string, brandName: string, domain: string) {
   const normalized = normalizeCompetitorName(name).toLowerCase();
@@ -2382,6 +2459,7 @@ export function isAuditedBrandName(name: string, brandName: string, domain: stri
   const keys = brandIdentityKeys(brandName, domain);
   if (keys.has(normalized)) return true;
   if (domainVariants(domain).some((variant) => normalized === variant || normalized.includes(variant))) return true;
+  if (isBrandWritingVariant(compactBrandKey(normalized), brandName, domain)) return true;
 
   // "Finisterre" vs "Finisterre UK" (dans les deux sens) : préfixe token à token.
   // Jamais de substring ("Smart" ≠ "Smartwool").
