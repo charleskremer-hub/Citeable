@@ -2,11 +2,13 @@ import { createHash, timingSafeEqual } from "crypto";
 import { pool } from "./db";
 import { recordFunnelEvent } from "./funnel";
 import { localizeCategoryLabel, localizePlainAction, type Locale } from "./i18n";
+import { isWebSearchConfigured, runWebSearch } from "./web-search";
+import { isMailConfigured, sendMail } from "./mailer";
 
 const USER_AGENT = "Mozilla/5.0 (compatible; CiteeableBot/1.0)";
 const CHECK_TIMEOUT_MS = 8_000;
 const ANSWER_TIMEOUT_MS = 18_000;
-const WEB_SEARCH_UNAVAILABLE = "Native NanoCorp web_search unavailable; this report uses only checks that completed.";
+const WEB_SEARCH_UNAVAILABLE = "Web search unavailable; this report uses only checks that completed.";
 const GEMINI_UNAVAILABLE = "Gemini indisponible, réessaie.";
 const OPENAI_UNAVAILABLE = "ChatGPT indisponible, réessaie.";
 const FREE_AUDIT_CACHE_HOURS = 24;
@@ -1320,6 +1322,37 @@ function unavailableMessageForTier(tier: AuditTier) {
   return answerEngineForTier(tier)?.unavailableMessage ?? GEMINI_UNAVAILABLE;
 }
 
+/**
+ * Recherche web du moteur d'audit.
+ *
+ * Ordre : notre propre fournisseur (Brave / Serper / Tavily) d'abord ; NanoCorp
+ * n'est plus qu'un repli hérité, utilisé uniquement si aucune clé n'est configurée.
+ * Quand aucune des deux voies n'est disponible, on renvoie un échec explicite —
+ * l'appelant dégrade le rapport, il n'invente jamais de résultats.
+ */
+async function fetchSearchSurface(source: string, query: string): Promise<SurfaceFetchResult> {
+  if (isWebSearchConfigured()) {
+    const search = await runWebSearch(query, { maxResults: 8, timeoutMs: ANSWER_TIMEOUT_MS });
+
+    if (!search.ok) {
+      console.log(`[getpick] surface fetch ${source}: ${search.error}`);
+      return { source, url: `search:${search.provider ?? "none"}`, ok: false, status: search.status, error: search.error };
+    }
+
+    const text = searchResultText(search.results);
+
+    if (!text) {
+      return { source, url: `search:${search.provider}`, ok: false, error: `${search.provider} web search returned no usable results` };
+    }
+
+    console.log(`[getpick] surface fetch ${source}: ${search.provider} ok (${search.results.length} results)`);
+    return { source, url: `search:${search.provider}`, ok: true, status: search.status, html: text, text };
+  }
+
+  return fetchNanoCorpSearch(source, query);
+}
+
+/** Repli hérité NanoCorp. À supprimer une fois une clé de recherche posée en prod. */
 async function fetchNanoCorpSearch(source: string, query: string): Promise<SurfaceFetchResult> {
   try {
     const toolResult = await executeNanoCorpTool<{ results?: NanoCorpSearchResult[] }>("web_search", { query, max_results: 8 }, ANSWER_TIMEOUT_MS);
@@ -2775,21 +2808,21 @@ function checksFromEngines(engines: EngineResult[]) {
 
 async function checkSearchVisibility(brandName: string, domain: string): Promise<AuditCheckResult> {
   const query = `${brandName} ${domain}`;
-  const result = await fetchNanoCorpSearch("search_visibility:NanoCorp web_search", query);
+  const result = await fetchSearchSurface("search_visibility:web search", query);
 
   if (!result.ok || !result.html) {
     return {
       check: "search_visibility",
       score: null,
       maxScore: 25,
-      detail: `Unavailable: native NanoCorp web_search failed (${result.error ?? `HTTP ${result.status}`})`,
+      detail: `Unavailable: web search failed (${result.error ?? `HTTP ${result.status}`})`,
       found: false,
       reachable: false,
-      evidence: result.error ?? "NanoCorp web_search unavailable",
+      evidence: result.error ?? "Web search unavailable",
     };
   }
 
-  const resultCount = countSearchResultMentions(result.html, brandName, domain, "NanoCorp web_search");
+  const resultCount = countSearchResultMentions(result.html, brandName, domain, "web search");
   const score = resultCount >= 5 ? 25 : resultCount >= 2 ? 15 : resultCount === 1 ? 8 : 0;
   const found = resultCount > 0;
 
@@ -2797,7 +2830,7 @@ async function checkSearchVisibility(brandName: string, domain: string): Promise
     check: "search_visibility",
     score,
     maxScore: 25,
-    detail: `Native NanoCorp web_search returned ${resultCount} brand/domain result mention(s).`,
+    detail: `Web search returned ${resultCount} brand/domain result mention(s).`,
     found,
     reachable: true,
     evidence: htmlSnippet(result.html, found ? domain : brandName),
@@ -2890,7 +2923,7 @@ function checkAIVisibilityFromBuyerPrompts(buyerIntentPrompts: BuyerIntentPrompt
       ? `${failedAnswerEngineReason ?? WEB_SEARCH_UNAVAILABLE} Unavailable surface(s): ${unavailable.join(", ")}.`
       : checkedAnswerEngineSurface
         ? `${checkedAnswerEngineSurface.engine ?? "AI"} checked buyer-intent recommendations.`
-        : "Native NanoCorp web_search checked buyer-intent result snippets.",
+        : "Web search checked buyer-intent result snippets.",
     found: namedPrompts > 0,
     reachable: checkedPrompts.length > 0,
     evidence: buyerIntentPrompts
@@ -2901,12 +2934,12 @@ function checkAIVisibilityFromBuyerPrompts(buyerIntentPrompts: BuyerIntentPrompt
 }
 
 async function probeSupplementarySearch(prompt: string, brandName: string, domain: string): Promise<BuyerIntentSurfaceResult> {
-  const source = "buyer_intent:NanoCorp web_search";
-  const result = await fetchNanoCorpSearch(source, buyerIntentSearchQuery(prompt));
+  const source = "buyer_intent:web search";
+  const result = await fetchSearchSurface(source, buyerIntentSearchQuery(prompt));
 
   if (!result.ok || !result.html) {
     return {
-      surface: "NanoCorp web_search",
+      surface: "Web search",
       reachable: false,
       unavailableReason: WEB_SEARCH_UNAVAILABLE,
       brandMentioned: false,
@@ -2917,12 +2950,12 @@ async function probeSupplementarySearch(prompt: string, brandName: string, domai
     };
   }
 
-  const text = surfaceText(result, "NanoCorp web_search");
+  const text = surfaceText(result, "Web search");
   const brandMentioned = mentionsBrandOrDomain(text, brandName, domain);
   const competitors = extractCompetitorsFromText(text, brandName, domain, prompt);
 
   return {
-    surface: "NanoCorp web_search",
+    surface: "Web search",
     reachable: true,
     brandMentioned,
     competitors,
@@ -3291,7 +3324,27 @@ function buildFixes(checks: AuditCheckResult[], segment: IcpSegmentMetadata = IC
   return fixes.slice(0, 5);
 }
 
+/**
+ * Envoi d'email du moteur.
+ *
+ * Ordre : Resend d'abord (`RESEND_API_KEY`), NanoCorp en repli hérité tant qu'aucune
+ * clé n'est posée. Sans aucune des deux, on renvoie `sent: false` — le log de
+ * délivrabilité enregistre l'échec, rien n'est perdu silencieusement.
+ */
 async function sendNativeEmail(to: string, subject: string, body: string): Promise<NativeEmailSendResult> {
+  if (isMailConfigured()) {
+    const result = await sendMail({ to, subject, text: body }, { timeoutMs: ANSWER_TIMEOUT_MS });
+
+    return result.sent
+      ? { sent: true, id: result.id, status: result.status, providerStatus: result.provider }
+      : { sent: false, error: result.error, status: result.status };
+  }
+
+  return sendNanoCorpEmail(to, subject, body);
+}
+
+/** Repli hérité NanoCorp. À supprimer une fois `RESEND_API_KEY` posée en prod. */
+async function sendNanoCorpEmail(to: string, subject: string, body: string): Promise<NativeEmailSendResult> {
   try {
     const result = await executeNanoCorpTool<{ id?: string; status?: string }>("send_email", { to, subject, body }, ANSWER_TIMEOUT_MS);
 

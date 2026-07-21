@@ -184,7 +184,10 @@ function competitorCounts(names: string[]) {
 
 function localizedUnavailableReason(reason: string | undefined, locale: Locale, engine = "Gemini") {
   if (!reason) return locale === "fr" ? `${engine} est indisponible ; réessaie.` : `${engine} unavailable; try again.`;
-  if (reason.includes("Native NanoCorp web_search unavailable")) return locale === "fr" ? "Recherche web native indisponible ; ce rapport utilise uniquement les vérifications terminées." : reason;
+  // Ancien libellé « Native NanoCorp web_search unavailable » conservé : les audits déjà en base le contiennent.
+  if (reason.includes("Web search unavailable") || reason.includes("Native NanoCorp web_search unavailable")) {
+    return locale === "fr" ? "Recherche web indisponible ; ce rapport utilise uniquement les vérifications terminées." : reason;
+  }
   if (reason.includes("Gemini indisponible")) return locale === "fr" ? reason : "Gemini unavailable; try again.";
   if (reason.includes("ChatGPT indisponible")) return locale === "fr" ? reason : "ChatGPT unavailable; try again.";
   return reason;
