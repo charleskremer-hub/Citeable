@@ -45,7 +45,7 @@ const STRUCTURED_DATA = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   name: "GetPick",
-  url: "https://getpick.ai",
+  url: "https://www.getpick.ai",
   applicationCategory: "BusinessApplication",
   applicationSubCategory: "GEO agent (AI visibility / AEO)",
   operatingSystem: "Web",

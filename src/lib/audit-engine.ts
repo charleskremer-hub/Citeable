@@ -3281,7 +3281,7 @@ export async function sendAuditEmail(email: string, brandName: string, websiteUr
 }
 
 function siteBaseUrl() {
-  return (envValue("NEXT_PUBLIC_SITE_URL") ?? envValue("VERCEL_PROJECT_URL") ?? "https://getpick.ai").replace(/\/$/, "");
+  return (envValue("NEXT_PUBLIC_SITE_URL") ?? envValue("VERCEL_PROJECT_URL") ?? "https://www.getpick.ai").replace(/\/$/, "");
 }
 
 function normalizedEmailAddress(email: string) {
@@ -3959,7 +3959,7 @@ export async function sendWeeklyMonitoringEmail(email: string, brandName: string
         `   Where: ${action.where}`,
       ]),
       "",
-      `View the report: https://getpick.ai/audit/${report.audit_id}`,
+      `View the report: https://www.getpick.ai/audit/${report.audit_id}`,
     ].join("\n");
 
   return sendGuardedEmail({ auditId: report.audit_id, email, websiteUrl, step: "weekly_monitoring", subject, body });

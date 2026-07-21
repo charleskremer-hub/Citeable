@@ -7,7 +7,7 @@ type SeoAnswerPageProps = {
   params: Promise<{ locale: string; slug: string }>;
 };
 
-const siteUrl = "https://getpick.ai";
+const siteUrl = "https://www.getpick.ai";
 
 export function generateStaticParams() {
   return answerPages.map((page) => ({ locale: page.locale, slug: page.slug }));

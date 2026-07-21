@@ -4,7 +4,10 @@ import Link from "next/link";
 export const dynamic = "force-static";
 
 const PUBLISHED = "2026-07-19";
-const URL = "https://getpick.ai/study";
+// CANONIQUE = www tant que l'apex n'est pas déclaré dans le projet Vercel
+// (certificat SSL non émis pour l'apex → connexions refusées).
+// Voir le commentaire détaillé dans src/app/robots.ts.
+const URL = "https://www.getpick.ai/study";
 
 export const metadata: Metadata = {
   title: "We asked AI what to buy in 21 DTC categories — GetPick study",
@@ -62,7 +65,7 @@ const ARTICLE_SCHEMA = {
   headline: "We asked AI what to buy in 21 DTC categories. Brand awareness had almost nothing to do with the answer.",
   datePublished: PUBLISHED,
   url: URL,
-  author: { "@type": "Organization", name: "GetPick", url: "https://getpick.ai" },
+  author: { "@type": "Organization", name: "GetPick", url: "https://www.getpick.ai" },
   publisher: { "@type": "Organization", name: "GetPick" },
   about: "AI visibility of direct-to-consumer brands in ChatGPT and Gemini answers",
   description:

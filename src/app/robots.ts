@@ -1,6 +1,13 @@
 import type { MetadataRoute } from "next";
 
-const BASE_URL = "https://getpick.ai";
+// CANONIQUE = www, volontairement (21/07/2026).
+// L'apex getpick.ai résout bien vers Vercel mais n'est PAS déclaré dans le projet :
+// le certificat SSL ne couvre que www, donc l'apex refuse toutes les connexions.
+// Déclarer aux crawlers IA une URL qui ne répond pas nous coûtait notre propre
+// lisibilité (score dogfood tombé de 61 à 34). On déclare donc l'URL qui sert.
+// Quand l'apex sera ajouté au projet Vercel, repasser ces constantes sur
+// https://getpick.ai (voir RENAME_WHOPICKS.md / PRODUCT_BACKLOG.md).
+const BASE_URL = "https://www.getpick.ai";
 
 /**
  * robots.txt servi par Next.

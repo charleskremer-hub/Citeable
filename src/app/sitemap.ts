@@ -1,7 +1,10 @@
 import type { MetadataRoute } from "next";
 import { answerPages } from "@/lib/answer-pages";
 
-const siteUrl = "https://getpick.ai";
+// CANONIQUE = www tant que l'apex getpick.ai n'est pas déclaré dans le projet
+// Vercel (son certificat SSL ne le couvre pas, il refuse les connexions).
+// Voir le commentaire détaillé dans src/app/robots.ts.
+const siteUrl = "https://www.getpick.ai";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

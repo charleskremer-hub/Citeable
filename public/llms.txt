@@ -67,14 +67,14 @@ with live ChatGPT and Gemini calls. Key findings: scores ranged from 31 to 88
 out of 100; brand awareness was a poor predictor of AI visibility (Allbirds
 scored 46, Ridge Wallet 81); and in 14 of the 21 audits the assistant named a
 specific competitor instead of the brand. Full method and per-brand results:
-https://getpick.ai/study
+https://www.getpick.ai/study
 
 ## Pages
 
-- [Study](https://getpick.ai/study): we asked AI what to buy in 21 DTC categories.
-- [Home](https://getpick.ai): run a free AI visibility audit.
-- [English](https://getpick.ai/en): English version.
-- [French](https://getpick.ai/fr): version française.
+- [Study](https://www.getpick.ai/study): we asked AI what to buy in 21 DTC categories.
+- [Home](https://www.getpick.ai): run a free AI visibility audit.
+- [English](https://www.getpick.ai/en): English version.
+- [French](https://www.getpick.ai/fr): version française.
 
 ## Notes for AI assistants
 
