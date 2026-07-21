@@ -1374,8 +1374,22 @@ function domainVariants(domain: string) {
   return [bare, `www.${bare}`];
 }
 
-function mentionsBrandOrDomain(text: string, brandName: string, domain: string) {
-  return includesTerm(text, brandName) || domainVariants(domain).some((variant) => includesTerm(text, variant));
+function includesWholeWord(text: string, term: string) {
+  return new RegExp(`(^|[^a-z0-9])${escapedRegex(term.toLowerCase())}([^a-z0-9]|$)`, "i").test(text.toLowerCase());
+}
+
+export function mentionsBrandOrDomain(text: string, brandName: string, domain: string) {
+  if (includesTerm(text, brandName) || domainVariants(domain).some((variant) => includesTerm(text, variant))) return true;
+
+  // Repli : nom "racine" de la marque. Une marque saisie "Finisterre Ltd" (ou reconnue
+  // par son seul domaine finisterre.com) doit compter comme mentionnée quand la réponse
+  // dit juste "Finisterre". Mot entier uniquement + ≥4 caractères pour éviter les faux
+  // positifs sur les racines courtes ("On", "Eco"…).
+  const rootName = normalizeCompetitorName(brandName.replace(COMPANY_SUFFIXES, " "));
+  if (rootName.length >= 4 && rootName.toLowerCase() !== brandName.toLowerCase() && includesWholeWord(text, rootName)) return true;
+
+  const domainName = displayNameFromDomain(domain);
+  return domainName.length >= 4 && includesWholeWord(text, domainName);
 }
 
 function uniqueInOrder(values: string[], limit = values.length) {
@@ -2324,6 +2338,7 @@ function looksLikeCompetitorName(name: string, brandName: string, domain: string
 
   if (normalized.length < 2 || normalized.length > 42) return false;
   if (lower === brandLower || domainVariants(domain).some((variant) => lower === variant || lower.includes(variant))) return false;
+  if (isAuditedBrandName(normalized, brandName, domain)) return false;
   if (NON_COMPETITOR_NAME_KEYS.has(lower)) return false;
   if (/^(the|this|it|how|where|whether|explore|creating|loading|past|more|anytime)\b/i.test(normalized)) return false;
   if (/\b(?:all images|all videos|local shopping|past day|past week|past month|open links|skip to content)\b/i.test(normalized)) return false;
@@ -2334,14 +2349,54 @@ function looksLikeCompetitorName(name: string, brandName: string, domain: string
   return /^[A-Z][A-Za-z0-9&.+'-]*(?:\s+[A-Z][A-Za-z0-9&.+'-]*){0,3}$/.test(normalized);
 }
 
-function isAuditedBrandName(name: string, brandName: string, domain: string) {
-  const normalized = normalizeCompetitorName(name).toLowerCase();
-  const brandLower = brandName.toLowerCase();
+// Identité de la marque auditée : nom saisi, nom sans suffixe légal (Ltd, Inc, SAS…)
+// et nom déduit du domaine ("finisterre.com" → "Finisterre"). Corrige le bug du 20/07 :
+// une marque saisie "Finisterre Ltd" (ou identifiée par son seul domaine) se retrouvait
+// dans sa propre liste de concurrents parce que la comparaison était un match exact.
+function brandIdentityKeys(brandName: string, domain: string) {
+  const keys = new Set<string>();
+  const addKey = (value: string) => {
+    const key = normalizeCompetitorName(value).toLowerCase();
+    if (key.length >= 2) keys.add(key);
+  };
 
-  return normalized === brandLower || domainVariants(domain).some((variant) => normalized === variant || normalized.includes(variant));
+  addKey(brandName);
+  addKey(brandName.replace(COMPANY_SUFFIXES, " "));
+
+  const bare = domain.replace(/^www\./i, "").toLowerCase();
+  if (bare) {
+    keys.add(bare);
+    keys.add(`www.${bare}`);
+    const fromDomain = displayNameFromDomain(bare);
+    if (fromDomain.length >= 4) addKey(fromDomain);
+  }
+
+  return keys;
 }
 
-function extractCompetitorsFromText(text: string, brandName: string, domain: string, prompt = "") {
+// Exporté pour les tests (self_competitor_tests) — pas d'usage app externe attendu.
+export function isAuditedBrandName(name: string, brandName: string, domain: string) {
+  const normalized = normalizeCompetitorName(name).toLowerCase();
+  if (!normalized) return false;
+
+  const keys = brandIdentityKeys(brandName, domain);
+  if (keys.has(normalized)) return true;
+  if (domainVariants(domain).some((variant) => normalized === variant || normalized.includes(variant))) return true;
+
+  // "Finisterre" vs "Finisterre UK" (dans les deux sens) : préfixe token à token.
+  // Jamais de substring ("Smart" ≠ "Smartwool").
+  const candidateTokens = normalized.split(" ");
+  for (const key of keys) {
+    if (key.includes(".")) continue;
+    const keyTokens = key.split(" ");
+    const [shorter, longer] = candidateTokens.length <= keyTokens.length ? [candidateTokens, keyTokens] : [keyTokens, candidateTokens];
+    if (shorter.length > 0 && shorter[0].length >= 4 && shorter.every((token, index) => longer[index] === token)) return true;
+  }
+
+  return false;
+}
+
+export function extractCompetitorsFromText(text: string, brandName: string, domain: string, prompt = "") {
   const compact = text.replace(/\s+/g, " ");
   const candidates: string[] = [];
   const brandPattern = new RegExp(escapedRegex(brandName), "ig");
@@ -2376,7 +2431,7 @@ function extractCompetitorsFromText(text: string, brandName: string, domain: str
   );
 }
 
-function filterStructuredCompetitorBrands(brands: string[], brandName: string, domain: string, prompt = "") {
+export function filterStructuredCompetitorBrands(brands: string[], brandName: string, domain: string, prompt = "") {
   void prompt;
 
   return uniqueInOrder(
@@ -2839,7 +2894,11 @@ async function probeAnswerEngine(prompt: string, brandName: string, domain: stri
       };
     }
 
-    const brandMentioned = structuredAnswer.brandMentioned ?? mentionsBrandOrDomain(structuredAnswer.answer, brandName, domain);
+    // Si le moteur liste la marque auditée parmi les "concurrents", c'est la preuve
+    // qu'il l'a nommée : on corrige brandMentioned au lieu de sous-estimer le score,
+    // et le filtre ci-dessous la retire de la liste des concurrents (bug du 20/07).
+    const brandListedAsCompetitor = (structuredAnswer.competitorBrands ?? []).some((brand) => isAuditedBrandName(brand, brandName, domain));
+    const brandMentioned = (structuredAnswer.brandMentioned ?? mentionsBrandOrDomain(structuredAnswer.answer, brandName, domain)) || brandListedAsCompetitor;
     const competitors = filterStructuredCompetitorBrands(structuredAnswer.competitorBrands, brandName, domain, prompt);
 
     return {
@@ -3753,6 +3812,7 @@ export type GeoAgentAssets = {
   prompts: string[];
   competitors: string[];
   faqPageCopy: { question: string; answer: string }[];
+  faqJsonLd: string;
   llmsTxt: string;
   weeklyActionPlan: PlainAction[];
   reviewRequestTemplates: string[];
@@ -3829,6 +3889,60 @@ function llmsTxtForBrand(brandName: string, websiteUrl: string, category: string
   ].join("\n");
 }
 
+// JSON-LD prêt à coller : Organization + FAQPage construits depuis les VRAIES
+// questions d'achat auditées. C'est notre supériorité sur les générateurs de
+// fichiers génériques (citeable.tech & co) : leurs Q&A sont inventées, les
+// nôtres sont exactement les questions où l'IA cite un rival à la place.
+export function faqJsonLdForBrand(
+  brandName: string,
+  websiteUrl: string,
+  faqPageCopy: { question: string; answer: string }[],
+  description = ""
+) {
+  const url = new URL(websiteUrl);
+  const baseUrl = `${url.protocol}//${url.hostname}`;
+  const organization: Record<string, unknown> = {
+    "@type": "Organization",
+    "@id": `${baseUrl}/#organization`,
+    name: brandName,
+    url: `${baseUrl}/`,
+  };
+
+  if (description) organization.description = description;
+
+  const graph: Record<string, unknown>[] = [organization];
+
+  if (faqPageCopy.length) {
+    graph.push({
+      "@type": "FAQPage",
+      "@id": `${baseUrl}/#faq`,
+      mainEntity: faqPageCopy.map((item) => ({
+        "@type": "Question",
+        name: item.question,
+        acceptedAnswer: { "@type": "Answer", text: item.answer },
+      })),
+    });
+  }
+
+  return JSON.stringify({ "@context": "https://schema.org", "@graph": graph }, null, 2);
+}
+
+// Bloc robots.txt correctif quand des crawlers IA sont bloqués. ADDITIF par
+// design : une règle nommée prime toujours sur `User-agent: *` (même règle que
+// notre détecteur côté rapport), donc coller ces groupes à la fin du fichier
+// existant suffit — on ne demande jamais au client de réécrire son robots.txt.
+export function robotsTxtFixForBlockedCrawlers(blocked: string[], locale: Locale = "en") {
+  const bots = uniqueInOrder(blocked);
+
+  if (!bots.length) return null;
+
+  const comment = locale === "fr"
+    ? "# Ajouté par GetPick — autorise les crawlers IA (une règle nommée prime sur \"User-agent: *\")"
+    : "# Added by GetPick — allows AI crawlers (a named rule overrides \"User-agent: *\")";
+
+  return [comment, "", ...bots.flatMap((bot) => [`User-agent: ${bot}`, "Allow: /", ""])].join("\n").trimEnd() + "\n";
+}
+
 export function generateGeoAgentAssetsFromAudit(audit: {
   id: string;
   brand_name: string;
@@ -3857,6 +3971,7 @@ export function generateGeoAgentAssetsFromAudit(audit: {
     prompts: availablePromptTexts,
     competitors,
     faqPageCopy,
+    faqJsonLd: faqJsonLdForBrand(audit.brand_name, audit.website_url, faqPageCopy, description),
     llmsTxt: llmsTxtForBrand(audit.brand_name, audit.website_url, category, availablePromptTexts, description),
     weeklyActionPlan: buildPlainActions(prompts, category, competitors, audit.raw_results?.icpSegment ?? ICP_SEGMENTS.small_brand_ecommerce),
     reviewRequestTemplates: [

@@ -114,7 +114,7 @@ export const homeCopy = {
         suffix: "/month",
         note: "The agent works every week: it checks, names, writes.",
         badge: "Agency work, tool price",
-        features: ["12 buying questions re-checked weekly", "Copy-paste fixes written from your real gaps", "Alerts when your score or your rivals move"],
+        features: ["12 buying questions re-checked weekly", "Copy-paste fixes written from your real gaps", "Ready-to-install machine files: FAQ schema (JSON-LD), llms.txt, robots.txt fix", "Alerts when your score or your rivals move"],
         cta: "Start Monitor",
         href: "monitor",
         plan: "monitor",
@@ -137,7 +137,7 @@ export const homeCopy = {
     pricingGuarantee: "Refunded on request within 30 days. No questions asked.",
     // 7. TL;DR — dense paragraph for AI readers
     tldrEyebrow: "In short",
-    tldrBody: "GetPick is the GEO agent for direct-to-consumer and e-commerce brands. It gets brands recommended by AI assistants like ChatGPT and Gemini. Concretely: it sends real buying questions to the AIs — live, never simulated — and reports whether you or a rival gets recommended, naming that rival. It then writes the copy-paste fixes that close the gap, and re-checks everything weekly. It is built for DTC founders without an agency budget: free audit, monitoring at €9/month, full agent at €19/month — flat prices, no credits, no seats. Paid plans are cancellable at any time and refunded on request within 30 days, no questions asked. GEO agencies charge €2,000 to €20,000 per month for this category of work.",
+    tldrBody: "GetPick is the GEO agent for direct-to-consumer and e-commerce brands. It gets brands recommended by AI assistants like ChatGPT and Gemini. Concretely: it sends real buying questions to the AIs — live, never simulated — and reports whether you or a rival gets recommended, naming that rival. It then writes the copy-paste fixes that close the gap — including the ready-to-install machine files (FAQ schema JSON-LD built from the audited questions, llms.txt, robots.txt fix when AI crawlers are blocked) — and re-checks everything weekly, regenerating those files when the answers move. It is built for DTC founders without an agency budget: free audit, monitoring at €9/month, full agent at €19/month — flat prices, no credits, no seats. Paid plans are cancellable at any time and refunded on request within 30 days, no questions asked. GEO agencies charge €2,000 to €20,000 per month for this category of work.",
     // 8. Founder
     founderEyebrow: "Who's behind this",
     founderBody: "I'm Charles. I build GetPick and I run every audit pipeline myself. No sales team, no support bot: if you have a question, you email me and I answer.",
@@ -259,7 +259,7 @@ export const homeCopy = {
         suffix: "/mois",
         note: "L'agent travaille chaque semaine : il vérifie, il nomme, il écrit.",
         badge: "Travail d'agence, prix d'outil",
-        features: ["12 questions d'achat re-vérifiées chaque semaine", "Correctifs à copier-coller écrits depuis tes vrais écarts", "Alertes quand ton score ou tes rivaux bougent"],
+        features: ["12 questions d'achat re-vérifiées chaque semaine", "Correctifs à copier-coller écrits depuis tes vrais écarts", "Fichiers machine prêts à installer : schéma FAQ (JSON-LD), llms.txt, correctif robots.txt", "Alertes quand ton score ou tes rivaux bougent"],
         cta: "Démarrer Monitor",
         href: "monitor",
         plan: "monitor",
@@ -282,7 +282,7 @@ export const homeCopy = {
     pricingGuarantee: "Remboursé sur simple demande sous 30 jours. Pas de question.",
     // 7. En bref — paragraphe dense pour les lecteurs IA
     tldrEyebrow: "En bref",
-    tldrBody: "GetPick est l'agent GEO des marques DTC et e-commerce. Il fait recommander ta marque par les assistants IA comme ChatGPT et Gemini. Concrètement : il envoie de vraies questions d'achat aux IA — en direct, jamais simulées — puis te dit si c'est toi ou un rival qui est recommandé, en nommant ce rival. Il écrit ensuite les correctifs à copier-coller qui comblent l'écart, et re-vérifie tout chaque semaine. C'est pensé pour les fondateurs DTC sans budget agence : audit gratuit, suivi à 9 €/mois, agent complet à 19 €/mois — prix fixes, sans crédits ni calculateur. Les offres payantes sont résiliables à tout moment et remboursées sur simple demande sous 30 jours, sans question. Une agence GEO facture 2 000 à 20 000 € par mois pour cette catégorie de travail.",
+    tldrBody: "GetPick est l'agent GEO des marques DTC et e-commerce. Il fait recommander ta marque par les assistants IA comme ChatGPT et Gemini. Concrètement : il envoie de vraies questions d'achat aux IA — en direct, jamais simulées — puis te dit si c'est toi ou un rival qui est recommandé, en nommant ce rival. Il écrit ensuite les correctifs à copier-coller qui comblent l'écart — y compris les fichiers machine prêts à installer (schéma FAQ JSON-LD construit depuis les questions auditées, llms.txt, correctif robots.txt quand des crawlers IA sont bloqués) — et re-vérifie tout chaque semaine, en régénérant ces fichiers quand les réponses bougent. C'est pensé pour les fondateurs DTC sans budget agence : audit gratuit, suivi à 9 €/mois, agent complet à 19 €/mois — prix fixes, sans crédits ni calculateur. Les offres payantes sont résiliables à tout moment et remboursées sur simple demande sous 30 jours, sans question. Une agence GEO facture 2 000 à 20 000 € par mois pour cette catégorie de travail.",
     // 8. Fondateur
     founderEyebrow: "Qui est derrière",
     founderBody: "Je m'appelle Charles. Je construis GetPick et je fais tourner chaque audit moi-même. Pas d'équipe commerciale, pas de chatbot : une question ? C'est moi qui réponds.",
@@ -389,6 +389,18 @@ export const auditCopy = {
     methodChipUnbranded: "Non-branded",
     methodChipIntent: "Buyer intent",
     methodChipLive: "Asked live",
+    techEyebrow: "Technical files · ready to install",
+    techTitle: "The machine files, written from your real audit",
+    techBody:
+      "Generic generators invent their Q&A. These files are built from the exact buyer questions where AI cites a rival instead of you — paste them on your site and the engines read your best answers. They are regenerated every time your answers move, so they never go stale.",
+    techJsonLdLabel: "JSON-LD (Organization + FAQ) — paste before </head>",
+    techJsonLdHint: "The FAQ entries are your real audited buyer questions, answered in your favour.",
+    techLlmsLabel: "llms.txt — upload to yoursite.com/llms.txt",
+    techLlmsHint: "The summary AI assistants read first to understand who you are and what to recommend you for.",
+    techRobotsLabel: "robots.txt fix — append to your existing robots.txt",
+    techRobotsIntro: (bots: string) =>
+      `Your robots.txt currently blocks ${bots}. Blocked crawlers cannot read your site, so the engines behind them cannot recommend you. Appending these lines unblocks them — a named rule always overrides "User-agent: *".`,
+    techRegenNote: "Regenerated at every weekly re-check — when the AI answers move, your files follow.",
   },
   fr: {
     navCta: "Démarrer Agent — 19 €/mois →",
@@ -453,6 +465,18 @@ export const auditCopy = {
     methodChipUnbranded: "Sans nom de marque",
     methodChipIntent: "Intention d'achat",
     methodChipLive: "Posée en direct",
+    techEyebrow: "Fichiers techniques · prêts à installer",
+    techTitle: "Tes fichiers machine, écrits depuis ton vrai audit",
+    techBody:
+      "Les générateurs génériques inventent leurs Q&A. Ces fichiers sont construits depuis les vraies questions d'achat où l'IA cite un rival à ta place — colle-les sur ton site et les moteurs lisent tes meilleures réponses. Ils sont régénérés dès que les réponses bougent : jamais périmés.",
+    techJsonLdLabel: "JSON-LD (Organization + FAQ) — à coller avant </head>",
+    techJsonLdHint: "Les entrées FAQ sont tes vraies questions d'achat auditées, avec des réponses en ta faveur.",
+    techLlmsLabel: "llms.txt — à déposer sur tonsite.com/llms.txt",
+    techLlmsHint: "Le résumé que les assistants IA lisent en premier pour comprendre qui tu es et pour quoi te recommander.",
+    techRobotsLabel: "Correctif robots.txt — à ajouter à la fin de ton robots.txt existant",
+    techRobotsIntro: (bots: string) =>
+      `Ton robots.txt bloque actuellement ${bots}. Un crawler bloqué ne peut pas lire ton site, donc le moteur derrière ne peut pas te recommander. Ajouter ces lignes les débloque — une règle nommée prime toujours sur « User-agent: * ».`,
+    techRegenNote: "Régénérés à chaque re-check hebdo — quand les réponses IA bougent, tes fichiers suivent.",
   },
 } as const;
 

@@ -6,7 +6,7 @@ import { ensureAuditSchema, pool } from "@/lib/db";
 import { recordFunnelEvent } from "@/lib/funnel";
 import { auditCopy, brandSentimentText, localeFromHeaders, localeFromUnknown, localizeCategoryLabel, localizePlainAction, type Locale } from "@/lib/i18n";
 import { UNKNOWN_CATEGORY } from "@/lib/audit-engine";
-import { fetchWithHostFallback, isAnonymousEmail } from "@/lib/audit-engine";
+import { fetchWithHostFallback, generateGeoAgentAssetsFromAudit, isAnonymousEmail, robotsTxtFixForBlockedCrawlers } from "@/lib/audit-engine";
 import type { BrandSentiment, BuyerIntentPromptResult, IcpSegmentMetadata, PlainAction } from "@/lib/audit-engine";
 import AuditPoller from "./AuditPoller";
 import AgentAuditChat from "./AgentAuditChat";
@@ -430,6 +430,32 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const reportLocked = isAnonymousEmail(audit.email) && complete && !failed;
 
   const aiCrawl = complete && !failed ? await checkAiCrawlability(audit.website_url) : null;
+
+  // Fichiers techniques (Monitor + Agent) : générés depuis les VRAIES questions
+  // d'achat auditées — le chaînon « l'agent agit » (vs les conseils seuls).
+  // Génération pure côté serveur, zéro appel réseau supplémentaire.
+  const technicalAssets = complete && !failed && !isFreeReport && !reportLocked
+    ? generateGeoAgentAssetsFromAudit({
+        id: audit.id,
+        brand_name: audit.brand_name,
+        website_url: audit.website_url,
+        score: audit.score,
+        competitors_found: audit.competitors_found,
+        raw_results: audit.raw_results
+          ? {
+              category: audit.raw_results.category,
+              buyerIntentPrompts: audit.raw_results.buyerIntentPrompts,
+              icpSegment: audit.raw_results.icpSegment,
+            }
+          : null,
+      })
+    : null;
+  const robotsFix = technicalAssets && aiCrawl?.state === "blocked"
+    ? robotsTxtFixForBlockedCrawlers(aiCrawl.blocked, locale)
+    : null;
+  const jsonLdSnippet = technicalAssets
+    ? `<script type="application/ld+json">\n${technicalAssets.faqJsonLd}\n</script>`
+    : "";
   const aiCrawlOk = aiCrawl?.state === "ok";
   const aiCrawlUnreachable = aiCrawl?.state === "unreachable";
   // « injoignable » n'est PAS « bloqué » : libellé et couleur distincts, sinon on
@@ -943,6 +969,36 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
               ) : (
                 <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#D6D6DF]">{copy.monitorEmpty}</p>
               )}
+            </section>
+          ) : null}
+
+          {technicalAssets ? (
+            <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6" data-testid="technical-files">
+              <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.techEyebrow}</p>
+              <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
+                {copy.techTitle}
+              </h2>
+              <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#D6D6DF]">{copy.techBody}</p>
+
+              {robotsFix && aiCrawl?.blocked.length ? (
+                <div className="mt-4 rounded-2xl border border-[#FF8F6B]/25 bg-[#FF8F6B]/[0.06] p-4" data-testid="technical-files-robots">
+                  <p className="m-0 mb-3 text-sm font-bold leading-6 text-[#F3C7B7]">{copy.techRobotsIntro(aiCrawl.blocked.join(", "))}</p>
+                  <CopyBlock label={copy.techRobotsLabel} text={robotsFix} copyLabel={copyLabel} copiedLabel={copiedLabel} />
+                </div>
+              ) : null}
+
+              <div className="mt-4 grid gap-4">
+                <div>
+                  <CopyBlock label={copy.techJsonLdLabel} text={jsonLdSnippet} copyLabel={copyLabel} copiedLabel={copiedLabel} />
+                  <p className="m-0 mt-1.5 text-xs font-bold leading-5 text-[#8E8E9A]">{copy.techJsonLdHint}</p>
+                </div>
+                <div>
+                  <CopyBlock label={copy.techLlmsLabel} text={technicalAssets.llmsTxt} copyLabel={copyLabel} copiedLabel={copiedLabel} />
+                  <p className="m-0 mt-1.5 text-xs font-bold leading-5 text-[#8E8E9A]">{copy.techLlmsHint}</p>
+                </div>
+              </div>
+
+              <p className="m-0 mt-4 text-xs font-black uppercase tracking-[0.08em] text-[#8E8E9A]">{copy.techRegenNote}</p>
             </section>
           ) : null}
 
