@@ -4,10 +4,11 @@ import { notFound } from "next/navigation";
 import { AGENT_CHECKOUT_URL, MONITOR_CHECKOUT_URL } from "@/lib/checkout-links";
 import { ensureAuditSchema, pool } from "@/lib/db";
 import { recordFunnelEvent } from "@/lib/funnel";
-import { auditCopy, brandSentimentText, localeFromHeaders, localeFromUnknown, localizeCategoryLabel, localizePlainAction, type Locale } from "@/lib/i18n";
+import { auditCopy, brandSentimentView, localeFromHeaders, localeFromUnknown, localizeCategoryLabel, localizePlainAction, type Locale } from "@/lib/i18n";
 import { UNKNOWN_CATEGORY } from "@/lib/audit-engine";
-import { fetchWithHostFallback, generateGeoAgentAssetsFromAudit, isAnonymousEmail, isAuditedBrandName, robotsTxtFixForBlockedCrawlers } from "@/lib/audit-engine";
-import type { BrandSentiment, BuyerIntentPromptResult, IcpSegmentMetadata, PlainAction } from "@/lib/audit-engine";
+import { categoryPerceptionFromPrompts, fetchWithHostFallback, generateGeoAgentAssetsFromAudit, isAnonymousEmail, isAuditedBrandName, robotsTxtFixForBlockedCrawlers } from "@/lib/audit-engine";
+import type { BrandSentiment, BuyerIntentPromptResult, CategoryPerception, IcpSegmentMetadata, PlainAction } from "@/lib/audit-engine";
+import LocaleLang from "@/app/LocaleLang";
 import AuditPoller from "./AuditPoller";
 import AgentAuditChat from "./AgentAuditChat";
 import FunnelCheckoutLink from "./FunnelCheckoutLink";
@@ -38,6 +39,7 @@ type AuditRow = {
     anonymous?: boolean;
     answerEngine?: { engine?: string; model?: string; realLlmCall?: boolean };
     brandSentiment?: BrandSentiment;
+    categoryPerception?: CategoryPerception;
     structuredDataFound?: boolean;
     locale?: string;
     buyerIntentPrompts?: BuyerIntentPromptResult[];
@@ -439,8 +441,13 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const checkedPromptCount = promptRows.filter((row) => row.analysis.state !== "unchecked").length;
   const promptRank = (state: PromptState) => (state === "missing" ? 0 : state === "recommended" ? 1 : 2);
   const sortedPromptRows = [...promptRows].sort((a, b) => promptRank(a.analysis.state) - promptRank(b.analysis.state));
-  const sentimentLine = brandSentimentText(audit.raw_results?.brandSentiment ?? { label: "not_enough_signal", justification: "not enough signal" }, locale);
+  const sentiment = brandSentimentView(audit.raw_results?.brandSentiment ?? { label: "not_enough_signal", justification: "not enough signal" }, locale);
   const agentSentimentLabel = audit.raw_results?.brandSentiment?.label ?? "not_enough_signal";
+  // Les audits antérieurs à la feature n'ont pas de categoryPerception stocké ; on le
+  // recalcule depuis leurs surfaces, qui ne portent pas de catégorie perçue et rendent
+  // donc "not_enough_signal". Un ancien rapport n'affiche jamais de verdict inventé.
+  const categoryPerception: CategoryPerception =
+    audit.raw_results?.categoryPerception ?? categoryPerceptionFromPrompts(questions, audit.raw_results?.category ?? "");
   // Audit lancé sans email : le verdict reste visible, le détail est échangé
   // contre l'email (voir ClaimReportGate). Une fois réclamé, le rapport s'ouvre.
   //
@@ -575,8 +582,12 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
         ? "#FFD166"
         : "#CAFF3C";
 
+  const actionImpactLabel = (index: number) =>
+    index === 0 ? copy.actionImpactHigh : index === 1 ? copy.actionImpactMedium : copy.actionImpactSupport;
+
   return (
     <main className="min-h-screen bg-[#09090B] text-[#F0F0EC]" style={{ fontFamily: "var(--font-sans)" }}>
+      <LocaleLang locale={locale} />
       <AuditPoller
         auditId={audit.id}
         email={audit.email}
@@ -656,7 +667,6 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                         : `Gemini cites you on ${brandMentionCount} of ${questionCount} buyer questions we tested${topCompetitor ? `, and cites ${topCompetitor} in your place` : ""}.`
                       : locale === "fr" ? "Aucune question d'achat n'a encore pu être vérifiée." : "No buyer question could be checked yet."}
                   </p>
-                  <p className="m-0 text-sm font-bold leading-6 text-[#8E8E9A]">{sentimentLine}</p>
                   {isAnswerEngineReport && answerEngine?.realLlmCall ? (
                     <p
                       className="m-0 flex w-fit items-center gap-1.5 text-xs font-black text-[#8FBF6B]"
@@ -669,6 +679,88 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                 </div>
               )}
             </div>
+
+            {/* « L'IA ne sait pas ce que tu vends » — verdict en amont du score.
+                Rendu uniquement s'il y a un vrai signal : sans catégorie perçue,
+                on n'affiche rien plutôt que d'inventer un diagnostic. */}
+            {complete && !failed && categoryPerception.status !== "not_enough_signal" ? (
+              (() => {
+                const mismatch = categoryPerception.status === "mismatch";
+                const tone = mismatch ? "#FFB84D" : "#CAFF3C";
+
+                return (
+                  <section
+                    className="mt-5 rounded-2xl border p-4"
+                    style={{ borderColor: `${tone}33`, background: `${tone}0F` }}
+                    data-testid="category-perception"
+                  >
+                    <p className="m-0 text-xs font-black uppercase tracking-[0.12em]" style={{ color: tone }}>
+                      {copy.categoryPerceptionEyebrow}
+                    </p>
+                    <p className="m-0 mt-2 text-base font-black leading-6 text-[#F0F0EC]">
+                      {mismatch ? copy.categoryPerceptionMismatchTitle : copy.categoryPerceptionMatchTitle}
+                    </p>
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      <div className="rounded-xl border border-white/[0.08] bg-black/20 px-3 py-2">
+                        <p className="m-0 text-[0.6875rem] font-black uppercase tracking-[0.1em] text-[#8E8E9A]">
+                          {copy.categoryPerceptionYouSell}
+                        </p>
+                        <p className="m-0 mt-1 text-sm font-bold text-[#F0F0EC]">{categoryPerception.actual}</p>
+                      </div>
+                      <div className="rounded-xl border border-white/[0.08] bg-black/20 px-3 py-2">
+                        <p className="m-0 text-[0.6875rem] font-black uppercase tracking-[0.1em] text-[#8E8E9A]">
+                          {copy.categoryPerceptionAiThinks}
+                        </p>
+                        <p className="m-0 mt-1 text-sm font-bold" style={{ color: tone }}>
+                          {categoryPerception.perceived}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#C7C7D1]">
+                      {mismatch
+                        ? copy.categoryPerceptionMismatchBody(answerEngineName)
+                        : copy.categoryPerceptionMatchBody(answerEngineName)}
+                    </p>
+                    {mismatch ? (
+                      <p className="m-0 mt-2 text-sm font-black leading-6 text-[#F0F0EC]">
+                        {copy.categoryPerceptionMismatchAction}
+                      </p>
+                    ) : null}
+                  </section>
+                );
+              })()
+            ) : null}
+
+            {complete && !failed ? (
+              <section
+                className="mt-5 rounded-2xl border p-4"
+                style={{
+                  borderColor: `${sentiment.color}33`,
+                  background: `${sentiment.color}0F`,
+                }}
+                data-testid="brand-sentiment"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="m-0 text-xs font-black uppercase tracking-[0.12em]" style={{ color: sentiment.color }}>
+                    {copy.sentimentEyebrow}
+                  </p>
+                  <span
+                    className="rounded-full px-2.5 py-1 text-[0.6875rem] font-black uppercase tracking-[0.1em]"
+                    style={{
+                      color: sentiment.color,
+                      background: `${sentiment.color}22`,
+                      border: `1px solid ${sentiment.color}44`,
+                    }}
+                  >
+                    {sentiment.shortLabel}
+                  </span>
+                </div>
+                {sentiment.justification ? (
+                  <p className="m-0 mt-2 text-sm font-black leading-6 text-[#F0F0EC]">{sentiment.justification}</p>
+                ) : null}
+                <p className="m-0 mt-2 text-sm font-bold leading-6 text-[#C7C7D1]">{sentiment.guidance}</p>
+              </section>
+            ) : null}
 
             {complete && !failed && (isFreeReport || isMonitorReport) ? (
               <VisibilityMonitorCard
@@ -903,9 +995,20 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                 <>
                   <ol className="m-0 mt-4 grid list-none gap-2 p-0">
                     {monitorActions.map((action, index) => (
-                      <li key={`${action.title}-${index}`} className="rounded-2xl border border-white/[0.08] bg-black/25 p-4 text-sm font-black text-[#F0F0EC]">
-                        <span className="mr-2 text-[#CAFF3C]">{index + 1}.</span>
-                        {action.title}
+                      <li key={`${action.title}-${index}`} className="rounded-2xl border border-white/[0.08] bg-black/25 p-4">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-black text-[#CAFF3C]">{index + 1}.</span>
+                          <span className="rounded-full border border-[#CAFF3C]/25 bg-[#CAFF3C]/10 px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#CAFF3C]">
+                            {actionImpactLabel(index)}
+                          </span>
+                        </div>
+                        <p className="m-0 mt-1.5 text-sm font-black text-[#F0F0EC]">{action.title}</p>
+                        {action.basedOn?.length ? (
+                          <p className="m-0 mt-1.5 text-xs font-bold leading-5 text-[#8E8E9A]">
+                            <span className="text-[#CAFF3C]">{copy.actionWhyFirst} · </span>
+                            {copy.actionWhyBecause(action.basedOn)}
+                          </p>
+                        ) : null}
                       </li>
                     ))}
                   </ol>
@@ -981,7 +1084,19 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                 <ol className="m-0 mt-4 grid list-none gap-3 p-0">
                   {monitorActions.map((action, index) => (
                     <li key={`${action.title}-${index}`} className="rounded-2xl border border-white/[0.08] bg-black/20 p-4">
-                      <p className="m-0 text-sm font-black text-[#CAFF3C]">{index + 1}. {action.title}</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-sm font-black text-[#CAFF3C]">{index + 1}.</span>
+                        <span className="rounded-full border border-[#CAFF3C]/25 bg-[#CAFF3C]/10 px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#CAFF3C]">
+                          {actionImpactLabel(index)}
+                        </span>
+                      </div>
+                      <p className="m-0 mt-1.5 text-sm font-black text-[#F0F0EC]">{action.title}</p>
+                      {action.basedOn?.length ? (
+                        <p className="m-0 mt-1.5 text-xs font-bold leading-5 text-[#A7A7B4]">
+                          <span className="text-[#CAFF3C]">{copy.actionWhyFirst} · </span>
+                          {copy.actionWhyBecause(action.basedOn)}
+                        </p>
+                      ) : null}
                       <p className="m-0 mt-2 text-sm font-bold leading-6 text-[#F0F0EC]">{action.doThis}</p>
                       <p className="m-0 mt-2 text-xs font-bold uppercase tracking-[0.08em] text-[#8E8E9A]">{copy.where} {action.where}</p>
                     </li>

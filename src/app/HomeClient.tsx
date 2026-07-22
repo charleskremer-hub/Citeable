@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import LocaleLang from "./LocaleLang";
 import { answerPages } from "@/lib/answer-pages";
 import { AGENT_CHECKOUT_URL, MONITOR_CHECKOUT_URL } from "@/lib/checkout-links";
 import { homeCopy, type Locale } from "@/lib/i18n";
@@ -29,12 +30,34 @@ export default function HomeClient({ locale }: HomeClientProps) {
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const formStartedRef = useRef(false);
+
+  function trackFormStarted(field: "brand_name" | "website_url" | "email") {
+    if (formStartedRef.current) return;
+    formStartedRef.current = true;
+    window.posthog?.capture("audit_form_started", { source: "hero_cta", field, locale });
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     // L'email n'est plus requis pour lancer l'audit : c'était le frein d'entrée
     // du funnel. Il est demandé sur le rapport, une fois le verdict montré.
-    if (!brandName || !websiteUrl) return;
+    if (!brandName.trim() || !websiteUrl.trim()) {
+      window.posthog?.capture("audit_validation_blocked", {
+        source: "hero_cta",
+        missing_brand: !brandName.trim(),
+        missing_website: !websiteUrl.trim(),
+        locale,
+      });
+      return;
+    }
+
+    window.posthog?.capture("audit_submit_clicked", {
+      source: "hero_cta",
+      has_email: Boolean(email.trim()),
+      locale,
+    });
+
     setStatus("loading");
     setErrorMsg("");
     try {
@@ -51,6 +74,7 @@ export default function HomeClient({ locale }: HomeClientProps) {
       window.posthog?.capture("audit_requested", { source: "hero_cta", brand_name: brandName, audit_id: data.audit_id, locale });
       window.location.assign(redirectUrl);
     } catch {
+      window.posthog?.capture("audit_submit_failed", { source: "hero_cta", locale });
       setStatus("error");
       setErrorMsg(copy.error);
     }
@@ -58,6 +82,7 @@ export default function HomeClient({ locale }: HomeClientProps) {
 
   return (
     <div className="min-h-screen bg-[#09090B] text-[#F0F0EC]" style={{ fontFamily: "var(--font-sans)" }}>
+      <LocaleLang locale={locale} />
       <nav className="border-b border-white/[0.06]">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-3 sm:px-6 sm:py-5">
           <a href="#hero" className="flex items-center gap-2 text-[#F0F0EC] no-underline">
@@ -98,12 +123,13 @@ export default function HomeClient({ locale }: HomeClientProps) {
             </div>
 
             <div id="audit" className="rounded-[1.35rem] border border-white/10 bg-[#111116]/95 p-4 shadow-2xl shadow-black/30 sm:p-6">
-              <div className="mb-3 hidden items-center justify-between gap-3 sm:flex">
+              {/* Visible on mobile too — trust signal above the fold (funnel diagnostic 2026-07-16) */}
+              <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-lg font-bold tracking-[-0.02em] text-[#F0F0EC]">{copy.formTitle}</h2>
-                  <p className="mt-1 text-sm text-[#858594]">{copy.formSubtitle}</p>
+                  <h2 className="text-base font-bold tracking-[-0.02em] text-[#F0F0EC] sm:text-lg">{copy.formTitle}</h2>
+                  <p className="mt-0.5 text-xs text-[#858594] sm:mt-1 sm:text-sm">{copy.formSubtitle}</p>
                 </div>
-                <span className="rounded-full bg-[#CAFF3C] px-2.5 py-1 text-xs font-black text-[#09090B]">{copy.freeBadge}</span>
+                <span className="shrink-0 rounded-full bg-[#CAFF3C] px-2.5 py-1 text-xs font-black text-[#09090B]">{copy.freeBadge}</span>
               </div>
 
               {status === "success" ? (
@@ -119,8 +145,10 @@ export default function HomeClient({ locale }: HomeClientProps) {
                     required
                     placeholder={copy.businessPlaceholder}
                     value={brandName}
+                    onFocus={() => trackFormStarted("brand_name")}
                     onChange={(e) => setBrandName(e.target.value)}
                     style={inputStyle}
+                    data-ph-capture-attribute-form-field="brand_name"
                   />
                   <label className="sr-only" htmlFor="website-url">{copy.websiteLabel}</label>
                   <input
@@ -132,8 +160,10 @@ export default function HomeClient({ locale }: HomeClientProps) {
                     autoCapitalize="none"
                     autoCorrect="off"
                     value={websiteUrl}
+                    onFocus={() => trackFormStarted("website_url")}
                     onChange={(e) => setWebsiteUrl(e.target.value)}
                     style={inputStyle}
+                    data-ph-capture-attribute-form-field="website_url"
                   />
                   {/* Email volontairement OPTIONNEL : exiger une adresse avant
                       d'avoir rien montré était le frein d'entrée du funnel. On
@@ -144,18 +174,22 @@ export default function HomeClient({ locale }: HomeClientProps) {
                     type="email"
                     placeholder={copy.emailOptionalPlaceholder}
                     value={email}
+                    onFocus={() => trackFormStarted("email")}
                     onChange={(e) => setEmail(e.target.value)}
                     style={inputStyle}
+                    data-ph-capture-attribute-form-field="email"
                   />
                   <button
                     type="submit"
                     disabled={status === "loading"}
                     className="rounded-[14px] bg-[#CAFF3C] px-5 py-3.5 text-base font-black tracking-[-0.01em] text-[#09090B] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                    data-ph-capture-attribute-form-field="submit"
                   >
                     {status === "loading" ? copy.loadingCta : copy.submitCta}
                   </button>
                   {errorMsg && <p className="m-0 text-sm text-[#FF6B6B]">{errorMsg}</p>}
                   <p className="m-0 text-xs leading-5 text-[#6F6F80]">{copy.formFootnote}</p>
+                  <p className="m-0 text-xs font-bold leading-5 text-[#8E8E9A]">{copy.formBuyerIntentNote}</p>
                 </form>
               )}
             </div>

@@ -67,6 +67,7 @@ export type BuyerIntentSurfaceResult = {
   competitors: string[];
   rawAnswerSnippet: string;
   brandSentiment?: BrandSentiment;
+  perceivedCategory?: string;
   kind?: "ai_engine" | "supplementary" | "locked";
   status?: "checked" | "not_connected" | "locked" | "failed";
   engine?: string;
@@ -118,6 +119,20 @@ export type BrandSentimentLabel = "positive" | "neutral" | "negative" | "not_eno
 export type BrandSentiment = {
   label: BrandSentimentLabel;
   justification: string;
+};
+
+// « L'IA ne sait pas ce que tu vends » : on compare la catégorie que le moteur
+// attribue spontanément à la marque avec celle que le site vend réellement.
+// Nos propres données prouvent le cas deux fois — Citeable rangé en outil de SEO
+// local, GetPick rangé en « warehouse management software ».
+export type CategoryPerceptionStatus = "match" | "mismatch" | "not_enough_signal";
+
+export type CategoryPerception = {
+  status: CategoryPerceptionStatus;
+  /** Ce que le moteur croit que la marque vend. Vide si aucun signal. */
+  perceived: string;
+  /** Ce que le site vend, tel que détecté par l'audit. */
+  actual: string;
 };
 
 export type MonitoringSnapshot = {
@@ -174,6 +189,7 @@ export type AuditReport = {
   monitoring: MonitoringSnapshot;
   auditTier: AuditTier;
   brandSentiment: BrandSentiment;
+  categoryPerception: CategoryPerception;
   locale: Locale;
   answerEngine?: {
     engine: string;
@@ -201,6 +217,7 @@ type AuditRawResults = {
   monitoring?: MonitoringSnapshot;
   auditTier?: AuditTier;
   brandSentiment?: BrandSentiment;
+  categoryPerception?: CategoryPerception;
   locale?: Locale;
   answerEngine?: {
     engine: string;
@@ -462,7 +479,7 @@ function reportFromRow(row: AuditRow): AuditReport {
   const buyerIntentPrompts = row.raw_results?.buyerIntentPrompts ?? [];
   const auditTier = row.raw_results?.auditTier ?? "free";
   const category = row.raw_results?.category ?? "unknown";
-  const icpSegment = row.raw_results?.icpSegment ?? detectIcpSegment(row.brand_name, row.website_url, category, "");
+  const icpSegment = row.raw_results?.icpSegment ?? detectIcpSegment();
 
   return {
     audit_id: row.id,
@@ -484,6 +501,10 @@ function reportFromRow(row: AuditRow): AuditReport {
     },
     auditTier,
     brandSentiment: normalizeBrandSentiment(row.raw_results?.brandSentiment ?? bestBrandSentimentFromPrompts(buyerIntentPrompts)),
+    // Les audits enregistrés AVANT cette feature n'ont pas de categoryPerception :
+    // on le recalcule depuis leurs surfaces, qui rendront "not_enough_signal"
+    // faute de perceivedCategory. Aucun rapport ancien n'affiche donc de verdict inventé.
+    categoryPerception: row.raw_results?.categoryPerception ?? categoryPerceptionFromPrompts(buyerIntentPrompts, category),
     locale: row.raw_results?.locale ?? recipientLocaleFromSignals(row.email, row.website_url),
     answerEngine: row.raw_results?.answerEngine,
   };
@@ -855,6 +876,7 @@ type AnswerEngineAnswer = {
   answer: string;
   competitorBrands: string[];
   brandSentiment?: BrandSentiment;
+  perceivedCategory?: string;
   brandMentioned?: boolean;
   model?: string;
 };
@@ -884,6 +906,7 @@ type GeminiStructuredBrandResponse = {
   recommended_brands?: unknown;
   audited_brand_sentiment?: unknown;
   audited_brand_sentiment_reason?: unknown;
+  audited_brand_category?: unknown;
 };
 
 type OpenAIChatCompletionResponse = {
@@ -1097,6 +1120,116 @@ export function brandSentimentLine(sentiment: BrandSentiment) {
   return `How AI talks about you: ${label} - ${normalized.justification}.`;
 }
 
+// Mots qui ne disent RIEN de la catégorie : présents dans presque toutes les
+// descriptions, ils feraient matcher n'importe quoi avec n'importe quoi.
+const CATEGORY_STOPWORDS = new Set([
+  "brand", "brands", "company", "companies", "business", "businesses", "maker", "makers",
+  "product", "products", "goods", "store", "stores", "shop", "shops", "retailer", "retailers",
+  "online", "ecommerce", "dtc", "direct", "consumer", "digital", "platform", "software",
+  "solution", "solutions", "tool", "tools", "app", "apps", "service", "services", "system",
+  "systems", "management", "marque", "marques", "entreprise", "societe", "boutique",
+  "produit", "produits", "logiciel", "outil", "plateforme", "en", "de", "du", "des", "la",
+  "le", "les", "and", "for", "the", "a", "an", "of", "to", "with",
+]);
+
+// Familles de synonymes : « footwear » et « sneaker » désignent la même chose, et
+// déclarer une incohérence dans ce cas serait un faux positif — bien plus grave
+// qu'une incohérence manquée, puisqu'on dirait à un client que l'IA le comprend
+// mal alors qu'elle le comprend bien.
+const CATEGORY_SYNONYM_GROUPS: string[][] = [
+  ["shoe", "shoes", "sneaker", "sneakers", "footwear", "trainer", "trainers", "chaussure", "chaussures", "running"],
+  ["skincare", "skin", "beauty", "cosmetic", "cosmetics", "serum", "moisturizer", "makeup", "lipstick", "mascara", "soin", "soins", "beaute", "maquillage"],
+  ["coffee", "espresso", "roaster", "roastery", "bean", "beans", "cafe"],
+  ["mattress", "mattresses", "bedding", "bed", "sheet", "sheets", "duvet", "pillow", "pillows", "literie"],
+  ["backpack", "backpacks", "bag", "bags", "luggage", "rucksack", "daypack", "sac", "sacs", "bagagerie"],
+  ["wallet", "wallets", "cardholder", "portefeuille"],
+  ["supplement", "supplements", "vitamin", "vitamins", "wellness", "nutrition", "complement"],
+  ["pet", "pets", "dog", "dogs", "cat", "cats", "petfood", "animal", "animaux"],
+  ["apparel", "clothing", "clothes", "fashion", "garment", "garments", "wear", "vetement", "vetements", "mode"],
+  ["cookware", "kitchen", "kitchenware", "pan", "pans", "pot", "pots", "cuisine", "ustensile", "ustensiles"],
+  ["eyewear", "glasses", "sunglasses", "optical", "lens", "lenses", "lunette", "lunettes"],
+  ["jewelry", "jewellery", "bijou", "bijoux", "ring", "rings", "necklace", "bracelet"],
+  ["beverage", "beverages", "drink", "drinks", "soda", "seltzer", "boisson", "boissons"],
+  ["sock", "socks", "hosiery", "chaussette", "chaussettes"],
+];
+
+// Concepts trop LARGES pour trancher : « food & beverage » et « fashion brand »
+// sont des familles que notre propre détecteur de catégorie émet, et une perception
+// IA parfaitement correcte peut ne partager aucun mot avec elles — « olive oil » vs
+// « food & beverage », « sneakers » vs « fashion brand ». Une confrontation de ce
+// type a produit 8 faux positifs sur 8 en test. Quand un côté ne contient QUE des
+// concepts de ce niveau, on refuse de conclure au lieu d'accuser l'IA à tort.
+const COARSE_CATEGORY_CONCEPTS = new Set(["food", "beverage", "apparel", "accessory", "accessories", "lifestyle", "home", "general", "consumer"]);
+
+const CATEGORY_SYNONYM_INDEX = new Map<string, string>(
+  CATEGORY_SYNONYM_GROUPS.flatMap((group) => group.map((word) => [word, group[0]] as [string, string]))
+);
+
+function categoryConcepts(value: string) {
+  const tokens = value
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean)
+    .filter((token) => token.length >= 2 && !CATEGORY_STOPWORDS.has(token));
+
+  return new Set(tokens.map((token) => CATEGORY_SYNONYM_INDEX.get(token) ?? token));
+}
+
+export function cleanPerceivedCategory(value: unknown) {
+  if (typeof value !== "string") return "";
+  const cleaned = value.trim().replace(/\s+/g, " ").replace(/[.。]+$/u, "");
+  if (cleaned.length < 2 || cleaned.length > 60) return "";
+  if (/^(unknown|not enough signal|n\/a|none|null)$/i.test(cleaned)) return "";
+  return cleaned;
+}
+
+// Verdict volontairement CONSERVATEUR : on ne déclare une incohérence que si les
+// deux descriptions ne partagent aucun concept. Si l'un des deux côtés ne contient
+// que des mots vides après filtrage, on ne peut rien conclure honnêtement.
+export function compareCategoryPerception(perceived: string, actual: string): CategoryPerception {
+  const cleanPerceived = cleanPerceivedCategory(perceived);
+  const cleanActual = cleanPerceivedCategory(actual);
+
+  if (!cleanPerceived || !cleanActual || isGenericCategory(cleanActual)) {
+    return { status: "not_enough_signal", perceived: cleanPerceived, actual: cleanActual };
+  }
+
+  const perceivedConcepts = categoryConcepts(cleanPerceived);
+  const actualConcepts = categoryConcepts(cleanActual);
+
+  const tooCoarse = (concepts: Set<string>) =>
+    concepts.size === 0 || Array.from(concepts).every((concept) => COARSE_CATEGORY_CONCEPTS.has(concept));
+
+  if (tooCoarse(perceivedConcepts) || tooCoarse(actualConcepts)) {
+    return { status: "not_enough_signal", perceived: cleanPerceived, actual: cleanActual };
+  }
+
+  const shared = Array.from(perceivedConcepts).some((concept) => actualConcepts.has(concept));
+  return { status: shared ? "match" : "mismatch", perceived: cleanPerceived, actual: cleanActual };
+}
+
+// La catégorie perçue n'a de sens que si le moteur a réellement parlé de la marque.
+// On retient la formulation la plus fréquente parmi les surfaces vraiment interrogées.
+export function categoryPerceptionFromPrompts(prompts: BuyerIntentPromptResult[], actualCategory: string): CategoryPerception {
+  const counts = new Map<string, number>();
+
+  for (const prompt of prompts) {
+    for (const surface of prompt.surfaces) {
+      if (surface.kind !== "ai_engine" || surface.status !== "checked" || surface.realLlmCall !== true) continue;
+      const perceived = cleanPerceivedCategory(surface.perceivedCategory);
+      if (!perceived) continue;
+      counts.set(perceived, (counts.get(perceived) ?? 0) + 1);
+    }
+  }
+
+  const mostCommon = Array.from(counts.entries()).sort((left, right) => right[1] - left[1])[0]?.[0] ?? "";
+  if (!mostCommon) return { status: "not_enough_signal", perceived: "", actual: cleanPerceivedCategory(actualCategory) };
+
+  return compareCategoryPerception(mostCommon, actualCategory);
+}
+
 function extractRecommendedBrandsFromLooseJson(text: string) {
   const match = text.match(/"recommended_brands"\s*:\s*\[([\s\S]*?)(?:\]|$)/i);
 
@@ -1112,13 +1245,15 @@ function parseStructuredBrandResponse(text: string): AnswerEngineAnswer {
     : extractRecommendedBrandsFromLooseJson(text);
   const recommendedBrands = uniqueInOrder(brands.map(normalizeCompetitorName).filter(Boolean), 12);
   const brandSentiment = sentimentFromStructuredResponse(parsed);
+  const perceivedCategory = cleanPerceivedCategory(parsed?.audited_brand_category);
 
-  if (!recommendedBrands.length) return { answer: text, competitorBrands: [], brandSentiment };
+  if (!recommendedBrands.length) return { answer: text, competitorBrands: [], brandSentiment, perceivedCategory };
 
   return {
     answer: `recommended_brands: ${recommendedBrands.join(", ")}`,
     competitorBrands: recommendedBrands,
     brandSentiment,
+    perceivedCategory,
   };
 }
 
@@ -1128,6 +1263,31 @@ function answerEngineErrorBody(error: AnswerEngineError) {
 
 function isAnswerEngineError(response: AnswerEngineResponse): response is AnswerEngineError {
   return "error" in response;
+}
+
+// Gemini et ChatGPT recevaient deux copies littéralement identiques de ces règles,
+// maintenues à la main. Un seul constructeur : ajouter un champ ne peut plus faire
+// diverger les deux moteurs, ce qui rendrait les rapports incomparables entre tiers.
+function answerEnginePrompt(question: string, context: AnswerEngineQuestionContext) {
+  return [
+    "You are answering a real buyer-intent recommendation question for a visibility audit.",
+    `Buyer question: ${question}`,
+    `Audited brand: ${context.brandName}`,
+    `Audited domain: ${context.domain}`,
+    "Return ONLY valid JSON with this exact shape:",
+    '{"recommended_brands":["On","Hoka","Veja"],"audited_brand_sentiment":"positive","audited_brand_sentiment_reason":"described as a trusted premium option","audited_brand_category":"running shoes"}',
+    "Rules:",
+    "- recommended_brands must contain only real brand/company/product names that answer the buyer question.",
+    `- Include ${context.brandName} only if you would genuinely recommend or cite it for this question.`,
+    `- Do not include ${context.domain} unless it is itself the brand name.`,
+    "- Do not include generic words, categories, adjectives, personas, locations, headings, explanations, URLs, or prose tokens.",
+    "- If you cannot name any recommended brands, return an empty recommended_brands array.",
+    `- audited_brand_sentiment must describe only how you are presenting ${context.brandName} in this answer: positive, neutral, negative, or not_enough_signal.`,
+    "- Use not_enough_signal if the audited brand is not clearly described in the answer.",
+    "- audited_brand_sentiment_reason must be one short, non-technical phrase in plain English, or exactly not enough signal.",
+    `- audited_brand_category must state, in 2 to 4 words, what kind of product or service you believe ${context.brandName} sells, based only on what you already know about it — for example "running shoes", "skincare", "project management software".`,
+    `- Return an empty string for audited_brand_category if you do not know what ${context.brandName} sells. Never guess from the buyer question itself.`,
+  ].join("\n");
 }
 
 function createGeminiProvider(): AnswerEngineProvider {
@@ -1144,23 +1304,7 @@ function createGeminiProvider(): AnswerEngineProvider {
     async ask(question: string, context: AnswerEngineQuestionContext) {
       if (!apiKey) throw new Error(GEMINI_UNAVAILABLE);
 
-      const prompt = [
-        "You are answering a real buyer-intent recommendation question for a visibility audit.",
-        `Buyer question: ${question}`,
-        `Audited brand: ${context.brandName}`,
-        `Audited domain: ${context.domain}`,
-        "Return ONLY valid JSON with this exact shape:",
-        '{"recommended_brands":["On","Hoka","Veja"],"audited_brand_sentiment":"positive","audited_brand_sentiment_reason":"described as a trusted premium option"}',
-        "Rules:",
-        "- recommended_brands must contain only real brand/company/product names that answer the buyer question.",
-        `- Include ${context.brandName} only if you would genuinely recommend or cite it for this question.`,
-        `- Do not include ${context.domain} unless it is itself the brand name.`,
-        "- Do not include generic words, categories, adjectives, personas, locations, headings, explanations, URLs, or prose tokens.",
-        "- If you cannot name any recommended brands, return an empty recommended_brands array.",
-        `- audited_brand_sentiment must describe only how you are presenting ${context.brandName} in this answer: positive, neutral, negative, or not_enough_signal.`,
-        "- Use not_enough_signal if the audited brand is not clearly described in the answer.",
-        "- audited_brand_sentiment_reason must be one short, non-technical phrase in plain English, or exactly not enough signal.",
-      ].join("\n");
+      const prompt = answerEnginePrompt(question, context);
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
       let lastError = GEMINI_UNAVAILABLE;
 
@@ -1221,23 +1365,7 @@ function createOpenAIProvider(): AnswerEngineProvider {
     async ask(question: string, context: AnswerEngineQuestionContext) {
       if (!apiKey) throw new Error(OPENAI_UNAVAILABLE);
 
-      const prompt = [
-        "You are answering a real buyer-intent recommendation question for a visibility audit.",
-        `Buyer question: ${question}`,
-        `Audited brand: ${context.brandName}`,
-        `Audited domain: ${context.domain}`,
-        "Return ONLY valid JSON with this exact shape:",
-        '{"recommended_brands":["On","Hoka","Veja"],"audited_brand_sentiment":"positive","audited_brand_sentiment_reason":"described as a trusted premium option"}',
-        "Rules:",
-        "- recommended_brands must contain only real brand/company/product names that answer the buyer question.",
-        `- Include ${context.brandName} only if you would genuinely recommend or cite it for this question.`,
-        `- Do not include ${context.domain} unless it is itself the brand name.`,
-        "- Do not include generic words, categories, adjectives, personas, locations, headings, explanations, URLs, or prose tokens.",
-        "- If you cannot name any recommended brands, return an empty recommended_brands array.",
-        `- audited_brand_sentiment must describe only how you are presenting ${context.brandName} in this answer: positive, neutral, negative, or not_enough_signal.`,
-        "- Use not_enough_signal if the audited brand is not clearly described in the answer.",
-        "- audited_brand_sentiment_reason must be one short, non-technical phrase in plain English, or exactly not enough signal.",
-      ].join("\n");
+      const prompt = answerEnginePrompt(question, context);
       let lastRateLimitError: AnswerEngineError | null = null;
 
       for (let attempt = 0; attempt < 2; attempt += 1) {
@@ -2149,35 +2277,24 @@ function promptCategoryTerms(category: string) {
 }
 
 
-function detectIcpSegment(brandName: string, websiteUrl: string, category: string, homepageText: string): IcpSegmentMetadata {
-  const domain = domainFromWebsite(websiteUrl);
-  const lower = `${brandName} ${domain} ${category} ${homepageText}`.toLowerCase();
-
-  if (/\b(coach|trainer|therapist|psychologist|psychotherapist|psy|th[eé]rapeute|kine|kin[eé]|consultant|lawyer|avocat|notaire|dentist|dentiste|doctor|médecin|clinic|cabinet|agency|agence|plumber|plombier|electrician|[ée]lectricien|boulangerie|bakery|p[aâ]tisserie|pastry|restaurant|salon|barber|realtor|real estate|immobili[eè]re|local|near me|près de moi|rendez-vous|appointment|doctolib|resalib|google business profile|google maps)\b/.test(lower)) {
-    return ICP_SEGMENTS.local_independent;
-  }
-
-  if (/\b(creator|influencer|youtube|youtuber|tiktok|instagram|newsletter|podcast|substack|streamer|content creator|créateur|créatrice|influenceur|influenceuse)\b/.test(lower)) {
-    return ICP_SEGMENTS.creator_influencer;
-  }
-
+// DÉCISION PRODUIT du 2026-07-21 — un seul segment servi : la marque DTC / e-commerce.
+//
+// Le détecteur renvoyait aussi `local_independent` (plombier, dentiste, cabinet…) et
+// `creator_influencer`, qui sont l'anti-ICP explicite de POSITIONING.md et d'ICP.md.
+// Deux raisons de trancher maintenant plutôt que de geler :
+//   1. La base ne contient AUCUN client — 7 audits, tous des tests de Charles. Le
+//      risque de revenu invoqué pour ne pas décider n'existe pas.
+//   2. Le détecteur classait GetPick lui-même en `local_independent` (audit du 21/07,
+//      catégorie « generative engine optimization software »), donc notre propre
+//      produit recevait des recommandations Google Business Profile et Doctolib.
+//      Un classificateur qui se trompe sur nous se trompe sur nos clients.
+//
+// Les métadonnées des deux autres segments restent déclarées le temps que les rapports
+// déjà en base, qui les référencent, continuent de s'afficher. Plus aucun audit neuf
+// ne peut les atteindre.
+function detectIcpSegment(): IcpSegmentMetadata {
   return ICP_SEGMENTS.small_brand_ecommerce;
 }
-
-function creatorNiche(categoryTerm: string, homepageText: string) {
-  const lower = `${categoryTerm} ${homepageText}`.toLowerCase();
-
-  if (/mkbhd|marques|tech|gadget|smartphone|consumer electronics|youtube/.test(lower)) return "tech";
-  if (/fitness|sport|running|yoga|nutrition/.test(lower)) return "fitness";
-  if (/beauty|skincare|makeup|cosmetic/.test(lower)) return "beauty";
-  if (/fashion|style|apparel|clothing/.test(lower)) return "fashion";
-  if (/travel|outdoor|hiking|backpack/.test(lower)) return "travel";
-  if (/food|coffee|recipe|cooking/.test(lower)) return "food";
-  if (/business|startup|marketing|saas|tech|ai/.test(lower)) return "business";
-
-  return categoryTerm.replace(/\b(creator|influencer|content creator|brand|category)\b/gi, "").trim() || "niche";
-}
-
 
 function promptHasBannedNavigationTerm(prompt: string) {
   NAVIGATION_FOOTER_PATTERN.lastIndex = 0;
@@ -2202,81 +2319,15 @@ function generateBuyerIntentPrompts(brandName: string, websiteUrl: string, categ
   const location = inferLocationFromHomepage(homepageText);
   const audience = inferAudienceFromHomepage(homepageText, language);
   const buyerCategory = localizedCategoryTerm(categoryTerm, language);
-  const englishLocationPhrase = location ? ` in ${location}` : "";
-  const frenchLocationPhrase = location ? ` à ${location}` : "";
   const ecommerceLocationSuffix = location ? (language === "fr" ? ` à ${location}` : ` in ${location}`) : "";
-  const segment = detectIcpSegment(brandName, websiteUrl, category, homepageText);
-
-  if (segment.key === "local_independent") {
-    return language === "fr"
-      ? cleanPromptList([
-          `meilleur ${buyerCategory}${frenchLocationPhrase}`,
-          `${buyerCategory} recommandé${frenchLocationPhrase}`,
-          `avis ${brandName}`,
-          `${brandName} est-il fiable`,
-          `quel ${buyerCategory} choisir${frenchLocationPhrase}`,
-          `${buyerCategory} avec bons avis${frenchLocationPhrase}`,
-          `${buyerCategory} disponible rapidement${frenchLocationPhrase}`,
-          `${buyerCategory} Doctolib Resalib ${location ?? ""}`.trim(),
-          `${buyerCategory} Google Business ${location ?? ""}`.trim(),
-          `pourquoi choisir ${brandName}`,
-          `alternative à ${leader}${frenchLocationPhrase}`,
-        ], 12)
-      : cleanPromptList([
-          `best ${buyerCategory}${englishLocationPhrase}`,
-          `best reviewed ${buyerCategory}${englishLocationPhrase}`,
-          `${brandName} reviews`,
-          `is ${brandName} reliable`,
-          `which ${buyerCategory} should I choose${englishLocationPhrase}`,
-          `${buyerCategory} with good reviews${englishLocationPhrase}`,
-          `${buyerCategory} available quickly${englishLocationPhrase}`,
-          `${buyerCategory} Google Business Profile${englishLocationPhrase}`,
-          `${buyerCategory} professional directory${englishLocationPhrase}`,
-          `why choose ${brandName}`,
-          `${buyerCategory} alternatives to ${leader}${englishLocationPhrase}`,
-        ], 12);
-  }
-
-  if (segment.key === "creator_influencer") {
-    const niche = creatorNiche(categoryTerm, homepageText);
-    return language === "fr"
-      ? cleanPromptList([
-          `meilleur créateur ${niche} à suivre`,
-          `top créateurs ${niche}`,
-          `meilleur influenceur ${niche} à suivre`,
-          `${brandName} avis créateur`,
-          `${brandName} vaut-il le coup à suivre`,
-          `créateurs ${niche} recommandés`,
-          `influenceurs ${niche} les plus crédibles`,
-          `comptes ${niche} à suivre`,
-          `meilleurs profils ${niche} Instagram TikTok YouTube`,
-          `listicle top ${niche} creators`,
-          `${brandName} presse interview`,
-          `${brandName} Wikipedia`,
-        ], 12)
-      : cleanPromptList([
-          `best ${niche} creator to follow`,
-          `top ${niche} creators`,
-          `best ${niche} influencer to follow`,
-          `${brandName} creator reviews`,
-          `is ${brandName} worth following`,
-          `recommended ${niche} creators`,
-          `most credible ${niche} influencers`,
-          `${niche} accounts to follow`,
-          `best ${niche} Instagram TikTok YouTube profiles`,
-          `top ${niche} creators listicle`,
-          `${brandName} press interview`,
-          `${brandName} Wikipedia`,
-        ], 12);
-  }
 
   if (language !== "fr" && /footwear|shoe|sneaker|running shoe/i.test(category)) {
     return cleanPromptList([
       "What is the best sustainable sneaker brand?",
       "Best eco-friendly running shoe brand?",
-      `Is ${brandName} a good sustainable shoe brand?`,
-      `Is ${brandName} worth it for everyday sneakers?`,
-      `${brandName} shoe reviews`,
+      "Which sustainable sneaker brands are actually worth the price?",
+      "Best everyday sneaker brand for all-day comfort?",
+      "Most recommended sustainable sneaker brands?",
       "Which DTC shoe brands are worth it?",
       "Most comfortable wool sneaker brand?",
       "Best walking shoe brand for everyday wear?",
@@ -2291,9 +2342,9 @@ function generateBuyerIntentPrompts(brandName: string, websiteUrl: string, categ
     return cleanPromptList([
       "What is the best hiking backpack brand?",
       "Best travel backpack brand for carry-on?",
-      `Is ${brandName} a good backpack brand?`,
-      `Is ${brandName} worth it for hiking packs?`,
-      `${brandName} backpack reviews`,
+      "Which backpack brands hold up over years of use?",
+      "Best backpack brand for multi-day hiking?",
+      "Most recommended travel backpack brands?",
       "Which outdoor backpack brands are worth it?",
       "Best daypack brand for hiking and travel?",
       "Best lightweight backpack brand for trekking?",
@@ -2308,10 +2359,10 @@ function generateBuyerIntentPrompts(brandName: string, websiteUrl: string, categ
     return cleanPromptList([
       `meilleur ${buyerCategory}${ecommerceLocationSuffix}`,
       `marque ${buyerCategory} recommandée`,
-      `avis ${brandName}`,
+      `avis clients marques ${buyerCategory}`,
       `${buyerCategory} pas cher`,
       `prix ${buyerCategory}`,
-      `${brandName} est-il fiable`,
+      `quelle marque de ${buyerCategory} est fiable`,
       `alternative à ${leader}`,
       `${buyerCategory} pour ${audience}`,
       `quelle marque de ${buyerCategory} choisir`,
@@ -2323,11 +2374,11 @@ function generateBuyerIntentPrompts(brandName: string, websiteUrl: string, categ
   return cleanPromptList([
     `best ${buyerCategory}${ecommerceLocationSuffix}`,
     `best ${buyerCategory} for ${useCase}`,
-    `${brandName} reviews`,
+    `${buyerCategory} brand reviews`,
     `top ${buyerCategory} brands 2026`,
     `affordable ${buyerCategory}`,
     `${buyerCategory} pricing`,
-    `is ${brandName} reliable`,
+    `which ${buyerCategory} brand is reliable`,
     `${buyerCategory} alternatives to ${leader}`,
     `${buyerCategory} for ${audience}`,
     `which ${buyerCategory} brand should I choose`,
@@ -2433,7 +2484,13 @@ const BRAND_AFFIXES = ["get", "try", "join", "shop", "buy", "the", "my", "hey", 
 //   - nom + suffixe de domaine ("getpickai") et le domaine lui-même ;
 //   - groupes de mots en tête/queue du nom ("Ridge" et "Wallet" pour "Ridge Wallet"),
 //     à partir de 4 caractères pour ne pas neutraliser une marque très courte.
-function brandCompactKeys(brandName: string, domain: string) {
+// `includeTailGroups` : les groupes de mots de QUEUE ("Wallet" pour "Ridge Wallet")
+// sont utiles pour reconnaître un nom de concurrent isolé, mais ruineux pour scanner
+// une phrase — le dernier mot d'un nom de marque est presque toujours la catégorie
+// ("Ridge Wallet", "Moon Juice", "Love Wellness"), et toute question d'achat la
+// contient. Le garde-fou des questions passe donc `false` et ne garde que les groupes
+// de tête, qui portent la partie distinctive du nom.
+function brandCompactKeys(brandName: string, domain: string, { includeTailGroups = true } = {}) {
   const compacts = new Set<string>();
   const roots = new Set<string>();
 
@@ -2462,7 +2519,7 @@ function brandCompactKeys(brandName: string, domain: string) {
       const head = nameTokens.slice(0, size).join("");
       const tail = nameTokens.slice(nameTokens.length - size).join("");
       if (head.length >= 4) compacts.add(head);
-      if (tail.length >= 4) compacts.add(tail);
+      if (includeTailGroups && tail.length >= 4) compacts.add(tail);
     }
   }
 
@@ -2502,6 +2559,96 @@ export function isAuditedBrandName(name: string, brandName: string, domain: stri
     const keyTokens = key.split(" ");
     const [shorter, longer] = candidateTokens.length <= keyTokens.length ? [candidateTokens, keyTokens] : [keyTokens, candidateTokens];
     if (shorter.length > 0 && shorter[0].length >= 4 && shorter.every((token, index) => longer[index] === token)) return true;
+  }
+
+  return false;
+}
+
+// Le rapport affiche « De vraies questions d'achat. Jamais ton nom de marque. » et
+// explique au client qu'un prompt brandé gonfle mécaniquement le score. Cette promesse
+// était DEMANDÉE au modèle (instruction dans generateBuyerIntentPromptsAI) mais jamais
+// VÉRIFIÉE, et les jeux de questions par défaut la violaient en dur (`${brand} reviews`,
+// `avis ${brand}`, `is ${brand} reliable`…). Ce garde-fou la rend vraie côté code.
+//
+// Règle de comparaison — même discipline que isAuditedBrandName : on énumère les
+// écritures possibles de la marque et on les compare à des FENÊTRES DE MOTS, jamais
+// par sous-chaîne libre (une sous-chaîne écarterait « best picks » pour un audit
+// « GetPick », ou « Smartwool » pour un audit « Smart »).
+//   - clés ≥ 4 caractères : comparaison insensible à la casse ;
+//   - clés < 4 caractères (« On », « Ma ») : comparaison SENSIBLE À LA CASSE et jamais
+//     en tête de phrase — sinon une marque nommée « On » ferait tomber toute question
+//     anglaise contenant le mot « on ». « Is On reliable? » est capturé, « best shoes
+//     on Amazon » ne l'est pas.
+// Second garde-fou, complémentaire du précédent : une question peut ne contenir aucun
+// nom de marque et rester entièrement brandée si elle recopie le PITCH de la home.
+// Mesuré en base le 21/07 : 21 questions sur 21 citaient la marque parce que le
+// générateur reprenait ses différenciateurs (« built-in USB chargers and internal
+// compression systems » pour Away). On compare donc les bigrammes de mots pleins de
+// la question à ceux de la home, en retirant ceux qui viennent légitimement de la
+// catégorie. Seuil à 3 : volontairement prudent, une question rejetée est remplacée
+// par un gabarit propre, mais on ne veut pas jeter des questions correctes en masse.
+export function questionEchoesBrandCopy(question: string, homepageText: string, category: string, threshold = 3) {
+  const contentTokens = (value: string) =>
+    value
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter(Boolean);
+
+  const bigrams = (value: string) => {
+    const tokens = contentTokens(value);
+    const pairs = new Set<string>();
+    for (let index = 0; index + 1 < tokens.length; index += 1) {
+      const [left, right] = [tokens[index], tokens[index + 1]];
+      // Les deux mots doivent être "pleins" : sinon "of the", "and a" feraient du bruit.
+      if (left.length < 4 || right.length < 4) continue;
+      if (CATEGORY_STOPWORDS.has(left) || CATEGORY_STOPWORDS.has(right)) continue;
+      pairs.add(`${left} ${right}`);
+    }
+    return pairs;
+  };
+
+  const categoryPairs = bigrams(category);
+  const homepagePairs = bigrams(homepageText);
+  const questionPairs = bigrams(question);
+
+  let shared = 0;
+  for (const pair of questionPairs) {
+    if (homepagePairs.has(pair) && !categoryPairs.has(pair)) shared += 1;
+  }
+
+  return shared >= threshold;
+}
+
+export function promptMentionsAuditedBrand(prompt: string, brandName: string, domain: string) {
+  const text = prompt.trim();
+  if (!text) return false;
+
+  const bareDomain = domain.replace(/^www\./i, "").toLowerCase();
+  if (bareDomain && text.toLowerCase().includes(bareDomain)) return true;
+
+  const keys = brandCompactKeys(brandName, domain, { includeTailGroups: false });
+  const longKeys = new Set(Array.from(keys).filter((key) => key.length >= 4));
+  const shortKeys = new Set(Array.from(keys).filter((key) => key.length < 4));
+
+  // Tokens en conservant la casse d'origine ET leur position (index 0 = tête de phrase).
+  const tokens = text.split(/[^A-Za-zÀ-ÿ0-9]+/).filter(Boolean);
+
+  for (let start = 0; start < tokens.length; start += 1) {
+    for (let size = 1; size <= 4 && start + size <= tokens.length; size += 1) {
+      const window = tokens.slice(start, start + size);
+      const compact = compactBrandKey(window.join(""));
+      if (!compact) continue;
+
+      if (longKeys.has(compact)) return true;
+
+      // Clés courtes : il faut la casse exacte de la marque et une position
+      // autre que le premier mot de la question.
+      if (start > 0 && shortKeys.has(compact) && window.join("") === brandName.replace(/\s+/g, "")) {
+        return true;
+      }
+    }
   }
 
   return false;
@@ -3016,6 +3163,7 @@ async function probeAnswerEngine(prompt: string, brandName: string, domain: stri
       competitors,
       rawAnswerSnippet: structuredAnswer.answer.slice(0, 900),
       brandSentiment: structuredAnswer.brandSentiment,
+      perceivedCategory: structuredAnswer.perceivedCategory,
       kind: "ai_engine",
       status: "checked",
       engine: provider.engine,
@@ -3078,11 +3226,19 @@ async function generateBuyerIntentPromptsAI(
     `Business name: ${brandName}`,
     `Domain: ${domain}`,
     `Category: ${category}`,
-    context ? `Website context (may be noisy, use it to understand what they sell): ${context}` : "",
-    `Task: write ${count} DISTINCT, complete, natural-language questions a real potential customer would type into an AI assistant (ChatGPT, Gemini) when looking to choose or buy a product/service like this business offers.`,
+    context ? `Website context — use it ONLY to identify which category this business is in. Never reuse its wording, features or claims in a question: ${context}` : "",
+    `Task: write ${count} DISTINCT, complete, natural-language questions a real potential customer would type into an AI assistant (ChatGPT, Gemini) when shopping in the CATEGORY "${category}" — before they know which brands exist.`,
     "Rules:",
     "- Full grammatical sentences ending with a question mark, the way a real buyer phrases them — not keywords.",
-    "- Specific to THIS business: its exact products, use cases, audience, price/delivery concerns, and buying criteria. Vary the angle across the list (best/comparison, use-case, buying criteria, delivery or price, trust/reviews, alternatives).",
+    // ⚠️ NE JAMAIS demander des questions "spécifiques à cette entreprise". La version
+    // précédente le faisait, et le résultat mesuré en base était sans appel : 21 questions
+    // sur 21 citaient la marque, ai_visibility 100/100 sur 7 audits sur 7. Le modèle
+    // recopiait le pitch de la home — « hardshell carry-on with built-in USB chargers »
+    // pour Away, « coastal California aesthetic » pour Vuori — donc la marque gagnait
+    // forcément. C'est un prompt brandé déguisé : pas le nom, mais l'identité.
+    `- Write from the CATEGORY, never from this specific business. A shopper who has never heard of ${brandName} must plausibly type each question.`,
+    "- Use only buying criteria that several brands in the category could satisfy: general use case, budget, durability, sizing, delivery, materials, comparison with the category leader.",
+    "- BANNED: any product feature, material combination, slogan, aesthetic or positioning phrase that reads as lifted from one brand's marketing. If a question could only describe one company, rewrite it broader.",
     `- Do NOT mention "${brandName}" or "${domain}" in any question — these are demand-side questions used to test whether the AI recommends the brand on its own.`,
     `- Write them in natural ${languageName}.`,
     "- No numbering, no surrounding quotes, no preamble, no duplicates.",
@@ -3126,8 +3282,7 @@ async function generateBuyerIntentPromptsAI(
         }
         // NOTE: deliberately NOT using cleanPromptList here — its navigation-footer
         // filter (shipping, delivery, shop, returns...) would wrongly drop legitimate
-        // buyer questions. LLM output is already clean prose. Brand-mentioning questions
-        // are kept (reputation checks are valid).
+        // buyer questions. LLM output is already clean prose.
         const cleaned = rawList
           .filter((item): item is string => typeof item === "string")
           .map((item) => item.replace(/^["'\s]+|["'\s]+$/g, "").replace(/\s+/g, " ").trim())
@@ -3135,9 +3290,18 @@ async function generateBuyerIntentPromptsAI(
           // Le fallback "découpage par lignes" (JSON tronqué) peut ramasser la
           // structure JSON elle-même — ex. `questions": [` — qui se retrouvait
           // affichée aux clients comme une vraie question d'acheteur.
-          .filter(isLikelyBuyerQuestion);
-        const questions = uniqueInOrder(cleaned, count);
-        if (questions.length >= 2) return { prompts: questions, debug: `ok:${questions.length}` };
+          .filter(isLikelyBuyerQuestion)
+          // L'instruction ci-dessus DEMANDE au modèle de ne pas citer la marque ;
+          // rien ne garantissait qu'il obéisse. On le vérifie : une question brandée
+          // renvoie presque toujours une mention et gonflerait le score, alors que le
+          // rapport promet au client l'inverse.
+          .filter((item) => !promptMentionsAuditedBrand(item, brandName, domain));
+        // Rejets tracés dans le debug : c'est la seule façon de savoir, en prod,
+        // si le modèle continue de recopier le pitch de la marque.
+        const onCategory = cleaned.filter((item) => !questionEchoesBrandCopy(item, homepageText, category));
+        const echoed = cleaned.length - onCategory.length;
+        const questions = uniqueInOrder(onCategory, count);
+        if (questions.length >= 2) return { prompts: questions, debug: `ok:${questions.length}${echoed ? `_echo${echoed}` : ""}` };
         lastDebug = `ok_but_few:raw${rawList.length}_clean${questions.length}_ans${answer.length}`;
       } else {
         lastDebug = `http_${response.status}`;
@@ -3155,15 +3319,27 @@ async function generateBuyerIntentPromptsAI(
 }
 
 async function analyzeBuyerIntentPrompts(brandName: string, websiteUrl: string, domain: string, category: string, homepageText: string, tier: AuditTier, locale?: Locale): Promise<{ prompts: BuyerIntentPromptResult[]; promptDebug: string }> {
-  const count = tier === "free" ? 3 : 12;
+  // 3 questions ne suffisaient pas à faire apparaître un écart : mesuré en base le
+  // 21/07, les 7 audits gratuits ont tous rendu 3/3 mentions et un score ai_visibility
+  // de 100/100. Or l'audit gratuit n'a qu'un seul job — montrer le rival cité à ta
+  // place. 6 questions doublent les chances d'exposer un trou pour un coût Gemini
+  // qui reste négligeable, et laissent les 12 questions comme bénéfice payant.
+  const count = tier === "free" ? 6 : 12;
   const ai = await generateBuyerIntentPromptsAI(brandName, websiteUrl, category, homepageText, count, locale);
-  const minAi = tier === "free" ? 2 : 4;
+  const minAi = tier === "free" ? 3 : 4;
   const usedAi = Boolean(ai.prompts && ai.prompts.length >= minAi);
   const promptDebug = usedAi ? `ai:${ai.prompts?.length}` : `template(${ai.debug})`;
-  const prompts = (usedAi && ai.prompts
-    ? ai.prompts
-    : generateBuyerIntentPrompts(brandName, websiteUrl, category, homepageText, locale)
-  ).slice(0, count);
+  // Filet final : quelle que soit la source, aucune question envoyée aux moteurs ne doit
+  // contenir le nom de la marque auditée. Si le filtrage fait descendre la liste sous le
+  // compte attendu, on complète avec les modèles — non brandés par construction depuis
+  // ce correctif. Sans ce complément, un audit filtré rendrait moins de questions que
+  // le tier ne le promet.
+  const templatePrompts = generateBuyerIntentPrompts(brandName, websiteUrl, category, homepageText, locale);
+  const unbranded = (list: string[]) => list.filter((prompt) => !promptMentionsAuditedBrand(prompt, brandName, domain));
+  const prompts = uniqueInOrder(
+    [...unbranded(usedAi && ai.prompts ? ai.prompts : templatePrompts), ...unbranded(templatePrompts)],
+    count
+  );
   const results: BuyerIntentPromptResult[] = [];
   const answerEngine = answerEngineForTier(tier);
 
@@ -4295,7 +4471,7 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
   );
   const structuredDataFound = (foundationChecks.find((check) => check.check === "structured_data")?.score ?? 0) > 0;
   const inferred = await inferCategory(args.brandName, args.websiteUrl, foundationChecks.find((check) => check.check === "structured_data") ?? foundationChecks[0]);
-  const icpSegment = detectIcpSegment(args.brandName, args.websiteUrl, inferred.category, inferred.homepageText);
+  const icpSegment = detectIcpSegment();
   const auditLocale = args.locale ?? recipientLocaleFromSignals(args.email, args.websiteUrl, inferred.homepageText);
   const { prompts: buyerIntentPrompts, promptDebug } = await analyzeBuyerIntentPrompts(args.brandName, args.websiteUrl, domain, inferred.category, inferred.homepageText, auditTier, auditLocale);
   const checkedAnswerEnginePrompts = buyerIntentPrompts.filter((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine" && surface.status === "checked"));
@@ -4338,6 +4514,7 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
     },
     auditTier,
     brandSentiment: bestBrandSentimentFromPrompts(buyerIntentPrompts),
+    categoryPerception: categoryPerceptionFromPrompts(buyerIntentPrompts, inferred.category),
     locale: auditLocale,
     answerEngine,
     promptDebug,
@@ -4413,6 +4590,7 @@ export async function completeQueuedAudit(auditId: string): Promise<QueuedAuditR
           auditTier: report.auditTier,
           locale: report.locale,
           brandSentiment: report.brandSentiment,
+          categoryPerception: report.categoryPerception,
           answerEngine: report.answerEngine,
           competitorExtractionVersion: COMPETITOR_EXTRACTION_VERSION,
           buyerPromptSetVersion: BUYER_PROMPT_SET_VERSION,

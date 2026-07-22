@@ -54,7 +54,8 @@ export const homeCopy = {
     loadingCta: "Running…",
     submitCta: "Run my free audit",
     error: "Something went wrong. Please try again.",
-    formFootnote: "Real questions sent live to Gemini — never simulated. No card, no signup.",
+    formFootnote: "Real buying questions sent live to Gemini — never simulated. No card, no signup.",
+    formBuyerIntentNote: "We only test questions a shopper asks before buying — never “reviews of your brand”.",
     // 2. AI conversation demo
     demoEyebrow: "Illustrative example",
     demoTitle: "This is what losing a customer to AI looks like.",
@@ -102,7 +103,7 @@ export const homeCopy = {
         price: "€0",
         note: "The diagnosis: see who AI recommends today.",
         badge: "Free audit",
-        features: ["Real buying questions, sent live", "Your score out of 100", "The rival named in your place", "Your share of voice"],
+        features: ["Real buying questions, sent live", "Your score out of 100", "The rival named in your place", "Whether AI even knows what you sell", "Your share of voice"],
         cta: "Run my free audit",
         href: "#audit",
         plan: "free",
@@ -137,7 +138,7 @@ export const homeCopy = {
     pricingGuarantee: "Refunded on request within 30 days. No questions asked.",
     // 7. TL;DR — dense paragraph for AI readers
     tldrEyebrow: "In short",
-    tldrBody: "GetPick is the GEO agent for direct-to-consumer and e-commerce brands. It gets brands recommended by AI assistants like ChatGPT and Gemini. Concretely: it sends real buying questions to the AIs — live, never simulated — and reports whether you or a rival gets recommended, naming that rival. It then writes the copy-paste fixes that close the gap — including the ready-to-install machine files (FAQ schema JSON-LD built from the audited questions, llms.txt, robots.txt fix when AI crawlers are blocked) — and re-checks everything weekly, regenerating those files when the answers move. It is built for DTC founders without an agency budget: free audit, monitoring at €9/month, full agent at €19/month — flat prices, no credits, no seats. Paid plans are cancellable at any time and refunded on request within 30 days, no questions asked. GEO agencies charge €2,000 to €20,000 per month for this category of work.",
+    tldrBody: "GetPick is the GEO agent for direct-to-consumer and e-commerce brands. It gets brands recommended by AI assistants like ChatGPT and Gemini. Concretely: it sends real buying questions to the AIs — live, never simulated — and reports whether you or a rival gets recommended, naming that rival. It also reports whether the AI has you filed in the right category at all — if an engine thinks you sell something else, it will never shortlist you, no matter what you publish. It then writes the copy-paste fixes that close the gap — including the ready-to-install machine files (FAQ schema JSON-LD built from the audited questions, llms.txt, robots.txt fix when AI crawlers are blocked) — and re-checks everything weekly, regenerating those files when the answers move. It is built for DTC founders without an agency budget: free audit, monitoring at €9/month, full agent at €19/month — flat prices, no credits, no seats. Paid plans are cancellable at any time and refunded on request within 30 days, no questions asked. GEO agencies charge €2,000 to €20,000 per month for this category of work.",
     // 8. Founder
     founderEyebrow: "Who's behind this",
     founderBody: "I'm Charles. I build GetPick and I run every audit pipeline myself. No sales team, no support bot: if you have a question, you email me and I answer.",
@@ -157,6 +158,10 @@ export const homeCopy = {
       {
         question: "Is it simulated or real?",
         answer: "Real. Every check is a real question sent live to ChatGPT or Gemini at audit time. No simulated prompts, no cached guesses, no modelled estimates. If an engine is unavailable, the report says so instead of inventing data.",
+      },
+      {
+        question: "Which questions do you test?",
+        answer: "Only real buying questions — the ones a shopper types before choosing a brand. Never “reviews of your brand” or “what is [your name]”: those almost always return a mention and inflate the score. We test whether AI names you when nobody handed it your name first.",
       },
       {
         question: "Do I need to install anything?",
@@ -199,7 +204,8 @@ export const homeCopy = {
     loadingCta: "Audit en cours…",
     submitCta: "Lancer mon audit gratuit",
     error: "Un problème est survenu. Réessaie dans un instant.",
-    formFootnote: "De vraies questions envoyées en direct à Gemini — jamais simulées. Sans carte, sans inscription.",
+    formFootnote: "De vraies questions d'achat envoyées en direct à Gemini — jamais simulées. Sans carte, sans inscription.",
+    formBuyerIntentNote: "On ne teste que les questions qu'un acheteur pose avant d'acheter — jamais « avis sur ta marque ».",
     // 2. Démo conversation IA
     demoEyebrow: "Exemple illustratif",
     demoTitle: "Voilà à quoi ressemble un client perdu dans l'IA.",
@@ -247,7 +253,7 @@ export const homeCopy = {
         price: "€0",
         note: "Le diagnostic : vois qui l'IA recommande aujourd'hui.",
         badge: "Audit gratuit",
-        features: ["Vraies questions d'achat, envoyées en direct", "Ton score sur 100", "Le rival nommé à ta place", "Ta part de voix"],
+        features: ["Vraies questions d'achat, envoyées en direct", "Ton score sur 100", "Le rival nommé à ta place", "Si l'IA sait seulement ce que tu vends", "Ta part de voix"],
         cta: "Lancer mon audit gratuit",
         href: "#audit",
         plan: "free",
@@ -282,7 +288,7 @@ export const homeCopy = {
     pricingGuarantee: "Remboursé sur simple demande sous 30 jours. Pas de question.",
     // 7. En bref — paragraphe dense pour les lecteurs IA
     tldrEyebrow: "En bref",
-    tldrBody: "GetPick est l'agent GEO des marques DTC et e-commerce. Il fait recommander ta marque par les assistants IA comme ChatGPT et Gemini. Concrètement : il envoie de vraies questions d'achat aux IA — en direct, jamais simulées — puis te dit si c'est toi ou un rival qui est recommandé, en nommant ce rival. Il écrit ensuite les correctifs à copier-coller qui comblent l'écart — y compris les fichiers machine prêts à installer (schéma FAQ JSON-LD construit depuis les questions auditées, llms.txt, correctif robots.txt quand des crawlers IA sont bloqués) — et re-vérifie tout chaque semaine, en régénérant ces fichiers quand les réponses bougent. C'est pensé pour les fondateurs DTC sans budget agence : audit gratuit, suivi à 9 €/mois, agent complet à 19 €/mois — prix fixes, sans crédits ni calculateur. Les offres payantes sont résiliables à tout moment et remboursées sur simple demande sous 30 jours, sans question. Une agence GEO facture 2 000 à 20 000 € par mois pour cette catégorie de travail.",
+    tldrBody: "GetPick est l'agent GEO des marques DTC et e-commerce. Il fait recommander ta marque par les assistants IA comme ChatGPT et Gemini. Concrètement : il envoie de vraies questions d'achat aux IA — en direct, jamais simulées — puis te dit si c'est toi ou un rival qui est recommandé, en nommant ce rival. Il te dit aussi si l'IA t'a seulement rangé dans la bonne catégorie — si un moteur croit que tu vends autre chose, il ne te proposera jamais, quoi que tu publies. Il écrit ensuite les correctifs à copier-coller qui comblent l'écart — y compris les fichiers machine prêts à installer (schéma FAQ JSON-LD construit depuis les questions auditées, llms.txt, correctif robots.txt quand des crawlers IA sont bloqués) — et re-vérifie tout chaque semaine, en régénérant ces fichiers quand les réponses bougent. C'est pensé pour les fondateurs DTC sans budget agence : audit gratuit, suivi à 9 €/mois, agent complet à 19 €/mois — prix fixes, sans crédits ni calculateur. Les offres payantes sont résiliables à tout moment et remboursées sur simple demande sous 30 jours, sans question. Une agence GEO facture 2 000 à 20 000 € par mois pour cette catégorie de travail.",
     // 8. Fondateur
     founderEyebrow: "Qui est derrière",
     founderBody: "Je m'appelle Charles. Je construis GetPick et je fais tourner chaque audit moi-même. Pas d'équipe commerciale, pas de chatbot : une question ? C'est moi qui réponds.",
@@ -302,6 +308,10 @@ export const homeCopy = {
       {
         question: "C'est simulé ou réel ?",
         answer: "Réel. Chaque vérification est une vraie question envoyée en direct à ChatGPT ou Gemini au moment de l'audit. Aucun prompt simulé, aucune estimation en cache, aucun chiffre modélisé. Si un moteur est indisponible, le rapport le dit au lieu d'inventer.",
+      },
+      {
+        question: "Quelles questions testez-vous ?",
+        answer: "Uniquement de vraies questions d'achat — celles qu'un client tape avant de choisir une marque. Jamais « avis sur ta marque » ni « c'est quoi [ton nom] » : ça renvoie presque toujours une mention et gonfle le score. On teste si l'IA te cite quand personne ne lui a soufflé ton nom avant.",
       },
       {
         question: "Je dois installer quelque chose ?",
@@ -401,6 +411,35 @@ export const auditCopy = {
     techRobotsIntro: (bots: string) =>
       `Your robots.txt currently blocks ${bots}. Blocked crawlers cannot read your site, so the engines behind them cannot recommend you. Appending these lines unblocks them — a named rule always overrides "User-agent: *".`,
     techRegenNote: "Regenerated at every weekly re-check — when the AI answers move, your files follow.",
+    categoryPerceptionEyebrow: "What AI thinks you sell",
+    categoryPerceptionMismatchTitle: "AI doesn't know what you sell.",
+    categoryPerceptionMatchTitle: "AI knows what you sell.",
+    categoryPerceptionYouSell: "Your site sells",
+    categoryPerceptionAiThinks: "AI describes you as",
+    categoryPerceptionMismatchBody: (engine: string) =>
+      `${engine} places you in a different category than the one you actually sell in. This is upstream of your score: if the engine has you filed under the wrong category, it will not shortlist you for the buying questions that matter — no amount of content in your real category fixes a wrong filing.`,
+    categoryPerceptionMismatchAction:
+      "Make one page state plainly, in the first sentence, what you sell and to whom. Then get that same wording repeated on the third-party pages AI reads about you — listicles, directories, your own llms.txt.",
+    categoryPerceptionMatchBody: (engine: string) =>
+      `${engine} files you in the right category. Your visibility problem, if you have one, is about being chosen inside that category — not about being misunderstood.`,
+    sentimentEyebrow: "How AI talks about you",
+    sentimentTitle: "Brand sentiment",
+    sentimentPositive: "Positive",
+    sentimentNeutral: "Neutral",
+    sentimentNegative: "Needs work",
+    sentimentUnknown: "Not enough signal",
+    sentimentBodyPositive: "When AI mentions you, the tone is favourable — protect that with consistent product facts.",
+    sentimentBodyNeutral: "AI describes you factually but without warmth. Clearer proofs and use-cases tip this positive.",
+    sentimentBodyNegative: "AI frames you poorly or inaccurately. Fix the public facts it can read before chasing more mentions.",
+    sentimentBodyUnknown: "AI barely describes you at all. Getting named on buying questions is the first step.",
+    actionWhyFirst: "Why this first",
+    actionWhyBecause: (prompts: string[]) =>
+      prompts.length === 1
+        ? `Closes the gap on: “${prompts[0]}”`
+        : `Closes gaps on ${prompts.length} buyer questions, starting with: “${prompts[0]}”`,
+    actionImpactHigh: "Highest impact",
+    actionImpactMedium: "Next up",
+    actionImpactSupport: "Then",
   },
   fr: {
     navCta: "Démarrer Agent — 19 €/mois →",
@@ -477,6 +516,35 @@ export const auditCopy = {
     techRobotsIntro: (bots: string) =>
       `Ton robots.txt bloque actuellement ${bots}. Un crawler bloqué ne peut pas lire ton site, donc le moteur derrière ne peut pas te recommander. Ajouter ces lignes les débloque — une règle nommée prime toujours sur « User-agent: * ».`,
     techRegenNote: "Régénérés à chaque re-check hebdo — quand les réponses IA bougent, tes fichiers suivent.",
+    categoryPerceptionEyebrow: "Ce que l'IA croit que tu vends",
+    categoryPerceptionMismatchTitle: "L'IA ne sait pas ce que tu vends.",
+    categoryPerceptionMatchTitle: "L'IA sait ce que tu vends.",
+    categoryPerceptionYouSell: "Ton site vend",
+    categoryPerceptionAiThinks: "L'IA te décrit comme",
+    categoryPerceptionMismatchBody: (engine: string) =>
+      `${engine} te range dans une autre catégorie que celle où tu vends réellement. C'est en amont de ton score : si le moteur t'a classé au mauvais endroit, il ne te fera pas figurer dans les questions d'achat qui comptent — et aucun contenu publié dans ta vraie catégorie ne rattrape un mauvais classement.`,
+    categoryPerceptionMismatchAction:
+      "Fais dire à une page, dès la première phrase, ce que tu vends et à qui. Puis fais reprendre exactement cette formulation sur les pages tierces que l'IA lit à ton sujet — comparatifs, annuaires, et ton propre llms.txt.",
+    categoryPerceptionMatchBody: (engine: string) =>
+      `${engine} te classe dans la bonne catégorie. Ton problème de visibilité, s'il y en a un, est d'être choisi À L'INTÉRIEUR de cette catégorie — pas d'être mal compris.`,
+    sentimentEyebrow: "Ce que l'IA dit de toi",
+    sentimentTitle: "Sentiment de marque",
+    sentimentPositive: "Positif",
+    sentimentNeutral: "Neutre",
+    sentimentNegative: "À améliorer",
+    sentimentUnknown: "Pas assez de signal",
+    sentimentBodyPositive: "Quand l'IA te mentionne, le ton est favorable — protège-le avec des faits produit cohérents.",
+    sentimentBodyNeutral: "L'IA te décrit factuellement, sans chaleur. Des preuves et cas d'usage plus clairs basculent ça en positif.",
+    sentimentBodyNegative: "L'IA te présente mal ou de façon inexacte. Corrige d'abord les faits publics qu'elle peut lire.",
+    sentimentBodyUnknown: "L'IA te décrit à peine. Se faire nommer sur des questions d'achat est la première étape.",
+    actionWhyFirst: "Pourquoi en premier",
+    actionWhyBecause: (prompts: string[]) =>
+      prompts.length === 1
+        ? `Comble l'écart sur : « ${prompts[0]} »`
+        : `Comble l'écart sur ${prompts.length} questions d'achat, à commencer par : « ${prompts[0]} »`,
+    actionImpactHigh: "Impact max",
+    actionImpactMedium: "Ensuite",
+    actionImpactSupport: "Puis",
   },
 } as const;
 
@@ -518,18 +586,64 @@ export function recommendationText(engine: string, brandMentioned: boolean, loca
   return brandMentioned ? `${engine} recommends you` : `${engine} does not mention you`;
 }
 
-export function brandSentimentText(sentiment: SentimentLike, locale: Locale) {
-  const label = sentiment.label === "positive" || sentiment.label === "neutral" || sentiment.label === "negative" ? sentiment.label : "not_enough_signal";
+export type BrandSentimentView = {
+  label: "positive" | "neutral" | "negative" | "not_enough_signal";
+  shortLabel: string;
+  color: string;
+  justification: string;
+  guidance: string;
+};
 
-  if (locale === "fr") {
-    if (label === "not_enough_signal") return "Comment l'IA parle de toi : pas assez de signal";
-    const translated = label === "positive" ? "plutôt positif" : label === "negative" ? "à améliorer" : "neutre";
-    return `Comment l'IA parle de toi : ${translated}.`;
+export function brandSentimentView(sentiment: SentimentLike, locale: Locale): BrandSentimentView {
+  const label =
+    sentiment.label === "positive" || sentiment.label === "neutral" || sentiment.label === "negative"
+      ? sentiment.label
+      : "not_enough_signal";
+  const justification = (sentiment.justification ?? "").trim();
+  const copy = auditCopy[locale];
+
+  if (label === "positive") {
+    return {
+      label,
+      shortLabel: copy.sentimentPositive,
+      color: "#CAFF3C",
+      justification: justification && justification.toLowerCase() !== "not enough signal" ? justification : "",
+      guidance: copy.sentimentBodyPositive,
+    };
   }
+  if (label === "neutral") {
+    return {
+      label,
+      shortLabel: copy.sentimentNeutral,
+      color: "#FFD166",
+      justification: justification && justification.toLowerCase() !== "not enough signal" ? justification : "",
+      guidance: copy.sentimentBodyNeutral,
+    };
+  }
+  if (label === "negative") {
+    return {
+      label,
+      shortLabel: copy.sentimentNegative,
+      color: "#FF8F6B",
+      justification: justification && justification.toLowerCase() !== "not enough signal" ? justification : "",
+      guidance: copy.sentimentBodyNegative,
+    };
+  }
+  return {
+    label: "not_enough_signal",
+    shortLabel: copy.sentimentUnknown,
+    color: "#8E8E9A",
+    justification: "",
+    guidance: copy.sentimentBodyUnknown,
+  };
+}
 
-  if (label === "not_enough_signal") return "How AI talks about you: not enough signal";
-  const englishLabel = label.charAt(0).toUpperCase() + label.slice(1);
-  return `How AI talks about you: ${englishLabel}${sentiment.justification ? ` - ${sentiment.justification}` : ""}.`;
+export function brandSentimentText(sentiment: SentimentLike, locale: Locale) {
+  const view = brandSentimentView(sentiment, locale);
+  const eyebrow = auditCopy[locale].sentimentEyebrow;
+
+  if (!view.justification) return `${eyebrow} : ${view.shortLabel}`;
+  return `${eyebrow} : ${view.shortLabel} — ${view.justification}`;
 }
 
 export function localizePlainAction(action: PlainActionLike, locale: Locale): PlainActionLike {
