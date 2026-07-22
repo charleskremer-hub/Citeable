@@ -61,6 +61,10 @@ Format : {titre} — source/concurrent inspirant — valeur ICP — effort (S/M/
 - **Scrunch AI** — "Agent Experience Platform" (AXP) : sert du contenu optimisé IA directement aux agents au niveau CDN. Infra lourde, hors cible pour notre ICP simple/self-serve.
 - **Agences GEO/AEO** — Retainers mensuels 2 000–20 000€, souvent 5 000–10 000€/mois pour le mid-market. Confirme que notre positionnement à 9€/mois (Monitor) est une rupture de prix radicale sur ce marché — argument à répéter dans le copy.
 
+## Veille — signaux notés (2026-07-22)
+
+- **Sprint conversion (22/07)** — 9 marques ICP auditées en prod après le correctif « questions catégorie » : taux de mention **51/54 (94 %)**, sans effet d'écho (vérifié sur BonneGueule). Enseignements : (a) **le biais de sourcing est réel** — une liste de prospects issue des rivaux cités par l'IA sélectionne des gagnantes ; règle corrigée dans `ICP.md` §6 ; (b) le funnel est opérationnel de bout en bout — claim d'email testé E2E (OK), checkout répond mais la page s'intitule encore **« Citeable Monitor »** (brand mismatch au paiement, action Charles : libellés NanoCorp ou bascule Stripe) ; (c) `search_visibility` réparé et vérifié (25/25 sur Lemahieu) après bascule Serper + rotation de clé ; au passage, caviardage systématique des clés dans les messages d'erreur (une clé avait fuité dans un rapport public via une exception `Headers.append`). 3 cibles outbound qualifiées avec drafts : `outbound/conversion_sprint_2026-07-22.md`. **Question ouverte à instrumenter : l'audit gratuit (Gemini seul, 6 questions) est-il structurellement trop indulgent ?** L'étude à 12 questions donnait 31–88 ; le lot du 22/07 donne 76–94. À trancher en comparant le même set de marques en tier payant (ChatGPT inclus) avant de toucher au scoring.
+
 ## Backlog
 
 ### Must

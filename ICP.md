@@ -124,16 +124,23 @@ invoqué n'existe pas ; et le détecteur classait **GetPick lui-même** en
 `local_independent`, ce qui lui valait des recommandations Google Business Profile
 et Doctolib. Un classificateur qui se trompe sur nous se trompe sur nos clients.
 
-## 6. Où il se trouve — la liste de chasse, pas une catégorie abstraite
+## 6. Où il se trouve — corrigé le 22/07 après test en réel
 
-Nos propres audits ont produit le meilleur ciblage disponible : **les rivaux que
-l'IA cite spontanément sont eux-mêmes des prospects parfaits.** Chaque audit
-alimente donc la liste suivante — c'est la boucle d'acquisition la moins chère
-qu'on ait.
+**La version d'hier était fausse, et le sprint du 22/07 l'a prouvée** : sourcer les
+prospects parmi « les rivaux que l'IA cite » sélectionne par construction des
+marques AI-visibles — des GAGNANTES. Les 9 marques de cette liste auditées en prod :
+taux de mention 51/54 (94 %), six à 6/6. Un antidouleur ne se vend pas à qui n'a
+pas mal.
 
-Premier cercle, sorti des audits du 21/07 (mode DTC FR, catégorie encombrée) :
-Hopaal, BonneGueule, Maison Standards, Hast, Archiduchesse, Lemahieu, Balzac Paris,
-Ekyog, Soeur. Tous cités par Gemini comme rivaux, tous à taille de challenger.
+Règle corrigée :
+1. **Sourcer HORS des réponses IA** : annuaires DTC FR, sélections presse, salons,
+   marketplaces éthiques — puis auditer chaque marque.
+2. **Ne garder en cible que les perdantes** (≥ 1 question d'achat perdue avec un
+   rival nommé). Sur le premier lot : Lemahieu, Ekyog, Soeur — 3 sur 9.
+3. Les gagnantes ne sont pas des prospects douleur ; angle B éventuel (« Monitor te
+   prévient le jour où tu perds ta place »), à ne pas mélanger au discours principal.
+
+Voir `outbound/conversion_sprint_2026-07-22.md` pour les verdicts et les drafts.
 
 - Catégories prioritaires : mode éco-responsable, sous-vêtement/basique, soin,
   bagagerie, alimentation — celles où l'audit remonte six rivaux ou plus.
