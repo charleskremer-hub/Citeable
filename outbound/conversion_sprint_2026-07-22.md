@@ -127,10 +127,28 @@ Objet : **« Quelles chaussures femme taillent bien ? » — l'IA répond Clarks
   Le paiement effectif (la carte passe-t-elle ?) reste NON testé — personne ne
   peut le vérifier sans payer.
 
+## Exécution (22/07, soir) — boucle fermée
+
+1. **Enrichissement Hunter : 3/3, contacts décideurs nominatifs** (dont une
+   cofondatrice pour Soeur). Zéro email générique, zéro pattern deviné.
+   Fichier : `sdr_conversion_2026-07-22_enriched.csv` — **volontairement non
+   commité** (données personnelles). Greetings personnalisés au prénom.
+2. **Leads chargés dans Instantly** par Charles, campagne
+   `802b9b61-b1ca-4fc6-9fb8-aefe90d2acf7` (« [AI SDR] … Fully Personalized »).
+   Campagne EN PAUSE — l'activation reste le geste de Charles.
+3. Pannes rencontrées et corrigées en route : clé Hunter morte (régénérée),
+   clé Instantly v1→v2 (régénérée), `INSTANTLY_CAMPAIGN_ID` qui valait
+   littéralement `...` dans `keys.env` (placeholder jamais rempli — à remplacer
+   par l'UUID ci-dessus, sinon le cron `citeable-sdr-weekly` de lundi recassera).
+
+### Avant activation (checklist Charles)
+- [ ] Séquence de la campagne : Subject = `{{sdr_subject}}`, Body = `{{sdr_body}}`
+      (sinon c'est le template par défaut qui partirait, pas nos drafts).
+- [ ] `INSTANTLY_CAMPAIGN_ID` corrigé dans `outbound/keys.env`.
+- [ ] Boîte d'envoi : `charles@freegetpick.com` (warmup depuis le 20/07, score 100).
+
 ## Prochaine itération du sprint
 
 1. Sourcer 20 marques hors réponses IA (annuaires/presse/salons) → auditer → ne
-   garder que les perdantes → drafts.
-2. Trouver les emails fondateurs des 3 cibles ci-dessus (non fait — pas de
-   scraping d'emails sans canal d'envoi décidé).
-3. Décision canal outbound (boîte dédiée vs manuel).
+   garder que les perdantes → drafts → même pipeline.
+2. Mesurer : ouvertures/réponses des 3 premiers envois avant d'industrialiser.
