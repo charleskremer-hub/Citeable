@@ -167,6 +167,12 @@ function buildRequest(
         headers: {
           Accept: "application/json",
           "Accept-Encoding": "gzip",
+          // Brave valide STRICTEMENT cet en-tête et rejette la requête en HTTP 422
+          // s'il est absent : en environnement serverless (Vercel), un proxy insère
+          // alors une directive comme `max-stale=0` que l'API refuse. C'était la
+          // cause du `search_visibility` mort en prod (pilier 25/100 injoignable).
+          // Réf. openclaw#2476.
+          "Cache-Control": "no-cache",
           "X-Subscription-Token": apiKey,
         },
       },
@@ -200,12 +206,44 @@ function buildRequest(
   };
 }
 
+// Brave n'emballe pas son erreur comme Serper/Tavily : au lieu d'un `detail`/`message`
+// plat, il renvoie `{"type":"ErrorResponse","error":{"detail":"…","meta":{"errors":[
+// {"loc":["query","q"],"msg":"…"}]}}}`. L'ancienne version faisait `String(objet)` et
+// affichait `[object Object]` — on ne voyait donc jamais QUEL paramètre Brave refusait.
+// Cette version descend dans la structure imbriquée et cite le champ fautif.
+function stringifyValidationErrors(errors: unknown): string | undefined {
+  if (!Array.isArray(errors)) return undefined;
+  const parts = errors
+    .map((entry) => {
+      const item = entry as Record<string, unknown>;
+      const where = Array.isArray(item.loc) ? item.loc.join(".") : undefined;
+      const msg = typeof item.msg === "string" ? item.msg : undefined;
+      return where && msg ? `${where}: ${msg}` : msg ?? where;
+    })
+    .filter((part): part is string => Boolean(part));
+  return parts.length ? parts.join("; ") : undefined;
+}
+
 function errorMessage(body: string) {
   try {
     const parsed = JSON.parse(body) as Record<string, unknown>;
-    const message = parsed.detail ?? parsed.message ?? parsed.error;
-    if (typeof message === "string" && message.trim()) return message.trim();
-    if (message !== undefined) return String(message);
+    // Candidat plat (Serper/Tavily) ou objet d'erreur imbriqué (Brave).
+    const candidate = parsed.detail ?? parsed.message ?? parsed.error;
+
+    if (typeof candidate === "string" && candidate.trim()) return candidate.trim();
+
+    if (candidate && typeof candidate === "object") {
+      const nested = candidate as Record<string, unknown>;
+      const meta = nested.meta as { errors?: unknown } | undefined;
+      const detailed = stringifyValidationErrors(meta?.errors);
+      const detail = typeof nested.detail === "string" ? nested.detail.trim() : undefined;
+      const code = typeof nested.code === "string" ? nested.code.trim() : undefined;
+
+      const message = [detail || code, detailed].filter(Boolean).join(" — ");
+      if (message) return message;
+    }
+
+    if (candidate !== undefined && typeof candidate !== "object") return String(candidate);
   } catch {
     // corps non-JSON : on renvoie le texte brut tronqué
   }
