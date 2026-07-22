@@ -275,12 +275,18 @@ export async function runWebSearch(query: string, options: WebSearchOptions = {}
 
   const { url, init } = buildRequest(provider, apiKey, query, maxResults);
 
+  // Aucun message d'erreur ne doit contenir la clé. Cas réel (21/07) : une valeur
+  // d'env mal collée (la commande curl d'exemple entière) a fait échouer
+  // Headers.append, dont l'exception CITE la valeur complète — clé incluse — et ce
+  // message partait dans raw_results, lisible par quiconque a l'URL du rapport.
+  const redactKey = (text: string) => text.split(apiKey).join("[redacted-key]");
+
   try {
     const response = await fetchImpl(url, { ...init, signal: AbortSignal.timeout(timeoutMs) });
     const body = await response.text();
 
     if (!response.ok) {
-      return { ok: false, provider, status: response.status, error: `${provider} HTTP ${response.status}: ${errorMessage(body)}` };
+      return { ok: false, provider, status: response.status, error: redactKey(`${provider} HTTP ${response.status}: ${errorMessage(body)}`) };
     }
 
     let payload: unknown;
@@ -294,6 +300,6 @@ export async function runWebSearch(query: string, options: WebSearchOptions = {}
     return { ok: true, provider, status: response.status, results: parseWebSearchPayload(provider, payload, maxResults) };
   } catch (error) {
     const message = error instanceof Error ? error.message : `Unknown ${provider} error`;
-    return { ok: false, provider, error: `${provider}: ${message}` };
+    return { ok: false, provider, error: redactKey(`${provider}: ${message}`) };
   }
 }
