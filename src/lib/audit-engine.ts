@@ -1146,6 +1146,10 @@ const CATEGORY_SYNONYM_GROUPS: string[][] = [
   ["supplement", "supplements", "vitamin", "vitamins", "wellness", "nutrition", "complement"],
   ["pet", "pets", "dog", "dogs", "cat", "cats", "petfood", "animal", "animaux"],
   ["apparel", "clothing", "clothes", "fashion", "garment", "garments", "wear", "vetement", "vetements", "mode"],
+  // Groupe séparé d'« apparel » : sa tête de groupe est un concept COARSE, ce qui
+  // rendrait toute comparaison lingerie non conclusive. Lingerie est concret.
+  ["lingerie", "swimwear", "underwear", "maillot", "maillots"],
+  ["granola", "muesli", "cereal", "cereals", "cereales", "oats", "porridge", "breakfast"],
   ["cookware", "kitchen", "kitchenware", "pan", "pans", "pot", "pots", "cuisine", "ustensile", "ustensiles"],
   ["eyewear", "glasses", "sunglasses", "optical", "lens", "lenses", "lunette", "lunettes"],
   ["jewelry", "jewellery", "bijou", "bijoux", "ring", "rings", "necklace", "bracelet"],
@@ -1164,6 +1168,24 @@ const COARSE_CATEGORY_CONCEPTS = new Set(["food", "beverage", "apparel", "access
 const CATEGORY_SYNONYM_INDEX = new Map<string, string>(
   CATEGORY_SYNONYM_GROUPS.flatMap((group) => group.map((word) => [word, group[0]] as [string, string]))
 );
+
+// Tripwire de divergence label/questions. Cas mesuré le 23/07 : Nénés Paris étiquetée
+// « analytics platform » avec 6 questions lingerie parfaitement cohérentes — le
+// générateur IA avait corrigé silencieusement depuis le contexte homepage, et rien ne
+// signalait que le label affiché au client était faux. Compte les questions qui ne
+// partagent AUCUN concept avec la catégorie ; rend 0 quand la catégorie est trop
+// large ou vide pour juger honnêtement (mêmes garde-fous que compareCategoryPerception).
+export function countCategoryDivergentQuestions(questions: string[], category: string) {
+  const catConcepts = categoryConcepts(category);
+  const tooCoarse = catConcepts.size === 0 || Array.from(catConcepts).every((concept) => COARSE_CATEGORY_CONCEPTS.has(concept));
+
+  if (tooCoarse) return 0;
+
+  return questions.filter((question) => {
+    const questionConcepts = categoryConcepts(question);
+    return questionConcepts.size > 0 && !Array.from(questionConcepts).some((concept) => catConcepts.has(concept));
+  }).length;
+}
 
 function categoryConcepts(value: string) {
   const tokens = value
@@ -2009,16 +2031,24 @@ function categoryFromHomepageText(text: string, domain: string) {
   const lower = text.toLowerCase();
   const phraseRules: Array<[RegExp, string]> = [
     [/\bbombas\b|\bsocks?\b|chaussettes?|hosiery|merino socks?|compression socks?|dress socks?|ankle socks?|crew socks?/, "socks and apparel"],
-    [/\bosprey\b|backpacks?|rucksacks?|daypacks?|travel packs?|hiking packs?|outdoor gear|hydration packs?|luggage|packfinder|trekking/, "backpacks and outdoor gear"],
+    [/\bosprey\b|backpacks?|rucksacks?|daypacks?|travel packs?|hiking packs?|outdoor gear|hydration packs?|packfinder|trekking|sacs? [aà] dos/, "backpacks and outdoor gear"],
+    // Les marques FR de sacs/bagagerie (ex. voile recyclée) n'avaient AUCUNE règle :
+    // elles tombaient dans les règles suivantes sur un match de bruit.
+    [/\bsacs?\b|\bbags?\b|bagagerie|maroquinerie|handbags?|tote bags?|\btotes?\b|leather goods|luggage|sacoches?|\bcabas\b/, "bags and accessories brand"],
     [/\ballbirds\b|sustainable sneakers?|eco-?friendly shoes?|wool shoes?|tree runners?|running shoes?|walking shoes?|sneakers?|footwear|chaussures?/, "DTC footwear brand"],
     [/boulangerie|bakery|p[aâ]tisserie|pastry|restaurant|bistro|brasserie|traiteur|catering/, "bakery / restaurant"],
-    [/\bmkbhd\b|marques brownlee|youtube|youtuber|tiktok|instagram|newsletter|podcast|substack|streamer|content creator|creator|influencer|créateur|créatrice|influenceur|influenceuse/, "creator"],
+    // « youtube », « instagram », « newsletter », « creator » nus matchaient les liens
+    // sociaux et bandeaux présents sur quasiment tous les sites de marque.
+    [/\bmkbhd\b|marques brownlee|youtubers?|youtube channel|cha[iî]ne youtube|streamer|content creators?|créat(?:eur|rice)s? de contenu|influencers?|influenceurs?|influenceuses?|substack/, "creator"],
     [/\beyewear\b|\bglasses\b|sunglasses|eyeglasses|prescription lenses?|progressive lenses?|\boptical\b|opticien|lunettes?|contact lenses?|frames? (?:for|and) lenses?/, "eyewear brand"],
     [/\bjewell?ery\b|\bbijoux\b|engagement rings?|necklaces?|bracelets?/, "jewelry brand"],
     [/mattress(?:es)?|bedding|\bduvet\b|\bpillows?\b|\bliterie\b/, "mattress and bedding brand"],
-    [/apparel|clothing|fashion|garments?|menswear|womenswear/, "fashion brand"],
+    [/\blingerie\b|maillots? de bain|swimwear|\bunderwear\b|sous-v[eê]tements?/, "lingerie and swimwear brand"],
+    [/apparel|clothing|fashion|garments?|menswear|womenswear|v[eê]tements?|pr[eê]t-[aà]-porter/, "fashion brand"],
     [/skin care|skincare|beauty|cosmetics/, "beauty brand"],
-    [/coffee|tea|beverage|drinks?|snacks?|food & beverage|food and beverage/, "food & beverage"],
+    // « tea » non borné matchait « ba-TEA-u » : Les Toiles du Large (sacs en voile de
+    // bateau recyclée) auditée en « food & beverage » avec des questions paniers gourmands.
+    [/\bcoffee\b|\bteas?\b|beverages?|\bdrinks?\b|\bsnacks?\b|granola|muesli|\bcereals?\b|c[eé]r[eé]ales?|food & beverage|food and beverage|[eé]picerie/, "food & beverage"],
     [/plombier|plumbing|leak repair|chauffagiste/, "plumber"],
     [/[ée]lectricien|electrician|electrical contractor/, "electrician"],
     [/dentiste|dental|orthodont/, "dentist"],
@@ -2036,8 +2066,12 @@ function categoryFromHomepageText(text: string, domain: string) {
     [/project management|gestion de projet/, "project management tool"],
     [/customer relationship management|\bcrm\b/, "CRM for startups"],
     [/running shoes?|chaussures? de running/, "running shoes"],
-    [/analytics|business intelligence|\bbi\b/, "analytics platform"],
-    [/email marketing|newsletter/, "email marketing platform"],
+    // « analytics » nu matchait le bandeau cookies (« Google Analytics ») de n'importe
+    // quel site : Nénés Paris (lingerie) étiquetée « analytics platform ». On exige un
+    // contexte produit ; « \bbi\b » nu matchait aussi « bi-matière ».
+    [/(?:product|web|data|marketing) analytics|analytics (?:platform|tool|software|suite|dashboard)|business intelligence|\bbi tools?\b/, "analytics platform"],
+    // « newsletter » nu matchait le formulaire d'inscription présent sur tous les sites DTC.
+    [/email marketing|marketing automation/, "email marketing platform"],
     [/cybersecurity|security platform/, "cybersecurity platform"],
     [/accounting|bookkeeping/, "accounting software"],
     [/e-?commerce|online store/, "ecommerce platform"],
@@ -2066,9 +2100,30 @@ function isGenericCategory(category: string) {
 function categoryLooksLikeTechStack(category: string, homepageText: string) {
   const lowerCategory = category.toLowerCase();
   const lowerText = homepageText.toLowerCase();
-  const productSignals = /\ballbirds\b|\bbombas\b|socks?|chaussettes?|hosiery|sustainable sneakers?|eco-?friendly shoes?|wool shoes?|tree runners?|running shoes?|walking shoes?|sneakers?|footwear|chaussures?|apparel|clothing|fashion|skincare|beauty|coffee|beverage|food/.test(lowerText);
+  const productSignals = /\ballbirds\b|\bbombas\b|socks?|chaussettes?|hosiery|sustainable sneakers?|eco-?friendly shoes?|wool shoes?|tree runners?|running shoes?|walking shoes?|sneakers?|footwear|chaussures?|apparel|clothing|fashion|lingerie|maillots?|skincare|beauty|coffee|beverage|food|granola|muesli|c[eé]r[eé]ales?|\bsacs?\b|bagagerie|bijoux|jewelry|literie|mattress/.test(lowerText);
 
   return productSignals && /e-?commerce|online store|shopify|website|platform|developer platform|software platform/.test(lowerCategory);
+}
+
+// Termes de stack technique à retirer avant re-dérivation : c'est le produit vendu
+// qui doit déterminer la catégorie, pas la plateforme qui l'héberge.
+const TECH_STACK_NOISE_PATTERN = /e-?commerce|online store|boutique en ligne|shopify|woocommerce|\bwebsites?\b|\bplatforms?\b|developer|software|\bsaas\b|\bapis?\b|\bsdks?\b/gi;
+
+/**
+ * Catégorie déterministe depuis les signaux homepage, avec correction de la
+ * collision tech-stack. Avant ce correctif, toute collision renvoyait une
+ * catégorie codée en dur « DTC footwear brand » (héritée des tests Allbirds) :
+ * Dear Muesli (granola, boutique Shopify) a été auditée en marque de chaussures,
+ * 6 questions sur 6 hors sujet. On retire désormais les termes de stack du texte
+ * et on relance les règles produit ; si rien ne matche, on rend le fallback
+ * générique — les étapes suivantes (2ᵉ passe, LLM) prennent le relais.
+ */
+export function resolveHomepageCategory(brandName: string, domain: string, signals: string) {
+  const ruleCategory = categoryFromHomepageText(`${brandName} ${domain} ${signals}`, domain);
+
+  if (!categoryLooksLikeTechStack(ruleCategory, signals)) return ruleCategory;
+
+  return categoryFromHomepageText(`${brandName} ${domain} ${signals.replace(TECH_STACK_NOISE_PATTERN, " ")}`, domain);
 }
 
 function detectBuyerQuestionLanguage(text: string, domain: string) {
@@ -2126,6 +2181,8 @@ function localizedCategoryTerm(categoryTerm: string, language: "en" | "fr") {
   const translations: Array<[RegExp, string]> = [
     [/socks? and apparel|hosiery/, "chaussettes et vêtements"],
     [/backpacks? and outdoor gear/, "sacs à dos et équipement outdoor"],
+    [/bags? and accessories/, "sacs et accessoires"],
+    [/lingerie and swimwear/, "lingerie et maillots de bain"],
     [/footwear|shoe|sneaker/, "chaussures"],
     [/plumber/, "plombier"],
     [/electrician/, "électricien"],
@@ -2193,6 +2250,25 @@ async function inferCategoryAI(brandName: string, domain: string, homepageText: 
   }
 }
 
+// Garde-fou : les règles à mots-clés ont prouvé qu'elles peuvent matcher du bruit
+// (« Google Analytics » du bandeau cookies, « tea » dans « bateau »). Quand la règle
+// et le LLM — qui lit la page entière — désignent des concepts SANS AUCUN
+// recouvrement, c'est la règle qui a tort : on préfère le LLM. La comparaison
+// réutilise compareCategoryPerception, volontairement conservatrice — elle ne
+// tranche jamais sur des concepts trop larges (« food & beverage ») ou vides,
+// donc pas de bascule intempestive quand les deux formulations sont compatibles.
+async function crossCheckCategoryWithAI(brandName: string, domain: string, signals: string, ruleCategory: string) {
+  if (!signals.trim()) return ruleCategory;
+
+  const aiCategory = await inferCategoryAI(brandName, domain, signals);
+  if (!aiCategory) return ruleCategory;
+
+  if (compareCategoryPerception(aiCategory, ruleCategory).status !== "mismatch") return ruleCategory;
+
+  console.log(`[getpick] category rule/AI mismatch: rule="${ruleCategory}" ai="${aiCategory}" — using AI category`);
+  return aiCategory;
+}
+
 async function inferCategory(brandName: string, websiteUrl: string, fallbackCheck: AuditCheckResult) {
   const domain = domainFromWebsite(websiteUrl);
   const fallbackText = `${fallbackCheck.detail} ${fallbackCheck.evidence ?? ""}`;
@@ -2204,13 +2280,16 @@ async function inferCategory(brandName: string, websiteUrl: string, fallbackChec
     if (response.ok) {
       const html = await response.text();
       signals = extractHomepageSignals(html);
-      const fallbackCategory = categoryFromHomepageText(`${brandName} ${domain} ${signals}`, domain);
-      const category = categoryLooksLikeTechStack(fallbackCategory, signals) ? "DTC footwear brand" : fallbackCategory;
+      const category = resolveHomepageCategory(brandName, domain, signals);
 
-      if (!isGenericCategory(category)) return { category, homepageText: signals };
+      if (!isGenericCategory(category)) {
+        return { category: await crossCheckCategoryWithAI(brandName, domain, signals, category), homepageText: signals };
+      }
 
       const secondPassCategory = categoryFromHomepageText(`${brandName} ${domain} ${signals} ${fallbackText}`, domain);
-      if (!isGenericCategory(secondPassCategory)) return { category: secondPassCategory, homepageText: signals };
+      if (!isGenericCategory(secondPassCategory)) {
+        return { category: await crossCheckCategoryWithAI(brandName, domain, signals, secondPassCategory), homepageText: signals };
+      }
     }
   } catch (error) {
     console.log(`[getpick] category homepage fetch failed: ${error instanceof Error ? error.message : "Unknown error"}`);
@@ -2256,6 +2335,8 @@ function promptCategoryTerms(category: string) {
     };
   }
 
+  if (/\bbags?\b|luggage|maroquinerie|bagagerie|\bsacs?\b/.test(lower)) return { categoryTerm: cleanCategory, useCase: "everyday carry and travel", leader: "Longchamp" };
+  if (/lingerie|swimwear|maillot|underwear/.test(lower)) return { categoryTerm: cleanCategory, useCase: "everyday comfort", leader: "Etam" };
   if (/fashion|apparel|clothing/.test(lower)) return { categoryTerm: cleanCategory, useCase: "everyday clothing", leader: "Everlane" };
   if (/beauty|skincare|cosmetic/.test(lower)) return { categoryTerm: cleanCategory, useCase: "daily routines", leader: "Glossier" };
   if (/coffee|espresso|roaster|café/.test(lower)) return { categoryTerm: "coffee brand", useCase: "specialty coffee", leader: "Starbucks" };
@@ -3355,7 +3436,13 @@ async function analyzeBuyerIntentPrompts(brandName: string, websiteUrl: string, 
   const ai = await generateBuyerIntentPromptsAI(brandName, websiteUrl, category, homepageText, count, locale);
   const minAi = tier === "free" ? 3 : 4;
   const usedAi = Boolean(ai.prompts && ai.prompts.length >= minAi);
-  const promptDebug = usedAi ? `ai:${ai.prompts?.length}` : `template(${ai.debug})`;
+  // Tracé `catdiv` : si une majorité des questions IA ne partage aucun concept avec la
+  // catégorie, le label est probablement faux (le générateur a corrigé depuis le contexte
+  // homepage). Visible en prod dans promptDebug — c'est le signal qui manquait pour
+  // repérer le cas Nénés Paris sans relire les audits un par un.
+  const divergent = usedAi && ai.prompts ? countCategoryDivergentQuestions(ai.prompts, category) : 0;
+  const divergenceFlag = usedAi && ai.prompts && divergent > ai.prompts.length / 2 ? `_catdiv:${divergent}/${ai.prompts.length}` : "";
+  const promptDebug = usedAi ? `ai:${ai.prompts?.length}${divergenceFlag}` : `template(${ai.debug})`;
   // Filet final : quelle que soit la source, aucune question envoyée aux moteurs ne doit
   // contenir le nom de la marque auditée. Si le filtrage fait descendre la liste sous le
   // compte attendu, on complète avec les modèles — non brandés par construction depuis

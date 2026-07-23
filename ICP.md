@@ -174,6 +174,21 @@ Constats du 2026-07-21, tous reportés au backlog :
 4. **Deux des trois segments servis étaient l'anti-ICP.** **Supprimés.**
 5. **La catégorie perçue par l'IA n'était pas mesurée. Livré.**
 
+Constat du 2026-07-23 (run outbound, 20 audits) :
+
+6. **L'inférence de catégorie déraillait sur 2 audits sur 20** — Dear Muesli
+   (granola) auditée en « DTC footwear brand », Les Toiles du Large (sacs en voile
+   recyclée) en « food & beverage », Nénés Paris (lingerie) étiquetée « analytics
+   platform » avec des questions pourtant cohérentes. Trois causes dans
+   `categoryFromHomepageText` : substring non borné (« tea » matchait « ba-TEA-u »),
+   matcheurs de bruit (« analytics » du bandeau cookies, « newsletter »,
+   « instagram »), et une catégorie **codée en dur** « DTC footwear brand » sur
+   collision tech-stack. **Corrigé** (règles bornées + règles sacs/lingerie FR,
+   re-dérivation produit au lieu du codage en dur, garde-fou croisé règle/LLM qui
+   préfère le LLM en cas de désaccord conceptuel, tripwire `catdiv` dans
+   `promptDebug` quand label et questions divergent — 20 tests,
+   `src/lib/audit-engine.category.test.ts`, `npm test`).
+
 ## 9. La question ouverte, qui n'est pas un problème produit
 
 Aucun utilisateur réel n'a lancé d'audit à ce jour. Tant que c'est vrai, le goulot
