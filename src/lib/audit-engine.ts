@@ -4,6 +4,15 @@ import { recordFunnelEvent } from "./funnel";
 import { localizeCategoryLabel, localizePlainAction, type Locale } from "./i18n";
 import { isWebSearchConfigured, runWebSearch } from "./web-search";
 import { isMailConfigured, sendMail } from "./mailer";
+// Garde anti-écho de l'exemple de format du prompt moteur — voir le module
+// pour le contexte (29 réponses sur 252 du re-run du 23/07/2026 recopiaient
+// l'ancien exemple et étaient comptées à tort « marque non citée »).
+import {
+  PROMPT_EXAMPLE_BRAND_PLACEHOLDERS,
+  PROMPT_EXAMPLE_CATEGORY,
+  PROMPT_EXAMPLE_SENTIMENT_REASON,
+  answerEchoesPromptExample,
+} from "./prompt-example-echo";
 
 const USER_AGENT = "Mozilla/5.0 (compatible; CiteeableBot/1.0)";
 const CHECK_TIMEOUT_MS = 8_000;
@@ -879,6 +888,9 @@ type AnswerEngineAnswer = {
   perceivedCategory?: string;
   brandMentioned?: boolean;
   model?: string;
+  // La réponse recopie l'exemple de format du prompt : artefact, pas une
+  // recommandation. Le provider retente, puis marque la surface indisponible.
+  echoedPromptExample?: boolean;
 };
 
 type AnswerEngineError = {
@@ -1243,6 +1255,16 @@ function parseStructuredBrandResponse(text: string): AnswerEngineAnswer {
   const brands = parsed && typeof parsed === "object" && Array.isArray(parsed.recommended_brands)
     ? parsed.recommended_brands.map(brandNameFromUnknown)
     : extractRecommendedBrandsFromLooseJson(text);
+
+  // Une réponse qui recopie l'exemple de format n'est pas une recommandation :
+  // elle est invalidée en bloc (marques, sentiment et catégorie compris) et le
+  // provider la retente puis marque la surface indisponible — jamais « non cité ».
+  const rawReason = typeof parsed?.audited_brand_sentiment_reason === "string" ? parsed.audited_brand_sentiment_reason : undefined;
+  const rawCategory = typeof parsed?.audited_brand_category === "string" ? parsed.audited_brand_category : undefined;
+  if (answerEchoesPromptExample(brands, rawReason, rawCategory)) {
+    return { answer: text, competitorBrands: [], echoedPromptExample: true };
+  }
+
   const recommendedBrands = uniqueInOrder(brands.map(normalizeCompetitorName).filter(Boolean), 12);
   const brandSentiment = sentimentFromStructuredResponse(parsed);
   const perceivedCategory = cleanPerceivedCategory(parsed?.audited_brand_category);
@@ -1275,8 +1297,9 @@ function answerEnginePrompt(question: string, context: AnswerEngineQuestionConte
     `Audited brand: ${context.brandName}`,
     `Audited domain: ${context.domain}`,
     "Return ONLY valid JSON with this exact shape:",
-    '{"recommended_brands":["On","Hoka","Veja"],"audited_brand_sentiment":"positive","audited_brand_sentiment_reason":"described as a trusted premium option","audited_brand_category":"running shoes"}',
+    `{"recommended_brands":["${PROMPT_EXAMPLE_BRAND_PLACEHOLDERS[0]}","${PROMPT_EXAMPLE_BRAND_PLACEHOLDERS[1]}"],"audited_brand_sentiment":"positive","audited_brand_sentiment_reason":"${PROMPT_EXAMPLE_SENTIMENT_REASON}","audited_brand_category":"${PROMPT_EXAMPLE_CATEGORY}"}`,
     "Rules:",
+    `- The JSON above is a FORMAT example only. ${PROMPT_EXAMPLE_BRAND_PLACEHOLDERS[0]}, ${PROMPT_EXAMPLE_BRAND_PLACEHOLDERS[1]}, "${PROMPT_EXAMPLE_SENTIMENT_REASON}" and "${PROMPT_EXAMPLE_CATEGORY}" are placeholders. Never copy any of these values into your answer; an answer that echoes them is invalid and will be discarded.`,
     "- recommended_brands must contain only real brand/company/product names that answer the buyer question.",
     `- Include ${context.brandName} only if you would genuinely recommend or cite it for this question.`,
     `- Do not include ${context.domain} unless it is itself the brand name.`,
@@ -1333,8 +1356,15 @@ function createGeminiProvider(): AnswerEngineProvider {
 
           if (response.ok) {
             const answer = geminiAnswerText(parsed);
-            if (answer) return parseStructuredBrandResponse(answer);
-            lastError = GEMINI_UNAVAILABLE;
+            if (answer) {
+              const structured = parseStructuredBrandResponse(answer);
+              if (!structured.echoedPromptExample) return structured;
+              // Écho de l'exemple du prompt : réponse invalide. Retente ;
+              // après épuisement, surface indisponible plutôt que « non cité ».
+              lastError = `${GEMINI_UNAVAILABLE} (answer echoed the prompt's format example)`;
+            } else {
+              lastError = GEMINI_UNAVAILABLE;
+            }
           } else {
             lastError = parsed.error?.message ? `${GEMINI_UNAVAILABLE} HTTP ${response.status}: ${parsed.error.message}` : `${GEMINI_UNAVAILABLE} HTTP ${response.status}`;
             if (response.status !== 429 && response.status < 500) break;
@@ -1401,8 +1431,17 @@ function createOpenAIProvider(): AnswerEngineProvider {
           if (response.ok) {
             const answer = openAIAnswerText(parsed);
             if (answer) {
+              const structured = parseStructuredBrandResponse(answer);
+
+              // Écho de l'exemple du prompt : réponse invalide. Un retry, puis
+              // surface indisponible — jamais compté comme « marque non citée ».
+              if (structured.echoedPromptExample) {
+                if (attempt === 0) continue;
+                return { error: "openai_error", status: response.status, message: "answer echoed the prompt's format example after retry" };
+              }
+
               return {
-                ...parseStructuredBrandResponse(answer),
+                ...structured,
                 model: parsed.model || model,
               };
             }
