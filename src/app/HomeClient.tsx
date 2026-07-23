@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import LocaleLang from "./LocaleLang";
 import { answerPages } from "@/lib/answer-pages";
 import { AGENT_CHECKOUT_URL, MONITOR_CHECKOUT_URL } from "@/lib/checkout-links";
@@ -267,9 +268,9 @@ export default function HomeClient({ locale }: HomeClientProps) {
             ))}
           </div>
 
-          <a href="/study" className="mt-6 inline-flex rounded-xl border border-[#CAFF3C]/30 bg-[#CAFF3C]/[0.07] px-5 py-3 text-sm font-black text-[#CAFF3C] no-underline transition hover:bg-[#CAFF3C]/[0.12]">
+          <Link href="/study" className="mt-6 inline-flex rounded-xl border border-[#CAFF3C]/30 bg-[#CAFF3C]/[0.07] px-5 py-3 text-sm font-black text-[#CAFF3C] no-underline transition hover:bg-[#CAFF3C]/[0.12]">
             {copy.studyCta}
-          </a>
+          </Link>
         </section>
 
         {/* 5. LE LIVRABLE — extrait de rapport stylisé */}
