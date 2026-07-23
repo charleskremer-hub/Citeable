@@ -1,0 +1,583 @@
+{
+  "audit_id": "0c90615d-2926-4881-81f9-8f360a834ee6",
+  "status": "completed",
+  "brand_name": "Moon Juice",
+  "website_url": "https://moonjuice.com/",
+  "score": 63,
+  "checks": [
+    {
+      "check": "search_visibility",
+      "found": true,
+      "score": 25,
+      "detail": "Web search returned 7 brand/domain result mention(s).",
+      "evidence": "ody, beauty and consciousness. Vegan, gluten-free, bioavailable and ... — Moon Juice - Adaptogenic Beauty & Wellbeing — moonjuice.com Supplements built for how women actually live 🌈🍄 Formulated to be felt, pleasurable enough to keep. — MOON JUICE (@moonjuice) • Instagram photos and videos — instagram.com Moon Juice S",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "structured_data",
+      "found": true,
+      "score": 25,
+      "detail": "Schema.org: true, OpenGraph: true",
+      "evidence": "3__header_section\" class=\"shopify-section shopify-section-group-header-group header-section\"> <script type=\"application/ld+json\"> { \"@context\": \"http://schema.org\", \"@type\": \"Organization\", \"name\": \"Moon Juice\", \"logo\": \"https:\\/\\/moonjuice.com\\/cdn\\/shop\\/files\\/mj-logo-2019.png?v=1653501377\\u0026width=500\", \"url\": \"h",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "wikipedia",
+      "found": false,
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "evidence": "Wikipedia returned HTTP 404",
+      "maxScore": 20,
+      "reachable": true
+    },
+    {
+      "check": "technical_seo",
+      "found": true,
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "evidence": "robots.txt: 200; sitemap.xml: 200; host: moonjuice.com",
+      "maxScore": 15,
+      "reachable": true
+    },
+    {
+      "check": "ai_visibility",
+      "found": true,
+      "score": 58,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "evidence": "What are the top clean beauty brands that offer daily supplements for healthier hair and glowing skin?: brand named; instead: Ritual, Hum Nutrition\nWhich high-end beauty brands specialize in stress-relief supplements that also support skin health?: brand named; instead: none found\nWhat are the best vegan and gluten-free ingestible beauty supplements available online?: brand named; instead: Vital Proteins\nCan you recommend natural electrolyte and skin hydration powder mixes for a daily skincare routine?: brand not named; instead: Electrolyte Powder, Nuun, Dr. Reddy's\nWhich luxury wellness and beauty brands dominate the market for stress-reducing ingestible supplements?: brand named; instead: Ritual\nWhat are the safest magnesium supplements designed by beauty brands to help with sleep and ni",
+      "maxScore": 100,
+      "reachable": true
+    }
+  ],
+  "engines": [
+    {
+      "check": "search_visibility",
+      "score": 25,
+      "detail": "Web search returned 7 brand/domain result mention(s).",
+      "engine": "search_visibility",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "search_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "ody, beauty and consciousness. Vegan, gluten-free, bioavailable and ... — Moon Juice - Adaptogenic Beauty & Wellbeing — moonjuice.com Supplements built for how women actually live 🌈🍄 Formulated to be felt, pleasurable enough to keep. — MOON JUICE (@moonjuice) • Instagram photos and videos — instagram.com Moon Juice S",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "ody, beauty and consciousness. Vegan, gluten-free, bioavailable and ... — Moon Juice - Adaptogenic Beauty & Wellbeing — moonjuice.com Supplements built for how women actually live 🌈🍄 Formulated to be felt, pleasurable enough to keep. — MOON JUICE (@moonjuice) • Instagram photos and videos — instagram.com Moon Juice S"
+    },
+    {
+      "check": "structured_data",
+      "score": 25,
+      "detail": "Schema.org: true, OpenGraph: true",
+      "engine": "structured_data",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "structured_data",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "3__header_section\" class=\"shopify-section shopify-section-group-header-group header-section\"> <script type=\"application/ld+json\"> { \"@context\": \"http://schema.org\", \"@type\": \"Organization\", \"name\": \"Moon Juice\", \"logo\": \"https:\\/\\/moonjuice.com\\/cdn\\/shop\\/files\\/mj-logo-2019.png?v=1653501377\\u0026width=500\", \"url\": \"h",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "3__header_section\" class=\"shopify-section shopify-section-group-header-group header-section\"> <script type=\"application/ld+json\"> { \"@context\": \"http://schema.org\", \"@type\": \"Organization\", \"name\": \"Moon Juice\", \"logo\": \"https:\\/\\/moonjuice.com\\/cdn\\/shop\\/files\\/mj-logo-2019.png?v=1653501377\\u0026width=500\", \"url\": \"h"
+    },
+    {
+      "check": "wikipedia",
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "engine": "wikipedia",
+      "maxScore": 20,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "wikipedia",
+          "competitors": [],
+          "brandMentioned": false,
+          "citationPoints": 0,
+          "rawAnswerSnippet": "Wikipedia returned HTTP 404",
+          "mentionProminence": "not_mentioned"
+        }
+      ],
+      "brandMentioned": false,
+      "rawAnswerSnippet": "Wikipedia returned HTTP 404"
+    },
+    {
+      "check": "technical_seo",
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "engine": "technical_seo",
+      "maxScore": 15,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "technical_seo",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 15,
+          "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: moonjuice.com",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: moonjuice.com"
+    },
+    {
+      "check": "ai_visibility",
+      "score": 58,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "engine": "ai_visibility",
+      "maxScore": 100,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "ai_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 58,
+          "rawAnswerSnippet": "What are the top clean beauty brands that offer daily supplements for healthier hair and glowing skin?: brand named; instead: Ritual, Hum Nutrition\nWhich high-end beauty brands specialize in stress-relief supplements that also support skin health?: brand named; instead: none found\nWhat are the best vegan and gluten-free ingestible beauty supplements available online?: brand named; instead: Vital Proteins\nCan you recommend natural electrolyte and skin hydration powder mixes for a daily skincare routine?: brand not named; instead: Electrolyte Powder, Nuun, Dr. Reddy's\nWhich luxury wellness and beauty brands dominate the market for stress-reducing ingestible supplements?: brand named; instead: Ritual\nWhat are the safest magnesium supplements designed by beauty brands to help with sleep and ni",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "What are the top clean beauty brands that offer daily supplements for healthier hair and glowing skin?: brand named; instead: Ritual, Hum Nutrition\nWhich high-end beauty brands specialize in stress-relief supplements that also support skin health?: brand named; instead: none found\nWhat are the best vegan and gluten-free ingestible beauty supplements available online?: brand named; instead: Vital Proteins\nCan you recommend natural electrolyte and skin hydration powder mixes for a daily skincare routine?: brand not named; instead: Electrolyte Powder, Nuun, Dr. Reddy's\nWhich luxury wellness and beauty brands dominate the market for stress-reducing ingestible supplements?: brand named; instead: Ritual\nWhat are the safest magnesium supplements designed by beauty brands to help with sleep and ni"
+    }
+  ],
+  "competitors": [
+    "Ritual",
+    "Hum Nutrition",
+    "Vital Proteins",
+    "Electrolyte Powder",
+    "Nuun",
+    "Dr. Reddy's",
+    "Sun Potion",
+    "Four Sigmatic",
+    "Nutrafol",
+    "Viviscal",
+    "Herbalife",
+    "Pique Tea"
+  ],
+  "buyer_intent_prompts": [
+    {
+      "prompt": "What are the top clean beauty brands that offer daily supplements for healthier hair and glowing skin?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Ritual",
+            "Hum Nutrition"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for quality supplements"
+          },
+          "rawAnswerSnippet": "recommended_brands: Moon Juice, Ritual, Hum Nutrition",
+          "perceivedCategory": "supplements",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Ritual",
+        "Hum Nutrition"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Which high-end beauty brands specialize in stress-relief supplements that also support skin health?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers effective stress-relief supplements"
+          },
+          "rawAnswerSnippet": "recommended_brands: Moon Juice",
+          "perceivedCategory": "stress-relief supplements",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What are the best vegan and gluten-free ingestible beauty supplements available online?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Vital Proteins"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for quality supplements"
+          },
+          "rawAnswerSnippet": "recommended_brands: Moon Juice, Garden of Life, Vital Proteins",
+          "perceivedCategory": "beauty supplements",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Vital Proteins"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Can you recommend natural electrolyte and skin hydration powder mixes for a daily skincare routine?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Electrolyte Powder",
+            "Nuun",
+            "Dr. Reddy's"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Electrolyte Powder, Nuun, Dr. Reddy's",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Electrolyte Powder",
+        "Nuun",
+        "Dr. Reddy's"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which luxury wellness and beauty brands dominate the market for stress-reducing ingestible supplements?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Ritual"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "recognized for quality wellness products"
+          },
+          "rawAnswerSnippet": "recommended_brands: Moon Juice, Ritual, Care/of",
+          "perceivedCategory": "wellness supplements",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Ritual"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What are the safest magnesium supplements designed by beauty brands to help with sleep and nighttime recovery?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers quality sleep support"
+          },
+          "rawAnswerSnippet": "recommended_brands: Moon Juice",
+          "perceivedCategory": "supplements",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Which clean beauty brands provide third-party tested dietary supplements for under $50?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Ritual",
+            "Hum Nutrition"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for quality supplements"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ritual, Care/of, Hum Nutrition",
+          "perceivedCategory": "dietary supplements",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Ritual",
+        "Hum Nutrition"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "How do I choose between different holistic beauty brands offering adaptogenic powders for daily energy?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Sun Potion",
+            "Four Sigmatic",
+            "Ritual"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for quality adaptogens"
+          },
+          "rawAnswerSnippet": "recommended_brands: Sun Potion, Four Sigmatic, Ritual",
+          "perceivedCategory": "adaptogenic powders",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Sun Potion",
+        "Four Sigmatic",
+        "Ritual"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which natural beauty brands offer monthly subscription boxes for wellness and anti-aging supplements?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Ritual",
+            "Hum Nutrition"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for quality wellness products"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ritual, Care/of, Hum Nutrition",
+          "perceivedCategory": "wellness supplements",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Ritual",
+        "Hum Nutrition"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the best plant-based beauty supplements for thinning hair and scalp health?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Nutrafol",
+            "Viviscal"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Moon Juice, Nutrafol, Viviscal",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Nutrafol",
+        "Viviscal"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What clean beauty supplement lines are recommended for improving gut health and calming skin redness?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Hum Nutrition"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers products for gut health"
+          },
+          "rawAnswerSnippet": "recommended_brands: Moon Juice, Hum Nutrition, Garden of Life",
+          "perceivedCategory": "clean beauty supplements",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Hum Nutrition"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Which sustainable beauty brands focus on clinically tested, botanical ingredients in their wellness drinks?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Herbalife",
+            "Ritual",
+            "Pique Tea"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for quality ingredients"
+          },
+          "rawAnswerSnippet": "recommended_brands: Herbalife, Ritual, Pique Tea",
+          "perceivedCategory": "wellness drinks",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Herbalife",
+        "Ritual",
+        "Pique Tea"
+      ],
+      "brandMentioned": false
+    }
+  ],
+  "prompt_debug": "ai:12",
+  "category": "beauty brand",
+  "icp_segment": {
+    "key": "small_brand_ecommerce",
+    "label": "Small brand / ecommerce",
+    "buyerIntent": "best brand of [product]",
+    "remediationFocus": [
+      "FAQ",
+      "product pages",
+      "reviews",
+      "third-party listicles"
+    ]
+  },
+  "audit_tier": "agent_19eur",
+  "answer_engine": {
+    "model": "gpt-4o-mini-2024-07-18",
+    "engine": "ChatGPT",
+    "realLlmCall": true
+  },
+  "brand_sentiment": {
+    "label": "positive",
+    "justification": "known for quality supplements"
+  },
+  "fixes": [
+    "Build authoritative third-party coverage and Wikidata-style entity consistency before pursuing encyclopedia visibility."
+  ],
+  "email_sent": false,
+  "email_error": "Suppressed: internal/test domain.",
+  "locale": "en"
+}

@@ -1,0 +1,623 @@
+{
+  "audit_id": "2f044a21-aef3-4dfd-88e3-c9c823ca870e",
+  "status": "completed",
+  "brand_name": "Cuts",
+  "website_url": "https://cutsclothing.com/",
+  "score": 19,
+  "checks": [
+    {
+      "check": "search_visibility",
+      "found": true,
+      "score": 25,
+      "detail": "Web search returned 10 brand/domain result mention(s).",
+      "evidence": "ning vision into reality. At Cuts, we outfit those driven to achieve ... — Cuts Clothing | For the Sport of Business® — cutsclothing.com Take 25% off sitewide while supporting a great cause. Every purchase helps provide professional apparel to individuals striving for meaningful employment. — Cuts (@cuts) • Instagram p",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "structured_data",
+      "found": true,
+      "score": 25,
+      "detail": "Schema.org: true, OpenGraph: true",
+      "evidence": "=\"og:url\" content=\"https://www.cutsclothing.com\"/><meta name=\"robots\" content=\"index,follow\"/><script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",\"@type\":\"Organization\",\"name\":\"Cuts\",\"logo\":\"https://cdn.shopify.com/s/files/1/1368/3463/files/Cuts_PrimaryLogo_Black_4a572d3b-a7ce-4221-8cf1-d0c021a92515.png",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "wikipedia",
+      "found": false,
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "evidence": "{\"type\":\"disambiguation\",\"title\":\"Cuts\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Cuts</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q22582128\",\"titles\":{\"canonical\":\"Cuts\",\"normalized\":\"Cuts\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-ma",
+      "maxScore": 20,
+      "reachable": true
+    },
+    {
+      "check": "technical_seo",
+      "found": true,
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "evidence": "robots.txt: 200; sitemap.xml: 200; host: cutsclothing.com",
+      "maxScore": 15,
+      "reachable": true
+    },
+    {
+      "check": "ai_visibility",
+      "found": false,
+      "score": 0,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "evidence": "What are the best clothing brands for content creators who need versatile outfits for both camera work and casual meetings?: brand not named; instead: Everlane, Uniqlo, Lululemon\nWhat high-quality minimalist t-shirts offer a tailored fit suitable for on-camera video filming?: brand not named; instead: On, Hoka, Veja\nWhich apparel brands make durable, wrinkle-resistant shirts that hold their shape after multiple washes?: brand not named; instead: L.L. Bean, Brooks Brothers, Banana Republic\nWhat are the top clothing brands for smart-casual office wear that feel as comfortable as athletic apparel?: brand not named; instead: On, Hoka, Veja\nHow do premium minimalist t-shirt brands compare to traditional designer casualwear lines in terms of longevity and fit?: brand not named; instead: Everlane",
+      "maxScore": 100,
+      "reachable": true
+    }
+  ],
+  "engines": [
+    {
+      "check": "search_visibility",
+      "score": 25,
+      "detail": "Web search returned 10 brand/domain result mention(s).",
+      "engine": "search_visibility",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "search_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "ning vision into reality. At Cuts, we outfit those driven to achieve ... — Cuts Clothing | For the Sport of Business® — cutsclothing.com Take 25% off sitewide while supporting a great cause. Every purchase helps provide professional apparel to individuals striving for meaningful employment. — Cuts (@cuts) • Instagram p",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "ning vision into reality. At Cuts, we outfit those driven to achieve ... — Cuts Clothing | For the Sport of Business® — cutsclothing.com Take 25% off sitewide while supporting a great cause. Every purchase helps provide professional apparel to individuals striving for meaningful employment. — Cuts (@cuts) • Instagram p"
+    },
+    {
+      "check": "structured_data",
+      "score": 25,
+      "detail": "Schema.org: true, OpenGraph: true",
+      "engine": "structured_data",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "structured_data",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "=\"og:url\" content=\"https://www.cutsclothing.com\"/><meta name=\"robots\" content=\"index,follow\"/><script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",\"@type\":\"Organization\",\"name\":\"Cuts\",\"logo\":\"https://cdn.shopify.com/s/files/1/1368/3463/files/Cuts_PrimaryLogo_Black_4a572d3b-a7ce-4221-8cf1-d0c021a92515.png",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "=\"og:url\" content=\"https://www.cutsclothing.com\"/><meta name=\"robots\" content=\"index,follow\"/><script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",\"@type\":\"Organization\",\"name\":\"Cuts\",\"logo\":\"https://cdn.shopify.com/s/files/1/1368/3463/files/Cuts_PrimaryLogo_Black_4a572d3b-a7ce-4221-8cf1-d0c021a92515.png"
+    },
+    {
+      "check": "wikipedia",
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "engine": "wikipedia",
+      "maxScore": 20,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "wikipedia",
+          "competitors": [],
+          "brandMentioned": false,
+          "citationPoints": 0,
+          "rawAnswerSnippet": "{\"type\":\"disambiguation\",\"title\":\"Cuts\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Cuts</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q22582128\",\"titles\":{\"canonical\":\"Cuts\",\"normalized\":\"Cuts\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-ma",
+          "mentionProminence": "not_mentioned"
+        }
+      ],
+      "brandMentioned": false,
+      "rawAnswerSnippet": "{\"type\":\"disambiguation\",\"title\":\"Cuts\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Cuts</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q22582128\",\"titles\":{\"canonical\":\"Cuts\",\"normalized\":\"Cuts\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-ma"
+    },
+    {
+      "check": "technical_seo",
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "engine": "technical_seo",
+      "maxScore": 15,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "technical_seo",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 15,
+          "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: cutsclothing.com",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: cutsclothing.com"
+    },
+    {
+      "check": "ai_visibility",
+      "score": 0,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "engine": "ai_visibility",
+      "maxScore": 100,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "ai_visibility",
+          "competitors": [],
+          "brandMentioned": false,
+          "citationPoints": 0,
+          "rawAnswerSnippet": "What are the best clothing brands for content creators who need versatile outfits for both camera work and casual meetings?: brand not named; instead: Everlane, Uniqlo, Lululemon\nWhat high-quality minimalist t-shirts offer a tailored fit suitable for on-camera video filming?: brand not named; instead: On, Hoka, Veja\nWhich apparel brands make durable, wrinkle-resistant shirts that hold their shape after multiple washes?: brand not named; instead: L.L. Bean, Brooks Brothers, Banana Republic\nWhat are the top clothing brands for smart-casual office wear that feel as comfortable as athletic apparel?: brand not named; instead: On, Hoka, Veja\nHow do premium minimalist t-shirt brands compare to traditional designer casualwear lines in terms of longevity and fit?: brand not named; instead: Everlane",
+          "mentionProminence": "not_mentioned"
+        }
+      ],
+      "brandMentioned": false,
+      "rawAnswerSnippet": "What are the best clothing brands for content creators who need versatile outfits for both camera work and casual meetings?: brand not named; instead: Everlane, Uniqlo, Lululemon\nWhat high-quality minimalist t-shirts offer a tailored fit suitable for on-camera video filming?: brand not named; instead: On, Hoka, Veja\nWhich apparel brands make durable, wrinkle-resistant shirts that hold their shape after multiple washes?: brand not named; instead: L.L. Bean, Brooks Brothers, Banana Republic\nWhat are the top clothing brands for smart-casual office wear that feel as comfortable as athletic apparel?: brand not named; instead: On, Hoka, Veja\nHow do premium minimalist t-shirt brands compare to traditional designer casualwear lines in terms of longevity and fit?: brand not named; instead: Everlane"
+    }
+  ],
+  "competitors": [
+    "Everlane",
+    "Uniqlo",
+    "On",
+    "Hoka",
+    "Veja",
+    "Lululemon",
+    "James Perse",
+    "L.L. Bean",
+    "Brooks Brothers",
+    "Banana Republic",
+    "Nike",
+    "Adidas",
+    "Mara Hoffman",
+    "Reformation",
+    "American Giant"
+  ],
+  "buyer_intent_prompts": [
+    {
+      "prompt": "What are the best clothing brands for content creators who need versatile outfits for both camera work and casual meetings?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Everlane",
+            "Uniqlo",
+            "Lululemon"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Everlane, Uniqlo, Lululemon",
+          "perceivedCategory": "apparel",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Everlane",
+        "Uniqlo",
+        "Lululemon"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What high-quality minimalist t-shirts offer a tailored fit suitable for on-camera video filming?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "apparel",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which apparel brands make durable, wrinkle-resistant shirts that hold their shape after multiple washes?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "L.L. Bean",
+            "Brooks Brothers",
+            "Banana Republic"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: L.L. Bean, Brooks Brothers, Banana Republic",
+          "perceivedCategory": "apparel",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "L.L. Bean",
+        "Brooks Brothers",
+        "Banana Republic"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the top clothing brands for smart-casual office wear that feel as comfortable as athletic apparel?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "apparel",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "How do premium minimalist t-shirt brands compare to traditional designer casualwear lines in terms of longevity and fit?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Everlane",
+            "Uniqlo",
+            "James Perse"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Everlane, Uniqlo, James Perse",
+          "perceivedCategory": "t-shirts",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Everlane",
+        "Uniqlo",
+        "James Perse"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Are high-end basic t-shirts worth the higher price point compared to standard retail brands?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Everlane",
+            "Uniqlo",
+            "James Perse"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Everlane, Uniqlo, James Perse",
+          "perceivedCategory": "basic t-shirts",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Everlane",
+        "Uniqlo",
+        "James Perse"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What wardrobe essentials do you recommend for video creators and digital nomads who travel frequently?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "apparel",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which modern apparel brands offer casual professional shirts designed specifically to flatter athletic body types?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "casual shirts",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What clothing brands make sleek, understated shirts using performance stretch materials?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Lululemon",
+            "Nike",
+            "Adidas"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Lululemon, Nike, Adidas",
+          "perceivedCategory": "shirts",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Lululemon",
+        "Nike",
+        "Adidas"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which online apparel brands offer capsule wardrobe sets for modern entrepreneurs?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Everlane",
+            "Mara Hoffman",
+            "Reformation"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Everlane, Mara Hoffman, Reformation",
+          "perceivedCategory": "apparel",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Everlane",
+        "Mara Hoffman",
+        "Reformation"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the best clothing lines for founders looking for clean, tagless t-shirts for everyday wear?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Everlane",
+            "Uniqlo",
+            "American Giant"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Everlane, Uniqlo, American Giant",
+          "perceivedCategory": "t-shirts",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Everlane",
+        "Uniqlo",
+        "American Giant"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which brands sell low-maintenance men's tops that don't shrink or require ironing?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Lululemon",
+            "Uniqlo",
+            "Everlane"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Lululemon, Uniqlo, Everlane",
+          "perceivedCategory": "men's tops",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Lululemon",
+        "Uniqlo",
+        "Everlane"
+      ],
+      "brandMentioned": false
+    }
+  ],
+  "prompt_debug": "ai:12",
+  "category": "creator",
+  "icp_segment": {
+    "key": "small_brand_ecommerce",
+    "label": "Small brand / ecommerce",
+    "buyerIntent": "best brand of [product]",
+    "remediationFocus": [
+      "FAQ",
+      "product pages",
+      "reviews",
+      "third-party listicles"
+    ]
+  },
+  "audit_tier": "agent_19eur",
+  "answer_engine": {
+    "model": "gpt-4o-mini-2024-07-18",
+    "engine": "ChatGPT",
+    "realLlmCall": true
+  },
+  "brand_sentiment": {
+    "label": "positive",
+    "justification": "described as a trusted premium option"
+  },
+  "fixes": [
+    "Earn mentions on trusted product listicles, review pages, comparison guides, community threads, and marketplaces that answer engines can cite.",
+    "Build authoritative third-party coverage and Wikidata-style entity consistency before pursuing encyclopedia visibility."
+  ],
+  "email_sent": false,
+  "email_error": "Suppressed: internal/test domain.",
+  "locale": "en"
+}

@@ -1,0 +1,563 @@
+{
+  "audit_id": "a768b07e-aeec-4dce-88d0-938f1186e085",
+  "status": "completed",
+  "brand_name": "Recess",
+  "website_url": "https://takearecess.com/",
+  "score": 87,
+  "checks": [
+    {
+      "check": "search_visibility",
+      "found": true,
+      "score": 25,
+      "detail": "Web search returned 11 brand/domain result mention(s).",
+      "evidence": "ol-free moments. tastes & feels like your favorite cocktails without the consequences. — Recess | Calm Cool Collected — takearecess.com Recess 160K followers 812 cool ☁️ drinks that help you unwind … the unwind space is going mainstream, proud to help lead the way. 30% off a whole year of recess ... — Recess (@takearec",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "structured_data",
+      "found": false,
+      "score": 0,
+      "detail": "Schema.org: false, OpenGraph: false",
+      "evidence": "<!DOCTYPE html><html lang=\"en\" class=\"\" style=\"--color-text:rgba(37, 56, 91, 1);--color-background:rgba(162, 176, 255, 1);--color-scheme-text:rgba(37, 56, 91, 1);--color-scheme-background:rgba(162, 176, 255, 1);--color-scheme-background-gradient-stop-1-color:rgba(162, 176, 255, 1);--color-scheme-background-gradient-sto",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "wikipedia",
+      "found": false,
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "evidence": "{\"type\":\"disambiguation\",\"title\":\"Recess\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Recess</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q3421874\",\"titles\":{\"canonical\":\"Recess\",\"normalized\":\"Recess\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-t",
+      "maxScore": 20,
+      "reachable": true
+    },
+    {
+      "check": "technical_seo",
+      "found": true,
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "evidence": "robots.txt: 200; sitemap.xml: 200; host: takearecess.com",
+      "maxScore": 15,
+      "reachable": true
+    },
+    {
+      "check": "ai_visibility",
+      "found": true,
+      "score": 100,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "evidence": "What are the best non-alcoholic sparkling drinks to help relax in the evening?: brand named; instead: Kin Euphorics, Pineapple Collaborative\nAre there any healthy canned beverages that contain magnesium or adaptogens for stress support?: brand named; instead: none found\nWhich functional beverage brands offer low-sugar alternatives to evening cocktails?: brand named; instead: Kin Euphorics, HUM Nutrition\nWhat are some top-rated mocktail options I can order online for social gatherings?: brand named; instead: Seedlip, Lyre's\nCan you recommend a refreshing drink mix powder that helps with mood and daily anxiety?: brand named; instead: Calm, Vital Proteins\nWhat are the cleanest ingredient sparkling waters designed to promote calm and focus?: brand named; instead: none found\nWhere can I buy var",
+      "maxScore": 100,
+      "reachable": true
+    }
+  ],
+  "engines": [
+    {
+      "check": "search_visibility",
+      "score": 25,
+      "detail": "Web search returned 11 brand/domain result mention(s).",
+      "engine": "search_visibility",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "search_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "ol-free moments. tastes & feels like your favorite cocktails without the consequences. — Recess | Calm Cool Collected — takearecess.com Recess 160K followers 812 cool ☁️ drinks that help you unwind … the unwind space is going mainstream, proud to help lead the way. 30% off a whole year of recess ... — Recess (@takearec",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "ol-free moments. tastes & feels like your favorite cocktails without the consequences. — Recess | Calm Cool Collected — takearecess.com Recess 160K followers 812 cool ☁️ drinks that help you unwind … the unwind space is going mainstream, proud to help lead the way. 30% off a whole year of recess ... — Recess (@takearec"
+    },
+    {
+      "check": "structured_data",
+      "score": 0,
+      "detail": "Schema.org: false, OpenGraph: false",
+      "engine": "structured_data",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "structured_data",
+          "competitors": [],
+          "brandMentioned": false,
+          "citationPoints": 0,
+          "rawAnswerSnippet": "<!DOCTYPE html><html lang=\"en\" class=\"\" style=\"--color-text:rgba(37, 56, 91, 1);--color-background:rgba(162, 176, 255, 1);--color-scheme-text:rgba(37, 56, 91, 1);--color-scheme-background:rgba(162, 176, 255, 1);--color-scheme-background-gradient-stop-1-color:rgba(162, 176, 255, 1);--color-scheme-background-gradient-sto",
+          "mentionProminence": "not_mentioned"
+        }
+      ],
+      "brandMentioned": false,
+      "rawAnswerSnippet": "<!DOCTYPE html><html lang=\"en\" class=\"\" style=\"--color-text:rgba(37, 56, 91, 1);--color-background:rgba(162, 176, 255, 1);--color-scheme-text:rgba(37, 56, 91, 1);--color-scheme-background:rgba(162, 176, 255, 1);--color-scheme-background-gradient-stop-1-color:rgba(162, 176, 255, 1);--color-scheme-background-gradient-sto"
+    },
+    {
+      "check": "wikipedia",
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "engine": "wikipedia",
+      "maxScore": 20,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "wikipedia",
+          "competitors": [],
+          "brandMentioned": false,
+          "citationPoints": 0,
+          "rawAnswerSnippet": "{\"type\":\"disambiguation\",\"title\":\"Recess\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Recess</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q3421874\",\"titles\":{\"canonical\":\"Recess\",\"normalized\":\"Recess\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-t",
+          "mentionProminence": "not_mentioned"
+        }
+      ],
+      "brandMentioned": false,
+      "rawAnswerSnippet": "{\"type\":\"disambiguation\",\"title\":\"Recess\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Recess</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q3421874\",\"titles\":{\"canonical\":\"Recess\",\"normalized\":\"Recess\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-t"
+    },
+    {
+      "check": "technical_seo",
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "engine": "technical_seo",
+      "maxScore": 15,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "technical_seo",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 15,
+          "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: takearecess.com",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: takearecess.com"
+    },
+    {
+      "check": "ai_visibility",
+      "score": 100,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "engine": "ai_visibility",
+      "maxScore": 100,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "ai_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 100,
+          "rawAnswerSnippet": "What are the best non-alcoholic sparkling drinks to help relax in the evening?: brand named; instead: Kin Euphorics, Pineapple Collaborative\nAre there any healthy canned beverages that contain magnesium or adaptogens for stress support?: brand named; instead: none found\nWhich functional beverage brands offer low-sugar alternatives to evening cocktails?: brand named; instead: Kin Euphorics, HUM Nutrition\nWhat are some top-rated mocktail options I can order online for social gatherings?: brand named; instead: Seedlip, Lyre's\nCan you recommend a refreshing drink mix powder that helps with mood and daily anxiety?: brand named; instead: Calm, Vital Proteins\nWhat are the cleanest ingredient sparkling waters designed to promote calm and focus?: brand named; instead: none found\nWhere can I buy var",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "What are the best non-alcoholic sparkling drinks to help relax in the evening?: brand named; instead: Kin Euphorics, Pineapple Collaborative\nAre there any healthy canned beverages that contain magnesium or adaptogens for stress support?: brand named; instead: none found\nWhich functional beverage brands offer low-sugar alternatives to evening cocktails?: brand named; instead: Kin Euphorics, HUM Nutrition\nWhat are some top-rated mocktail options I can order online for social gatherings?: brand named; instead: Seedlip, Lyre's\nCan you recommend a refreshing drink mix powder that helps with mood and daily anxiety?: brand named; instead: Calm, Vital Proteins\nWhat are the cleanest ingredient sparkling waters designed to promote calm and focus?: brand named; instead: none found\nWhere can I buy var"
+    }
+  ],
+  "competitors": [
+    "Kin Euphorics",
+    "Pineapple Collaborative",
+    "HUM Nutrition",
+    "Seedlip",
+    "Lyre's",
+    "Calm",
+    "Vital Proteins",
+    "Drink Monday",
+    "Aplos"
+  ],
+  "buyer_intent_prompts": [
+    {
+      "prompt": "What are the best non-alcoholic sparkling drinks to help relax in the evening?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Kin Euphorics",
+            "Pineapple Collaborative"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Recess, Kin Euphorics, Pineapple Collaborative",
+          "perceivedCategory": "sparkling drinks",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Kin Euphorics",
+        "Pineapple Collaborative"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Are there any healthy canned beverages that contain magnesium or adaptogens for stress support?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers healthy stress support options"
+          },
+          "rawAnswerSnippet": "recommended_brands: Recess",
+          "perceivedCategory": "beverages",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Which functional beverage brands offer low-sugar alternatives to evening cocktails?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Kin Euphorics",
+            "HUM Nutrition"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers a low-sugar option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Recess, Kin Euphorics, HUM Nutrition",
+          "perceivedCategory": "functional beverages",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Kin Euphorics",
+        "HUM Nutrition"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What are some top-rated mocktail options I can order online for social gatherings?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Seedlip",
+            "Lyre's"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Recess, Seedlip, Lyre's",
+          "perceivedCategory": "mocktails",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Seedlip",
+        "Lyre's"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Can you recommend a refreshing drink mix powder that helps with mood and daily anxiety?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Calm",
+            "Vital Proteins"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for mood-enhancing drinks"
+          },
+          "rawAnswerSnippet": "recommended_brands: Recess, Calm, Vital Proteins",
+          "perceivedCategory": "drink mix powder",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Calm",
+        "Vital Proteins"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What are the cleanest ingredient sparkling waters designed to promote calm and focus?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers clean ingredients for calm"
+          },
+          "rawAnswerSnippet": "recommended_brands: Recess",
+          "perceivedCategory": "sparkling water",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Where can I buy variety sample packs of non-alcoholic relaxation drinks?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Recess",
+          "perceivedCategory": "relaxation drinks",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Which functional drink brands are best for people looking to cut back on alcohol during happy hour?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Kin Euphorics",
+            "Drink Monday"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "popular choice for alcohol alternatives"
+          },
+          "rawAnswerSnippet": "recommended_brands: Recess, Kin Euphorics, Drink Monday",
+          "perceivedCategory": "functional drinks",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Kin Euphorics",
+        "Drink Monday"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Are there any canned wellness drinks with natural fruit juices and no artificial sweeteners?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers wellness drinks with natural ingredients"
+          },
+          "rawAnswerSnippet": "recommended_brands: Recess",
+          "perceivedCategory": "wellness drinks",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "How do adaptogenic drinks compare to traditional herbal teas for daily stress relief?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers unique stress relief options"
+          },
+          "rawAnswerSnippet": "recommended_brands: Recess",
+          "perceivedCategory": "adaptogenic drinks",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What are some affordable subscription services for healthy non-alcoholic canned drinks?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Kin Euphorics",
+            "Pineapple Collaborative"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Recess, Kin Euphorics, Pineapple Collaborative",
+          "perceivedCategory": "non-alcoholic drinks",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Kin Euphorics",
+        "Pineapple Collaborative"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Which sparkling stress-relief beverages have the best customer reviews for taste and efficacy?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Kin Euphorics",
+            "Aplos"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "well-reviewed for taste and effects"
+          },
+          "rawAnswerSnippet": "recommended_brands: Recess, Kin Euphorics, Aplos",
+          "perceivedCategory": "sparkling beverages",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Kin Euphorics",
+        "Aplos"
+      ],
+      "brandMentioned": true
+    }
+  ],
+  "prompt_debug": "ai:12",
+  "category": "food & beverage",
+  "icp_segment": {
+    "key": "small_brand_ecommerce",
+    "label": "Small brand / ecommerce",
+    "buyerIntent": "best brand of [product]",
+    "remediationFocus": [
+      "FAQ",
+      "product pages",
+      "reviews",
+      "third-party listicles"
+    ]
+  },
+  "audit_tier": "agent_19eur",
+  "answer_engine": {
+    "model": "gpt-4o-mini-2024-07-18",
+    "engine": "ChatGPT",
+    "realLlmCall": true
+  },
+  "brand_sentiment": {
+    "label": "positive",
+    "justification": "described as a trusted premium option"
+  },
+  "fixes": [
+    "Add Organization JSON-LD schema and complete OpenGraph title/description tags on the homepage.",
+    "Build authoritative third-party coverage and Wikidata-style entity consistency before pursuing encyclopedia visibility."
+  ],
+  "email_sent": false,
+  "email_error": "Suppressed: internal/test domain.",
+  "locale": "en"
+}

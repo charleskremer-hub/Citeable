@@ -1,0 +1,607 @@
+{
+  "audit_id": "6398867b-4ad3-489c-87ea-1534892ad5f4",
+  "status": "completed",
+  "brand_name": "Tower 28",
+  "website_url": "https://tower28beauty.com/",
+  "score": 38,
+  "checks": [
+    {
+      "check": "search_visibility",
+      "found": true,
+      "score": 25,
+      "detail": "Web search returned 12 brand/domain result mention(s).",
+      "evidence": " for sensitive skin. Starting at $12. Clean, vegan, cruelty free, ... — Tower 28 Beauty | Clean, Vegan & Cruelty free — tower28beauty.com Email us at hey@tower28beauty.com. tower28beauty.com is the ONLY official website of Tower 28 Beauty. email domains (community@tower28beauty.com) only. — Contact Us - Tower28 Beauty ",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "structured_data",
+      "found": true,
+      "score": 25,
+      "detail": "Schema.org: true, OpenGraph: true",
+      "evidence": "ntListener('focusout', () => { closeMegamenuIfFocusMovedOutside($megamenu) }) }) }) </script> <script type=\"application/ld+json\"> { \"@context\": \"http://schema.org\", \"@type\": \"Organization\", \"name\": \"Tower 28 Beauty\", \"logo\": \"https:\\/\\/www.tower28beauty.com\\/cdn\\/shop\\/files\\/logo--clear-space.svg?v=1689771808\\u0026wid",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "wikipedia",
+      "found": true,
+      "score": 20,
+      "detail": "Brand has a Wikipedia article",
+      "evidence": "{\"type\":\"standard\",\"title\":\"Tower 28\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Tower 28</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q65073597\",\"titles\":{\"canonical\":\"Tower_28\",\"normalized\":\"Tower 28\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-pag",
+      "maxScore": 20,
+      "reachable": true
+    },
+    {
+      "check": "technical_seo",
+      "found": true,
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "evidence": "robots.txt: 200; sitemap.xml: 200; host: tower28beauty.com",
+      "maxScore": 15,
+      "reachable": true
+    },
+    {
+      "check": "ai_visibility",
+      "found": true,
+      "score": 17,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "evidence": "What are the best affordable clean makeup brands for sensitive or eczema-prone skin?: brand named; instead: Ilia, BareMinerals\nWhich vegan makeup brands offer lightweight concealers that do not irritate reactive skin?: brand not named; instead: Ilia, RMS Beauty\nWhat is a good dermatologist-tested daily soothing face mist for skin redness?: brand named; instead: none found\nCan you recommend clean, cruelty-free lip glosses that provide hydration without feeling sticky?: brand not named; instead: Ilia, Burt's Bees, RMS Beauty\nWhat are the top clean beauty brands that sell daily tinted sunscreens with physical SPF?: brand not named; instead: Supergoop, Bare Republic, EltaMD\nWhich makeup brands focus on hypoallergenic ingredients and stay under a thirty dollar price point?: brand not named; ins",
+      "maxScore": 100,
+      "reachable": true
+    }
+  ],
+  "engines": [
+    {
+      "check": "search_visibility",
+      "score": 25,
+      "detail": "Web search returned 12 brand/domain result mention(s).",
+      "engine": "search_visibility",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "search_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": " for sensitive skin. Starting at $12. Clean, vegan, cruelty free, ... — Tower 28 Beauty | Clean, Vegan & Cruelty free — tower28beauty.com Email us at hey@tower28beauty.com. tower28beauty.com is the ONLY official website of Tower 28 Beauty. email domains (community@tower28beauty.com) only. — Contact Us - Tower28 Beauty ",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": " for sensitive skin. Starting at $12. Clean, vegan, cruelty free, ... — Tower 28 Beauty | Clean, Vegan & Cruelty free — tower28beauty.com Email us at hey@tower28beauty.com. tower28beauty.com is the ONLY official website of Tower 28 Beauty. email domains (community@tower28beauty.com) only. — Contact Us - Tower28 Beauty "
+    },
+    {
+      "check": "structured_data",
+      "score": 25,
+      "detail": "Schema.org: true, OpenGraph: true",
+      "engine": "structured_data",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "structured_data",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "ntListener('focusout', () => { closeMegamenuIfFocusMovedOutside($megamenu) }) }) }) </script> <script type=\"application/ld+json\"> { \"@context\": \"http://schema.org\", \"@type\": \"Organization\", \"name\": \"Tower 28 Beauty\", \"logo\": \"https:\\/\\/www.tower28beauty.com\\/cdn\\/shop\\/files\\/logo--clear-space.svg?v=1689771808\\u0026wid",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "ntListener('focusout', () => { closeMegamenuIfFocusMovedOutside($megamenu) }) }) }) </script> <script type=\"application/ld+json\"> { \"@context\": \"http://schema.org\", \"@type\": \"Organization\", \"name\": \"Tower 28 Beauty\", \"logo\": \"https:\\/\\/www.tower28beauty.com\\/cdn\\/shop\\/files\\/logo--clear-space.svg?v=1689771808\\u0026wid"
+    },
+    {
+      "check": "wikipedia",
+      "score": 20,
+      "detail": "Brand has a Wikipedia article",
+      "engine": "wikipedia",
+      "maxScore": 20,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "wikipedia",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 20,
+          "rawAnswerSnippet": "{\"type\":\"standard\",\"title\":\"Tower 28\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Tower 28</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q65073597\",\"titles\":{\"canonical\":\"Tower_28\",\"normalized\":\"Tower 28\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-pag",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "{\"type\":\"standard\",\"title\":\"Tower 28\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Tower 28</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q65073597\",\"titles\":{\"canonical\":\"Tower_28\",\"normalized\":\"Tower 28\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-pag"
+    },
+    {
+      "check": "technical_seo",
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "engine": "technical_seo",
+      "maxScore": 15,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "technical_seo",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 15,
+          "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: tower28beauty.com",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: tower28beauty.com"
+    },
+    {
+      "check": "ai_visibility",
+      "score": 17,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "engine": "ai_visibility",
+      "maxScore": 100,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "ai_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 17,
+          "rawAnswerSnippet": "What are the best affordable clean makeup brands for sensitive or eczema-prone skin?: brand named; instead: Ilia, BareMinerals\nWhich vegan makeup brands offer lightweight concealers that do not irritate reactive skin?: brand not named; instead: Ilia, RMS Beauty\nWhat is a good dermatologist-tested daily soothing face mist for skin redness?: brand named; instead: none found\nCan you recommend clean, cruelty-free lip glosses that provide hydration without feeling sticky?: brand not named; instead: Ilia, Burt's Bees, RMS Beauty\nWhat are the top clean beauty brands that sell daily tinted sunscreens with physical SPF?: brand not named; instead: Supergoop, Bare Republic, EltaMD\nWhich makeup brands focus on hypoallergenic ingredients and stay under a thirty dollar price point?: brand not named; ins",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "What are the best affordable clean makeup brands for sensitive or eczema-prone skin?: brand named; instead: Ilia, BareMinerals\nWhich vegan makeup brands offer lightweight concealers that do not irritate reactive skin?: brand not named; instead: Ilia, RMS Beauty\nWhat is a good dermatologist-tested daily soothing face mist for skin redness?: brand named; instead: none found\nCan you recommend clean, cruelty-free lip glosses that provide hydration without feeling sticky?: brand not named; instead: Ilia, Burt's Bees, RMS Beauty\nWhat are the top clean beauty brands that sell daily tinted sunscreens with physical SPF?: brand not named; instead: Supergoop, Bare Republic, EltaMD\nWhich makeup brands focus on hypoallergenic ingredients and stay under a thirty dollar price point?: brand not named; ins"
+    }
+  ],
+  "competitors": [
+    "Ilia",
+    "BareMinerals",
+    "RMS Beauty",
+    "Burt's Bees",
+    "Supergoop",
+    "Bare Republic",
+    "EltaMD",
+    "Alima Pure",
+    "Physicians Formula",
+    "Fenty Beauty",
+    "Clinique",
+    "Herbivore Botanicals",
+    "Caudalie",
+    "CeraVe",
+    "La Roche-Posay",
+    "Aveeno"
+  ],
+  "buyer_intent_prompts": [
+    {
+      "prompt": "What are the best affordable clean makeup brands for sensitive or eczema-prone skin?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Ilia",
+            "BareMinerals"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "recommended for sensitive skin"
+          },
+          "rawAnswerSnippet": "recommended_brands: Tower 28, Ilia, BareMinerals",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Ilia",
+        "BareMinerals"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Which vegan makeup brands offer lightweight concealers that do not irritate reactive skin?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Ilia",
+            "RMS Beauty"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for gentle formulations"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ilia, RMS Beauty, % Pure",
+          "perceivedCategory": "makeup",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Ilia",
+        "RMS Beauty"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What is a good dermatologist-tested daily soothing face mist for skin redness?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for effective skincare"
+          },
+          "rawAnswerSnippet": "recommended_brands: Tower 28",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Can you recommend clean, cruelty-free lip glosses that provide hydration without feeling sticky?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Ilia",
+            "Burt's Bees",
+            "RMS Beauty"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for quality clean beauty"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ilia, Burt's Bees, RMS Beauty",
+          "perceivedCategory": "lip gloss",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Ilia",
+        "Burt's Bees",
+        "RMS Beauty"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the top clean beauty brands that sell daily tinted sunscreens with physical SPF?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Supergoop",
+            "Bare Republic",
+            "EltaMD"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "well-regarded for clean beauty"
+          },
+          "rawAnswerSnippet": "recommended_brands: Supergoop, Bare Republic, EltaMD",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Supergoop",
+        "Bare Republic",
+        "EltaMD"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which makeup brands focus on hypoallergenic ingredients and stay under a thirty dollar price point?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Alima Pure",
+            "BareMinerals",
+            "Physicians Formula"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for skin-friendly products"
+          },
+          "rawAnswerSnippet": "recommended_brands: Alima Pure, BareMinerals, Physicians Formula",
+          "perceivedCategory": "makeup",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Alima Pure",
+        "BareMinerals",
+        "Physicians Formula"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "How do I choose a non-comedogenic skin tint or tinted moisturizer suitable for acne-prone skin?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "BareMinerals",
+            "Fenty Beauty",
+            "Clinique"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: BareMinerals, Fenty Beauty, Clinique",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "BareMinerals",
+        "Fenty Beauty",
+        "Clinique"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What clean skincare lines make gentle facial sprays designed to calm irritated skin throughout the day?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Herbivore Botanicals",
+            "Caudalie"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for effective skincare"
+          },
+          "rawAnswerSnippet": "recommended_brands: Herbivore Botanicals, Caudalie, Avène",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Herbivore Botanicals",
+        "Caudalie"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which vegan beauty brands offer dermatologist-approved everyday makeup for sensitive skin types?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Ilia",
+            "RMS Beauty"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for sensitive skin-friendly products"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ilia, RMS Beauty, % Pure",
+          "perceivedCategory": "makeup",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Ilia",
+        "RMS Beauty"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Are there any affordable clean cosmetic brands with great shade ranges for fair sensitive skin?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Ilia",
+            "RMS Beauty",
+            "BareMinerals"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers suitable options for sensitive skin"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ilia, RMS Beauty, BareMinerals",
+          "perceivedCategory": "clean cosmetics",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Ilia",
+        "RMS Beauty",
+        "BareMinerals"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the best gentle, barrier-repairing face cleansers for daily use on rosacea-prone skin?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "CeraVe",
+            "La Roche-Posay",
+            "Aveeno"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: CeraVe, La Roche-Posay, Aveeno",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "CeraVe",
+        "La Roche-Posay",
+        "Aveeno"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "How do top clean beauty brands compare when looking for gentle, non-irritating makeup for everyday wear?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Ilia",
+            "RMS Beauty",
+            "BareMinerals"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for gentle formulations"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ilia, RMS Beauty, BareMinerals",
+          "perceivedCategory": "makeup",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Ilia",
+        "RMS Beauty",
+        "BareMinerals"
+      ],
+      "brandMentioned": false
+    }
+  ],
+  "prompt_debug": "ai:12",
+  "category": "beauty brand",
+  "icp_segment": {
+    "key": "small_brand_ecommerce",
+    "label": "Small brand / ecommerce",
+    "buyerIntent": "best brand of [product]",
+    "remediationFocus": [
+      "FAQ",
+      "product pages",
+      "reviews",
+      "third-party listicles"
+    ]
+  },
+  "audit_tier": "agent_19eur",
+  "answer_engine": {
+    "model": "gpt-4o-mini-2024-07-18",
+    "engine": "ChatGPT",
+    "realLlmCall": true
+  },
+  "brand_sentiment": {
+    "label": "positive",
+    "justification": "recommended for sensitive skin"
+  },
+  "fixes": [
+    "Maintain FAQ, product pages, reviews, and listicle/review mentions so AI recommendations stay consistent for product-brand questions."
+  ],
+  "email_sent": false,
+  "email_error": "Suppressed: internal/test domain.",
+  "locale": "en"
+}

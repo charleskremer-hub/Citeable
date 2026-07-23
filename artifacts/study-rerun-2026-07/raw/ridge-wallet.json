@@ -1,0 +1,572 @@
+{
+  "audit_id": "aa76dad5-97f3-4b9e-8db3-933dd51fbc5f",
+  "status": "completed",
+  "brand_name": "Ridge Wallet",
+  "website_url": "https://ridge.com/",
+  "score": 50,
+  "checks": [
+    {
+      "check": "search_visibility",
+      "found": true,
+      "score": 15,
+      "detail": "Web search returned 2 brand/domain result mention(s).",
+      "evidence": "ghtful collections of elevated everyday essentials. Shop wallets, keycases, travel essentials, & more. — Ridge Wallet — ridge.com Discover The Ridge minimalist wallets with RFID protection. Slim front pocket design holds cards securely. Shop now on Amazon. — The Ridge Wallet — amazon.com",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "structured_data",
+      "score": 0,
+      "detail": "Homepage returned HTTP 403",
+      "evidence": "Homepage returned HTTP 403",
+      "maxScore": 25,
+      "reachable": false
+    },
+    {
+      "check": "wikipedia",
+      "found": false,
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "evidence": "Wikipedia returned HTTP 404",
+      "maxScore": 20,
+      "reachable": true
+    },
+    {
+      "check": "technical_seo",
+      "found": true,
+      "score": 5,
+      "detail": "robots.txt: true, sitemap.xml: false",
+      "evidence": "robots.txt: 200; sitemap.xml: 403; host: ridge.com",
+      "maxScore": 15,
+      "reachable": true
+    },
+    {
+      "check": "ai_visibility",
+      "found": true,
+      "score": 58,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "evidence": "What are the best front-pocket minimalist wallets for holding about 8 cards and a few cash bills?: brand named; instead: Bellroy, Ekster\nShould I choose a metal or leather minimalist wallet if I want something durable that fits comfortably in a front pocket?: brand named; instead: none found\nWhich slim minimalist wallets offer built-in RFID blocking to protect my credit cards?: brand named; instead: none found\nWhat are the top high-end minimalist wallet brands known for long-lasting durability and tough materials?: brand not named; instead: Bellroy, Mujjo, Secrid\nWhat are the best affordable minimalist wallets under $50 that don't feel cheap?: brand not named; instead: Bellroy, Secrid, Ekster\nWhat minimalist wallet would you recommend for someone switching away from a bulky leather traditi",
+      "maxScore": 100,
+      "reachable": true
+    }
+  ],
+  "engines": [
+    {
+      "check": "search_visibility",
+      "score": 15,
+      "detail": "Web search returned 2 brand/domain result mention(s).",
+      "engine": "search_visibility",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "search_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 15,
+          "rawAnswerSnippet": "ghtful collections of elevated everyday essentials. Shop wallets, keycases, travel essentials, & more. — Ridge Wallet — ridge.com Discover The Ridge minimalist wallets with RFID protection. Slim front pocket design holds cards securely. Shop now on Amazon. — The Ridge Wallet — amazon.com",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "ghtful collections of elevated everyday essentials. Shop wallets, keycases, travel essentials, & more. — Ridge Wallet — ridge.com Discover The Ridge minimalist wallets with RFID protection. Slim front pocket design holds cards securely. Shop now on Amazon. — The Ridge Wallet — amazon.com"
+    },
+    {
+      "check": "structured_data",
+      "score": 0,
+      "detail": "Homepage returned HTTP 403",
+      "engine": "structured_data",
+      "maxScore": 25,
+      "reachable": false,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "structured_data",
+          "competitors": [],
+          "brandMentioned": false,
+          "citationPoints": 0,
+          "rawAnswerSnippet": "Homepage returned HTTP 403",
+          "mentionProminence": "not_mentioned"
+        }
+      ],
+      "brandMentioned": false,
+      "rawAnswerSnippet": "Homepage returned HTTP 403",
+      "unavailableReason": "Homepage returned HTTP 403"
+    },
+    {
+      "check": "wikipedia",
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "engine": "wikipedia",
+      "maxScore": 20,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "wikipedia",
+          "competitors": [],
+          "brandMentioned": false,
+          "citationPoints": 0,
+          "rawAnswerSnippet": "Wikipedia returned HTTP 404",
+          "mentionProminence": "not_mentioned"
+        }
+      ],
+      "brandMentioned": false,
+      "rawAnswerSnippet": "Wikipedia returned HTTP 404"
+    },
+    {
+      "check": "technical_seo",
+      "score": 5,
+      "detail": "robots.txt: true, sitemap.xml: false",
+      "engine": "technical_seo",
+      "maxScore": 15,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "technical_seo",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 5,
+          "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 403; host: ridge.com",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 403; host: ridge.com"
+    },
+    {
+      "check": "ai_visibility",
+      "score": 58,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "engine": "ai_visibility",
+      "maxScore": 100,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "ai_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 58,
+          "rawAnswerSnippet": "What are the best front-pocket minimalist wallets for holding about 8 cards and a few cash bills?: brand named; instead: Bellroy, Ekster\nShould I choose a metal or leather minimalist wallet if I want something durable that fits comfortably in a front pocket?: brand named; instead: none found\nWhich slim minimalist wallets offer built-in RFID blocking to protect my credit cards?: brand named; instead: none found\nWhat are the top high-end minimalist wallet brands known for long-lasting durability and tough materials?: brand not named; instead: Bellroy, Mujjo, Secrid\nWhat are the best affordable minimalist wallets under $50 that don't feel cheap?: brand not named; instead: Bellroy, Secrid, Ekster\nWhat minimalist wallet would you recommend for someone switching away from a bulky leather traditi",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "What are the best front-pocket minimalist wallets for holding about 8 cards and a few cash bills?: brand named; instead: Bellroy, Ekster\nShould I choose a metal or leather minimalist wallet if I want something durable that fits comfortably in a front pocket?: brand named; instead: none found\nWhich slim minimalist wallets offer built-in RFID blocking to protect my credit cards?: brand named; instead: none found\nWhat are the top high-end minimalist wallet brands known for long-lasting durability and tough materials?: brand not named; instead: Bellroy, Mujjo, Secrid\nWhat are the best affordable minimalist wallets under $50 that don't feel cheap?: brand not named; instead: Bellroy, Secrid, Ekster\nWhat minimalist wallet would you recommend for someone switching away from a bulky leather traditi"
+    }
+  ],
+  "competitors": [
+    "Bellroy",
+    "Secrid",
+    "Ekster",
+    "Nomatic",
+    "Mujjo",
+    "Nomad"
+  ],
+  "buyer_intent_prompts": [
+    {
+      "prompt": "What are the best front-pocket minimalist wallets for holding about 8 cards and a few cash bills?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Bellroy",
+            "Ekster"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ridge Wallet, Bellroy, Ekster",
+          "perceivedCategory": "wallets",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Bellroy",
+        "Ekster"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Should I choose a metal or leather minimalist wallet if I want something durable that fits comfortably in a front pocket?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for durability and comfort"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ridge Wallet",
+          "perceivedCategory": "wallets",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Which slim minimalist wallets offer built-in RFID blocking to protect my credit cards?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "highly regarded for RFID protection"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ridge Wallet",
+          "perceivedCategory": "wallets",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What are the top high-end minimalist wallet brands known for long-lasting durability and tough materials?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Bellroy",
+            "Mujjo",
+            "Secrid"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Bellroy, Mujjo, Secrid",
+          "perceivedCategory": "wallets",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Bellroy",
+        "Mujjo",
+        "Secrid"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the best affordable minimalist wallets under $50 that don't feel cheap?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Bellroy",
+            "Secrid",
+            "Ekster"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Bellroy, Secrid, Ekster",
+          "perceivedCategory": "wallets",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Bellroy",
+        "Secrid",
+        "Ekster"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What minimalist wallet would you recommend for someone switching away from a bulky leather traditional wallet?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ridge Wallet",
+          "perceivedCategory": "wallets",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Which minimalist wallets make it easiest to push out and access your most frequently used cards quickly?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for quick access to cards"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ridge Wallet",
+          "perceivedCategory": "wallets",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What is a good travel-friendly minimalist wallet that safely holds cards, cash, and a tracking device?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Bellroy",
+            "Nomatic"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ridge Wallet, Bellroy, Nomatic",
+          "perceivedCategory": "wallets",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Bellroy",
+        "Nomatic"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What are some stylish, premium minimalist wallets that would make a great gift?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Bellroy",
+            "Nomad",
+            "Secrid"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Bellroy, Nomad, Secrid",
+          "perceivedCategory": "wallets",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Bellroy",
+        "Nomad",
+        "Secrid"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Can you recommend a minimalist wallet that stays slim even when loaded with up to 10 cards and cash?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ridge Wallet",
+          "perceivedCategory": "wallets",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What are the most popular minimalist wallets currently favored in the everyday carry community?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Bellroy",
+            "Ekster",
+            "Secrid"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Bellroy, Ekster, Secrid",
+          "perceivedCategory": "wallets",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Bellroy",
+        "Ekster",
+        "Secrid"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which lightweight minimalist wallets are best for active use or running without feeling heavy in your pocket?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Bellroy",
+            "Secrid",
+            "Nomatic"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Bellroy, Secrid, Nomatic",
+          "perceivedCategory": "wallets",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Bellroy",
+        "Secrid",
+        "Nomatic"
+      ],
+      "brandMentioned": false
+    }
+  ],
+  "prompt_debug": "ai:12",
+  "category": "minimalist wallets",
+  "icp_segment": {
+    "key": "small_brand_ecommerce",
+    "label": "Small brand / ecommerce",
+    "buyerIntent": "best brand of [product]",
+    "remediationFocus": [
+      "FAQ",
+      "product pages",
+      "reviews",
+      "third-party listicles"
+    ]
+  },
+  "audit_tier": "agent_19eur",
+  "answer_engine": {
+    "model": "gpt-4o-mini-2024-07-18",
+    "engine": "ChatGPT",
+    "realLlmCall": true
+  },
+  "brand_sentiment": {
+    "label": "positive",
+    "justification": "described as a trusted premium option"
+  },
+  "fixes": [
+    "Add Organization JSON-LD schema and complete OpenGraph title/description tags on the homepage.",
+    "Create crawlable brand, product, review, and comparison pages that clearly connect the brand name to the official domain.",
+    "Publish accessible robots.txt and sitemap.xml files so search and answer engines can discover key pages.",
+    "Build authoritative third-party coverage and Wikidata-style entity consistency before pursuing encyclopedia visibility."
+  ],
+  "email_sent": false,
+  "email_error": "Suppressed: internal/test domain.",
+  "locale": "en"
+}

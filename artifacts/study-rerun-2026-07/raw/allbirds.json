@@ -1,0 +1,610 @@
+{
+  "audit_id": "2c3f5ff1-f37b-4829-a99b-4da90c01abbe",
+  "status": "completed",
+  "brand_name": "Allbirds",
+  "website_url": "https://allbirds.com/",
+  "score": 25,
+  "checks": [
+    {
+      "check": "search_visibility",
+      "found": true,
+      "score": 25,
+      "detail": "Web search returned 9 brand/domain result mention(s).",
+      "evidence": "erials like merino wool and eucalyptus. FREE shipping & returns. — Allbirds: Comfortable, Sustainable Shoes & Apparel — allbirds.com Lightweight, bouncy, and wildly comfortable, Allbirds shoes make any outing feel effortless. Slip in, lace up, or slide them on and enjoy the comfy support. — Allbirds — allbirds.com.au S",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "structured_data",
+      "found": true,
+      "score": 25,
+      "detail": "Schema.org: true, OpenGraph: true",
+      "evidence": "<!-- DNAM BRANDS --> <!doctype html> <html class='h-full' lang='en-US'> <head> <meta charset='utf-8'> <meta http-equiv='X-UA-Compatible' content='IE=edge'> <meta name='viewport' content='width=device-width,initial-scale=1'> <meta name='theme-color' content='#ece9e2'> <link rel='canonical' href='https://www.allbirds.com",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "wikipedia",
+      "found": true,
+      "score": 20,
+      "detail": "Brand has a Wikipedia article",
+      "evidence": "{\"type\":\"standard\",\"title\":\"Allbirds\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Allbirds</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q30591057\",\"titles\":{\"canonical\":\"Allbirds\",\"normalized\":\"Allbirds\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-pag",
+      "maxScore": 20,
+      "reachable": true
+    },
+    {
+      "check": "technical_seo",
+      "found": true,
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "evidence": "robots.txt: 200; sitemap.xml: 200; host: allbirds.com",
+      "maxScore": 15,
+      "reachable": true
+    },
+    {
+      "check": "ai_visibility",
+      "found": false,
+      "score": 0,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "evidence": "What are the best direct-to-consumer sneaker brands for long days of travel and walking?: brand not named; instead: On, Hoka, Veja\nWhich online shoe companies make comfortable, eco-friendly everyday sneakers?: brand not named; instead: On, Hoka, Veja\nCan you recommend breathable, lightweight shoes for summer that can be worn without socks?: brand not named; instead: On, Hoka, Veja\nWhat are top-rated sustainable casual shoes that look good enough to wear in a relaxed office environment?: brand not named; instead: On, Hoka, Veja\nAre there any machine-washable sneaker brands that offer good arch support for daily wear?: brand not named; instead: On, Hoka, Veja\nWhat are the main differences between top direct-to-consumer sustainable shoe brands in terms of durability and price?: brand not name",
+      "maxScore": 100,
+      "reachable": true
+    }
+  ],
+  "engines": [
+    {
+      "check": "search_visibility",
+      "score": 25,
+      "detail": "Web search returned 9 brand/domain result mention(s).",
+      "engine": "search_visibility",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "search_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "erials like merino wool and eucalyptus. FREE shipping & returns. — Allbirds: Comfortable, Sustainable Shoes & Apparel — allbirds.com Lightweight, bouncy, and wildly comfortable, Allbirds shoes make any outing feel effortless. Slip in, lace up, or slide them on and enjoy the comfy support. — Allbirds — allbirds.com.au S",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "erials like merino wool and eucalyptus. FREE shipping & returns. — Allbirds: Comfortable, Sustainable Shoes & Apparel — allbirds.com Lightweight, bouncy, and wildly comfortable, Allbirds shoes make any outing feel effortless. Slip in, lace up, or slide them on and enjoy the comfy support. — Allbirds — allbirds.com.au S"
+    },
+    {
+      "check": "structured_data",
+      "score": 25,
+      "detail": "Schema.org: true, OpenGraph: true",
+      "engine": "structured_data",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "structured_data",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "<!-- DNAM BRANDS --> <!doctype html> <html class='h-full' lang='en-US'> <head> <meta charset='utf-8'> <meta http-equiv='X-UA-Compatible' content='IE=edge'> <meta name='viewport' content='width=device-width,initial-scale=1'> <meta name='theme-color' content='#ece9e2'> <link rel='canonical' href='https://www.allbirds.com",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "<!-- DNAM BRANDS --> <!doctype html> <html class='h-full' lang='en-US'> <head> <meta charset='utf-8'> <meta http-equiv='X-UA-Compatible' content='IE=edge'> <meta name='viewport' content='width=device-width,initial-scale=1'> <meta name='theme-color' content='#ece9e2'> <link rel='canonical' href='https://www.allbirds.com"
+    },
+    {
+      "check": "wikipedia",
+      "score": 20,
+      "detail": "Brand has a Wikipedia article",
+      "engine": "wikipedia",
+      "maxScore": 20,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "wikipedia",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 20,
+          "rawAnswerSnippet": "{\"type\":\"standard\",\"title\":\"Allbirds\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Allbirds</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q30591057\",\"titles\":{\"canonical\":\"Allbirds\",\"normalized\":\"Allbirds\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-pag",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "{\"type\":\"standard\",\"title\":\"Allbirds\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Allbirds</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q30591057\",\"titles\":{\"canonical\":\"Allbirds\",\"normalized\":\"Allbirds\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-pag"
+    },
+    {
+      "check": "technical_seo",
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "engine": "technical_seo",
+      "maxScore": 15,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "technical_seo",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 15,
+          "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: allbirds.com",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: allbirds.com"
+    },
+    {
+      "check": "ai_visibility",
+      "score": 0,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "engine": "ai_visibility",
+      "maxScore": 100,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "ai_visibility",
+          "competitors": [],
+          "brandMentioned": false,
+          "citationPoints": 0,
+          "rawAnswerSnippet": "What are the best direct-to-consumer sneaker brands for long days of travel and walking?: brand not named; instead: On, Hoka, Veja\nWhich online shoe companies make comfortable, eco-friendly everyday sneakers?: brand not named; instead: On, Hoka, Veja\nCan you recommend breathable, lightweight shoes for summer that can be worn without socks?: brand not named; instead: On, Hoka, Veja\nWhat are top-rated sustainable casual shoes that look good enough to wear in a relaxed office environment?: brand not named; instead: On, Hoka, Veja\nAre there any machine-washable sneaker brands that offer good arch support for daily wear?: brand not named; instead: On, Hoka, Veja\nWhat are the main differences between top direct-to-consumer sustainable shoe brands in terms of durability and price?: brand not name",
+          "mentionProminence": "not_mentioned"
+        }
+      ],
+      "brandMentioned": false,
+      "rawAnswerSnippet": "What are the best direct-to-consumer sneaker brands for long days of travel and walking?: brand not named; instead: On, Hoka, Veja\nWhich online shoe companies make comfortable, eco-friendly everyday sneakers?: brand not named; instead: On, Hoka, Veja\nCan you recommend breathable, lightweight shoes for summer that can be worn without socks?: brand not named; instead: On, Hoka, Veja\nWhat are top-rated sustainable casual shoes that look good enough to wear in a relaxed office environment?: brand not named; instead: On, Hoka, Veja\nAre there any machine-washable sneaker brands that offer good arch support for daily wear?: brand not named; instead: On, Hoka, Veja\nWhat are the main differences between top direct-to-consumer sustainable shoe brands in terms of durability and price?: brand not name"
+    }
+  ],
+  "competitors": [
+    "On",
+    "Hoka",
+    "Veja"
+  ],
+  "buyer_intent_prompts": [
+    {
+      "prompt": "What are the best direct-to-consumer sneaker brands for long days of travel and walking?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "running shoes",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which online shoe companies make comfortable, eco-friendly everyday sneakers?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "running shoes",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Can you recommend breathable, lightweight shoes for summer that can be worn without socks?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "running shoes",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are top-rated sustainable casual shoes that look good enough to wear in a relaxed office environment?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "running shoes",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Are there any machine-washable sneaker brands that offer good arch support for daily wear?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "running shoes",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the main differences between top direct-to-consumer sustainable shoe brands in terms of durability and price?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "running shoes",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the best sustainable running or walking shoes made by direct-to-consumer footwear companies?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "running shoes",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which eco-friendly footwear brands offer flexible fits or good options for people on their feet all day?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "running shoes",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the best affordable direct-to-consumer casual shoes under 150 dollars?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "casual shoes",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which online footwear brands specialize in shoes made from natural or recycled materials?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "running shoes",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What comfortable casual sneakers do people recommend for standing all day while working?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "running shoes",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the most popular direct-to-consumer footwear brands for buying everyday walking shoes online?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "running shoes",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    }
+  ],
+  "prompt_debug": "ai:12",
+  "category": "DTC footwear brand",
+  "icp_segment": {
+    "key": "small_brand_ecommerce",
+    "label": "Small brand / ecommerce",
+    "buyerIntent": "best brand of [product]",
+    "remediationFocus": [
+      "FAQ",
+      "product pages",
+      "reviews",
+      "third-party listicles"
+    ]
+  },
+  "audit_tier": "agent_19eur",
+  "answer_engine": {
+    "model": "gpt-4o-mini-2024-07-18",
+    "engine": "ChatGPT",
+    "realLlmCall": true
+  },
+  "brand_sentiment": {
+    "label": "positive",
+    "justification": "described as a trusted premium option"
+  },
+  "fixes": [
+    "Earn mentions on trusted product listicles, review pages, comparison guides, community threads, and marketplaces that answer engines can cite."
+  ],
+  "email_sent": false,
+  "email_error": "Suppressed: internal/test domain.",
+  "locale": "en"
+}

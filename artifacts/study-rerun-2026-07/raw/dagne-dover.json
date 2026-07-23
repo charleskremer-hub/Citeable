@@ -1,0 +1,609 @@
+{
+  "audit_id": "1f648cac-10d6-402d-90e7-447e81979c18",
+  "status": "completed",
+  "brand_name": "Dagne Dover",
+  "website_url": "https://dagnedover.com/",
+  "score": 19,
+  "checks": [
+    {
+      "check": "search_visibility",
+      "found": true,
+      "score": 25,
+      "detail": "Web search returned 10 brand/domain result mention(s).",
+      "evidence": "most out of life. Say #HelloDagne with our work bags, handbags, travel bags, gym bags, and laptop bags. — Dagne Dover — dagnedover.com 409K followers · 1.2K+ following · 5058 posts · @dagnedover: “Bags designed for humans getting the most out of life. Shop New 365 Neoprene ↓” — Dagne Dover (@dagnedover) • Instagram pho",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "structured_data",
+      "found": true,
+      "score": 25,
+      "detail": "Schema.org: true, OpenGraph: true",
+      "evidence": "e, }; // FOR EDGEMESH document.cookie = 'early_access=; max-age=0; path=/;'; </script> </div> <script type=\"application/ld+json\"> { \"@context\": \"https://schema.org\", \"@type\": \"Organization\", \"@id\": \"https:\\/\\/www.dagnedover.com\", \"name\": \"DAGNE DOVER\", \"url\": \"https:\\/\\/www.dagnedover.com\", \"logo\": \"https://cdn.shopify",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "wikipedia",
+      "found": false,
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "evidence": "Wikipedia returned HTTP 404",
+      "maxScore": 20,
+      "reachable": true
+    },
+    {
+      "check": "technical_seo",
+      "found": true,
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "evidence": "robots.txt: 200; sitemap.xml: 200; host: dagnedover.com",
+      "maxScore": 15,
+      "reachable": true
+    },
+    {
+      "check": "ai_visibility",
+      "found": false,
+      "score": 0,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "evidence": "What are the best water-resistant travel backpacks for daily commuting and weekend trips?: brand not named; instead: Patagonia, Osprey\nWhich outdoor backpacks have the best interior organization for keeping gear and electronics separate?: brand not named; instead: Osprey, Patagonia\nWhat are the top-rated lightweight backpacks that can double as a diaper bag for hiking?: brand not named; instead: Osprey, Deuter, Patagonia\nHow do modern commuter backpacks compare to classic outdoor brands like Osprey or The North Face?: brand not named; instead: Patagonia, Arc'teryx\nWhat functional yet stylish work backpacks are available under $200?: brand not named; instead: Timbuk2, Herschel\nWhich carry-on compliant backpacks offer the easiest access for airport security?: brand not named; instead: Osprey",
+      "maxScore": 100,
+      "reachable": true
+    }
+  ],
+  "engines": [
+    {
+      "check": "search_visibility",
+      "score": 25,
+      "detail": "Web search returned 10 brand/domain result mention(s).",
+      "engine": "search_visibility",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "search_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "most out of life. Say #HelloDagne with our work bags, handbags, travel bags, gym bags, and laptop bags. — Dagne Dover — dagnedover.com 409K followers · 1.2K+ following · 5058 posts · @dagnedover: “Bags designed for humans getting the most out of life. Shop New 365 Neoprene ↓” — Dagne Dover (@dagnedover) • Instagram pho",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "most out of life. Say #HelloDagne with our work bags, handbags, travel bags, gym bags, and laptop bags. — Dagne Dover — dagnedover.com 409K followers · 1.2K+ following · 5058 posts · @dagnedover: “Bags designed for humans getting the most out of life. Shop New 365 Neoprene ↓” — Dagne Dover (@dagnedover) • Instagram pho"
+    },
+    {
+      "check": "structured_data",
+      "score": 25,
+      "detail": "Schema.org: true, OpenGraph: true",
+      "engine": "structured_data",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "structured_data",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "e, }; // FOR EDGEMESH document.cookie = 'early_access=; max-age=0; path=/;'; </script> </div> <script type=\"application/ld+json\"> { \"@context\": \"https://schema.org\", \"@type\": \"Organization\", \"@id\": \"https:\\/\\/www.dagnedover.com\", \"name\": \"DAGNE DOVER\", \"url\": \"https:\\/\\/www.dagnedover.com\", \"logo\": \"https://cdn.shopify",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "e, }; // FOR EDGEMESH document.cookie = 'early_access=; max-age=0; path=/;'; </script> </div> <script type=\"application/ld+json\"> { \"@context\": \"https://schema.org\", \"@type\": \"Organization\", \"@id\": \"https:\\/\\/www.dagnedover.com\", \"name\": \"DAGNE DOVER\", \"url\": \"https:\\/\\/www.dagnedover.com\", \"logo\": \"https://cdn.shopify"
+    },
+    {
+      "check": "wikipedia",
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "engine": "wikipedia",
+      "maxScore": 20,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "wikipedia",
+          "competitors": [],
+          "brandMentioned": false,
+          "citationPoints": 0,
+          "rawAnswerSnippet": "Wikipedia returned HTTP 404",
+          "mentionProminence": "not_mentioned"
+        }
+      ],
+      "brandMentioned": false,
+      "rawAnswerSnippet": "Wikipedia returned HTTP 404"
+    },
+    {
+      "check": "technical_seo",
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "engine": "technical_seo",
+      "maxScore": 15,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "technical_seo",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 15,
+          "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: dagnedover.com",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: dagnedover.com"
+    },
+    {
+      "check": "ai_visibility",
+      "score": 0,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "engine": "ai_visibility",
+      "maxScore": 100,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "ai_visibility",
+          "competitors": [],
+          "brandMentioned": false,
+          "citationPoints": 0,
+          "rawAnswerSnippet": "What are the best water-resistant travel backpacks for daily commuting and weekend trips?: brand not named; instead: Patagonia, Osprey\nWhich outdoor backpacks have the best interior organization for keeping gear and electronics separate?: brand not named; instead: Osprey, Patagonia\nWhat are the top-rated lightweight backpacks that can double as a diaper bag for hiking?: brand not named; instead: Osprey, Deuter, Patagonia\nHow do modern commuter backpacks compare to classic outdoor brands like Osprey or The North Face?: brand not named; instead: Patagonia, Arc'teryx\nWhat functional yet stylish work backpacks are available under $200?: brand not named; instead: Timbuk2, Herschel\nWhich carry-on compliant backpacks offer the easiest access for airport security?: brand not named; instead: Osprey",
+          "mentionProminence": "not_mentioned"
+        }
+      ],
+      "brandMentioned": false,
+      "rawAnswerSnippet": "What are the best water-resistant travel backpacks for daily commuting and weekend trips?: brand not named; instead: Patagonia, Osprey\nWhich outdoor backpacks have the best interior organization for keeping gear and electronics separate?: brand not named; instead: Osprey, Patagonia\nWhat are the top-rated lightweight backpacks that can double as a diaper bag for hiking?: brand not named; instead: Osprey, Deuter, Patagonia\nHow do modern commuter backpacks compare to classic outdoor brands like Osprey or The North Face?: brand not named; instead: Patagonia, Arc'teryx\nWhat functional yet stylish work backpacks are available under $200?: brand not named; instead: Timbuk2, Herschel\nWhich carry-on compliant backpacks offer the easiest access for airport security?: brand not named; instead: Osprey"
+    }
+  ],
+  "competitors": [
+    "Patagonia",
+    "Osprey",
+    "Timbuk2",
+    "Herschel",
+    "Deuter",
+    "Arc'teryx",
+    "North Face",
+    "On",
+    "Hoka",
+    "Veja",
+    "Everlane",
+    "Targus",
+    "Thule"
+  ],
+  "buyer_intent_prompts": [
+    {
+      "prompt": "What are the best water-resistant travel backpacks for daily commuting and weekend trips?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Patagonia",
+            "Osprey"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Patagonia, Osprey, The North Face",
+          "perceivedCategory": "bags and accessories",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Patagonia",
+        "Osprey"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which outdoor backpacks have the best interior organization for keeping gear and electronics separate?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Osprey",
+            "Patagonia"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Osprey, The North Face, Patagonia",
+          "perceivedCategory": "backpacks",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Osprey",
+        "Patagonia"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the top-rated lightweight backpacks that can double as a diaper bag for hiking?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Osprey",
+            "Deuter",
+            "Patagonia"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "neutral",
+            "justification": "not enough signal"
+          },
+          "rawAnswerSnippet": "recommended_brands: Osprey, Deuter, Patagonia",
+          "perceivedCategory": "",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Osprey",
+        "Deuter",
+        "Patagonia"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "How do modern commuter backpacks compare to classic outdoor brands like Osprey or The North Face?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Patagonia",
+            "Arc'teryx"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Patagonia, Arc'teryx, Fjällräven",
+          "perceivedCategory": "",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Patagonia",
+        "Arc'teryx"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What functional yet stylish work backpacks are available under $200?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Timbuk2",
+            "Herschel"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Timbuk2, Herschel, Fjällräven",
+          "perceivedCategory": "backpacks",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Timbuk2",
+        "Herschel"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which carry-on compliant backpacks offer the easiest access for airport security?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Osprey",
+            "Timbuk2",
+            "Patagonia"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Osprey, Timbuk2, Patagonia",
+          "perceivedCategory": "backpacks",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Osprey",
+        "Timbuk2",
+        "Patagonia"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What ergonomically designed backpacks are recommended for preventing shoulder pain during daily travel?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Osprey",
+            "Patagonia",
+            "North Face"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Osprey, Patagonia, North Face",
+          "perceivedCategory": "backpacks",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Osprey",
+        "Patagonia",
+        "North Face"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which sustainable outdoor brands offer durable backpacks made from recycled materials?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Patagonia",
+            "Osprey"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "not_enough_signal",
+            "justification": "not enough signal"
+          },
+          "rawAnswerSnippet": "recommended_brands: Patagonia, The North Face, Osprey",
+          "perceivedCategory": "",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Patagonia",
+        "Osprey"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the best hybrid gym and work backpacks with a dedicated compartment for clothes?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "bags and accessories",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which weather-resistant daypacks are best for city commuting and light trail hikes?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Patagonia",
+            "Osprey"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Patagonia, The North Face, Osprey",
+          "perceivedCategory": "bags",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Patagonia",
+        "Osprey"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What minimalist outdoor backpacks are suitable for a professional office setting?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Herschel",
+            "Everlane",
+            "Timbuk2"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Herschel, Everlane, Timbuk2",
+          "perceivedCategory": "bags and accessories",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Herschel",
+        "Everlane",
+        "Timbuk2"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the best travel backpacks that fit under an airplane seat while holding a 15-inch laptop?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Targus",
+            "Thule",
+            "Osprey"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "not_enough_signal",
+            "justification": "not enough signal"
+          },
+          "rawAnswerSnippet": "recommended_brands: Targus, Thule, Osprey",
+          "perceivedCategory": "",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Targus",
+        "Thule",
+        "Osprey"
+      ],
+      "brandMentioned": false
+    }
+  ],
+  "prompt_debug": "ai:12",
+  "category": "backpacks and outdoor gear",
+  "icp_segment": {
+    "key": "small_brand_ecommerce",
+    "label": "Small brand / ecommerce",
+    "buyerIntent": "best brand of [product]",
+    "remediationFocus": [
+      "FAQ",
+      "product pages",
+      "reviews",
+      "third-party listicles"
+    ]
+  },
+  "audit_tier": "agent_19eur",
+  "answer_engine": {
+    "model": "gpt-4o-mini-2024-07-18",
+    "engine": "ChatGPT",
+    "realLlmCall": true
+  },
+  "brand_sentiment": {
+    "label": "positive",
+    "justification": "described as a trusted premium option"
+  },
+  "fixes": [
+    "Earn mentions on trusted product listicles, review pages, comparison guides, community threads, and marketplaces that answer engines can cite.",
+    "Build authoritative third-party coverage and Wikidata-style entity consistency before pursuing encyclopedia visibility."
+  ],
+  "email_sent": false,
+  "email_error": "Suppressed: internal/test domain.",
+  "locale": "en"
+}

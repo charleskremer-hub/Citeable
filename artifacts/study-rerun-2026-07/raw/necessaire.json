@@ -1,0 +1,612 @@
+{
+  "audit_id": "408249ef-c9d2-487e-9134-eb85377a2a0e",
+  "status": "completed",
+  "brand_name": "Necessaire",
+  "website_url": "https://necessaire.com/",
+  "score": 32,
+  "checks": [
+    {
+      "check": "search_visibility",
+      "found": true,
+      "score": 25,
+      "detail": "Web search returned 7 brand/domain result mention(s).",
+      "evidence": "ut better. We design the personal care we need - The Necessary™ - that supports our health and wellness. — Nécessaire — necessaire.com Shop all our clean, effective and pH-optimized body care essentials. The Deodorant. The Body Lotion. The Body Serum. The Body Wash. — Shop All — necessaire.com Body Discover Essentials ",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "structured_data",
+      "found": true,
+      "score": 25,
+      "detail": "Schema.org: true, OpenGraph: true",
+      "evidence": "a-predictive-search-results></div> </predictive-search> </div> </div> </div> </header> </div> <script type=\"application/ld+json\"> { \"@context\": \"https://schema.org\", \"@type\": \"Corporation\", \"name\": \"Nécessaire\", \"url\": \"https://necessaire.com/\", \"logo\": \"https://cdn.shopify.com/s/files/1/0034/8812/0947/files/necessaire",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "wikipedia",
+      "found": false,
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "evidence": "Wikipedia returned HTTP 404",
+      "maxScore": 20,
+      "reachable": true
+    },
+    {
+      "check": "technical_seo",
+      "found": true,
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "evidence": "robots.txt: 200; sitemap.xml: 200; host: necessaire.com",
+      "maxScore": 15,
+      "reachable": true
+    },
+    {
+      "check": "ai_visibility",
+      "found": true,
+      "score": 17,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "evidence": "What are the best non-comedogenic body lotions for extremely dry skin?: brand not named; instead: CeraVe, Eucerin, Aveeno\nWhich eco-friendly body care brands use recyclable packaging and clean ingredients?: brand not named; instead: Ethique, Lush, Burt's Bees\nHow do I choose between a hydrating body oil and a thick body cream for winter hydration?: brand named; instead: Kiehl's, L'Occitane\nWhat are some top-rated fragrance-free body washes recommended by dermatologists for sensitive skin?: brand not named; instead: CeraVe, Vanicream, Aveeno\nAre there high-end body lotion brands that offer refillable options or bulk sizes?: brand not named; instead: L'Occitane, Kiehl's, Aesop\nWhat body lotions or serums are most effective for treating keratosis pilaris and rough skin texture?: brand not nam",
+      "maxScore": 100,
+      "reachable": true
+    }
+  ],
+  "engines": [
+    {
+      "check": "search_visibility",
+      "score": 25,
+      "detail": "Web search returned 7 brand/domain result mention(s).",
+      "engine": "search_visibility",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "search_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "ut better. We design the personal care we need - The Necessary™ - that supports our health and wellness. — Nécessaire — necessaire.com Shop all our clean, effective and pH-optimized body care essentials. The Deodorant. The Body Lotion. The Body Serum. The Body Wash. — Shop All — necessaire.com Body Discover Essentials ",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "ut better. We design the personal care we need - The Necessary™ - that supports our health and wellness. — Nécessaire — necessaire.com Shop all our clean, effective and pH-optimized body care essentials. The Deodorant. The Body Lotion. The Body Serum. The Body Wash. — Shop All — necessaire.com Body Discover Essentials "
+    },
+    {
+      "check": "structured_data",
+      "score": 25,
+      "detail": "Schema.org: true, OpenGraph: true",
+      "engine": "structured_data",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "structured_data",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "a-predictive-search-results></div> </predictive-search> </div> </div> </div> </header> </div> <script type=\"application/ld+json\"> { \"@context\": \"https://schema.org\", \"@type\": \"Corporation\", \"name\": \"Nécessaire\", \"url\": \"https://necessaire.com/\", \"logo\": \"https://cdn.shopify.com/s/files/1/0034/8812/0947/files/necessaire",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "a-predictive-search-results></div> </predictive-search> </div> </div> </div> </header> </div> <script type=\"application/ld+json\"> { \"@context\": \"https://schema.org\", \"@type\": \"Corporation\", \"name\": \"Nécessaire\", \"url\": \"https://necessaire.com/\", \"logo\": \"https://cdn.shopify.com/s/files/1/0034/8812/0947/files/necessaire"
+    },
+    {
+      "check": "wikipedia",
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "engine": "wikipedia",
+      "maxScore": 20,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "wikipedia",
+          "competitors": [],
+          "brandMentioned": false,
+          "citationPoints": 0,
+          "rawAnswerSnippet": "Wikipedia returned HTTP 404",
+          "mentionProminence": "not_mentioned"
+        }
+      ],
+      "brandMentioned": false,
+      "rawAnswerSnippet": "Wikipedia returned HTTP 404"
+    },
+    {
+      "check": "technical_seo",
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "engine": "technical_seo",
+      "maxScore": 15,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "technical_seo",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 15,
+          "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: necessaire.com",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: necessaire.com"
+    },
+    {
+      "check": "ai_visibility",
+      "score": 17,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "engine": "ai_visibility",
+      "maxScore": 100,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "ai_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 17,
+          "rawAnswerSnippet": "What are the best non-comedogenic body lotions for extremely dry skin?: brand not named; instead: CeraVe, Eucerin, Aveeno\nWhich eco-friendly body care brands use recyclable packaging and clean ingredients?: brand not named; instead: Ethique, Lush, Burt's Bees\nHow do I choose between a hydrating body oil and a thick body cream for winter hydration?: brand named; instead: Kiehl's, L'Occitane\nWhat are some top-rated fragrance-free body washes recommended by dermatologists for sensitive skin?: brand not named; instead: CeraVe, Vanicream, Aveeno\nAre there high-end body lotion brands that offer refillable options or bulk sizes?: brand not named; instead: L'Occitane, Kiehl's, Aesop\nWhat body lotions or serums are most effective for treating keratosis pilaris and rough skin texture?: brand not nam",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "What are the best non-comedogenic body lotions for extremely dry skin?: brand not named; instead: CeraVe, Eucerin, Aveeno\nWhich eco-friendly body care brands use recyclable packaging and clean ingredients?: brand not named; instead: Ethique, Lush, Burt's Bees\nHow do I choose between a hydrating body oil and a thick body cream for winter hydration?: brand named; instead: Kiehl's, L'Occitane\nWhat are some top-rated fragrance-free body washes recommended by dermatologists for sensitive skin?: brand not named; instead: CeraVe, Vanicream, Aveeno\nAre there high-end body lotion brands that offer refillable options or bulk sizes?: brand not named; instead: L'Occitane, Kiehl's, Aesop\nWhat body lotions or serums are most effective for treating keratosis pilaris and rough skin texture?: brand not nam"
+    }
+  ],
+  "competitors": [
+    "CeraVe",
+    "Aveeno",
+    "Eucerin",
+    "L'Occitane",
+    "Burt's Bees",
+    "Kiehl's",
+    "Ethique",
+    "Lush",
+    "Vanicream",
+    "Aesop",
+    "Ameliorate",
+    "Dove",
+    "Birchbox",
+    "Ipsy",
+    "Soko Glam"
+  ],
+  "buyer_intent_prompts": [
+    {
+      "prompt": "What are the best non-comedogenic body lotions for extremely dry skin?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "CeraVe",
+            "Eucerin",
+            "Aveeno"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: CeraVe, Eucerin, Aveeno",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "CeraVe",
+        "Eucerin",
+        "Aveeno"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which eco-friendly body care brands use recyclable packaging and clean ingredients?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Ethique",
+            "Lush",
+            "Burt's Bees"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for clean ingredients"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ethique, Lush, Burt's Bees",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Ethique",
+        "Lush",
+        "Burt's Bees"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "How do I choose between a hydrating body oil and a thick body cream for winter hydration?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Kiehl's",
+            "L'Occitane"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Nécessaire, Kiehl's, L'Occitane",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Kiehl's",
+        "L'Occitane"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What are some top-rated fragrance-free body washes recommended by dermatologists for sensitive skin?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "CeraVe",
+            "Vanicream",
+            "Aveeno"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: CeraVe, Vanicream, Aveeno",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "CeraVe",
+        "Vanicream",
+        "Aveeno"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Are there high-end body lotion brands that offer refillable options or bulk sizes?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "L'Occitane",
+            "Kiehl's",
+            "Aesop"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: L'Occitane, Kiehl's, Aesop",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "L'Occitane",
+        "Kiehl's",
+        "Aesop"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What body lotions or serums are most effective for treating keratosis pilaris and rough skin texture?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "CeraVe",
+            "Ameliorate",
+            "Eucerin"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: CeraVe, Ameliorate, Eucerin",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "CeraVe",
+        "Ameliorate",
+        "Eucerin"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which luxury body care gift sets are best for someone who prefers subtle, natural scents?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Necessaire",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What should I look for in a daily body wash to avoid stripping my skin barrier?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "CeraVe",
+            "Aveeno",
+            "Dove"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: CeraVe, Aveeno, Dove",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "CeraVe",
+        "Aveeno",
+        "Dove"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Are clean body care products actually better for eczema-prone skin than standard drugstore brands?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "CeraVe",
+            "Aveeno",
+            "Eucerin"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: CeraVe, Aveeno, Eucerin",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "CeraVe",
+        "Aveeno",
+        "Eucerin"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the top body care subscription services that give discounts on recurring deliveries?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Birchbox",
+            "Ipsy",
+            "Soko Glam"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Birchbox, Ipsy, Soko Glam",
+          "perceivedCategory": "body care",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Birchbox",
+        "Ipsy",
+        "Soko Glam"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which travel-sized body care kits are TSA-compliant and good for sensitive skin?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Burt's Bees",
+            "Aveeno",
+            "CeraVe"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Burt's Bees, Aveeno, CeraVe",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Burt's Bees",
+        "Aveeno",
+        "CeraVe"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "How do premium body washes compare to drugstore options in terms of ingredient quality and hydration?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "CeraVe",
+            "Aveeno",
+            "L'Occitane"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: CeraVe, Aveeno, L'Occitane",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "CeraVe",
+        "Aveeno",
+        "L'Occitane"
+      ],
+      "brandMentioned": false
+    }
+  ],
+  "prompt_debug": "ai:12",
+  "category": "body care products",
+  "icp_segment": {
+    "key": "small_brand_ecommerce",
+    "label": "Small brand / ecommerce",
+    "buyerIntent": "best brand of [product]",
+    "remediationFocus": [
+      "FAQ",
+      "product pages",
+      "reviews",
+      "third-party listicles"
+    ]
+  },
+  "audit_tier": "agent_19eur",
+  "answer_engine": {
+    "model": "gpt-4o-mini-2024-07-18",
+    "engine": "ChatGPT",
+    "realLlmCall": true
+  },
+  "brand_sentiment": {
+    "label": "positive",
+    "justification": "described as a trusted premium option"
+  },
+  "fixes": [
+    "Build authoritative third-party coverage and Wikidata-style entity consistency before pursuing encyclopedia visibility."
+  ],
+  "email_sent": false,
+  "email_error": "Suppressed: internal/test domain.",
+  "locale": "en"
+}

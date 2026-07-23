@@ -1,0 +1,618 @@
+{
+  "audit_id": "6a7f2d10-b63e-4c92-aa78-1df53dda5b72",
+  "status": "completed",
+  "brand_name": "De Soi",
+  "website_url": "https://drinkdesoi.com/",
+  "score": 38,
+  "checks": [
+    {
+      "check": "search_visibility",
+      "found": true,
+      "score": 25,
+      "detail": "Web search returned 6 brand/domain result mention(s).",
+      "evidence": "avors for a refreshing & mindful drinking experience. — De Soi | Non-alcoholic cocktails made with natural adaptogens — drinkdesoi.com Non-alc cocktails with adaptogens ✨. Available at Target, Sprouts, Whole Foods & more 👀. Only 25 calories ✅ 5g sugar or less — De Soi (@drinkdesoi) — instagram.com Inspired by the Fren",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "structured_data",
+      "found": true,
+      "score": 25,
+      "detail": "Schema.org: true, OpenGraph: true",
+      "evidence": "</menu-drawer> </header> <div class=\"fixed-overlay fixed-overlay--header-section z-10\"></div> <script type=\"application/ld+json\"> { \"@context\": \"http://schema.org\", \"@type\": \"Organization\", \"name\": \"De Soi\", \"logo\": \"https:\\/\\/drinkdesoi.com\\/cdn\\/shop\\/files\\/desoi_logo_79e8ba40-43fa-41ab-8735-4a6a90818902.webp?v=1773",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "wikipedia",
+      "found": false,
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "evidence": "{\"type\":\"standard\",\"title\":\"Katy Perry\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Katy Perry</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q42493\",\"titles\":{\"canonical\":\"Katy_Perry\",\"normalized\":\"Katy Perry\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"m",
+      "maxScore": 20,
+      "reachable": true
+    },
+    {
+      "check": "technical_seo",
+      "found": true,
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "evidence": "robots.txt: 200; sitemap.xml: 200; host: drinkdesoi.com",
+      "maxScore": 15,
+      "reachable": true
+    },
+    {
+      "check": "ai_visibility",
+      "found": true,
+      "score": 25,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "evidence": "What are the best non-alcoholic aperitifs for serving at a dinner party?: brand not named; instead: Seedlip, Lyre's, Aecorn\nCan you recommend low-sugar zero-proof canned cocktails that taste like sophisticated drinks?: brand not named; instead: Kin Euphorics, Parch, Boozy Botanicals\nWhat are top-rated functional non-alcoholic beverages that help you relax without alcohol?: brand named; instead: Kin Euphorics, Seedlip\nWhich non-alcoholic RTD cocktail brands offer monthly subscription discounts?: brand not named; instead: On, Hoka, Veja\nWhat are the best alcohol-free cocktail options for people looking to replace evening wine?: brand not named; instead: Seedlip, Lyre's, Monday\nAre there any botanical non-alcoholic aperitifs similar to Ghia or Seedlip?: brand named; instead: Ghia, Seedlip\nWha",
+      "maxScore": 100,
+      "reachable": true
+    }
+  ],
+  "engines": [
+    {
+      "check": "search_visibility",
+      "score": 25,
+      "detail": "Web search returned 6 brand/domain result mention(s).",
+      "engine": "search_visibility",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "search_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "avors for a refreshing & mindful drinking experience. — De Soi | Non-alcoholic cocktails made with natural adaptogens — drinkdesoi.com Non-alc cocktails with adaptogens ✨. Available at Target, Sprouts, Whole Foods & more 👀. Only 25 calories ✅ 5g sugar or less — De Soi (@drinkdesoi) — instagram.com Inspired by the Fren",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "avors for a refreshing & mindful drinking experience. — De Soi | Non-alcoholic cocktails made with natural adaptogens — drinkdesoi.com Non-alc cocktails with adaptogens ✨. Available at Target, Sprouts, Whole Foods & more 👀. Only 25 calories ✅ 5g sugar or less — De Soi (@drinkdesoi) — instagram.com Inspired by the Fren"
+    },
+    {
+      "check": "structured_data",
+      "score": 25,
+      "detail": "Schema.org: true, OpenGraph: true",
+      "engine": "structured_data",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "structured_data",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "</menu-drawer> </header> <div class=\"fixed-overlay fixed-overlay--header-section z-10\"></div> <script type=\"application/ld+json\"> { \"@context\": \"http://schema.org\", \"@type\": \"Organization\", \"name\": \"De Soi\", \"logo\": \"https:\\/\\/drinkdesoi.com\\/cdn\\/shop\\/files\\/desoi_logo_79e8ba40-43fa-41ab-8735-4a6a90818902.webp?v=1773",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "</menu-drawer> </header> <div class=\"fixed-overlay fixed-overlay--header-section z-10\"></div> <script type=\"application/ld+json\"> { \"@context\": \"http://schema.org\", \"@type\": \"Organization\", \"name\": \"De Soi\", \"logo\": \"https:\\/\\/drinkdesoi.com\\/cdn\\/shop\\/files\\/desoi_logo_79e8ba40-43fa-41ab-8735-4a6a90818902.webp?v=1773"
+    },
+    {
+      "check": "wikipedia",
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "engine": "wikipedia",
+      "maxScore": 20,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "wikipedia",
+          "competitors": [],
+          "brandMentioned": false,
+          "citationPoints": 0,
+          "rawAnswerSnippet": "{\"type\":\"standard\",\"title\":\"Katy Perry\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Katy Perry</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q42493\",\"titles\":{\"canonical\":\"Katy_Perry\",\"normalized\":\"Katy Perry\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"m",
+          "mentionProminence": "not_mentioned"
+        }
+      ],
+      "brandMentioned": false,
+      "rawAnswerSnippet": "{\"type\":\"standard\",\"title\":\"Katy Perry\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Katy Perry</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q42493\",\"titles\":{\"canonical\":\"Katy_Perry\",\"normalized\":\"Katy Perry\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"m"
+    },
+    {
+      "check": "technical_seo",
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "engine": "technical_seo",
+      "maxScore": 15,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "technical_seo",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 15,
+          "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: drinkdesoi.com",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: drinkdesoi.com"
+    },
+    {
+      "check": "ai_visibility",
+      "score": 25,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "engine": "ai_visibility",
+      "maxScore": 100,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "ai_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "What are the best non-alcoholic aperitifs for serving at a dinner party?: brand not named; instead: Seedlip, Lyre's, Aecorn\nCan you recommend low-sugar zero-proof canned cocktails that taste like sophisticated drinks?: brand not named; instead: Kin Euphorics, Parch, Boozy Botanicals\nWhat are top-rated functional non-alcoholic beverages that help you relax without alcohol?: brand named; instead: Kin Euphorics, Seedlip\nWhich non-alcoholic RTD cocktail brands offer monthly subscription discounts?: brand not named; instead: On, Hoka, Veja\nWhat are the best alcohol-free cocktail options for people looking to replace evening wine?: brand not named; instead: Seedlip, Lyre's, Monday\nAre there any botanical non-alcoholic aperitifs similar to Ghia or Seedlip?: brand named; instead: Ghia, Seedlip\nWha",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "What are the best non-alcoholic aperitifs for serving at a dinner party?: brand not named; instead: Seedlip, Lyre's, Aecorn\nCan you recommend low-sugar zero-proof canned cocktails that taste like sophisticated drinks?: brand not named; instead: Kin Euphorics, Parch, Boozy Botanicals\nWhat are top-rated functional non-alcoholic beverages that help you relax without alcohol?: brand named; instead: Kin Euphorics, Seedlip\nWhich non-alcoholic RTD cocktail brands offer monthly subscription discounts?: brand not named; instead: On, Hoka, Veja\nWhat are the best alcohol-free cocktail options for people looking to replace evening wine?: brand not named; instead: Seedlip, Lyre's, Monday\nAre there any botanical non-alcoholic aperitifs similar to Ghia or Seedlip?: brand named; instead: Ghia, Seedlip\nWha"
+    }
+  ],
+  "competitors": [
+    "Seedlip",
+    "Lyre's",
+    "Kin Euphorics",
+    "Athletic Brewing",
+    "Aecorn",
+    "Parch",
+    "Monday",
+    "Boozy Botanicals",
+    "On",
+    "Hoka",
+    "Veja",
+    "Ghia",
+    "Pineapple Collaborative",
+    "Humble",
+    "Mocktail Club"
+  ],
+  "buyer_intent_prompts": [
+    {
+      "prompt": "What are the best non-alcoholic aperitifs for serving at a dinner party?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Seedlip",
+            "Lyre's",
+            "Aecorn"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "recognized for quality non-alcoholic options"
+          },
+          "rawAnswerSnippet": "recommended_brands: Seedlip, Lyre's, Aecorn",
+          "perceivedCategory": "non-alcoholic aperitifs",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Seedlip",
+        "Lyre's",
+        "Aecorn"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Can you recommend low-sugar zero-proof canned cocktails that taste like sophisticated drinks?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Kin Euphorics",
+            "Parch",
+            "Boozy Botanicals"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Kin Euphorics, Parch, Boozy Botanicals",
+          "perceivedCategory": "canned cocktails",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Kin Euphorics",
+        "Parch",
+        "Boozy Botanicals"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are top-rated functional non-alcoholic beverages that help you relax without alcohol?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Kin Euphorics",
+            "Seedlip"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for quality non-alcoholic options"
+          },
+          "rawAnswerSnippet": "recommended_brands: De Soi, Kin Euphorics, Seedlip",
+          "perceivedCategory": "non-alcoholic beverages",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Kin Euphorics",
+        "Seedlip"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Which non-alcoholic RTD cocktail brands offer monthly subscription discounts?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "non-alcoholic cocktails",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the best alcohol-free cocktail options for people looking to replace evening wine?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Seedlip",
+            "Lyre's",
+            "Monday"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Seedlip, Lyre's, Monday",
+          "perceivedCategory": "non-alcoholic beverages",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Seedlip",
+        "Lyre's",
+        "Monday"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Are there any botanical non-alcoholic aperitifs similar to Ghia or Seedlip?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Ghia",
+            "Seedlip"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers a unique non-alcoholic option"
+          },
+          "rawAnswerSnippet": "recommended_brands: De Soi, Ghia, Seedlip",
+          "perceivedCategory": "botanical aperitifs",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Ghia",
+        "Seedlip"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What are some healthy zero-proof drinks made with natural herbal ingredients?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Seedlip",
+            "Lyre's",
+            "Monday"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Seedlip, Lyre's, Monday",
+          "perceivedCategory": "non-alcoholic beverages",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Seedlip",
+        "Lyre's",
+        "Monday"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Where can I find premium non-alcoholic canned beverages in retail stores nearby?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Athletic Brewing",
+            "Pineapple Collaborative"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for premium non-alcoholic options"
+          },
+          "rawAnswerSnippet": "recommended_brands: De Soi, Athletic Brewing, Pineapple Collaborative",
+          "perceivedCategory": "non-alcoholic beverages",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Athletic Brewing",
+        "Pineapple Collaborative"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What are the most popular non-alcoholic drinks for hosting social gatherings?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Seedlip",
+            "Lyre's",
+            "Athletic Brewing"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Seedlip, Lyre's, Athletic Brewing",
+          "perceivedCategory": "non-alcoholic beverages",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Seedlip",
+        "Lyre's",
+        "Athletic Brewing"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which non-alcoholic sparkling cocktails have adult flavor profiles like bitter or herbal rather than sweet?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Seedlip",
+            "Aecorn",
+            "Kin Euphorics"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Seedlip, Aecorn, Kin Euphorics",
+          "perceivedCategory": "non-alcoholic cocktails",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Seedlip",
+        "Aecorn",
+        "Kin Euphorics"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the best alcohol-free drinks to buy for someone participating in Dry January?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Seedlip",
+            "Athletic Brewing",
+            "Lyre's"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Seedlip, Athletic Brewing, Lyre's",
+          "perceivedCategory": "non-alcoholic beverages",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Seedlip",
+        "Athletic Brewing",
+        "Lyre's"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "How do different non-alcoholic canned cocktail brands compare in terms of price per serving?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Kin Euphorics",
+            "Parch",
+            "Humble",
+            "Mocktail Club"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Kin Euphorics, Parch, Humble, Mocktail Club",
+          "perceivedCategory": "non-alcoholic cocktails",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Kin Euphorics",
+        "Parch",
+        "Humble",
+        "Mocktail Club"
+      ],
+      "brandMentioned": false
+    }
+  ],
+  "prompt_debug": "ai:12",
+  "category": "food & beverage",
+  "icp_segment": {
+    "key": "small_brand_ecommerce",
+    "label": "Small brand / ecommerce",
+    "buyerIntent": "best brand of [product]",
+    "remediationFocus": [
+      "FAQ",
+      "product pages",
+      "reviews",
+      "third-party listicles"
+    ]
+  },
+  "audit_tier": "agent_19eur",
+  "answer_engine": {
+    "model": "gpt-4o-mini-2024-07-18",
+    "engine": "ChatGPT",
+    "realLlmCall": true
+  },
+  "brand_sentiment": {
+    "label": "positive",
+    "justification": "recognized for quality non-alcoholic options"
+  },
+  "fixes": [
+    "Build authoritative third-party coverage and Wikidata-style entity consistency before pursuing encyclopedia visibility."
+  ],
+  "email_sent": false,
+  "email_error": "Suppressed: internal/test domain.",
+  "locale": "en"
+}

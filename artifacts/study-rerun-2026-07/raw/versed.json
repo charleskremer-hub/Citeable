@@ -1,0 +1,600 @@
+{
+  "audit_id": "64016045-60cd-4fe5-bf39-58fa17f19106",
+  "status": "completed",
+  "brand_name": "Versed",
+  "website_url": "https://versedskin.com/",
+  "score": 25,
+  "checks": [
+    {
+      "check": "search_visibility",
+      "found": true,
+      "score": 25,
+      "detail": "Web search returned 9 brand/domain result mention(s).",
+      "evidence": "bottle of Versed Skin Soothe hydrating milky toner with white cap, 4 FL. Skin Soothe. Regular price: $14.99. — Makeup — versedskin.com Shop Versed Skin for skincare and makeup routine essentials, from moisturizers and cleansers, to mascara and concealer. — Versed — versedskin.com Solve Your SkinTM Clean | Vegan | Derma",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "structured_data",
+      "found": true,
+      "score": 25,
+      "detail": "Schema.org: true, OpenGraph: true",
+      "evidence": "hidden--inline\">Opens in a new window.</span> </a> </li></ul> </div> </div> </div> </section> <script type=\"application/ld+json\"> { \"@context\": \"http://schema.org\", \"@type\": \"Organization\", \"name\": \"Versed Skin\", \"logo\": \"https:\\/\\/versedskin.com\\/cdn\\/shop\\/files\\/versed_2.0_logo__1__720.png?v=1718325393\\u0026width=25",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "wikipedia",
+      "found": false,
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "evidence": "{\"type\":\"standard\",\"title\":\"Midazolam\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Midazolam</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q423071\",\"titles\":{\"canonical\":\"Midazolam\",\"normalized\":\"Midazolam\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-p",
+      "maxScore": 20,
+      "reachable": true
+    },
+    {
+      "check": "technical_seo",
+      "found": true,
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "evidence": "robots.txt: 200; sitemap.xml: 200; host: versedskin.com",
+      "maxScore": 15,
+      "reachable": true
+    },
+    {
+      "check": "ai_visibility",
+      "found": true,
+      "score": 8,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "evidence": "What are the best affordable clean skincare brands for sensitive, acne-prone skin?: brand not named; instead: CeraVe, La Roche-Posay, Neutrogena\nCan you recommend cruelty-free beauty brands that offer both skincare and basic everyday makeup?: brand not named; instead: Pacifica, Alima Pure\nWhat dermatologist-tested skincare brands are best for a simple, budget-friendly morning routine?: brand not named; instead: CeraVe, Neutrogena\nWhich sustainable beauty brands make lightweight daily moisturizers under twenty dollars?: brand named; instead: none found\nWhat are top-rated non-comedogenic skincare lines for someone building a beginner routine?: brand not named; instead: CeraVe, Neutrogena, La Roche-Posay\nAre there any affordable vegan beauty brands that sell good lip liners and concealers?: b",
+      "maxScore": 100,
+      "reachable": true
+    }
+  ],
+  "engines": [
+    {
+      "check": "search_visibility",
+      "score": 25,
+      "detail": "Web search returned 9 brand/domain result mention(s).",
+      "engine": "search_visibility",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "search_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "bottle of Versed Skin Soothe hydrating milky toner with white cap, 4 FL. Skin Soothe. Regular price: $14.99. — Makeup — versedskin.com Shop Versed Skin for skincare and makeup routine essentials, from moisturizers and cleansers, to mascara and concealer. — Versed — versedskin.com Solve Your SkinTM Clean | Vegan | Derma",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "bottle of Versed Skin Soothe hydrating milky toner with white cap, 4 FL. Skin Soothe. Regular price: $14.99. — Makeup — versedskin.com Shop Versed Skin for skincare and makeup routine essentials, from moisturizers and cleansers, to mascara and concealer. — Versed — versedskin.com Solve Your SkinTM Clean | Vegan | Derma"
+    },
+    {
+      "check": "structured_data",
+      "score": 25,
+      "detail": "Schema.org: true, OpenGraph: true",
+      "engine": "structured_data",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "structured_data",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "hidden--inline\">Opens in a new window.</span> </a> </li></ul> </div> </div> </div> </section> <script type=\"application/ld+json\"> { \"@context\": \"http://schema.org\", \"@type\": \"Organization\", \"name\": \"Versed Skin\", \"logo\": \"https:\\/\\/versedskin.com\\/cdn\\/shop\\/files\\/versed_2.0_logo__1__720.png?v=1718325393\\u0026width=25",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "hidden--inline\">Opens in a new window.</span> </a> </li></ul> </div> </div> </div> </section> <script type=\"application/ld+json\"> { \"@context\": \"http://schema.org\", \"@type\": \"Organization\", \"name\": \"Versed Skin\", \"logo\": \"https:\\/\\/versedskin.com\\/cdn\\/shop\\/files\\/versed_2.0_logo__1__720.png?v=1718325393\\u0026width=25"
+    },
+    {
+      "check": "wikipedia",
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "engine": "wikipedia",
+      "maxScore": 20,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "wikipedia",
+          "competitors": [],
+          "brandMentioned": false,
+          "citationPoints": 0,
+          "rawAnswerSnippet": "{\"type\":\"standard\",\"title\":\"Midazolam\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Midazolam</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q423071\",\"titles\":{\"canonical\":\"Midazolam\",\"normalized\":\"Midazolam\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-p",
+          "mentionProminence": "not_mentioned"
+        }
+      ],
+      "brandMentioned": false,
+      "rawAnswerSnippet": "{\"type\":\"standard\",\"title\":\"Midazolam\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Midazolam</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q423071\",\"titles\":{\"canonical\":\"Midazolam\",\"normalized\":\"Midazolam\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-p"
+    },
+    {
+      "check": "technical_seo",
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "engine": "technical_seo",
+      "maxScore": 15,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "technical_seo",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 15,
+          "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: versedskin.com",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: versedskin.com"
+    },
+    {
+      "check": "ai_visibility",
+      "score": 8,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "engine": "ai_visibility",
+      "maxScore": 100,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "ai_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 8,
+          "rawAnswerSnippet": "What are the best affordable clean skincare brands for sensitive, acne-prone skin?: brand not named; instead: CeraVe, La Roche-Posay, Neutrogena\nCan you recommend cruelty-free beauty brands that offer both skincare and basic everyday makeup?: brand not named; instead: Pacifica, Alima Pure\nWhat dermatologist-tested skincare brands are best for a simple, budget-friendly morning routine?: brand not named; instead: CeraVe, Neutrogena\nWhich sustainable beauty brands make lightweight daily moisturizers under twenty dollars?: brand named; instead: none found\nWhat are top-rated non-comedogenic skincare lines for someone building a beginner routine?: brand not named; instead: CeraVe, Neutrogena, La Roche-Posay\nAre there any affordable vegan beauty brands that sell good lip liners and concealers?: b",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "What are the best affordable clean skincare brands for sensitive, acne-prone skin?: brand not named; instead: CeraVe, La Roche-Posay, Neutrogena\nCan you recommend cruelty-free beauty brands that offer both skincare and basic everyday makeup?: brand not named; instead: Pacifica, Alima Pure\nWhat dermatologist-tested skincare brands are best for a simple, budget-friendly morning routine?: brand not named; instead: CeraVe, Neutrogena\nWhich sustainable beauty brands make lightweight daily moisturizers under twenty dollars?: brand named; instead: none found\nWhat are top-rated non-comedogenic skincare lines for someone building a beginner routine?: brand not named; instead: CeraVe, Neutrogena, La Roche-Posay\nAre there any affordable vegan beauty brands that sell good lip liners and concealers?: b"
+    }
+  ],
+  "competitors": [
+    "CeraVe",
+    "Neutrogena",
+    "Pacifica",
+    "Burt's Bees",
+    "La Roche-Posay",
+    "Paula's Choice",
+    "Alima Pure",
+    "E.l.f. Cosmetics",
+    "Clinique",
+    "Tatcha",
+    "Acure",
+    "Murad",
+    "Glossier",
+    "Drunk Elephant"
+  ],
+  "buyer_intent_prompts": [
+    {
+      "prompt": "What are the best affordable clean skincare brands for sensitive, acne-prone skin?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "CeraVe",
+            "La Roche-Posay",
+            "Neutrogena"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for effective skincare"
+          },
+          "rawAnswerSnippet": "recommended_brands: CeraVe, La Roche-Posay, Neutrogena",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "CeraVe",
+        "La Roche-Posay",
+        "Neutrogena"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Can you recommend cruelty-free beauty brands that offer both skincare and basic everyday makeup?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Pacifica",
+            "Alima Pure"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Pacifica, % Pure, Alima Pure",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Pacifica",
+        "Alima Pure"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What dermatologist-tested skincare brands are best for a simple, budget-friendly morning routine?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "CeraVe",
+            "Neutrogena"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers affordable skincare options"
+          },
+          "rawAnswerSnippet": "recommended_brands: CeraVe, Neutrogena, The Ordinary",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "CeraVe",
+        "Neutrogena"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which sustainable beauty brands make lightweight daily moisturizers under twenty dollars?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers affordable skincare"
+          },
+          "rawAnswerSnippet": "recommended_brands: Versed",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What are top-rated non-comedogenic skincare lines for someone building a beginner routine?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "CeraVe",
+            "Neutrogena",
+            "La Roche-Posay"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for effective skincare"
+          },
+          "rawAnswerSnippet": "recommended_brands: CeraVe, Neutrogena, La Roche-Posay",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "CeraVe",
+        "Neutrogena",
+        "La Roche-Posay"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Are there any affordable vegan beauty brands that sell good lip liners and concealers?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "E.l.f. Cosmetics",
+            "Pacifica"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "not_enough_signal",
+            "justification": "not enough signal"
+          },
+          "rawAnswerSnippet": "recommended_brands: % Pure, E.l.f. Cosmetics, Pacifica",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "E.l.f. Cosmetics",
+        "Pacifica"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the most popular clean skincare brands available at mass retailers like Target?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "CeraVe",
+            "Neutrogena",
+            "Burt's Bees"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for effective clean products"
+          },
+          "rawAnswerSnippet": "recommended_brands: CeraVe, Neutrogena, Burt's Bees",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "CeraVe",
+        "Neutrogena",
+        "Burt's Bees"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which beauty brands offer gentle facial exfoliators that work well under makeup?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Paula's Choice",
+            "Clinique",
+            "Tatcha"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Paula's Choice, Clinique, Tatcha",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Paula's Choice",
+        "Clinique",
+        "Tatcha"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Can you suggest some budget-friendly skincare brands that do not use synthetic fragrances?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Acure",
+            "Burt's Bees"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: The Ordinary, Acure, Burt's Bees",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Acure",
+        "Burt's Bees"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What clean beauty brands offer high-quality products similar to Glossier but at a lower price point?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Burt's Bees",
+            "Pacifica"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers affordable clean beauty"
+          },
+          "rawAnswerSnippet": "recommended_brands: Burt's Bees, Pacifica, % Pure",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Burt's Bees",
+        "Pacifica"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which skincare lines are best for treating dark spots and hyperpigmentation without harsh chemicals?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Paula's Choice",
+            "Murad"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: The Ordinary, Paula's Choice, Murad",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Paula's Choice",
+        "Murad"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the best beauty brands for a minimalist, multi-purpose skincare and makeup routine?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Glossier",
+            "Drunk Elephant"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers effective minimalist products"
+          },
+          "rawAnswerSnippet": "recommended_brands: The Ordinary, Glossier, Drunk Elephant",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Glossier",
+        "Drunk Elephant"
+      ],
+      "brandMentioned": false
+    }
+  ],
+  "prompt_debug": "ai:12",
+  "category": "beauty brand",
+  "icp_segment": {
+    "key": "small_brand_ecommerce",
+    "label": "Small brand / ecommerce",
+    "buyerIntent": "best brand of [product]",
+    "remediationFocus": [
+      "FAQ",
+      "product pages",
+      "reviews",
+      "third-party listicles"
+    ]
+  },
+  "audit_tier": "agent_19eur",
+  "answer_engine": {
+    "model": "gpt-4o-mini-2024-07-18",
+    "engine": "ChatGPT",
+    "realLlmCall": true
+  },
+  "brand_sentiment": {
+    "label": "positive",
+    "justification": "known for effective skincare"
+  },
+  "fixes": [
+    "Earn mentions on trusted product listicles, review pages, comparison guides, community threads, and marketplaces that answer engines can cite.",
+    "Build authoritative third-party coverage and Wikidata-style entity consistency before pursuing encyclopedia visibility."
+  ],
+  "email_sent": false,
+  "email_error": "Suppressed: internal/test domain.",
+  "locale": "en"
+}

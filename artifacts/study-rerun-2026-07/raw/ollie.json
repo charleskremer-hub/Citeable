@@ -1,0 +1,541 @@
+{
+  "audit_id": "30450451-cdb3-4872-98db-9df0df200f59",
+  "status": "completed",
+  "brand_name": "Ollie",
+  "website_url": "https://myollie.com/",
+  "score": 100,
+  "checks": [
+    {
+      "check": "search_visibility",
+      "found": true,
+      "score": 25,
+      "detail": "Web search returned 12 brand/domain result mention(s).",
+      "evidence": "- Human Grade Dog Food - Apps on Google Play — play.google.com No information is available for this page. — https://www.myollie.com/account — myollie.com Feel free to contact us anytime! Our incredible Canine Care team is here to assist you via Instagram or email at caninecare@myollie.com. — Ollie on Instagram: \"Thinki",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "structured_data",
+      "found": true,
+      "score": 25,
+      "detail": "Schema.org: true, OpenGraph: true",
+      "evidence": "dients, tailored to your pup&#x27;s unique nutritional needs.\"/><meta name=\"robots\" content=\"index\"/><meta name=\"script:ld+json\" content=\"{&quot;@context&quot;:&quot;https://schema.org&quot;,&quot;@type&quot;:&quot;Organization&quot;,&quot;name&quot;:&quot;Ollie&quot;,&quot;url&quot;:&quot;https://www.ollie.com/&quot;,",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "wikipedia",
+      "found": true,
+      "score": 20,
+      "detail": "Brand has a Wikipedia article",
+      "evidence": "{\"type\":\"standard\",\"title\":\"Ollie\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Ollie</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q20164339\",\"titles\":{\"canonical\":\"Ollie\",\"normalized\":\"Ollie\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main",
+      "maxScore": 20,
+      "reachable": true
+    },
+    {
+      "check": "technical_seo",
+      "found": true,
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "evidence": "robots.txt: 200; sitemap.xml: 200; host: myollie.com",
+      "maxScore": 15,
+      "reachable": true
+    },
+    {
+      "check": "ai_visibility",
+      "found": true,
+      "score": 100,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "evidence": "What are the best fresh dog food subscription services for dogs with sensitive stomachs?: brand named; instead: Pet Plate\nHow much does human-grade fresh dog food typically cost per month for a medium-sized dog?: brand named; instead: none found\nWhich fresh dog food delivery companies offer customized portion control for weight loss?: brand named; instead: none found\nWhat is the healthiest fresh dog food brand for a growing puppy?: brand named; instead: PetPlate\nAre fresh dog food subscriptions worth the cost compared to high-end dry kibble?: brand named; instead: none found\nWhat are the top rated fresh dog food brands that deliver pre-portioned meals?: brand named; instead: Pet Plate\nWhich fresh dog food service is best for picky eaters who dislike traditional kibble?: brand named; instea",
+      "maxScore": 100,
+      "reachable": true
+    }
+  ],
+  "engines": [
+    {
+      "check": "search_visibility",
+      "score": 25,
+      "detail": "Web search returned 12 brand/domain result mention(s).",
+      "engine": "search_visibility",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "search_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "- Human Grade Dog Food - Apps on Google Play — play.google.com No information is available for this page. — https://www.myollie.com/account — myollie.com Feel free to contact us anytime! Our incredible Canine Care team is here to assist you via Instagram or email at caninecare@myollie.com. — Ollie on Instagram: \"Thinki",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "- Human Grade Dog Food - Apps on Google Play — play.google.com No information is available for this page. — https://www.myollie.com/account — myollie.com Feel free to contact us anytime! Our incredible Canine Care team is here to assist you via Instagram or email at caninecare@myollie.com. — Ollie on Instagram: \"Thinki"
+    },
+    {
+      "check": "structured_data",
+      "score": 25,
+      "detail": "Schema.org: true, OpenGraph: true",
+      "engine": "structured_data",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "structured_data",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "dients, tailored to your pup&#x27;s unique nutritional needs.\"/><meta name=\"robots\" content=\"index\"/><meta name=\"script:ld+json\" content=\"{&quot;@context&quot;:&quot;https://schema.org&quot;,&quot;@type&quot;:&quot;Organization&quot;,&quot;name&quot;:&quot;Ollie&quot;,&quot;url&quot;:&quot;https://www.ollie.com/&quot;,",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "dients, tailored to your pup&#x27;s unique nutritional needs.\"/><meta name=\"robots\" content=\"index\"/><meta name=\"script:ld+json\" content=\"{&quot;@context&quot;:&quot;https://schema.org&quot;,&quot;@type&quot;:&quot;Organization&quot;,&quot;name&quot;:&quot;Ollie&quot;,&quot;url&quot;:&quot;https://www.ollie.com/&quot;,"
+    },
+    {
+      "check": "wikipedia",
+      "score": 20,
+      "detail": "Brand has a Wikipedia article",
+      "engine": "wikipedia",
+      "maxScore": 20,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "wikipedia",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 20,
+          "rawAnswerSnippet": "{\"type\":\"standard\",\"title\":\"Ollie\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Ollie</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q20164339\",\"titles\":{\"canonical\":\"Ollie\",\"normalized\":\"Ollie\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "{\"type\":\"standard\",\"title\":\"Ollie\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Ollie</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q20164339\",\"titles\":{\"canonical\":\"Ollie\",\"normalized\":\"Ollie\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main"
+    },
+    {
+      "check": "technical_seo",
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "engine": "technical_seo",
+      "maxScore": 15,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "technical_seo",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 15,
+          "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: myollie.com",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: myollie.com"
+    },
+    {
+      "check": "ai_visibility",
+      "score": 100,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "engine": "ai_visibility",
+      "maxScore": 100,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "ai_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 100,
+          "rawAnswerSnippet": "What are the best fresh dog food subscription services for dogs with sensitive stomachs?: brand named; instead: Pet Plate\nHow much does human-grade fresh dog food typically cost per month for a medium-sized dog?: brand named; instead: none found\nWhich fresh dog food delivery companies offer customized portion control for weight loss?: brand named; instead: none found\nWhat is the healthiest fresh dog food brand for a growing puppy?: brand named; instead: PetPlate\nAre fresh dog food subscriptions worth the cost compared to high-end dry kibble?: brand named; instead: none found\nWhat are the top rated fresh dog food brands that deliver pre-portioned meals?: brand named; instead: Pet Plate\nWhich fresh dog food service is best for picky eaters who dislike traditional kibble?: brand named; instea",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "What are the best fresh dog food subscription services for dogs with sensitive stomachs?: brand named; instead: Pet Plate\nHow much does human-grade fresh dog food typically cost per month for a medium-sized dog?: brand named; instead: none found\nWhich fresh dog food delivery companies offer customized portion control for weight loss?: brand named; instead: none found\nWhat is the healthiest fresh dog food brand for a growing puppy?: brand named; instead: PetPlate\nAre fresh dog food subscriptions worth the cost compared to high-end dry kibble?: brand named; instead: none found\nWhat are the top rated fresh dog food brands that deliver pre-portioned meals?: brand named; instead: Pet Plate\nWhich fresh dog food service is best for picky eaters who dislike traditional kibble?: brand named; instea"
+    }
+  ],
+  "competitors": [
+    "PetPlate",
+    "Pet Plate"
+  ],
+  "buyer_intent_prompts": [
+    {
+      "prompt": "What are the best fresh dog food subscription services for dogs with sensitive stomachs?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Pet Plate"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "highly rated for sensitive stomachs"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ollie, The Farmer's Dog, Pet Plate",
+          "perceivedCategory": "fresh dog food",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Pet Plate"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "How much does human-grade fresh dog food typically cost per month for a medium-sized dog?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers quality fresh dog food"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ollie",
+          "perceivedCategory": "fresh dog food",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Which fresh dog food delivery companies offer customized portion control for weight loss?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers customized portion control"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ollie",
+          "perceivedCategory": "fresh dog food",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What is the healthiest fresh dog food brand for a growing puppy?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "PetPlate"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "high-quality fresh ingredients"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ollie, The Farmer's Dog, PetPlate",
+          "perceivedCategory": "fresh dog food",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "PetPlate"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Are fresh dog food subscriptions worth the cost compared to high-end dry kibble?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers fresh, high-quality options"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ollie",
+          "perceivedCategory": "fresh dog food",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What are the top rated fresh dog food brands that deliver pre-portioned meals?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Pet Plate"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ollie, The Farmer's Dog, Pet Plate",
+          "perceivedCategory": "fresh dog food",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Pet Plate"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Which fresh dog food service is best for picky eaters who dislike traditional kibble?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "PetPlate"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ollie, The Farmer's Dog, PetPlate",
+          "perceivedCategory": "fresh dog food",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "PetPlate"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "How long does fresh dog food usually last in the fridge and freezer once delivered?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers fresh dog food"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ollie",
+          "perceivedCategory": "dog food",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What fresh dog food brands offer grain-free or limited-ingredient recipes for dogs with allergies?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "PetPlate"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ollie, The Farmer's Dog, PetPlate",
+          "perceivedCategory": "dog food",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "PetPlate"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Can I mix fresh dog food with dry kibble to save money while improving my dog's diet?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers quality fresh dog food"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ollie",
+          "perceivedCategory": "dog food",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Which fresh dog food companies use human-grade ingredients and publish complete nutritional information?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "PetPlate"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers human-grade ingredients"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ollie, The Farmer's Dog, PetPlate",
+          "perceivedCategory": "dog food",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "PetPlate"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What are the most popular direct-to-consumer fresh dog food brands available right now?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Pet Plate"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ollie, The Farmer's Dog, Pet Plate",
+          "perceivedCategory": "fresh dog food",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Pet Plate"
+      ],
+      "brandMentioned": true
+    }
+  ],
+  "prompt_debug": "ai:12",
+  "category": "fresh dog food",
+  "icp_segment": {
+    "key": "small_brand_ecommerce",
+    "label": "Small brand / ecommerce",
+    "buyerIntent": "best brand of [product]",
+    "remediationFocus": [
+      "FAQ",
+      "product pages",
+      "reviews",
+      "third-party listicles"
+    ]
+  },
+  "audit_tier": "agent_19eur",
+  "answer_engine": {
+    "model": "gpt-4o-mini-2024-07-18",
+    "engine": "ChatGPT",
+    "realLlmCall": true
+  },
+  "brand_sentiment": {
+    "label": "positive",
+    "justification": "highly rated for sensitive stomachs"
+  },
+  "fixes": [
+    "Maintain FAQ, product pages, reviews, and listicle/review mentions so AI recommendations stay consistent for product-brand questions."
+  ],
+  "email_sent": false,
+  "email_error": "Suppressed: internal/test domain.",
+  "locale": "en"
+}

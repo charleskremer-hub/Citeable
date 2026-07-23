@@ -1,0 +1,589 @@
+{
+  "audit_id": "fd8ccc60-5cc3-4564-9e17-33db7a15b228",
+  "status": "completed",
+  "brand_name": "Cometeer",
+  "website_url": "https://cometeer.com/",
+  "score": 47,
+  "checks": [
+    {
+      "check": "search_visibility",
+      "found": true,
+      "score": 25,
+      "detail": "Web search returned 10 brand/domain result mention(s).",
+      "evidence": "e—perfect every single time. No machine, no mess, no guesswork. Rate each matchup in the Cometeer app, ... — Cometeer — cometeer.com Explore 50+ roasts from the top specialty coffee roasters in the world, brewed to perfection and flash frozen by Cometeer. — Cometeer Coffee Menu — cometeer.com Explore 40+ rotating best ",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "structured_data",
+      "found": true,
+      "score": 15,
+      "detail": "Schema.org: true, OpenGraph: false",
+      "evidence": "om/\" /> <meta property=\"og:site_name\" content=\"Cometeer \" /> <!-- JSON-LD Structured Data --> <script type=\"application/ld+json\"> { \"@context\" : \"http://schema.org\", \"@type\" : \"WebSite\", \"name\" : \"Cometeer \", \"url\" : \"https:\\/\\/cometeer.com\" } </script> <script type=\"application/ld+json\"> { \"@context\": \"http://schema.o",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "wikipedia",
+      "found": false,
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "evidence": "Wikipedia returned HTTP 404",
+      "maxScore": 20,
+      "reachable": true
+    },
+    {
+      "check": "technical_seo",
+      "found": true,
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "evidence": "robots.txt: 200; sitemap.xml: 200; host: cometeer.com",
+      "maxScore": 15,
+      "reachable": true
+    },
+    {
+      "check": "ai_visibility",
+      "found": true,
+      "score": 42,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "evidence": "What are the best options for making cafe-quality iced lattes at home without buying an expensive espresso machine?: brand not named; instead: Aeropress, Nespresso, Breville\nHow can I get specialty coffee delivered to my home that takes less than a minute to prepare?: brand named; instead: none found\nWhat are the most sustainable single-serve coffee options currently available?: brand not named; instead: On, Hoka, Veja\nWhich high-end coffee brands offer convenient liquid concentrate or quick-brew formats?: brand named; instead: none found\nWhat is the best way to make gourmet iced coffee at the office without needing a full setup?: brand named; instead: none found\nHow do liquid coffee concentrates compare to traditional freeze-dried instant coffee in terms of flavor?: brand not named; inste",
+      "maxScore": 100,
+      "reachable": true
+    }
+  ],
+  "engines": [
+    {
+      "check": "search_visibility",
+      "score": 25,
+      "detail": "Web search returned 10 brand/domain result mention(s).",
+      "engine": "search_visibility",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "search_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "e—perfect every single time. No machine, no mess, no guesswork. Rate each matchup in the Cometeer app, ... — Cometeer — cometeer.com Explore 50+ roasts from the top specialty coffee roasters in the world, brewed to perfection and flash frozen by Cometeer. — Cometeer Coffee Menu — cometeer.com Explore 40+ rotating best ",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "e—perfect every single time. No machine, no mess, no guesswork. Rate each matchup in the Cometeer app, ... — Cometeer — cometeer.com Explore 50+ roasts from the top specialty coffee roasters in the world, brewed to perfection and flash frozen by Cometeer. — Cometeer Coffee Menu — cometeer.com Explore 40+ rotating best "
+    },
+    {
+      "check": "structured_data",
+      "score": 15,
+      "detail": "Schema.org: true, OpenGraph: false",
+      "engine": "structured_data",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "structured_data",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 15,
+          "rawAnswerSnippet": "om/\" /> <meta property=\"og:site_name\" content=\"Cometeer \" /> <!-- JSON-LD Structured Data --> <script type=\"application/ld+json\"> { \"@context\" : \"http://schema.org\", \"@type\" : \"WebSite\", \"name\" : \"Cometeer \", \"url\" : \"https:\\/\\/cometeer.com\" } </script> <script type=\"application/ld+json\"> { \"@context\": \"http://schema.o",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "om/\" /> <meta property=\"og:site_name\" content=\"Cometeer \" /> <!-- JSON-LD Structured Data --> <script type=\"application/ld+json\"> { \"@context\" : \"http://schema.org\", \"@type\" : \"WebSite\", \"name\" : \"Cometeer \", \"url\" : \"https:\\/\\/cometeer.com\" } </script> <script type=\"application/ld+json\"> { \"@context\": \"http://schema.o"
+    },
+    {
+      "check": "wikipedia",
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "engine": "wikipedia",
+      "maxScore": 20,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "wikipedia",
+          "competitors": [],
+          "brandMentioned": false,
+          "citationPoints": 0,
+          "rawAnswerSnippet": "Wikipedia returned HTTP 404",
+          "mentionProminence": "not_mentioned"
+        }
+      ],
+      "brandMentioned": false,
+      "rawAnswerSnippet": "Wikipedia returned HTTP 404"
+    },
+    {
+      "check": "technical_seo",
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "engine": "technical_seo",
+      "maxScore": 15,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "technical_seo",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 15,
+          "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: cometeer.com",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: cometeer.com"
+    },
+    {
+      "check": "ai_visibility",
+      "score": 42,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "engine": "ai_visibility",
+      "maxScore": 100,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "ai_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 42,
+          "rawAnswerSnippet": "What are the best options for making cafe-quality iced lattes at home without buying an expensive espresso machine?: brand not named; instead: Aeropress, Nespresso, Breville\nHow can I get specialty coffee delivered to my home that takes less than a minute to prepare?: brand named; instead: none found\nWhat are the most sustainable single-serve coffee options currently available?: brand not named; instead: On, Hoka, Veja\nWhich high-end coffee brands offer convenient liquid concentrate or quick-brew formats?: brand named; instead: none found\nWhat is the best way to make gourmet iced coffee at the office without needing a full setup?: brand named; instead: none found\nHow do liquid coffee concentrates compare to traditional freeze-dried instant coffee in terms of flavor?: brand not named; inste",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "What are the best options for making cafe-quality iced lattes at home without buying an expensive espresso machine?: brand not named; instead: Aeropress, Nespresso, Breville\nHow can I get specialty coffee delivered to my home that takes less than a minute to prepare?: brand named; instead: none found\nWhat are the most sustainable single-serve coffee options currently available?: brand not named; instead: On, Hoka, Veja\nWhich high-end coffee brands offer convenient liquid concentrate or quick-brew formats?: brand named; instead: none found\nWhat is the best way to make gourmet iced coffee at the office without needing a full setup?: brand named; instead: none found\nHow do liquid coffee concentrates compare to traditional freeze-dried instant coffee in terms of flavor?: brand not named; inste"
+    }
+  ],
+  "competitors": [
+    "Aeropress",
+    "Nespresso",
+    "On",
+    "Hoka",
+    "Veja",
+    "Stumptown",
+    "Blue Bottle",
+    "Trade Coffee",
+    "Breville",
+    "Chameleon",
+    "Blue Bottle Coffee",
+    "Atlas Coffee Club",
+    "Hario",
+    "Bean Box",
+    "MistoBox"
+  ],
+  "buyer_intent_prompts": [
+    {
+      "prompt": "What are the best options for making cafe-quality iced lattes at home without buying an expensive espresso machine?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Aeropress",
+            "Nespresso",
+            "Breville"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Aeropress, Nespresso, Breville",
+          "perceivedCategory": "coffee products",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Aeropress",
+        "Nespresso",
+        "Breville"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "How can I get specialty coffee delivered to my home that takes less than a minute to prepare?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers convenient coffee solutions"
+          },
+          "rawAnswerSnippet": "recommended_brands: Cometeer",
+          "perceivedCategory": "specialty coffee",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What are the most sustainable single-serve coffee options currently available?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "coffee",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which high-end coffee brands offer convenient liquid concentrate or quick-brew formats?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers convenient coffee solutions"
+          },
+          "rawAnswerSnippet": "recommended_brands: Cometeer",
+          "perceivedCategory": "coffee products",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What is the best way to make gourmet iced coffee at the office without needing a full setup?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers convenient gourmet coffee"
+          },
+          "rawAnswerSnippet": "recommended_brands: Cometeer",
+          "perceivedCategory": "coffee",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "How do liquid coffee concentrates compare to traditional freeze-dried instant coffee in terms of flavor?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Stumptown",
+            "Blue Bottle",
+            "Chameleon"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Stumptown, Blue Bottle, Chameleon",
+          "perceivedCategory": "coffee products",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Stumptown",
+        "Blue Bottle",
+        "Chameleon"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are some premium coffee sampler boxes that make good gifts for coffee enthusiasts?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Blue Bottle Coffee",
+            "Atlas Coffee Club",
+            "Trade Coffee"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Blue Bottle Coffee, Atlas Coffee Club, Trade Coffee",
+          "perceivedCategory": "coffee products",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Blue Bottle Coffee",
+        "Atlas Coffee Club",
+        "Trade Coffee"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Are there high-quality single-serve coffee alternatives that avoid traditional plastic pods?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "coffee alternatives",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What is the easiest way to recreate specialty coffee shop drinks at home on a daily budget?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Nespresso",
+            "Aeropress",
+            "Hario"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Nespresso, Aeropress, Hario",
+          "perceivedCategory": "coffee products",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Nespresso",
+        "Aeropress",
+        "Hario"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which online coffee services allow you to sample varieties from multiple artisan roasters in one box?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Trade Coffee",
+            "Bean Box",
+            "MistoBox"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Trade Coffee, Bean Box, MistoBox",
+          "perceivedCategory": "coffee subscription service",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Trade Coffee",
+        "Bean Box",
+        "MistoBox"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the top-rated coffee options for someone who wants espresso-strength flavor without brewing equipment?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for convenient espresso options"
+          },
+          "rawAnswerSnippet": "recommended_brands: Cometeer",
+          "perceivedCategory": "coffee",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What are the best quick gourmet coffee solutions for people with busy morning routines?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Blue Bottle",
+            "Stumptown"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Cometeer, Blue Bottle, Stumptown",
+          "perceivedCategory": "gourmet coffee",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Blue Bottle",
+        "Stumptown"
+      ],
+      "brandMentioned": true
+    }
+  ],
+  "prompt_debug": "ai:12",
+  "category": "food & beverage",
+  "icp_segment": {
+    "key": "small_brand_ecommerce",
+    "label": "Small brand / ecommerce",
+    "buyerIntent": "best brand of [product]",
+    "remediationFocus": [
+      "FAQ",
+      "product pages",
+      "reviews",
+      "third-party listicles"
+    ]
+  },
+  "audit_tier": "agent_19eur",
+  "answer_engine": {
+    "model": "gpt-4o-mini-2024-07-18",
+    "engine": "ChatGPT",
+    "realLlmCall": true
+  },
+  "brand_sentiment": {
+    "label": "positive",
+    "justification": "described as a trusted premium option"
+  },
+  "fixes": [
+    "Add Organization JSON-LD schema and complete OpenGraph title/description tags on the homepage.",
+    "Build authoritative third-party coverage and Wikidata-style entity consistency before pursuing encyclopedia visibility."
+  ],
+  "email_sent": false,
+  "email_error": "Suppressed: internal/test domain.",
+  "locale": "en"
+}

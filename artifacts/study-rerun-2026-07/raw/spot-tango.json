@@ -1,0 +1,574 @@
+{
+  "audit_id": "42cdbc60-8987-4759-a9a1-9668910e0540",
+  "status": "completed",
+  "brand_name": "Spot & Tango",
+  "website_url": "https://spotandtango.com/",
+  "score": 40,
+  "checks": [
+    {
+      "check": "search_visibility",
+      "found": true,
+      "score": 25,
+      "detail": "Web search returned 6 brand/domain result mention(s).",
+      "evidence": "nalized meal plan with honest guidance and real ingredients. — Spot & Tango: Healthy, Fresh Dog Food Delivery Service — spotandtango.com Spot & Tango Chicken Bites Dog Treats 100% Chicken Breast. Freeze-Dried Treats - Grain & Gluten-Free - USA-Made - for Small, Medium, and Large Dogs — Spot And Tango Dog Food — amazon.",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "structured_data",
+      "found": true,
+      "score": 10,
+      "detail": "Schema.org: false, OpenGraph: true",
+      "evidence": "www.spotandtango.ca/\"/><link rel=\"alternate\" hrefLang=\"x-default\" href=\"https://www.spotandtango.com/\"/><meta property=\"og:title\" content=\"Healthy, Fresh Dog Food Delivery Service | Spot &amp; Tango\"/><meta property=\"og:description\" content=\"Spot &amp; Tango is a fresh dog food delivery service. Build your dog’s person",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "wikipedia",
+      "found": false,
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "evidence": "Wikipedia returned HTTP 404",
+      "maxScore": 20,
+      "reachable": true
+    },
+    {
+      "check": "technical_seo",
+      "found": true,
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "evidence": "robots.txt: 200; sitemap.xml: 200; host: spotandtango.com",
+      "maxScore": 15,
+      "reachable": true
+    },
+    {
+      "check": "ai_visibility",
+      "found": true,
+      "score": 33,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "evidence": "What are the best fresh dog food subscription services available right now?: brand not named; instead: Pet Plate, Ollie\nWhich fresh dog food brands offer recipes tailored for dogs with sensitive stomachs or food allergies?: brand named; instead: Nom Nom\nWhat is the most affordable fresh dog food delivery service for a large breed dog?: brand not named; instead: Ollie, PetPlate\nHow do I choose a fresh dog food service that uses human-grade ingredients and is formulated by veterinary nutritionists?: brand not named; instead: PetPlate, Nom Nom\nIs switching to a fresh dog food diet worth the cost compared to high-end dry kibble?: brand named; instead: none found\nWhat are the differences between frozen fresh dog food and shelf-stable gently cooked dog food?: brand not named; instead: Ollie, Pet",
+      "maxScore": 100,
+      "reachable": true
+    }
+  ],
+  "engines": [
+    {
+      "check": "search_visibility",
+      "score": 25,
+      "detail": "Web search returned 6 brand/domain result mention(s).",
+      "engine": "search_visibility",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "search_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "nalized meal plan with honest guidance and real ingredients. — Spot & Tango: Healthy, Fresh Dog Food Delivery Service — spotandtango.com Spot & Tango Chicken Bites Dog Treats 100% Chicken Breast. Freeze-Dried Treats - Grain & Gluten-Free - USA-Made - for Small, Medium, and Large Dogs — Spot And Tango Dog Food — amazon.",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "nalized meal plan with honest guidance and real ingredients. — Spot & Tango: Healthy, Fresh Dog Food Delivery Service — spotandtango.com Spot & Tango Chicken Bites Dog Treats 100% Chicken Breast. Freeze-Dried Treats - Grain & Gluten-Free - USA-Made - for Small, Medium, and Large Dogs — Spot And Tango Dog Food — amazon."
+    },
+    {
+      "check": "structured_data",
+      "score": 10,
+      "detail": "Schema.org: false, OpenGraph: true",
+      "engine": "structured_data",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "structured_data",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 10,
+          "rawAnswerSnippet": "www.spotandtango.ca/\"/><link rel=\"alternate\" hrefLang=\"x-default\" href=\"https://www.spotandtango.com/\"/><meta property=\"og:title\" content=\"Healthy, Fresh Dog Food Delivery Service | Spot &amp; Tango\"/><meta property=\"og:description\" content=\"Spot &amp; Tango is a fresh dog food delivery service. Build your dog’s person",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "www.spotandtango.ca/\"/><link rel=\"alternate\" hrefLang=\"x-default\" href=\"https://www.spotandtango.com/\"/><meta property=\"og:title\" content=\"Healthy, Fresh Dog Food Delivery Service | Spot &amp; Tango\"/><meta property=\"og:description\" content=\"Spot &amp; Tango is a fresh dog food delivery service. Build your dog’s person"
+    },
+    {
+      "check": "wikipedia",
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "engine": "wikipedia",
+      "maxScore": 20,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "wikipedia",
+          "competitors": [],
+          "brandMentioned": false,
+          "citationPoints": 0,
+          "rawAnswerSnippet": "Wikipedia returned HTTP 404",
+          "mentionProminence": "not_mentioned"
+        }
+      ],
+      "brandMentioned": false,
+      "rawAnswerSnippet": "Wikipedia returned HTTP 404"
+    },
+    {
+      "check": "technical_seo",
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "engine": "technical_seo",
+      "maxScore": 15,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "technical_seo",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 15,
+          "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: spotandtango.com",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: spotandtango.com"
+    },
+    {
+      "check": "ai_visibility",
+      "score": 33,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "engine": "ai_visibility",
+      "maxScore": 100,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "ai_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 33,
+          "rawAnswerSnippet": "What are the best fresh dog food subscription services available right now?: brand not named; instead: Pet Plate, Ollie\nWhich fresh dog food brands offer recipes tailored for dogs with sensitive stomachs or food allergies?: brand named; instead: Nom Nom\nWhat is the most affordable fresh dog food delivery service for a large breed dog?: brand not named; instead: Ollie, PetPlate\nHow do I choose a fresh dog food service that uses human-grade ingredients and is formulated by veterinary nutritionists?: brand not named; instead: PetPlate, Nom Nom\nIs switching to a fresh dog food diet worth the cost compared to high-end dry kibble?: brand named; instead: none found\nWhat are the differences between frozen fresh dog food and shelf-stable gently cooked dog food?: brand not named; instead: Ollie, Pet",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "What are the best fresh dog food subscription services available right now?: brand not named; instead: Pet Plate, Ollie\nWhich fresh dog food brands offer recipes tailored for dogs with sensitive stomachs or food allergies?: brand named; instead: Nom Nom\nWhat is the most affordable fresh dog food delivery service for a large breed dog?: brand not named; instead: Ollie, PetPlate\nHow do I choose a fresh dog food service that uses human-grade ingredients and is formulated by veterinary nutritionists?: brand not named; instead: PetPlate, Nom Nom\nIs switching to a fresh dog food diet worth the cost compared to high-end dry kibble?: brand named; instead: none found\nWhat are the differences between frozen fresh dog food and shelf-stable gently cooked dog food?: brand not named; instead: Ollie, Pet"
+    }
+  ],
+  "competitors": [
+    "PetPlate",
+    "Ollie",
+    "Pet Plate",
+    "Nom Nom"
+  ],
+  "buyer_intent_prompts": [
+    {
+      "prompt": "What are the best fresh dog food subscription services available right now?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Pet Plate",
+            "Ollie"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: The Farmer's Dog, Pet Plate, Ollie",
+          "perceivedCategory": "fresh dog food",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Pet Plate",
+        "Ollie"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which fresh dog food brands offer recipes tailored for dogs with sensitive stomachs or food allergies?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Nom Nom"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers tailored recipes for sensitive stomachs"
+          },
+          "rawAnswerSnippet": "recommended_brands: Spot & Tango, The Farmer's Dog, Nom Nom",
+          "perceivedCategory": "fresh dog food",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Nom Nom"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What is the most affordable fresh dog food delivery service for a large breed dog?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Ollie",
+            "PetPlate"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: The Farmer's Dog, Ollie, PetPlate",
+          "perceivedCategory": "fresh dog food",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Ollie",
+        "PetPlate"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "How do I choose a fresh dog food service that uses human-grade ingredients and is formulated by veterinary nutritionists?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "PetPlate",
+            "Nom Nom"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: The Farmer's Dog, PetPlate, Nom Nom",
+          "perceivedCategory": "fresh dog food",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "PetPlate",
+        "Nom Nom"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Is switching to a fresh dog food diet worth the cost compared to high-end dry kibble?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers fresh dog food options"
+          },
+          "rawAnswerSnippet": "recommended_brands: Spot & Tango",
+          "perceivedCategory": "fresh dog food",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What are the differences between frozen fresh dog food and shelf-stable gently cooked dog food?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Ollie",
+            "PetPlate"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: The Farmer's Dog, Ollie, PetPlate",
+          "perceivedCategory": "dog food",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Ollie",
+        "PetPlate"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which fresh dog food delivery options are best for extremely picky eaters?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Pet Plate"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Spot & Tango, The Farmer's Dog, Pet Plate",
+          "perceivedCategory": "fresh dog food",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Pet Plate"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What are the best fresh dog food brands that offer personalized meal plans for puppies?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "PetPlate",
+            "Ollie"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: The Farmer's Dog, PetPlate, Ollie",
+          "perceivedCategory": "fresh dog food",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "PetPlate",
+        "Ollie"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "How much freezer space do typical fresh dog food subscription boxes require?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "PetPlate"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for quality fresh dog food"
+          },
+          "rawAnswerSnippet": "recommended_brands: PetPlate, The Farmer's Dog",
+          "perceivedCategory": "fresh dog food",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "PetPlate"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which fresh dog food delivery service is best for helping an overweight dog lose weight safely?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "PetPlate"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Spot & Tango, The Farmer's Dog, PetPlate",
+          "perceivedCategory": "fresh dog food",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "PetPlate"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "How do fresh dog food companies calculate pre-portioned daily meals based on a dog's weight and activity level?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "PetPlate",
+            "Nom Nom"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: PetPlate, The Farmer's Dog, Nom Nom",
+          "perceivedCategory": "fresh dog food",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "PetPlate",
+        "Nom Nom"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Are there any fresh dog food delivery companies that offer trial boxes or money-back guarantees for new customers?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Pet Plate",
+            "Ollie"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers quality fresh dog food"
+          },
+          "rawAnswerSnippet": "recommended_brands: The Farmer's Dog, Pet Plate, Ollie",
+          "perceivedCategory": "fresh dog food",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Pet Plate",
+        "Ollie"
+      ],
+      "brandMentioned": false
+    }
+  ],
+  "prompt_debug": "ai:12",
+  "category": "fresh dog food",
+  "icp_segment": {
+    "key": "small_brand_ecommerce",
+    "label": "Small brand / ecommerce",
+    "buyerIntent": "best brand of [product]",
+    "remediationFocus": [
+      "FAQ",
+      "product pages",
+      "reviews",
+      "third-party listicles"
+    ]
+  },
+  "audit_tier": "agent_19eur",
+  "answer_engine": {
+    "model": "gpt-4o-mini-2024-07-18",
+    "engine": "ChatGPT",
+    "realLlmCall": true
+  },
+  "brand_sentiment": {
+    "label": "positive",
+    "justification": "described as a trusted premium option"
+  },
+  "fixes": [
+    "Add Organization JSON-LD schema and complete OpenGraph title/description tags on the homepage.",
+    "Build authoritative third-party coverage and Wikidata-style entity consistency before pursuing encyclopedia visibility."
+  ],
+  "email_sent": false,
+  "email_error": "Suppressed: internal/test domain.",
+  "locale": "en"
+}

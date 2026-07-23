@@ -1,0 +1,572 @@
+{
+  "audit_id": "5e2da871-39dd-4d53-8fab-dde28eb7b185",
+  "status": "completed",
+  "brand_name": "Hedley & Bennett",
+  "website_url": "https://hedleyandbennett.com/",
+  "score": 77,
+  "checks": [
+    {
+      "check": "search_visibility",
+      "found": true,
+      "score": 25,
+      "detail": "Web search returned 7 brand/domain result mention(s).",
+      "evidence": "the world. Shop our quality aprons, knives, hats and kitchen gear for men, women, chefs, and kids. — Hedley & Bennett — hedleyandbennett.com Pro-grade kitchen gear for all Born in a two-Michelin-star kitchen in 2012 LA based📍. H&B Cookware with some of our LA chef community. Shop now at the link in ... — Hedley & Benn",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "structured_data",
+      "found": true,
+      "score": 10,
+      "detail": "Schema.org: false, OpenGraph: true",
+      "evidence": "y aprons, knives, hats and kitchen gear for men, women, chefs, and kids. \"/><meta name=\"twitter:image\"/><meta property=\"og:title\" content=\"Hedley &amp; Bennett\"/><meta property=\"og:type\" content=\"category\"/><meta property=\"og:url\" content=\"https://www.hedleyandbennett.com/\"/><meta property=\"og:image\"/><meta property=\"o",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "wikipedia",
+      "found": false,
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "evidence": "Wikipedia returned HTTP 404",
+      "maxScore": 20,
+      "reachable": true
+    },
+    {
+      "check": "technical_seo",
+      "found": true,
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "evidence": "robots.txt: 200; sitemap.xml: 200; host: hedleyandbennett.com",
+      "maxScore": 15,
+      "reachable": true
+    },
+    {
+      "check": "ai_visibility",
+      "found": true,
+      "score": 83,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "evidence": "What are the most durable apron brands for professional kitchen staff who work long shifts?: brand named; instead: Chef Works, Duluth Trading\nWhere can I buy high-quality commercial-grade aprons in bulk for a new bakery opening?: brand named; instead: Chef Works, Baker's Mark\nWhich chef aprons offer the best cross-back strap design to prevent neck strain during full days in the kitchen?: brand named; instead: none found\nWhat type of apron material is easiest to clean and best suited for bakers dealing with flour and oil daily?: brand named; instead: Chef Works, Duluth Trading\nWhat are the top-rated professional chef apron brands compared to traditional commercial uniform suppliers?: brand not named; instead: Chef Works, Bragard, Happy Chef\nWhich restaurant aprons have functional pockets sp",
+      "maxScore": 100,
+      "reachable": true
+    }
+  ],
+  "engines": [
+    {
+      "check": "search_visibility",
+      "score": 25,
+      "detail": "Web search returned 7 brand/domain result mention(s).",
+      "engine": "search_visibility",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "search_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "the world. Shop our quality aprons, knives, hats and kitchen gear for men, women, chefs, and kids. — Hedley & Bennett — hedleyandbennett.com Pro-grade kitchen gear for all Born in a two-Michelin-star kitchen in 2012 LA based📍. H&B Cookware with some of our LA chef community. Shop now at the link in ... — Hedley & Benn",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "the world. Shop our quality aprons, knives, hats and kitchen gear for men, women, chefs, and kids. — Hedley & Bennett — hedleyandbennett.com Pro-grade kitchen gear for all Born in a two-Michelin-star kitchen in 2012 LA based📍. H&B Cookware with some of our LA chef community. Shop now at the link in ... — Hedley & Benn"
+    },
+    {
+      "check": "structured_data",
+      "score": 10,
+      "detail": "Schema.org: false, OpenGraph: true",
+      "engine": "structured_data",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "structured_data",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 10,
+          "rawAnswerSnippet": "y aprons, knives, hats and kitchen gear for men, women, chefs, and kids. \"/><meta name=\"twitter:image\"/><meta property=\"og:title\" content=\"Hedley &amp; Bennett\"/><meta property=\"og:type\" content=\"category\"/><meta property=\"og:url\" content=\"https://www.hedleyandbennett.com/\"/><meta property=\"og:image\"/><meta property=\"o",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "y aprons, knives, hats and kitchen gear for men, women, chefs, and kids. \"/><meta name=\"twitter:image\"/><meta property=\"og:title\" content=\"Hedley &amp; Bennett\"/><meta property=\"og:type\" content=\"category\"/><meta property=\"og:url\" content=\"https://www.hedleyandbennett.com/\"/><meta property=\"og:image\"/><meta property=\"o"
+    },
+    {
+      "check": "wikipedia",
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "engine": "wikipedia",
+      "maxScore": 20,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "wikipedia",
+          "competitors": [],
+          "brandMentioned": false,
+          "citationPoints": 0,
+          "rawAnswerSnippet": "Wikipedia returned HTTP 404",
+          "mentionProminence": "not_mentioned"
+        }
+      ],
+      "brandMentioned": false,
+      "rawAnswerSnippet": "Wikipedia returned HTTP 404"
+    },
+    {
+      "check": "technical_seo",
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "engine": "technical_seo",
+      "maxScore": 15,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "technical_seo",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 15,
+          "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: hedleyandbennett.com",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: hedleyandbennett.com"
+    },
+    {
+      "check": "ai_visibility",
+      "score": 83,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "engine": "ai_visibility",
+      "maxScore": 100,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "ai_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 83,
+          "rawAnswerSnippet": "What are the most durable apron brands for professional kitchen staff who work long shifts?: brand named; instead: Chef Works, Duluth Trading\nWhere can I buy high-quality commercial-grade aprons in bulk for a new bakery opening?: brand named; instead: Chef Works, Baker's Mark\nWhich chef aprons offer the best cross-back strap design to prevent neck strain during full days in the kitchen?: brand named; instead: none found\nWhat type of apron material is easiest to clean and best suited for bakers dealing with flour and oil daily?: brand named; instead: Chef Works, Duluth Trading\nWhat are the top-rated professional chef apron brands compared to traditional commercial uniform suppliers?: brand not named; instead: Chef Works, Bragard, Happy Chef\nWhich restaurant aprons have functional pockets sp",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "What are the most durable apron brands for professional kitchen staff who work long shifts?: brand named; instead: Chef Works, Duluth Trading\nWhere can I buy high-quality commercial-grade aprons in bulk for a new bakery opening?: brand named; instead: Chef Works, Baker's Mark\nWhich chef aprons offer the best cross-back strap design to prevent neck strain during full days in the kitchen?: brand named; instead: none found\nWhat type of apron material is easiest to clean and best suited for bakers dealing with flour and oil daily?: brand named; instead: Chef Works, Duluth Trading\nWhat are the top-rated professional chef apron brands compared to traditional commercial uniform suppliers?: brand not named; instead: Chef Works, Bragard, Happy Chef\nWhich restaurant aprons have functional pockets sp"
+    }
+  ],
+  "competitors": [
+    "Chef Works",
+    "Duluth Trading",
+    "Baker's Mark",
+    "Bragard",
+    "Happy Chef",
+    "Shun",
+    "Victorinox",
+    "Bistro Aprons",
+    "Williams Sonoma",
+    "Sur La Table"
+  ],
+  "buyer_intent_prompts": [
+    {
+      "prompt": "What are the most durable apron brands for professional kitchen staff who work long shifts?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Chef Works",
+            "Duluth Trading"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "highly regarded for quality"
+          },
+          "rawAnswerSnippet": "recommended_brands: Hedley & Bennett, Chef Works, Duluth Trading",
+          "perceivedCategory": "aprons",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Chef Works",
+        "Duluth Trading"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Where can I buy high-quality commercial-grade aprons in bulk for a new bakery opening?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Chef Works",
+            "Baker's Mark"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for high-quality aprons"
+          },
+          "rawAnswerSnippet": "recommended_brands: Hedley & Bennett, Chef Works, Baker's Mark",
+          "perceivedCategory": "aprons",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Chef Works",
+        "Baker's Mark"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Which chef aprons offer the best cross-back strap design to prevent neck strain during full days in the kitchen?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for quality chef aprons"
+          },
+          "rawAnswerSnippet": "recommended_brands: Hedley & Bennett",
+          "perceivedCategory": "chef aprons",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What type of apron material is easiest to clean and best suited for bakers dealing with flour and oil daily?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Chef Works",
+            "Duluth Trading"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for high-quality aprons"
+          },
+          "rawAnswerSnippet": "recommended_brands: Hedley & Bennett, Chef Works, Duluth Trading",
+          "perceivedCategory": "aprons",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Chef Works",
+        "Duluth Trading"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What are the top-rated professional chef apron brands compared to traditional commercial uniform suppliers?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Chef Works",
+            "Bragard",
+            "Happy Chef"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Chef Works, Bragard, Happy Chef",
+          "perceivedCategory": "chef aprons",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Chef Works",
+        "Bragard",
+        "Happy Chef"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which restaurant aprons have functional pockets specifically designed for utility items like thermometers, pens, and towels?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for quality restaurant gear"
+          },
+          "rawAnswerSnippet": "recommended_brands: Hedley & Bennett",
+          "perceivedCategory": "restaurant apparel",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What are the best professional-grade chef knives and kitchen gear for a high-volume restaurant?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Shun",
+            "Victorinox"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for high-quality kitchen gear"
+          },
+          "rawAnswerSnippet": "recommended_brands: Wüsthof, Shun, Victorinox",
+          "perceivedCategory": "kitchen gear",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Shun",
+        "Victorinox"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Are there professional kitchen apron brands that offer matching adult and kids sizes for cooking workshops?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers matching sizes for adults and kids"
+          },
+          "rawAnswerSnippet": "recommended_brands: Hedley & Bennett",
+          "perceivedCategory": "kitchen aprons",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What is the best heavy-duty canvas apron for line cooks that holds up well to frequent high-temp industrial washing?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Chef Works",
+            "Duluth Trading"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for durable aprons"
+          },
+          "rawAnswerSnippet": "recommended_brands: Hedley & Bennett, Chef Works, Duluth Trading",
+          "perceivedCategory": "aprons",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Chef Works",
+        "Duluth Trading"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Which commercial kitchen wear brands offer custom logo embroidery for restaurant staff uniforms?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Chef Works",
+            "Bistro Aprons"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for quality kitchen wear"
+          },
+          "rawAnswerSnippet": "recommended_brands: Hedley & Bennett, Chef Works, Bistro Aprons",
+          "perceivedCategory": "kitchen wear",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Chef Works",
+        "Bistro Aprons"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What kind of heat-resistant protective aprons should line cooks wear to guard against hot grease splatters?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for high-quality kitchen apparel"
+          },
+          "rawAnswerSnippet": "recommended_brands: Hedley & Bennett",
+          "perceivedCategory": "kitchen apparel",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What are the best premium kitchen aprons to gift a professional pastry chef or serious home baker?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Williams Sonoma",
+            "Sur La Table"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "trusted for quality kitchen gear"
+          },
+          "rawAnswerSnippet": "recommended_brands: Hedley & Bennett, Williams Sonoma, Sur La Table",
+          "perceivedCategory": "kitchen aprons",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Williams Sonoma",
+        "Sur La Table"
+      ],
+      "brandMentioned": true
+    }
+  ],
+  "prompt_debug": "ai:12",
+  "category": "bakery / restaurant",
+  "icp_segment": {
+    "key": "small_brand_ecommerce",
+    "label": "Small brand / ecommerce",
+    "buyerIntent": "best brand of [product]",
+    "remediationFocus": [
+      "FAQ",
+      "product pages",
+      "reviews",
+      "third-party listicles"
+    ]
+  },
+  "audit_tier": "agent_19eur",
+  "answer_engine": {
+    "model": "gpt-4o-mini-2024-07-18",
+    "engine": "ChatGPT",
+    "realLlmCall": true
+  },
+  "brand_sentiment": {
+    "label": "positive",
+    "justification": "highly regarded for quality"
+  },
+  "fixes": [
+    "Add Organization JSON-LD schema and complete OpenGraph title/description tags on the homepage.",
+    "Build authoritative third-party coverage and Wikidata-style entity consistency before pursuing encyclopedia visibility."
+  ],
+  "email_sent": false,
+  "email_error": "Suppressed: internal/test domain.",
+  "locale": "en"
+}

@@ -1,0 +1,601 @@
+{
+  "audit_id": "269e7a00-77c3-4ec3-a17f-ea49a81c2934",
+  "status": "completed",
+  "brand_name": "Our Place",
+  "website_url": "https://fromourplace.com/",
+  "score": 38,
+  "checks": [
+    {
+      "check": "search_visibility",
+      "found": true,
+      "score": 25,
+      "detail": "Web search returned 10 brand/domain result mention(s).",
+      "evidence": "e kitchen table. Start today with our Heirloom dinnerware. — Our Place: Essential Cookware & Dinnerware | Kitchen ... — fromourplace.com Our Place is a direct-to-consumer cookware and kitchenware brand founded in 2019. sauté pan, steamer, skillet, saucier, saucepan, non-stick pan, and spoon rest ... — Our Place Cookwar",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "structured_data",
+      "found": true,
+      "score": 25,
+      "detail": "Schema.org: true, OpenGraph: true",
+      "evidence": "98d4d0aab742/trymry-144/assets/loader.min.js\" async></script><!-- BEGIN app snippet: index --><script type=\"application/ld+json\" class=\"schemaplus-schema\">[ { \"@context\": \"https://schema.org\", \"@type\": [\"Organization\", \"OnlineStore\"], \"@id\": \"https://fromourplace.com#organization_sp_schemaplus\", \"url\": \"https://fromour",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "wikipedia",
+      "found": false,
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "evidence": "{\"type\":\"disambiguation\",\"title\":\"Our Place\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Our Place</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q7111132\",\"titles\":{\"canonical\":\"Our_Place\",\"normalized\":\"Our Place\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class",
+      "maxScore": 20,
+      "reachable": true
+    },
+    {
+      "check": "technical_seo",
+      "found": true,
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "evidence": "robots.txt: 200; sitemap.xml: 200; host: fromourplace.com",
+      "maxScore": 15,
+      "reachable": true
+    },
+    {
+      "check": "ai_visibility",
+      "found": true,
+      "score": 25,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "evidence": "What are the best non-toxic nonstick skillet brands that do not use Teflon or PFAS?: brand not named; instead: GreenPan, Caraway, Scanpan\nWhich versatile frying pans can replace multiple pieces of cookware like a sauté pan and deep skillet?: brand not named; instead: All-Clad, T-fal, Calphalon\nWhat should I look for when buying ceramic-coated cookware for everyday family meals?: brand not named; instead: GreenPan, Scanpan, T-fal\nWhat are the most durable and stylish dinnerware sets for daily use that are microwave and dishwasher safe?: brand not named; instead: Corelle, Fiesta, Stoneware\nWhich sustainable kitchenware brands offer high-quality nonstick pans and eco-friendly dishes?: brand not named; instead: GreenPan, Tefal, Scanpan\nWhat is a good minimalist cookware set for someone moving ",
+      "maxScore": 100,
+      "reachable": true
+    }
+  ],
+  "engines": [
+    {
+      "check": "search_visibility",
+      "score": 25,
+      "detail": "Web search returned 10 brand/domain result mention(s).",
+      "engine": "search_visibility",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "search_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "e kitchen table. Start today with our Heirloom dinnerware. — Our Place: Essential Cookware & Dinnerware | Kitchen ... — fromourplace.com Our Place is a direct-to-consumer cookware and kitchenware brand founded in 2019. sauté pan, steamer, skillet, saucier, saucepan, non-stick pan, and spoon rest ... — Our Place Cookwar",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "e kitchen table. Start today with our Heirloom dinnerware. — Our Place: Essential Cookware & Dinnerware | Kitchen ... — fromourplace.com Our Place is a direct-to-consumer cookware and kitchenware brand founded in 2019. sauté pan, steamer, skillet, saucier, saucepan, non-stick pan, and spoon rest ... — Our Place Cookwar"
+    },
+    {
+      "check": "structured_data",
+      "score": 25,
+      "detail": "Schema.org: true, OpenGraph: true",
+      "engine": "structured_data",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "structured_data",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "98d4d0aab742/trymry-144/assets/loader.min.js\" async></script><!-- BEGIN app snippet: index --><script type=\"application/ld+json\" class=\"schemaplus-schema\">[ { \"@context\": \"https://schema.org\", \"@type\": [\"Organization\", \"OnlineStore\"], \"@id\": \"https://fromourplace.com#organization_sp_schemaplus\", \"url\": \"https://fromour",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "98d4d0aab742/trymry-144/assets/loader.min.js\" async></script><!-- BEGIN app snippet: index --><script type=\"application/ld+json\" class=\"schemaplus-schema\">[ { \"@context\": \"https://schema.org\", \"@type\": [\"Organization\", \"OnlineStore\"], \"@id\": \"https://fromourplace.com#organization_sp_schemaplus\", \"url\": \"https://fromour"
+    },
+    {
+      "check": "wikipedia",
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "engine": "wikipedia",
+      "maxScore": 20,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "wikipedia",
+          "competitors": [],
+          "brandMentioned": false,
+          "citationPoints": 0,
+          "rawAnswerSnippet": "{\"type\":\"disambiguation\",\"title\":\"Our Place\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Our Place</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q7111132\",\"titles\":{\"canonical\":\"Our_Place\",\"normalized\":\"Our Place\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class",
+          "mentionProminence": "not_mentioned"
+        }
+      ],
+      "brandMentioned": false,
+      "rawAnswerSnippet": "{\"type\":\"disambiguation\",\"title\":\"Our Place\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Our Place</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q7111132\",\"titles\":{\"canonical\":\"Our_Place\",\"normalized\":\"Our Place\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class"
+    },
+    {
+      "check": "technical_seo",
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "engine": "technical_seo",
+      "maxScore": 15,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "technical_seo",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 15,
+          "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: fromourplace.com",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: fromourplace.com"
+    },
+    {
+      "check": "ai_visibility",
+      "score": 25,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "engine": "ai_visibility",
+      "maxScore": 100,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "ai_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "What are the best non-toxic nonstick skillet brands that do not use Teflon or PFAS?: brand not named; instead: GreenPan, Caraway, Scanpan\nWhich versatile frying pans can replace multiple pieces of cookware like a sauté pan and deep skillet?: brand not named; instead: All-Clad, T-fal, Calphalon\nWhat should I look for when buying ceramic-coated cookware for everyday family meals?: brand not named; instead: GreenPan, Scanpan, T-fal\nWhat are the most durable and stylish dinnerware sets for daily use that are microwave and dishwasher safe?: brand not named; instead: Corelle, Fiesta, Stoneware\nWhich sustainable kitchenware brands offer high-quality nonstick pans and eco-friendly dishes?: brand not named; instead: GreenPan, Tefal, Scanpan\nWhat is a good minimalist cookware set for someone moving ",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "What are the best non-toxic nonstick skillet brands that do not use Teflon or PFAS?: brand not named; instead: GreenPan, Caraway, Scanpan\nWhich versatile frying pans can replace multiple pieces of cookware like a sauté pan and deep skillet?: brand not named; instead: All-Clad, T-fal, Calphalon\nWhat should I look for when buying ceramic-coated cookware for everyday family meals?: brand not named; instead: GreenPan, Scanpan, T-fal\nWhat are the most durable and stylish dinnerware sets for daily use that are microwave and dishwasher safe?: brand not named; instead: Corelle, Fiesta, Stoneware\nWhich sustainable kitchenware brands offer high-quality nonstick pans and eco-friendly dishes?: brand not named; instead: GreenPan, Tefal, Scanpan\nWhat is a good minimalist cookware set for someone moving "
+    }
+  ],
+  "competitors": [
+    "GreenPan",
+    "Scanpan",
+    "T-fal",
+    "Caraway",
+    "All-Clad",
+    "Calphalon",
+    "Corelle",
+    "Fiesta",
+    "Stoneware",
+    "Tefal",
+    "Le Creuset",
+    "Staub"
+  ],
+  "buyer_intent_prompts": [
+    {
+      "prompt": "What are the best non-toxic nonstick skillet brands that do not use Teflon or PFAS?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "GreenPan",
+            "Caraway",
+            "Scanpan"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: GreenPan, Caraway, Scanpan",
+          "perceivedCategory": "cookware",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "GreenPan",
+        "Caraway",
+        "Scanpan"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which versatile frying pans can replace multiple pieces of cookware like a sauté pan and deep skillet?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "All-Clad",
+            "T-fal",
+            "Calphalon"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: All-Clad, T-fal, Calphalon",
+          "perceivedCategory": "cookware",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "All-Clad",
+        "T-fal",
+        "Calphalon"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What should I look for when buying ceramic-coated cookware for everyday family meals?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "GreenPan",
+            "Scanpan",
+            "T-fal"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: GreenPan, Scanpan, T-fal",
+          "perceivedCategory": "cookware",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "GreenPan",
+        "Scanpan",
+        "T-fal"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the most durable and stylish dinnerware sets for daily use that are microwave and dishwasher safe?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Corelle",
+            "Fiesta",
+            "Stoneware"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Corelle, Fiesta, Stoneware",
+          "perceivedCategory": "dinnerware",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Corelle",
+        "Fiesta",
+        "Stoneware"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which sustainable kitchenware brands offer high-quality nonstick pans and eco-friendly dishes?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "GreenPan",
+            "Tefal",
+            "Scanpan"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: GreenPan, Tefal, Scanpan",
+          "perceivedCategory": "kitchenware",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "GreenPan",
+        "Tefal",
+        "Scanpan"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What is a good minimalist cookware set for someone moving into a small apartment with limited cabinet space?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "highly regarded for space-saving design"
+          },
+          "rawAnswerSnippet": "recommended_brands: Our Place",
+          "perceivedCategory": "cookware",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Where can I find stackable, durable drinking glasses that look modern for everyday use?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for stylish kitchenware"
+          },
+          "rawAnswerSnippet": "recommended_brands: Our Place",
+          "perceivedCategory": "kitchenware",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "How do popular ceramic nonstick pan brands compare to traditional cast iron in terms of heat distribution and care?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "GreenPan",
+            "Scanpan",
+            "T-fal"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: GreenPan, Scanpan, T-fal",
+          "perceivedCategory": "cookware",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "GreenPan",
+        "Scanpan",
+        "T-fal"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are top-rated non-toxic cookware sets under 200 dollars that hold up over time?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "GreenPan",
+            "Caraway",
+            "T-fal"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for quality and design"
+          },
+          "rawAnswerSnippet": "recommended_brands: GreenPan, Caraway, T-fal",
+          "perceivedCategory": "cookware sets",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "GreenPan",
+        "Caraway",
+        "T-fal"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the best aesthetic cookware sets to give as a wedding or housewarming gift?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Le Creuset",
+            "Staub"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a stylish and functional option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Our Place, Le Creuset, Staub",
+          "perceivedCategory": "cookware sets",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Le Creuset",
+        "Staub"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Which ceramic nonstick pans are safe to use both on the stovetop and inside the oven?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "GreenPan",
+            "Scanpan",
+            "T-fal"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: GreenPan, Scanpan, T-fal",
+          "perceivedCategory": "cookware",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "GreenPan",
+        "Scanpan",
+        "T-fal"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Are ceramic nonstick frying pans easier to clean and maintain compared to stainless steel?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "GreenPan",
+            "T-fal",
+            "Scanpan"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: GreenPan, T-fal, Scanpan",
+          "perceivedCategory": "cookware",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "GreenPan",
+        "T-fal",
+        "Scanpan"
+      ],
+      "brandMentioned": false
+    }
+  ],
+  "prompt_debug": "ai:12",
+  "category": "food & beverage",
+  "icp_segment": {
+    "key": "small_brand_ecommerce",
+    "label": "Small brand / ecommerce",
+    "buyerIntent": "best brand of [product]",
+    "remediationFocus": [
+      "FAQ",
+      "product pages",
+      "reviews",
+      "third-party listicles"
+    ]
+  },
+  "audit_tier": "agent_19eur",
+  "answer_engine": {
+    "model": "gpt-4o-mini-2024-07-18",
+    "engine": "ChatGPT",
+    "realLlmCall": true
+  },
+  "brand_sentiment": {
+    "label": "positive",
+    "justification": "described as a trusted premium option"
+  },
+  "fixes": [
+    "Build authoritative third-party coverage and Wikidata-style entity consistency before pursuing encyclopedia visibility."
+  ],
+  "email_sent": false,
+  "email_error": "Suppressed: internal/test domain.",
+  "locale": "en"
+}

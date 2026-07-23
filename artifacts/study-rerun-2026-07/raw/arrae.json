@@ -1,0 +1,604 @@
+{
+  "audit_id": "27d3d11e-a3ed-4e06-9b00-44f5241acba4",
+  "status": "completed",
+  "brand_name": "Arrae",
+  "website_url": "https://arrae.com/",
+  "score": 43,
+  "checks": [
+    {
+      "check": "search_visibility",
+      "found": true,
+      "score": 15,
+      "detail": "Web search returned 4 brand/domain result mention(s).",
+      "evidence": " supports everything you care about, while saving more on every item. — Arrae: Targeted Natural Supplements That Work — arrae.com Shop Target for a wide assortment of Arrae. Arrae Bloat, Fast Acting Bloating Support Dietary Supplement Capsules - 40ct Highly rated $34.99($0.87/count) ... — Arrae products at Target — tar",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "structured_data",
+      "found": true,
+      "score": 10,
+      "detail": "Schema.org: false, OpenGraph: true",
+      "evidence": "eta property=\"og:site_name\" content=\"Arrae \"> <meta property=\"og:url\" content=\"https://www.arrae.com/\"> <meta property=\"og:title\" content=\"Targeted Natural Supplements That Work\"> <meta property=\"og:type\" content=\"website\"> <meta property=\"og:description\" content=\"We want women to feel empowered as their most authentic",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "wikipedia",
+      "found": false,
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "evidence": "Wikipedia returned HTTP 404",
+      "maxScore": 20,
+      "reachable": true
+    },
+    {
+      "check": "technical_seo",
+      "found": true,
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "evidence": "robots.txt: 200; sitemap.xml: 200; host: arrae.com",
+      "maxScore": 15,
+      "reachable": true
+    },
+    {
+      "check": "ai_visibility",
+      "found": true,
+      "score": 42,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "evidence": "What are the most effective natural supplements for reducing daily bloating and improving digestion?: brand named; instead: Digestive Advantage\nCan you recommend organic herbal supplements that help balance women's hormones naturally?: brand not named; instead: Gaia Herbs, Herb Pharm, Moon Juice\nWhich clean-ingredient supplement brands offer effective daily routines for gut health and clear skin?: brand named; instead: Ritual, Hum Nutrition\nWhat are some top-rated natural alternatives to synthetic vitamins for boosting daily energy and focus?: brand not named; instead: New Chapter, MegaFood\nAre there plant-based supplements specifically formulated to support women's wellness and bloating relief?: brand named; instead: none found\nHow do I choose a safe and natural supplement brand that uses",
+      "maxScore": 100,
+      "reachable": true
+    }
+  ],
+  "engines": [
+    {
+      "check": "search_visibility",
+      "score": 15,
+      "detail": "Web search returned 4 brand/domain result mention(s).",
+      "engine": "search_visibility",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "search_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 15,
+          "rawAnswerSnippet": " supports everything you care about, while saving more on every item. — Arrae: Targeted Natural Supplements That Work — arrae.com Shop Target for a wide assortment of Arrae. Arrae Bloat, Fast Acting Bloating Support Dietary Supplement Capsules - 40ct Highly rated $34.99($0.87/count) ... — Arrae products at Target — tar",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": " supports everything you care about, while saving more on every item. — Arrae: Targeted Natural Supplements That Work — arrae.com Shop Target for a wide assortment of Arrae. Arrae Bloat, Fast Acting Bloating Support Dietary Supplement Capsules - 40ct Highly rated $34.99($0.87/count) ... — Arrae products at Target — tar"
+    },
+    {
+      "check": "structured_data",
+      "score": 10,
+      "detail": "Schema.org: false, OpenGraph: true",
+      "engine": "structured_data",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "structured_data",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 10,
+          "rawAnswerSnippet": "eta property=\"og:site_name\" content=\"Arrae \"> <meta property=\"og:url\" content=\"https://www.arrae.com/\"> <meta property=\"og:title\" content=\"Targeted Natural Supplements That Work\"> <meta property=\"og:type\" content=\"website\"> <meta property=\"og:description\" content=\"We want women to feel empowered as their most authentic",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "eta property=\"og:site_name\" content=\"Arrae \"> <meta property=\"og:url\" content=\"https://www.arrae.com/\"> <meta property=\"og:title\" content=\"Targeted Natural Supplements That Work\"> <meta property=\"og:type\" content=\"website\"> <meta property=\"og:description\" content=\"We want women to feel empowered as their most authentic"
+    },
+    {
+      "check": "wikipedia",
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "engine": "wikipedia",
+      "maxScore": 20,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "wikipedia",
+          "competitors": [],
+          "brandMentioned": false,
+          "citationPoints": 0,
+          "rawAnswerSnippet": "Wikipedia returned HTTP 404",
+          "mentionProminence": "not_mentioned"
+        }
+      ],
+      "brandMentioned": false,
+      "rawAnswerSnippet": "Wikipedia returned HTTP 404"
+    },
+    {
+      "check": "technical_seo",
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "engine": "technical_seo",
+      "maxScore": 15,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "technical_seo",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 15,
+          "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: arrae.com",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: arrae.com"
+    },
+    {
+      "check": "ai_visibility",
+      "score": 42,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "engine": "ai_visibility",
+      "maxScore": 100,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "ai_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 42,
+          "rawAnswerSnippet": "What are the most effective natural supplements for reducing daily bloating and improving digestion?: brand named; instead: Digestive Advantage\nCan you recommend organic herbal supplements that help balance women's hormones naturally?: brand not named; instead: Gaia Herbs, Herb Pharm, Moon Juice\nWhich clean-ingredient supplement brands offer effective daily routines for gut health and clear skin?: brand named; instead: Ritual, Hum Nutrition\nWhat are some top-rated natural alternatives to synthetic vitamins for boosting daily energy and focus?: brand not named; instead: New Chapter, MegaFood\nAre there plant-based supplements specifically formulated to support women's wellness and bloating relief?: brand named; instead: none found\nHow do I choose a safe and natural supplement brand that uses",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "What are the most effective natural supplements for reducing daily bloating and improving digestion?: brand named; instead: Digestive Advantage\nCan you recommend organic herbal supplements that help balance women's hormones naturally?: brand not named; instead: Gaia Herbs, Herb Pharm, Moon Juice\nWhich clean-ingredient supplement brands offer effective daily routines for gut health and clear skin?: brand named; instead: Ritual, Hum Nutrition\nWhat are some top-rated natural alternatives to synthetic vitamins for boosting daily energy and focus?: brand not named; instead: New Chapter, MegaFood\nAre there plant-based supplements specifically formulated to support women's wellness and bloating relief?: brand named; instead: none found\nHow do I choose a safe and natural supplement brand that uses"
+    }
+  ],
+  "competitors": [
+    "Gaia Herbs",
+    "Ritual",
+    "Hum Nutrition",
+    "On",
+    "Hoka",
+    "Veja",
+    "Digestive Advantage",
+    "Herb Pharm",
+    "Moon Juice",
+    "New Chapter",
+    "MegaFood",
+    "Ashwagandha",
+    "L-Theanine",
+    "Valerian Root",
+    "Traditional Medicinals",
+    "Peppermint",
+    "Ginger",
+    "Vega",
+    "Sunwarrior"
+  ],
+  "buyer_intent_prompts": [
+    {
+      "prompt": "What are the most effective natural supplements for reducing daily bloating and improving digestion?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Digestive Advantage"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Arrae, Garden of Life, Digestive Advantage",
+          "perceivedCategory": "natural supplements",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Digestive Advantage"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Can you recommend organic herbal supplements that help balance women's hormones naturally?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Gaia Herbs",
+            "Herb Pharm",
+            "Moon Juice"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Gaia Herbs, Herb Pharm, Moon Juice",
+          "perceivedCategory": "herbal supplements",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Gaia Herbs",
+        "Herb Pharm",
+        "Moon Juice"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which clean-ingredient supplement brands offer effective daily routines for gut health and clear skin?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Ritual",
+            "Hum Nutrition"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers clean-ingredient supplements"
+          },
+          "rawAnswerSnippet": "recommended_brands: Arrae, Ritual, Hum Nutrition",
+          "perceivedCategory": "supplements",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Ritual",
+        "Hum Nutrition"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What are some top-rated natural alternatives to synthetic vitamins for boosting daily energy and focus?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "New Chapter",
+            "MegaFood"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Garden of Life, New Chapter, MegaFood",
+          "perceivedCategory": "supplements",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "New Chapter",
+        "MegaFood"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Are there plant-based supplements specifically formulated to support women's wellness and bloating relief?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers targeted wellness solutions"
+          },
+          "rawAnswerSnippet": "recommended_brands: Arrae",
+          "perceivedCategory": "plant-based supplements",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "How do I choose a safe and natural supplement brand that uses third-party tested ingredients?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "supplements",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What natural supplements work best for managing stress and supporting better sleep without melatonin?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Ashwagandha",
+            "L-Theanine",
+            "Valerian Root"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ashwagandha, L-Theanine, Valerian Root",
+          "perceivedCategory": "natural supplements",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Ashwagandha",
+        "L-Theanine",
+        "Valerian Root"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which brands offer high-quality, targeted herbal remedies for digestive comfort after meals?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Traditional Medicinals",
+            "Gaia Herbs"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "recommended for digestive support"
+          },
+          "rawAnswerSnippet": "recommended_brands: Arrae, Traditional Medicinals, Gaia Herbs",
+          "perceivedCategory": "herbal remedies",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Traditional Medicinals",
+        "Gaia Herbs"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Are natural supplement subscriptions worth it, and which brands provide flexible delivery options?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Ritual",
+            "Hum Nutrition"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Care/of, Ritual, Hum Nutrition",
+          "perceivedCategory": "natural supplements",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Ritual",
+        "Hum Nutrition"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What should I look for when buying holistic supplements for metabolic health and weight management?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "holistic supplements",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which natural supplements for bloating have the fastest results based on customer reviews?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Peppermint",
+            "Ginger"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as effective for bloating"
+          },
+          "rawAnswerSnippet": "recommended_brands: Arrae, Peppermint, Ginger",
+          "perceivedCategory": "natural supplements",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Peppermint",
+        "Ginger"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What are the best vegan and gluten-free supplement options for overall women's health?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Vega",
+            "Sunwarrior"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Garden of Life, Vega, Sunwarrior",
+          "perceivedCategory": "supplements",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Vega",
+        "Sunwarrior"
+      ],
+      "brandMentioned": false
+    }
+  ],
+  "prompt_debug": "ai:12",
+  "category": "natural supplements",
+  "icp_segment": {
+    "key": "small_brand_ecommerce",
+    "label": "Small brand / ecommerce",
+    "buyerIntent": "best brand of [product]",
+    "remediationFocus": [
+      "FAQ",
+      "product pages",
+      "reviews",
+      "third-party listicles"
+    ]
+  },
+  "audit_tier": "agent_19eur",
+  "answer_engine": {
+    "model": "gpt-4o-mini-2024-07-18",
+    "engine": "ChatGPT",
+    "realLlmCall": true
+  },
+  "brand_sentiment": {
+    "label": "positive",
+    "justification": "described as a trusted premium option"
+  },
+  "fixes": [
+    "Add Organization JSON-LD schema and complete OpenGraph title/description tags on the homepage.",
+    "Create crawlable brand, product, review, and comparison pages that clearly connect the brand name to the official domain.",
+    "Build authoritative third-party coverage and Wikidata-style entity consistency before pursuing encyclopedia visibility."
+  ],
+  "email_sent": false,
+  "email_error": "Suppressed: internal/test domain.",
+  "locale": "en"
+}

@@ -1,0 +1,622 @@
+{
+  "audit_id": "bc89ec27-bb72-425e-985f-6d8b9ae40f28",
+  "status": "completed",
+  "brand_name": "GetPick",
+  "website_url": "https://getpick.ai/",
+  "score": 13,
+  "checks": [
+    {
+      "check": "search_visibility",
+      "found": true,
+      "score": 15,
+      "detail": "Web search returned 4 brand/domain result mention(s).",
+      "evidence": "brands. It gets brands recommended by AI assistants like ChatGPT and Gemini. — GetPick — The GEO agent for DTC brands — getpick.ai Use professional editing tools and powerful AI technology to easily and conveniently edit photos. Compatible with RAW files. — EPIK - AI Photo & Video Editor - Apps on Google Play — play.go",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "structured_data",
+      "found": true,
+      "score": 15,
+      "detail": "Schema.org: true, OpenGraph: false",
+      "evidence": "rel=\"icon\" href=\"/favicon.ico?favicon.2vob68tjqpejf.ico\" sizes=\"256x256\" type=\"image/x-icon\"/><script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",\"@type\":\"SoftwareApplication\",\"name\":\"GetPick\",\"url\":\"https://www.getpick.ai\",\"applicationCategory\":\"BusinessApplication\",\"applicationSubCategory\":\"GEO agent ",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "wikipedia",
+      "found": false,
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "evidence": "Wikipedia returned HTTP 404",
+      "maxScore": 20,
+      "reachable": true
+    },
+    {
+      "check": "technical_seo",
+      "found": true,
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "evidence": "robots.txt: 200; sitemap.xml: 200; host: getpick.ai",
+      "maxScore": 15,
+      "reachable": true
+    },
+    {
+      "check": "ai_visibility",
+      "found": false,
+      "score": 0,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "evidence": "What are the best software tools for monitoring and improving my brand's visibility in ChatGPT and Gemini?: brand not named; instead: SEMrush, Ahrefs, Moz\nWhich generative engine optimization platforms offer affordable plans for small e-commerce businesses?: brand not named; instead: On, Hoka, Veja\nHow can I audit how AI search engines and chatbots talk about my products compared to my competitors?: brand not named; instead: On, Hoka, Veja\nWhat software allows DTC brands to track product recommendations across major AI assistants?: brand not named; instead: On, Hoka, Veja\nAre there tools that generate actionable content recommendations to help my brand rank better in AI responses?: brand not named; instead: SurferSEO, MarketMuse, Clearscope\nWhat is the best GEO software for e-commerce comp",
+      "maxScore": 100,
+      "reachable": true
+    }
+  ],
+  "engines": [
+    {
+      "check": "search_visibility",
+      "score": 15,
+      "detail": "Web search returned 4 brand/domain result mention(s).",
+      "engine": "search_visibility",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "search_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 15,
+          "rawAnswerSnippet": "brands. It gets brands recommended by AI assistants like ChatGPT and Gemini. — GetPick — The GEO agent for DTC brands — getpick.ai Use professional editing tools and powerful AI technology to easily and conveniently edit photos. Compatible with RAW files. — EPIK - AI Photo & Video Editor - Apps on Google Play — play.go",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "brands. It gets brands recommended by AI assistants like ChatGPT and Gemini. — GetPick — The GEO agent for DTC brands — getpick.ai Use professional editing tools and powerful AI technology to easily and conveniently edit photos. Compatible with RAW files. — EPIK - AI Photo & Video Editor - Apps on Google Play — play.go"
+    },
+    {
+      "check": "structured_data",
+      "score": 15,
+      "detail": "Schema.org: true, OpenGraph: false",
+      "engine": "structured_data",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "structured_data",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 15,
+          "rawAnswerSnippet": "rel=\"icon\" href=\"/favicon.ico?favicon.2vob68tjqpejf.ico\" sizes=\"256x256\" type=\"image/x-icon\"/><script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",\"@type\":\"SoftwareApplication\",\"name\":\"GetPick\",\"url\":\"https://www.getpick.ai\",\"applicationCategory\":\"BusinessApplication\",\"applicationSubCategory\":\"GEO agent ",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "rel=\"icon\" href=\"/favicon.ico?favicon.2vob68tjqpejf.ico\" sizes=\"256x256\" type=\"image/x-icon\"/><script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",\"@type\":\"SoftwareApplication\",\"name\":\"GetPick\",\"url\":\"https://www.getpick.ai\",\"applicationCategory\":\"BusinessApplication\",\"applicationSubCategory\":\"GEO agent "
+    },
+    {
+      "check": "wikipedia",
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "engine": "wikipedia",
+      "maxScore": 20,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "wikipedia",
+          "competitors": [],
+          "brandMentioned": false,
+          "citationPoints": 0,
+          "rawAnswerSnippet": "Wikipedia returned HTTP 404",
+          "mentionProminence": "not_mentioned"
+        }
+      ],
+      "brandMentioned": false,
+      "rawAnswerSnippet": "Wikipedia returned HTTP 404"
+    },
+    {
+      "check": "technical_seo",
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "engine": "technical_seo",
+      "maxScore": 15,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "technical_seo",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 15,
+          "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: getpick.ai",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: getpick.ai"
+    },
+    {
+      "check": "ai_visibility",
+      "score": 0,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "engine": "ai_visibility",
+      "maxScore": 100,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "ai_visibility",
+          "competitors": [],
+          "brandMentioned": false,
+          "citationPoints": 0,
+          "rawAnswerSnippet": "What are the best software tools for monitoring and improving my brand's visibility in ChatGPT and Gemini?: brand not named; instead: SEMrush, Ahrefs, Moz\nWhich generative engine optimization platforms offer affordable plans for small e-commerce businesses?: brand not named; instead: On, Hoka, Veja\nHow can I audit how AI search engines and chatbots talk about my products compared to my competitors?: brand not named; instead: On, Hoka, Veja\nWhat software allows DTC brands to track product recommendations across major AI assistants?: brand not named; instead: On, Hoka, Veja\nAre there tools that generate actionable content recommendations to help my brand rank better in AI responses?: brand not named; instead: SurferSEO, MarketMuse, Clearscope\nWhat is the best GEO software for e-commerce comp",
+          "mentionProminence": "not_mentioned"
+        }
+      ],
+      "brandMentioned": false,
+      "rawAnswerSnippet": "What are the best software tools for monitoring and improving my brand's visibility in ChatGPT and Gemini?: brand not named; instead: SEMrush, Ahrefs, Moz\nWhich generative engine optimization platforms offer affordable plans for small e-commerce businesses?: brand not named; instead: On, Hoka, Veja\nHow can I audit how AI search engines and chatbots talk about my products compared to my competitors?: brand not named; instead: On, Hoka, Veja\nWhat software allows DTC brands to track product recommendations across major AI assistants?: brand not named; instead: On, Hoka, Veja\nAre there tools that generate actionable content recommendations to help my brand rank better in AI responses?: brand not named; instead: SurferSEO, MarketMuse, Clearscope\nWhat is the best GEO software for e-commerce comp"
+    }
+  ],
+  "competitors": [
+    "On",
+    "Hoka",
+    "Veja",
+    "SEMrush",
+    "Ahrefs",
+    "Moz",
+    "SurferSEO",
+    "MarketMuse",
+    "Clearscope",
+    "Crimson Hexagon",
+    "Brandwatch",
+    "Mention"
+  ],
+  "buyer_intent_prompts": [
+    {
+      "prompt": "What are the best software tools for monitoring and improving my brand's visibility in ChatGPT and Gemini?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "SEMrush",
+            "Ahrefs",
+            "Moz"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: SEMrush, Ahrefs, Moz",
+          "perceivedCategory": "",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "SEMrush",
+        "Ahrefs",
+        "Moz"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which generative engine optimization platforms offer affordable plans for small e-commerce businesses?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "How can I audit how AI search engines and chatbots talk about my products compared to my competitors?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "running shoes",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What software allows DTC brands to track product recommendations across major AI assistants?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "running shoes",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Are there tools that generate actionable content recommendations to help my brand rank better in AI responses?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "SurferSEO",
+            "MarketMuse",
+            "Clearscope"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: SurferSEO, MarketMuse, Clearscope",
+          "perceivedCategory": "",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "SurferSEO",
+        "MarketMuse",
+        "Clearscope"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What is the best GEO software for e-commerce companies looking to increase brand mentions in conversational AI?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which platforms help marketing teams optimize product pages specifically for generative engine optimization?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "running shoes",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Can you recommend software that alerts me when competitors replace my brand in AI chatbot recommendations?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Crimson Hexagon",
+            "Brandwatch",
+            "Mention"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Crimson Hexagon, Brandwatch, Mention",
+          "perceivedCategory": "AI chatbot software",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Crimson Hexagon",
+        "Brandwatch",
+        "Mention"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the top-rated tools for auditing brand presence in generative search engines?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Moz",
+            "SEMrush",
+            "Ahrefs"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Moz, SEMrush, Ahrefs",
+          "perceivedCategory": "",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Moz",
+        "SEMrush",
+        "Ahrefs"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "How do different generative engine optimization tools compare in features and pricing for online stores?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Moz",
+            "SEMrush",
+            "Ahrefs"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Moz, SEMrush, Ahrefs",
+          "perceivedCategory": "SEO tools",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Moz",
+        "SEMrush",
+        "Ahrefs"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Is there a tool that sends real buyer questions to AI models to analyze which brands get recommended?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "running shoes",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which generative engine optimization solutions support multi-language brand tracking for international markets?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "On",
+            "Hoka",
+            "Veja"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: On, Hoka, Veja",
+          "perceivedCategory": "",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "On",
+        "Hoka",
+        "Veja"
+      ],
+      "brandMentioned": false
+    }
+  ],
+  "prompt_debug": "ai:12",
+  "category": "generative engine optimization software",
+  "icp_segment": {
+    "key": "small_brand_ecommerce",
+    "label": "Small brand / ecommerce",
+    "buyerIntent": "best brand of [product]",
+    "remediationFocus": [
+      "FAQ",
+      "product pages",
+      "reviews",
+      "third-party listicles"
+    ]
+  },
+  "audit_tier": "agent_19eur",
+  "answer_engine": {
+    "model": "gpt-4o-mini-2024-07-18",
+    "engine": "ChatGPT",
+    "realLlmCall": true
+  },
+  "brand_sentiment": {
+    "label": "positive",
+    "justification": "described as a trusted premium option"
+  },
+  "fixes": [
+    "Add Organization JSON-LD schema and complete OpenGraph title/description tags on the homepage.",
+    "Create crawlable brand, product, review, and comparison pages that clearly connect the brand name to the official domain.",
+    "Earn mentions on trusted product listicles, review pages, comparison guides, community threads, and marketplaces that answer engines can cite.",
+    "Build authoritative third-party coverage and Wikidata-style entity consistency before pursuing encyclopedia visibility."
+  ],
+  "email_sent": false,
+  "email_error": "Suppressed: internal/test domain.",
+  "locale": "en"
+}

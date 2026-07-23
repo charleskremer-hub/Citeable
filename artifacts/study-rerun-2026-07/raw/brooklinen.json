@@ -1,0 +1,596 @@
+{
+  "audit_id": "94b91533-282c-448c-914a-2f22db64d289",
+  "status": "completed",
+  "brand_name": "Brooklinen",
+  "website_url": "https://brooklinen.com/",
+  "score": 29,
+  "checks": [
+    {
+      "check": "search_visibility",
+      "found": true,
+      "score": 15,
+      "detail": "Web search returned 3 brand/domain result mention(s).",
+      "evidence": "firm supportive pillows designed for the best night's sleep. — Brooklinen: Luxury Bedding, Sheets & Comforters Online — brooklinen.com Discover Brooklinen's premium bedding collection. Shop soft sheets, cozy comforters, and soft & firm supportive pillows designed for the best night's sleep. — Luxury Bedding, Sheets & C",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "structured_data",
+      "found": true,
+      "score": 25,
+      "detail": "Schema.org: true, OpenGraph: true",
+      "evidence": "--> <div class='js-search-bar-results search-bar__results hidden'></div> </predictive-search> <script type='application/ld+json'> { \"@context\": \"http://schema.org\", \"@type\": \"Organization\", \"name\": \"Brooklinen\", \"logo\": \"https:\\/\\/www.brooklinen.com\\/cdn\\/shop\\/files\\/Best-In-Bed_Lockup_web-only_Blue.svg?v=1770997710\\u",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "wikipedia",
+      "found": false,
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "evidence": "Wikipedia returned HTTP 404",
+      "maxScore": 20,
+      "reachable": true
+    },
+    {
+      "check": "technical_seo",
+      "found": true,
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "evidence": "robots.txt: 200; sitemap.xml: 200; host: brooklinen.com",
+      "maxScore": 15,
+      "reachable": true
+    },
+    {
+      "check": "ai_visibility",
+      "found": true,
+      "score": 17,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "evidence": "What are the best breathable cotton sheet sets for hot sleepers looking for a crisp feel?: brand named; instead: Parachute\nWhich direct-to-consumer bedding brands offer a generous home trial period or return policy?: brand not named; instead: Parachute, Casper\nWhat are the top luxury sheet brands that offer long-lasting durability for daily use?: brand not named; instead: Frette, Sferra, Matouk\nIs linen or sateen cotton better if I want soft, cozy bedding that works well in all seasons?: brand named; instead: none found\nWhat is the best hypoallergenic down alternative comforter for year-round warmth?: brand not named; instead: Buffy, Parachute, Linenspa\nWhere can I buy a complete high-end bedding bundle that includes sheets, duvet cover, and pillowcases?: brand not named; instead: Parachut",
+      "maxScore": 100,
+      "reachable": true
+    }
+  ],
+  "engines": [
+    {
+      "check": "search_visibility",
+      "score": 15,
+      "detail": "Web search returned 3 brand/domain result mention(s).",
+      "engine": "search_visibility",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "search_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 15,
+          "rawAnswerSnippet": "firm supportive pillows designed for the best night's sleep. — Brooklinen: Luxury Bedding, Sheets & Comforters Online — brooklinen.com Discover Brooklinen's premium bedding collection. Shop soft sheets, cozy comforters, and soft & firm supportive pillows designed for the best night's sleep. — Luxury Bedding, Sheets & C",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "firm supportive pillows designed for the best night's sleep. — Brooklinen: Luxury Bedding, Sheets & Comforters Online — brooklinen.com Discover Brooklinen's premium bedding collection. Shop soft sheets, cozy comforters, and soft & firm supportive pillows designed for the best night's sleep. — Luxury Bedding, Sheets & C"
+    },
+    {
+      "check": "structured_data",
+      "score": 25,
+      "detail": "Schema.org: true, OpenGraph: true",
+      "engine": "structured_data",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "structured_data",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "--> <div class='js-search-bar-results search-bar__results hidden'></div> </predictive-search> <script type='application/ld+json'> { \"@context\": \"http://schema.org\", \"@type\": \"Organization\", \"name\": \"Brooklinen\", \"logo\": \"https:\\/\\/www.brooklinen.com\\/cdn\\/shop\\/files\\/Best-In-Bed_Lockup_web-only_Blue.svg?v=1770997710\\u",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "--> <div class='js-search-bar-results search-bar__results hidden'></div> </predictive-search> <script type='application/ld+json'> { \"@context\": \"http://schema.org\", \"@type\": \"Organization\", \"name\": \"Brooklinen\", \"logo\": \"https:\\/\\/www.brooklinen.com\\/cdn\\/shop\\/files\\/Best-In-Bed_Lockup_web-only_Blue.svg?v=1770997710\\u"
+    },
+    {
+      "check": "wikipedia",
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "engine": "wikipedia",
+      "maxScore": 20,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "wikipedia",
+          "competitors": [],
+          "brandMentioned": false,
+          "citationPoints": 0,
+          "rawAnswerSnippet": "Wikipedia returned HTTP 404",
+          "mentionProminence": "not_mentioned"
+        }
+      ],
+      "brandMentioned": false,
+      "rawAnswerSnippet": "Wikipedia returned HTTP 404"
+    },
+    {
+      "check": "technical_seo",
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "engine": "technical_seo",
+      "maxScore": 15,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "technical_seo",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 15,
+          "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: brooklinen.com",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: brooklinen.com"
+    },
+    {
+      "check": "ai_visibility",
+      "score": 17,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "engine": "ai_visibility",
+      "maxScore": 100,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "ai_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 17,
+          "rawAnswerSnippet": "What are the best breathable cotton sheet sets for hot sleepers looking for a crisp feel?: brand named; instead: Parachute\nWhich direct-to-consumer bedding brands offer a generous home trial period or return policy?: brand not named; instead: Parachute, Casper\nWhat are the top luxury sheet brands that offer long-lasting durability for daily use?: brand not named; instead: Frette, Sferra, Matouk\nIs linen or sateen cotton better if I want soft, cozy bedding that works well in all seasons?: brand named; instead: none found\nWhat is the best hypoallergenic down alternative comforter for year-round warmth?: brand not named; instead: Buffy, Parachute, Linenspa\nWhere can I buy a complete high-end bedding bundle that includes sheets, duvet cover, and pillowcases?: brand not named; instead: Parachut",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "What are the best breathable cotton sheet sets for hot sleepers looking for a crisp feel?: brand named; instead: Parachute\nWhich direct-to-consumer bedding brands offer a generous home trial period or return policy?: brand not named; instead: Parachute, Casper\nWhat are the top luxury sheet brands that offer long-lasting durability for daily use?: brand not named; instead: Frette, Sferra, Matouk\nIs linen or sateen cotton better if I want soft, cozy bedding that works well in all seasons?: brand named; instead: none found\nWhat is the best hypoallergenic down alternative comforter for year-round warmth?: brand not named; instead: Buffy, Parachute, Linenspa\nWhere can I buy a complete high-end bedding bundle that includes sheets, duvet cover, and pillowcases?: brand not named; instead: Parachut"
+    }
+  ],
+  "competitors": [
+    "Parachute",
+    "Buffy",
+    "Coyuchi",
+    "Frette",
+    "Sferra",
+    "Casper",
+    "Matouk",
+    "Linenspa",
+    "Tempur-Pedic",
+    "Purple",
+    "Coop Home Goods",
+    "Snowe"
+  ],
+  "buyer_intent_prompts": [
+    {
+      "prompt": "What are the best breathable cotton sheet sets for hot sleepers looking for a crisp feel?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Parachute"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for quality bedding"
+          },
+          "rawAnswerSnippet": "recommended_brands: Brooklinen, Parachute, Boll & Branch",
+          "perceivedCategory": "bedding",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Parachute"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Which direct-to-consumer bedding brands offer a generous home trial period or return policy?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Parachute",
+            "Casper"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for quality bedding"
+          },
+          "rawAnswerSnippet": "recommended_brands: Parachute, Casper, Tuft & Needle",
+          "perceivedCategory": "bedding",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Parachute",
+        "Casper"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the top luxury sheet brands that offer long-lasting durability for daily use?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Frette",
+            "Sferra",
+            "Matouk"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Frette, Sferra, Matouk",
+          "perceivedCategory": "bedding",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Frette",
+        "Sferra",
+        "Matouk"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Is linen or sateen cotton better if I want soft, cozy bedding that works well in all seasons?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for quality bedding"
+          },
+          "rawAnswerSnippet": "recommended_brands: Brooklinen",
+          "perceivedCategory": "bedding",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "What is the best hypoallergenic down alternative comforter for year-round warmth?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Buffy",
+            "Parachute",
+            "Linenspa"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Buffy, Parachute, Linenspa",
+          "perceivedCategory": "bedding",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Buffy",
+        "Parachute",
+        "Linenspa"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Where can I buy a complete high-end bedding bundle that includes sheets, duvet cover, and pillowcases?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Parachute",
+            "Coyuchi"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Boll & Branch, Parachute, Coyuchi",
+          "perceivedCategory": "bedding",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Parachute",
+        "Coyuchi"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which eco-friendly bedding brands make the softest cooling sheets for summer?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Coyuchi",
+            "Buffy"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Coyuchi, Boll & Branch, Buffy",
+          "perceivedCategory": "bedding",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Coyuchi",
+        "Buffy"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What mattress and bedding companies offer supportive pillows designed specifically for side sleepers?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Tempur-Pedic",
+            "Purple",
+            "Coop Home Goods"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Tempur-Pedic, Purple, Coop Home Goods",
+          "perceivedCategory": "bedding",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Tempur-Pedic",
+        "Purple",
+        "Coop Home Goods"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the most reputable online bedding brands known for hotel-quality luxury sheets?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Parachute",
+            "Frette"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Boll & Branch, Parachute, Frette",
+          "perceivedCategory": "bedding",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Parachute",
+        "Frette"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "How do I choose a lightweight duvet insert that stays fluffy and evenly distributed after washing?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Buffy",
+            "Parachute",
+            "Snowe"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Buffy, Parachute, Snowe",
+          "perceivedCategory": "bedding products",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Buffy",
+        "Parachute",
+        "Snowe"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What bed sheets are recommended for people with sensitive skin who prefer a silky smooth texture?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Parachute",
+            "Coyuchi"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Boll & Branch, Parachute, Coyuchi",
+          "perceivedCategory": "bedding",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Parachute",
+        "Coyuchi"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which high-end bedding brands make deep-pocket fitted sheets that fit thick pillow-top mattresses?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Parachute",
+            "Sferra"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Boll & Branch, Parachute, Sferra",
+          "perceivedCategory": "bedding",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Parachute",
+        "Sferra"
+      ],
+      "brandMentioned": false
+    }
+  ],
+  "prompt_debug": "ai:12",
+  "category": "mattress and bedding brand",
+  "icp_segment": {
+    "key": "small_brand_ecommerce",
+    "label": "Small brand / ecommerce",
+    "buyerIntent": "best brand of [product]",
+    "remediationFocus": [
+      "FAQ",
+      "product pages",
+      "reviews",
+      "third-party listicles"
+    ]
+  },
+  "audit_tier": "agent_19eur",
+  "answer_engine": {
+    "model": "gpt-4o-mini-2024-07-18",
+    "engine": "ChatGPT",
+    "realLlmCall": true
+  },
+  "brand_sentiment": {
+    "label": "positive",
+    "justification": "known for quality bedding"
+  },
+  "fixes": [
+    "Create crawlable brand, product, review, and comparison pages that clearly connect the brand name to the official domain.",
+    "Build authoritative third-party coverage and Wikidata-style entity consistency before pursuing encyclopedia visibility."
+  ],
+  "email_sent": false,
+  "email_error": "Suppressed: internal/test domain.",
+  "locale": "en"
+}

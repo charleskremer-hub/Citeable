@@ -1,0 +1,609 @@
+{
+  "audit_id": "c3ac4585-c112-45fc-8e06-1f624deb68d4",
+  "status": "completed",
+  "brand_name": "Bubble",
+  "website_url": "https://hellobubble.com/",
+  "score": 21,
+  "checks": [
+    {
+      "check": "search_visibility",
+      "found": true,
+      "score": 25,
+      "detail": "Web search returned 11 brand/domain result mention(s).",
+      "evidence": "Welcome to the new hellobubble.com Welcome to the new hellobubble.com ... Bring Bubble to life through your content, with opportunities to participate ... — Bubble Skincare: Bubble | Face The Day — hellobubble.com Our new website is officially live with a fresh new look, easier ways to shop your routine, and even more ",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "structured_data",
+      "score": 0,
+      "detail": "Homepage returned HTTP 403",
+      "evidence": "Homepage returned HTTP 403",
+      "maxScore": 25,
+      "reachable": false
+    },
+    {
+      "check": "wikipedia",
+      "found": false,
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "evidence": "{\"type\":\"disambiguation\",\"title\":\"Bubble\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Bubble</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q30067105\",\"titles\":{\"canonical\":\"Bubble\",\"normalized\":\"Bubble\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-",
+      "maxScore": 20,
+      "reachable": true
+    },
+    {
+      "check": "technical_seo",
+      "found": true,
+      "score": 5,
+      "detail": "robots.txt: true, sitemap.xml: false",
+      "evidence": "robots.txt: 200; sitemap.xml: 403; host: hellobubble.com",
+      "maxScore": 15,
+      "reachable": true
+    },
+    {
+      "check": "ai_visibility",
+      "found": true,
+      "score": 17,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "evidence": "What are the best gentle skincare routines for teenagers with sensitive skin?: brand not named; instead: CeraVe, Neutrogena, La Roche-Posay\nWhich affordable skincare brands offer effective hydrating cleansers under $20?: brand not named; instead: CeraVe, Neutrogena\nWhat skincare products are recommended for clearing up mild acne without drying out the skin?: brand not named; instead: CeraVe, Neutrogena, La Roche-Posay\nAre there cruelty-free skincare lines that focus on natural ingredients for oily skin?: brand not named; instead: Burt's Bees, Acure, Herbivore Botanicals\nHow do drugstore skincare brands compare to high-end dermatologist-recommended products for daily hydration?: brand not named; instead: CeraVe, Neutrogena, La Roche-Posay\nWhat basic three-step skincare routine should a begi",
+      "maxScore": 100,
+      "reachable": true
+    }
+  ],
+  "engines": [
+    {
+      "check": "search_visibility",
+      "score": 25,
+      "detail": "Web search returned 11 brand/domain result mention(s).",
+      "engine": "search_visibility",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "search_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "Welcome to the new hellobubble.com Welcome to the new hellobubble.com ... Bring Bubble to life through your content, with opportunities to participate ... — Bubble Skincare: Bubble | Face The Day — hellobubble.com Our new website is officially live with a fresh new look, easier ways to shop your routine, and even more ",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "Welcome to the new hellobubble.com Welcome to the new hellobubble.com ... Bring Bubble to life through your content, with opportunities to participate ... — Bubble Skincare: Bubble | Face The Day — hellobubble.com Our new website is officially live with a fresh new look, easier ways to shop your routine, and even more "
+    },
+    {
+      "check": "structured_data",
+      "score": 0,
+      "detail": "Homepage returned HTTP 403",
+      "engine": "structured_data",
+      "maxScore": 25,
+      "reachable": false,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "structured_data",
+          "competitors": [],
+          "brandMentioned": false,
+          "citationPoints": 0,
+          "rawAnswerSnippet": "Homepage returned HTTP 403",
+          "mentionProminence": "not_mentioned"
+        }
+      ],
+      "brandMentioned": false,
+      "rawAnswerSnippet": "Homepage returned HTTP 403",
+      "unavailableReason": "Homepage returned HTTP 403"
+    },
+    {
+      "check": "wikipedia",
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "engine": "wikipedia",
+      "maxScore": 20,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "wikipedia",
+          "competitors": [],
+          "brandMentioned": false,
+          "citationPoints": 0,
+          "rawAnswerSnippet": "{\"type\":\"disambiguation\",\"title\":\"Bubble\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Bubble</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q30067105\",\"titles\":{\"canonical\":\"Bubble\",\"normalized\":\"Bubble\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-",
+          "mentionProminence": "not_mentioned"
+        }
+      ],
+      "brandMentioned": false,
+      "rawAnswerSnippet": "{\"type\":\"disambiguation\",\"title\":\"Bubble\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Bubble</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q30067105\",\"titles\":{\"canonical\":\"Bubble\",\"normalized\":\"Bubble\",\"display\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-"
+    },
+    {
+      "check": "technical_seo",
+      "score": 5,
+      "detail": "robots.txt: true, sitemap.xml: false",
+      "engine": "technical_seo",
+      "maxScore": 15,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "technical_seo",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 5,
+          "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 403; host: hellobubble.com",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 403; host: hellobubble.com"
+    },
+    {
+      "check": "ai_visibility",
+      "score": 17,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "engine": "ai_visibility",
+      "maxScore": 100,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "ai_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 17,
+          "rawAnswerSnippet": "What are the best gentle skincare routines for teenagers with sensitive skin?: brand not named; instead: CeraVe, Neutrogena, La Roche-Posay\nWhich affordable skincare brands offer effective hydrating cleansers under $20?: brand not named; instead: CeraVe, Neutrogena\nWhat skincare products are recommended for clearing up mild acne without drying out the skin?: brand not named; instead: CeraVe, Neutrogena, La Roche-Posay\nAre there cruelty-free skincare lines that focus on natural ingredients for oily skin?: brand not named; instead: Burt's Bees, Acure, Herbivore Botanicals\nHow do drugstore skincare brands compare to high-end dermatologist-recommended products for daily hydration?: brand not named; instead: CeraVe, Neutrogena, La Roche-Posay\nWhat basic three-step skincare routine should a begi",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "What are the best gentle skincare routines for teenagers with sensitive skin?: brand not named; instead: CeraVe, Neutrogena, La Roche-Posay\nWhich affordable skincare brands offer effective hydrating cleansers under $20?: brand not named; instead: CeraVe, Neutrogena\nWhat skincare products are recommended for clearing up mild acne without drying out the skin?: brand not named; instead: CeraVe, Neutrogena, La Roche-Posay\nAre there cruelty-free skincare lines that focus on natural ingredients for oily skin?: brand not named; instead: Burt's Bees, Acure, Herbivore Botanicals\nHow do drugstore skincare brands compare to high-end dermatologist-recommended products for daily hydration?: brand not named; instead: CeraVe, Neutrogena, La Roche-Posay\nWhat basic three-step skincare routine should a begi"
+    }
+  ],
+  "competitors": [
+    "CeraVe",
+    "Neutrogena",
+    "La Roche-Posay",
+    "Burt's Bees",
+    "Acure",
+    "Herbivore Botanicals",
+    "Clinique",
+    "Lush",
+    "Kiehl's",
+    "Ethique",
+    "Curology",
+    "Lumiere De Vie"
+  ],
+  "buyer_intent_prompts": [
+    {
+      "prompt": "What are the best gentle skincare routines for teenagers with sensitive skin?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "CeraVe",
+            "Neutrogena",
+            "La Roche-Posay"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: CeraVe, Neutrogena, La Roche-Posay",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "CeraVe",
+        "Neutrogena",
+        "La Roche-Posay"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which affordable skincare brands offer effective hydrating cleansers under $20?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "CeraVe",
+            "Neutrogena"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: CeraVe, Neutrogena, The Ordinary",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "CeraVe",
+        "Neutrogena"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What skincare products are recommended for clearing up mild acne without drying out the skin?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "CeraVe",
+            "Neutrogena",
+            "La Roche-Posay"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: CeraVe, Neutrogena, La Roche-Posay",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "CeraVe",
+        "Neutrogena",
+        "La Roche-Posay"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Are there cruelty-free skincare lines that focus on natural ingredients for oily skin?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Burt's Bees",
+            "Acure",
+            "Herbivore Botanicals"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Burt's Bees, Acure, Herbivore Botanicals",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Burt's Bees",
+        "Acure",
+        "Herbivore Botanicals"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "How do drugstore skincare brands compare to high-end dermatologist-recommended products for daily hydration?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "CeraVe",
+            "Neutrogena",
+            "La Roche-Posay"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: CeraVe, Neutrogena, La Roche-Posay",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "CeraVe",
+        "Neutrogena",
+        "La Roche-Posay"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What basic three-step skincare routine should a beginner start with for combination skin?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "CeraVe",
+            "Neutrogena"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "not_enough_signal",
+            "justification": "not enough signal"
+          },
+          "rawAnswerSnippet": "recommended_brands: CeraVe, Neutrogena, The Ordinary",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "CeraVe",
+        "Neutrogena"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which skincare brands sell travel-sized daily moisturizers that are good for dry skin?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "CeraVe",
+            "Clinique",
+            "Neutrogena"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "not_enough_signal",
+            "justification": "not enough signal"
+          },
+          "rawAnswerSnippet": "recommended_brands: CeraVe, Clinique, Neutrogena",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "CeraVe",
+        "Clinique",
+        "Neutrogena"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the safest and most popular skincare products for younger teens starting a skincare routine?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "CeraVe",
+            "Neutrogena"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "recommended for gentle skincare"
+          },
+          "rawAnswerSnippet": "recommended_brands: Bubble, CeraVe, Neutrogena",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "CeraVe",
+        "Neutrogena"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Which lightweight daily moisturizers contain hyaluronic acid for barrier repair?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Neutrogena",
+            "CeraVe",
+            "La Roche-Posay"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Neutrogena, CeraVe, La Roche-Posay",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Neutrogena",
+        "CeraVe",
+        "La Roche-Posay"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What skincare brands offer complete starter bundles for under $50?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "CeraVe"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers affordable skincare options"
+          },
+          "rawAnswerSnippet": "recommended_brands: Bubble, CeraVe, The Ordinary",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "CeraVe"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Are there sustainable skincare brands that offer refillable or eco-friendly packaging?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Lush",
+            "Kiehl's",
+            "Ethique"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers eco-friendly options"
+          },
+          "rawAnswerSnippet": "recommended_brands: Lush, Kiehl's, Ethique",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Lush",
+        "Kiehl's",
+        "Ethique"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which direct-to-consumer skincare companies offer subscription discounts and easy returns?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Curology",
+            "Lumiere De Vie"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "offers subscription options"
+          },
+          "rawAnswerSnippet": "recommended_brands: Curology, Function of Beauty, Lumiere De Vie",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Curology",
+        "Lumiere De Vie"
+      ],
+      "brandMentioned": false
+    }
+  ],
+  "prompt_debug": "ai:12",
+  "category": "skincare products",
+  "icp_segment": {
+    "key": "small_brand_ecommerce",
+    "label": "Small brand / ecommerce",
+    "buyerIntent": "best brand of [product]",
+    "remediationFocus": [
+      "FAQ",
+      "product pages",
+      "reviews",
+      "third-party listicles"
+    ]
+  },
+  "audit_tier": "agent_19eur",
+  "answer_engine": {
+    "model": "gpt-4o-mini-2024-07-18",
+    "engine": "ChatGPT",
+    "realLlmCall": true
+  },
+  "brand_sentiment": {
+    "label": "positive",
+    "justification": "described as a trusted premium option"
+  },
+  "fixes": [
+    "Add Organization JSON-LD schema and complete OpenGraph title/description tags on the homepage.",
+    "Publish accessible robots.txt and sitemap.xml files so search and answer engines can discover key pages.",
+    "Build authoritative third-party coverage and Wikidata-style entity consistency before pursuing encyclopedia visibility."
+  ],
+  "email_sent": false,
+  "email_error": "Suppressed: internal/test domain.",
+  "locale": "en"
+}

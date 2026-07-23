@@ -1,0 +1,619 @@
+{
+  "audit_id": "7e21713b-ecac-42d4-8a53-c63fc81471b5",
+  "status": "completed",
+  "brand_name": "Topicals",
+  "website_url": "https://mytopicals.com/",
+  "score": 25,
+  "checks": [
+    {
+      "check": "search_visibility",
+      "found": true,
+      "score": 25,
+      "detail": "Web search returned 9 brand/domain result mention(s).",
+      "evidence": "e science backed products for chronic skin conditions and mental health advocacy. — Topicals | Skincare for Flare-Ups — mytopicals.com Heavy hitting formulas for chronic skin. Available now on mytopicals.com, moisturize and soften — your new, all-star body care routine. mytopicals.com — TOPICALS (@topicals) • Instagram",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "structured_data",
+      "found": true,
+      "score": 25,
+      "detail": "Schema.org: true, OpenGraph: true",
+      "evidence": "\" href=\"https://cdn.shopify.com/oxygen-v2/37974/30730/64211/3911502/assets/app-CPzphSAy.css\"/><script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",\"@type\":\"Organization\",\"name\":\"Skincare for Flare-Ups\",\"sameAs\":[],\"url\":\"https://mytopicals.com/\",\"potentialAction\":{\"@type\":\"SearchAction\",\"target\":\"https:/",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "wikipedia",
+      "found": false,
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "evidence": "{\"type\":\"standard\",\"title\":\"Topical medication\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Topical medication</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q420054\",\"titles\":{\"canonical\":\"Topical_medication\",\"normalized\":\"Topical medication\",\"display\":\"<span lang=\\",
+      "maxScore": 20,
+      "reachable": true
+    },
+    {
+      "check": "technical_seo",
+      "found": true,
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "evidence": "robots.txt: 200; sitemap.xml: 200; host: mytopicals.com",
+      "maxScore": 15,
+      "reachable": true
+    },
+    {
+      "check": "ai_visibility",
+      "found": true,
+      "score": 8,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "evidence": "What are the best beauty brands for people dealing with hyperpigmentation and sensitive skin?: brand not named; instead: Paula's Choice, CeraVe\nWhich affordable skincare brands offer dermatologist-tested products for body dark spots?: brand not named; instead: CeraVe, Neutrogena, Kiehl's\nCan you recommend beauty brands that specialize in science-backed barrier repair treatments?: brand not named; instead: CeraVe, La Roche-Posay, SkinCeuticals\nWhat skincare brands sell travel-friendly mini sizes and solid body cleansers?: brand not named; instead: Drunk Elephant, Burt's Bees, Lush\nWhich clean beauty brands offer bundled skincare sets to help save money?: brand not named; instead: Herbivore Botanicals, Youth To The People, Biossance\nWhat are the top cruelty-free beauty brands targeting stubb",
+      "maxScore": 100,
+      "reachable": true
+    }
+  ],
+  "engines": [
+    {
+      "check": "search_visibility",
+      "score": 25,
+      "detail": "Web search returned 9 brand/domain result mention(s).",
+      "engine": "search_visibility",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "search_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "e science backed products for chronic skin conditions and mental health advocacy. — Topicals | Skincare for Flare-Ups — mytopicals.com Heavy hitting formulas for chronic skin. Available now on mytopicals.com, moisturize and soften — your new, all-star body care routine. mytopicals.com — TOPICALS (@topicals) • Instagram",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "e science backed products for chronic skin conditions and mental health advocacy. — Topicals | Skincare for Flare-Ups — mytopicals.com Heavy hitting formulas for chronic skin. Available now on mytopicals.com, moisturize and soften — your new, all-star body care routine. mytopicals.com — TOPICALS (@topicals) • Instagram"
+    },
+    {
+      "check": "structured_data",
+      "score": 25,
+      "detail": "Schema.org: true, OpenGraph: true",
+      "engine": "structured_data",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "structured_data",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "\" href=\"https://cdn.shopify.com/oxygen-v2/37974/30730/64211/3911502/assets/app-CPzphSAy.css\"/><script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",\"@type\":\"Organization\",\"name\":\"Skincare for Flare-Ups\",\"sameAs\":[],\"url\":\"https://mytopicals.com/\",\"potentialAction\":{\"@type\":\"SearchAction\",\"target\":\"https:/",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "\" href=\"https://cdn.shopify.com/oxygen-v2/37974/30730/64211/3911502/assets/app-CPzphSAy.css\"/><script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",\"@type\":\"Organization\",\"name\":\"Skincare for Flare-Ups\",\"sameAs\":[],\"url\":\"https://mytopicals.com/\",\"potentialAction\":{\"@type\":\"SearchAction\",\"target\":\"https:/"
+    },
+    {
+      "check": "wikipedia",
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "engine": "wikipedia",
+      "maxScore": 20,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "wikipedia",
+          "competitors": [],
+          "brandMentioned": false,
+          "citationPoints": 0,
+          "rawAnswerSnippet": "{\"type\":\"standard\",\"title\":\"Topical medication\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Topical medication</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q420054\",\"titles\":{\"canonical\":\"Topical_medication\",\"normalized\":\"Topical medication\",\"display\":\"<span lang=\\",
+          "mentionProminence": "not_mentioned"
+        }
+      ],
+      "brandMentioned": false,
+      "rawAnswerSnippet": "{\"type\":\"standard\",\"title\":\"Topical medication\",\"displaytitle\":\"<span lang=\\\"en\\\" dir=\\\"ltr\\\"><span class=\\\"mw-page-title-main\\\">Topical medication</span></span>\",\"namespace\":{\"id\":0,\"text\":\"\"},\"wikibase_item\":\"Q420054\",\"titles\":{\"canonical\":\"Topical_medication\",\"normalized\":\"Topical medication\",\"display\":\"<span lang=\\"
+    },
+    {
+      "check": "technical_seo",
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "engine": "technical_seo",
+      "maxScore": 15,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "technical_seo",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 15,
+          "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: mytopicals.com",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: mytopicals.com"
+    },
+    {
+      "check": "ai_visibility",
+      "score": 8,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "engine": "ai_visibility",
+      "maxScore": 100,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "ai_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 8,
+          "rawAnswerSnippet": "What are the best beauty brands for people dealing with hyperpigmentation and sensitive skin?: brand not named; instead: Paula's Choice, CeraVe\nWhich affordable skincare brands offer dermatologist-tested products for body dark spots?: brand not named; instead: CeraVe, Neutrogena, Kiehl's\nCan you recommend beauty brands that specialize in science-backed barrier repair treatments?: brand not named; instead: CeraVe, La Roche-Posay, SkinCeuticals\nWhat skincare brands sell travel-friendly mini sizes and solid body cleansers?: brand not named; instead: Drunk Elephant, Burt's Bees, Lush\nWhich clean beauty brands offer bundled skincare sets to help save money?: brand not named; instead: Herbivore Botanicals, Youth To The People, Biossance\nWhat are the top cruelty-free beauty brands targeting stubb",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "What are the best beauty brands for people dealing with hyperpigmentation and sensitive skin?: brand not named; instead: Paula's Choice, CeraVe\nWhich affordable skincare brands offer dermatologist-tested products for body dark spots?: brand not named; instead: CeraVe, Neutrogena, Kiehl's\nCan you recommend beauty brands that specialize in science-backed barrier repair treatments?: brand not named; instead: CeraVe, La Roche-Posay, SkinCeuticals\nWhat skincare brands sell travel-friendly mini sizes and solid body cleansers?: brand not named; instead: Drunk Elephant, Burt's Bees, Lush\nWhich clean beauty brands offer bundled skincare sets to help save money?: brand not named; instead: Herbivore Botanicals, Youth To The People, Biossance\nWhat are the top cruelty-free beauty brands targeting stubb"
+    }
+  ],
+  "competitors": [
+    "CeraVe",
+    "Paula's Choice",
+    "Drunk Elephant",
+    "Kiehl's",
+    "La Roche-Posay",
+    "Biossance",
+    "Aveeno",
+    "Neutrogena",
+    "SkinCeuticals",
+    "Burt's Bees",
+    "Lush",
+    "Herbivore Botanicals",
+    "Youth To The People",
+    "Eucerin",
+    "Tatcha",
+    "Murad",
+    "Ulta",
+    "Sephora",
+    "Dermstore"
+  ],
+  "buyer_intent_prompts": [
+    {
+      "prompt": "What are the best beauty brands for people dealing with hyperpigmentation and sensitive skin?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Paula's Choice",
+            "CeraVe"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for effective skincare solutions"
+          },
+          "rawAnswerSnippet": "recommended_brands: The Ordinary, Paula's Choice, CeraVe",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Paula's Choice",
+        "CeraVe"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which affordable skincare brands offer dermatologist-tested products for body dark spots?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "CeraVe",
+            "Neutrogena",
+            "Kiehl's"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: CeraVe, Neutrogena, Kiehl's",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "CeraVe",
+        "Neutrogena",
+        "Kiehl's"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Can you recommend beauty brands that specialize in science-backed barrier repair treatments?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "CeraVe",
+            "La Roche-Posay",
+            "SkinCeuticals"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: CeraVe, La Roche-Posay, SkinCeuticals",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "CeraVe",
+        "La Roche-Posay",
+        "SkinCeuticals"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What skincare brands sell travel-friendly mini sizes and solid body cleansers?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Drunk Elephant",
+            "Burt's Bees",
+            "Lush"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Drunk Elephant, Burt's Bees, Lush",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Drunk Elephant",
+        "Burt's Bees",
+        "Lush"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which clean beauty brands offer bundled skincare sets to help save money?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Herbivore Botanicals",
+            "Youth To The People",
+            "Biossance"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for effective skincare products"
+          },
+          "rawAnswerSnippet": "recommended_brands: Herbivore Botanicals, Youth To The People, Biossance",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Herbivore Botanicals",
+        "Youth To The People",
+        "Biossance"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the top cruelty-free beauty brands targeting stubborn acne marks and redness?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Paula's Choice"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": true,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "recommended for effective skincare"
+          },
+          "rawAnswerSnippet": "recommended_brands: Topicals, Paula's Choice, The Ordinary",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT te recommande"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Paula's Choice"
+      ],
+      "brandMentioned": true
+    },
+    {
+      "prompt": "Which skincare brands focus on gentle, fragrance-free solutions for chronic skin irritation?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "CeraVe",
+            "Aveeno",
+            "La Roche-Posay"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for effective skincare"
+          },
+          "rawAnswerSnippet": "recommended_brands: CeraVe, Aveeno, La Roche-Posay",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "CeraVe",
+        "Aveeno",
+        "La Roche-Posay"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "How do indie body care brands compare to drugstore leaders like CeraVe for soothing dry skin?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "CeraVe",
+            "Eucerin",
+            "Aveeno"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for effective skincare"
+          },
+          "rawAnswerSnippet": "recommended_brands: CeraVe, Eucerin, Aveeno",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "CeraVe",
+        "Eucerin",
+        "Aveeno"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the most recommended beauty brands for smoothing rough and uneven skin texture?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Drunk Elephant",
+            "Paula's Choice"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for effective skincare solutions"
+          },
+          "rawAnswerSnippet": "recommended_brands: Drunk Elephant, The Ordinary, Paula's Choice",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Drunk Elephant",
+        "Paula's Choice"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which skincare brands offer travel-friendly mini versions of their bestselling products?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Drunk Elephant",
+            "Tatcha",
+            "Biossance"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Drunk Elephant, Tatcha, Biossance",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Drunk Elephant",
+        "Tatcha",
+        "Biossance"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What beauty brands are best known for effective treatments for dark spots and discolored skin?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Murad",
+            "Kiehl's",
+            "Paula's Choice"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for effective skincare solutions"
+          },
+          "rawAnswerSnippet": "recommended_brands: Murad, Kiehl's, Paula's Choice",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Murad",
+        "Kiehl's",
+        "Paula's Choice"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which online beauty brands provide free shipping on orders over 50 dollars?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Ulta",
+            "Sephora",
+            "Dermstore"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Ulta, Sephora, Dermstore",
+          "perceivedCategory": "skincare",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Ulta",
+        "Sephora",
+        "Dermstore"
+      ],
+      "brandMentioned": false
+    }
+  ],
+  "prompt_debug": "ai:12",
+  "category": "beauty brand",
+  "icp_segment": {
+    "key": "small_brand_ecommerce",
+    "label": "Small brand / ecommerce",
+    "buyerIntent": "best brand of [product]",
+    "remediationFocus": [
+      "FAQ",
+      "product pages",
+      "reviews",
+      "third-party listicles"
+    ]
+  },
+  "audit_tier": "agent_19eur",
+  "answer_engine": {
+    "model": "gpt-4o-mini-2024-07-18",
+    "engine": "ChatGPT",
+    "realLlmCall": true
+  },
+  "brand_sentiment": {
+    "label": "positive",
+    "justification": "known for effective skincare solutions"
+  },
+  "fixes": [
+    "Earn mentions on trusted product listicles, review pages, comparison guides, community threads, and marketplaces that answer engines can cite.",
+    "Build authoritative third-party coverage and Wikidata-style entity consistency before pursuing encyclopedia visibility."
+  ],
+  "email_sent": false,
+  "email_error": "Suppressed: internal/test domain.",
+  "locale": "en"
+}

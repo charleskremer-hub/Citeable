@@ -1,0 +1,586 @@
+{
+  "audit_id": "24cb2b0b-d5ad-4d2f-9ae9-05a00835d7dd",
+  "status": "completed",
+  "brand_name": "Baboon to the Moon",
+  "website_url": "https://baboontothemoon.com/",
+  "score": 19,
+  "checks": [
+    {
+      "check": "search_visibility",
+      "found": true,
+      "score": 25,
+      "detail": "Web search returned 9 brand/domain result mention(s).",
+      "evidence": "and radical bags. All with a lifetime warranty and free shipping in the US. — BABOON TO THE MOON | Bags for Adventure — baboontothemoon.com If you get the “baboon to the moon heart” design from the Black Cherry lining permanently tattooed on you, we'll gift you a free Baboon To The ... — BABOON TO THE MOON (@baboontoth",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "structured_data",
+      "found": true,
+      "score": 25,
+      "detail": "Schema.org: true, OpenGraph: true",
+      "evidence": "<!doctype html> <html class=\"no-js\" lang=\"en\"> <head> <meta charset=\"utf-8\"> <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\"> <meta name=\"viewport\" content=\"width=device-width,initial-scale=1,viewport-fit=cover\"> <meta name=\"color-scheme\" content=\"light only\"> <!-- avoiding chrome force dark mode --> <script> var ",
+      "maxScore": 25,
+      "reachable": true
+    },
+    {
+      "check": "wikipedia",
+      "found": false,
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "evidence": "Wikipedia returned HTTP 404",
+      "maxScore": 20,
+      "reachable": true
+    },
+    {
+      "check": "technical_seo",
+      "found": true,
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "evidence": "robots.txt: 200; sitemap.xml: 200; host: baboontothemoon.com",
+      "maxScore": 15,
+      "reachable": true
+    },
+    {
+      "check": "ai_visibility",
+      "found": false,
+      "score": 0,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "evidence": "What are the best durable duffel bags for a weekend trip that fit in an overhead bin?: brand not named; instead: Patagonia, Osprey\nWhich travel bag brands offer a lifetime warranty on their luggage?: brand not named; instead: Osprey, Patagonia\nWhat are the top-rated water-resistant backpacks for adventure travel?: brand not named; instead: Osprey, Patagonia\nHow do I choose between a travel duffel and a hard-shell suitcase for international trips?: brand not named; instead: Patagonia, Osprey\nWhat are the best bright and colorful travel bags available right now?: brand not named; instead: Patagonia, Osprey\nWhich carry-on travel bags feature convertible backpack straps for easy carrying?: brand not named; instead: Patagonia, Osprey\nWhat are the most rugged and tear-resistant travel bags under",
+      "maxScore": 100,
+      "reachable": true
+    }
+  ],
+  "engines": [
+    {
+      "check": "search_visibility",
+      "score": 25,
+      "detail": "Web search returned 9 brand/domain result mention(s).",
+      "engine": "search_visibility",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "search_visibility",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "and radical bags. All with a lifetime warranty and free shipping in the US. — BABOON TO THE MOON | Bags for Adventure — baboontothemoon.com If you get the “baboon to the moon heart” design from the Black Cherry lining permanently tattooed on you, we'll gift you a free Baboon To The ... — BABOON TO THE MOON (@baboontoth",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "and radical bags. All with a lifetime warranty and free shipping in the US. — BABOON TO THE MOON | Bags for Adventure — baboontothemoon.com If you get the “baboon to the moon heart” design from the Black Cherry lining permanently tattooed on you, we'll gift you a free Baboon To The ... — BABOON TO THE MOON (@baboontoth"
+    },
+    {
+      "check": "structured_data",
+      "score": 25,
+      "detail": "Schema.org: true, OpenGraph: true",
+      "engine": "structured_data",
+      "maxScore": 25,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "structured_data",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 25,
+          "rawAnswerSnippet": "<!doctype html> <html class=\"no-js\" lang=\"en\"> <head> <meta charset=\"utf-8\"> <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\"> <meta name=\"viewport\" content=\"width=device-width,initial-scale=1,viewport-fit=cover\"> <meta name=\"color-scheme\" content=\"light only\"> <!-- avoiding chrome force dark mode --> <script> var ",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "<!doctype html> <html class=\"no-js\" lang=\"en\"> <head> <meta charset=\"utf-8\"> <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\"> <meta name=\"viewport\" content=\"width=device-width,initial-scale=1,viewport-fit=cover\"> <meta name=\"color-scheme\" content=\"light only\"> <!-- avoiding chrome force dark mode --> <script> var "
+    },
+    {
+      "check": "wikipedia",
+      "score": 0,
+      "detail": "No exact Wikipedia article found",
+      "engine": "wikipedia",
+      "maxScore": 20,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "wikipedia",
+          "competitors": [],
+          "brandMentioned": false,
+          "citationPoints": 0,
+          "rawAnswerSnippet": "Wikipedia returned HTTP 404",
+          "mentionProminence": "not_mentioned"
+        }
+      ],
+      "brandMentioned": false,
+      "rawAnswerSnippet": "Wikipedia returned HTTP 404"
+    },
+    {
+      "check": "technical_seo",
+      "score": 15,
+      "detail": "robots.txt: true, sitemap.xml: true",
+      "engine": "technical_seo",
+      "maxScore": 15,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "technical_seo",
+          "competitors": [],
+          "brandMentioned": true,
+          "citationPoints": 15,
+          "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: baboontothemoon.com",
+          "mentionProminence": "middle"
+        }
+      ],
+      "brandMentioned": true,
+      "rawAnswerSnippet": "robots.txt: 200; sitemap.xml: 200; host: baboontothemoon.com"
+    },
+    {
+      "check": "ai_visibility",
+      "score": 0,
+      "detail": "ChatGPT checked buyer-intent recommendations.",
+      "engine": "ai_visibility",
+      "maxScore": 100,
+      "reachable": true,
+      "promptsRun": 1,
+      "competitors": [],
+      "promptResults": [
+        {
+          "prompt": "ai_visibility",
+          "competitors": [],
+          "brandMentioned": false,
+          "citationPoints": 0,
+          "rawAnswerSnippet": "What are the best durable duffel bags for a weekend trip that fit in an overhead bin?: brand not named; instead: Patagonia, Osprey\nWhich travel bag brands offer a lifetime warranty on their luggage?: brand not named; instead: Osprey, Patagonia\nWhat are the top-rated water-resistant backpacks for adventure travel?: brand not named; instead: Osprey, Patagonia\nHow do I choose between a travel duffel and a hard-shell suitcase for international trips?: brand not named; instead: Patagonia, Osprey\nWhat are the best bright and colorful travel bags available right now?: brand not named; instead: Patagonia, Osprey\nWhich carry-on travel bags feature convertible backpack straps for easy carrying?: brand not named; instead: Patagonia, Osprey\nWhat are the most rugged and tear-resistant travel bags under",
+          "mentionProminence": "not_mentioned"
+        }
+      ],
+      "brandMentioned": false,
+      "rawAnswerSnippet": "What are the best durable duffel bags for a weekend trip that fit in an overhead bin?: brand not named; instead: Patagonia, Osprey\nWhich travel bag brands offer a lifetime warranty on their luggage?: brand not named; instead: Osprey, Patagonia\nWhat are the top-rated water-resistant backpacks for adventure travel?: brand not named; instead: Osprey, Patagonia\nHow do I choose between a travel duffel and a hard-shell suitcase for international trips?: brand not named; instead: Patagonia, Osprey\nWhat are the best bright and colorful travel bags available right now?: brand not named; instead: Patagonia, Osprey\nWhich carry-on travel bags feature convertible backpack straps for easy carrying?: brand not named; instead: Patagonia, Osprey\nWhat are the most rugged and tear-resistant travel bags under"
+    }
+  ],
+  "competitors": [
+    "Patagonia",
+    "Osprey"
+  ],
+  "buyer_intent_prompts": [
+    {
+      "prompt": "What are the best durable duffel bags for a weekend trip that fit in an overhead bin?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Patagonia",
+            "Osprey"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Patagonia, The North Face, Osprey",
+          "perceivedCategory": "duffel bags",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Patagonia",
+        "Osprey"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which travel bag brands offer a lifetime warranty on their luggage?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Osprey",
+            "Patagonia"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "known for durable travel bags"
+          },
+          "rawAnswerSnippet": "recommended_brands: Osprey, Patagonia, The North Face",
+          "perceivedCategory": "travel bags",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Osprey",
+        "Patagonia"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the top-rated water-resistant backpacks for adventure travel?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Osprey",
+            "Patagonia"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Osprey, The North Face, Patagonia",
+          "perceivedCategory": "backpacks",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Osprey",
+        "Patagonia"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "How do I choose between a travel duffel and a hard-shell suitcase for international trips?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Patagonia",
+            "Osprey"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Patagonia, The North Face, Osprey",
+          "perceivedCategory": "travel gear",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Patagonia",
+        "Osprey"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the best bright and colorful travel bags available right now?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Patagonia",
+            "Osprey"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Patagonia, Osprey, The North Face",
+          "perceivedCategory": "travel bags",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Patagonia",
+        "Osprey"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which carry-on travel bags feature convertible backpack straps for easy carrying?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Patagonia",
+            "Osprey"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Patagonia, Osprey, The North Face",
+          "perceivedCategory": "travel bags",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Patagonia",
+        "Osprey"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the most rugged and tear-resistant travel bags under $200?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Osprey",
+            "Patagonia"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Osprey, Patagonia, The North Face",
+          "perceivedCategory": "travel bags",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Osprey",
+        "Patagonia"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What size duffel bag is small enough to fit under an airline seat as a personal item?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Patagonia",
+            "Osprey"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Patagonia, The North Face, Osprey",
+          "perceivedCategory": "travel gear",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Patagonia",
+        "Osprey"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Are heavy-duty nylon travel bags better than polyester for frequent travel?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Osprey",
+            "Patagonia"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Osprey, Patagonia, The North Face",
+          "perceivedCategory": "travel bags",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Osprey",
+        "Patagonia"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "Which travel bag brands offer the best options made from recycled materials?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Patagonia",
+            "Osprey"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Patagonia, The North Face, Osprey",
+          "perceivedCategory": "travel bags",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Patagonia",
+        "Osprey"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "What are the best travel bags with spacious compartments for gear and packing cubes?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Osprey",
+            "Patagonia"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Osprey, Patagonia, The North Face",
+          "perceivedCategory": "travel bags",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Osprey",
+        "Patagonia"
+      ],
+      "brandMentioned": false
+    },
+    {
+      "prompt": "How do top adventure luggage brands compare in terms of durability and weather protection?",
+      "surfaces": [
+        {
+          "kind": "ai_engine",
+          "model": "gpt-4o-mini-2024-07-18",
+          "engine": "ChatGPT",
+          "status": "checked",
+          "surface": "ChatGPT",
+          "reachable": true,
+          "competitors": [
+            "Patagonia",
+            "Osprey"
+          ],
+          "realLlmCall": true,
+          "brandMentioned": false,
+          "brandSentiment": {
+            "label": "positive",
+            "justification": "described as a trusted premium option"
+          },
+          "rawAnswerSnippet": "recommended_brands: Patagonia, The North Face, Osprey",
+          "perceivedCategory": "adventure luggage",
+          "recommendationLabel": "ChatGPT ne te cite pas"
+        }
+      ],
+      "available": true,
+      "competitors": [
+        "Patagonia",
+        "Osprey"
+      ],
+      "brandMentioned": false
+    }
+  ],
+  "prompt_debug": "ai:12",
+  "category": "travel bags",
+  "icp_segment": {
+    "key": "small_brand_ecommerce",
+    "label": "Small brand / ecommerce",
+    "buyerIntent": "best brand of [product]",
+    "remediationFocus": [
+      "FAQ",
+      "product pages",
+      "reviews",
+      "third-party listicles"
+    ]
+  },
+  "audit_tier": "agent_19eur",
+  "answer_engine": {
+    "model": "gpt-4o-mini-2024-07-18",
+    "engine": "ChatGPT",
+    "realLlmCall": true
+  },
+  "brand_sentiment": {
+    "label": "positive",
+    "justification": "described as a trusted premium option"
+  },
+  "fixes": [
+    "Earn mentions on trusted product listicles, review pages, comparison guides, community threads, and marketplaces that answer engines can cite.",
+    "Build authoritative third-party coverage and Wikidata-style entity consistency before pursuing encyclopedia visibility."
+  ],
+  "email_sent": false,
+  "email_error": "Suppressed: internal/test domain.",
+  "locale": "en"
+}
