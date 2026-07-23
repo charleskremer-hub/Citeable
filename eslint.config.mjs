@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Sorties de build et copies de worktrees d'agents : générées, jamais du
+    // code source à linter (elles portaient 311 erreurs de bruit).
+    ".next-agent-build/**",
+    ".claude/worktrees/**",
   ]),
 ]);
 
