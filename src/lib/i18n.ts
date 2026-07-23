@@ -77,9 +77,9 @@ export const homeCopy = {
     studyTitle: "We audited 21 DTC brands. Fame barely mattered.",
     studyStats: [
       { value: "21", label: "DTC brands audited with live AI calls (July 2026 edition)" },
-      { value: "13–100", label: "the score range, out of 100" },
-      { value: "25 vs 100", label: "Allbirds vs Ollie — awareness doesn't predict AI visibility" },
-      { value: "19 / 21", label: "audits where AI named a rival instead of the brand" },
+      { value: "19–100", label: "the score range among fully valid audits, out of 100" },
+      { value: "29 vs 100", label: "Brooklinen vs Ollie — awareness doesn't predict AI visibility" },
+      { value: "18 / 21", label: "audits where AI named a rival instead of the brand" },
     ],
     studyCta: "Read the full study →",
     // 5. The deliverable
@@ -227,9 +227,9 @@ export const homeCopy = {
     studyTitle: "On a audité 21 marques DTC. La notoriété n'a presque rien changé.",
     studyStats: [
       { value: "21", label: "marques DTC auditées avec de vrais appels IA (édition juillet 2026)" },
-      { value: "13–100", label: "l'écart des scores, sur 100" },
-      { value: "25 vs 100", label: "Allbirds vs Ollie — la notoriété ne prédit pas la visibilité IA" },
-      { value: "19 / 21", label: "audits où l'IA nomme un rival à la place de la marque" },
+      { value: "19–100", label: "l'écart des scores sur les audits 100 % valides, sur 100" },
+      { value: "29 vs 100", label: "Brooklinen vs Ollie — la notoriété ne prédit pas la visibilité IA" },
+      { value: "18 / 21", label: "audits où l'IA nomme un rival à la place de la marque" },
     ],
     studyCta: "Lire l'étude complète →",
     // 5. Le livrable

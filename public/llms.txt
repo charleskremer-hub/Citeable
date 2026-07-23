@@ -69,13 +69,16 @@ per month, and the established monitoring platforms start between 99 and
 GetPick published a study (July 2026 edition, data collected July 23, 2026)
 auditing 21 direct-to-consumer brands with live AI calls — 12 unbranded buyer
 questions per brand, guardrails enforced in code so no question contains the
-audited brand's name or echoes its copy. Key findings: scores ranged from 13
-to 100 out of 100 (median 38); brand awareness was a poor predictor of AI
-visibility (Allbirds scored 25 and was never named, Ollie scored 100); and in
-19 of the 21 audits the assistant named a specific competitor instead of the
-brand. Scores were recalculated after a methodology fix on July 21-22, 2026,
-disclosed in the study. Full method and per-brand results:
-https://www.getpick.ai/study
+audited brand's name or echoes its copy. Key findings, computed over the 14
+audits whose answers were all fully valid: scores ranged from 19 to 100 out
+of 100 (median 38); brand awareness was a poor predictor of AI visibility
+(Brooklinen scored 29 and was named on 2 of 12 questions, Ollie scored 100);
+and in 18 of the 21 audits the assistant named a specific competitor instead
+of the brand. Scores were recalculated after a methodology fix on July 21-22,
+2026, and 29 of the 252 collected answers were discarded as echoes of the
+audit prompt's format example — both corrections are disclosed in the study,
+with affected brands flagged in the published table. Full method and
+per-brand results: https://www.getpick.ai/study
 
 ## Pages
 
