@@ -4,50 +4,60 @@ import Link from "next/link";
 export const dynamic = "force-static";
 
 const PUBLISHED = "2026-07-19";
+// Édition juillet 2026 : les 21 marques ont été re-auditées le 23/07 avec le
+// moteur corrigé du 21-22/07 (garde-fous promptMentionsAuditedBrand +
+// questionEchoesBrandCopy actifs, 12 questions pour toutes les marques).
+// Chaque audit du re-run est en base Neon avec son promptDebug ; les données
+// brutes sont versionnées dans artifacts/study-rerun-2026-07/.
+const COLLECTED = "2026-07-23";
 // CANONIQUE = www tant que l'apex n'est pas déclaré dans le projet Vercel
 // (certificat SSL non émis pour l'apex → connexions refusées).
 // Voir le commentaire détaillé dans src/app/robots.ts.
 const URL = "https://www.getpick.ai/study";
 
 export const metadata: Metadata = {
-  title: "We asked AI what to buy in 21 DTC categories — GetPick study",
+  title: "We asked AI what to buy in 21 DTC categories — GetPick study (July 2026 edition)",
   description:
-    "We audited 21 direct-to-consumer brands with live ChatGPT and Gemini calls. Brand awareness barely predicted AI visibility: Allbirds scored 46, Ridge Wallet 81. In 14 of 21 audits, AI named a competitor instead.",
+    "We audited 21 direct-to-consumer brands with live AI calls — 12 unbranded buyer questions each, collected July 23, 2026. Scores ran from 13 to 100. Allbirds scored 25 and was never named; Ollie scored 100. In 19 of 21 audits, AI named a competitor instead.",
   alternates: { canonical: URL },
   openGraph: {
     title: "Brand awareness barely predicts whether AI recommends you",
     description:
-      "21 DTC brands audited with live AI calls. Scores from 31 to 88. In 14 of 21, AI named a competitor instead.",
+      "21 DTC brands, 12 unbranded buyer questions each, live AI calls collected July 23, 2026. Scores from 13 to 100. In 19 of 21, AI named a competitor instead.",
     url: URL,
     type: "article",
     publishedTime: PUBLISHED,
+    modifiedTime: COLLECTED,
   },
 };
 
-type Row = { brand: string; score: number; cited?: string; instead?: string; lowRes?: boolean; us?: boolean };
+type Row = { brand: string; score: number; cited: string; instead?: string; offCategory?: boolean; us?: boolean };
 
+// Données du re-run du 23/07/2026 — moteur corrigé, 12 questions non brandées
+// par marque, appels ChatGPT live (gpt-4o-mini). Source de vérité : la base
+// Neon (audits avec promptDebug) + artifacts/study-rerun-2026-07/results.json.
 const ROWS: Row[] = [
-  { brand: "Hedley & Bennett", score: 31, cited: "3/12", instead: "Tilit" },
-  { brand: "Necessaire", score: 35, cited: "3/12", instead: "Aesop" },
-  { brand: "Allbirds", score: 46, lowRes: true },
-  { brand: "Bubble", score: 47, cited: "5/12", instead: "CeraVe" },
-  { brand: "Cuts", score: 50, instead: "Lululemon" },
-  { brand: "Topicals", score: 51, instead: "Paula's Choice" },
-  { brand: "Spot & Tango", score: 55, cited: "7/12", instead: "Ollie" },
-  { brand: "De Soi", score: 57, cited: "8/12", instead: "Ghia" },
-  { brand: "GetPick (us, formerly Citeable)", score: 61, cited: "9/12", instead: "BrightLocal", us: true },
-  { brand: "Versed", score: 63, cited: "7/12", instead: "Cocokind" },
-  { brand: "Baboon to the Moon", score: 65, lowRes: true },
-  { brand: "Cometeer", score: 66, instead: "Jot" },
-  { brand: "Tower 28", score: 69, cited: "7/12", instead: "Kosas" },
-  { brand: "Arrae", score: 69, cited: "8/12", instead: "Love Wellness" },
-  { brand: "Dagne Dover", score: 69, cited: "8/12", instead: "Calpak" },
-  { brand: "Ollie", score: 69, instead: "Nom Nom" },
-  { brand: "Recess", score: 74 },
-  { brand: "Our Place", score: 75 },
-  { brand: "Ridge Wallet", score: 81, lowRes: true },
-  { brand: "Moon Juice", score: 85 },
-  { brand: "Brooklinen", score: 88 },
+  { brand: "GetPick (us)", score: 13, cited: "0/12", instead: "SEMrush", offCategory: true, us: true },
+  { brand: "Baboon to the Moon", score: 19, cited: "0/12", instead: "Patagonia" },
+  { brand: "Cuts", score: 19, cited: "0/12", instead: "Everlane" },
+  { brand: "Dagne Dover", score: 19, cited: "0/12", instead: "Patagonia" },
+  { brand: "Bubble", score: 21, cited: "2/12", instead: "CeraVe" },
+  { brand: "Allbirds", score: 25, cited: "0/12", instead: "On" },
+  { brand: "Topicals", score: 25, cited: "1/12", instead: "CeraVe" },
+  { brand: "Versed", score: 25, cited: "1/12", instead: "CeraVe" },
+  { brand: "Brooklinen", score: 29, cited: "2/12", instead: "Parachute" },
+  { brand: "Necessaire", score: 32, cited: "2/12", instead: "CeraVe" },
+  { brand: "De Soi", score: 38, cited: "3/12", instead: "Seedlip" },
+  { brand: "Our Place", score: 38, cited: "3/12", instead: "GreenPan" },
+  { brand: "Tower 28", score: 38, cited: "2/12", instead: "Ilia" },
+  { brand: "Spot & Tango", score: 40, cited: "4/12", instead: "PetPlate" },
+  { brand: "Arrae", score: 43, cited: "5/12", instead: "Gaia Herbs", offCategory: true },
+  { brand: "Cometeer", score: 47, cited: "5/12", instead: "AeroPress" },
+  { brand: "Ridge Wallet", score: 50, cited: "7/12", instead: "Bellroy" },
+  { brand: "Moon Juice", score: 63, cited: "7/12", instead: "Ritual" },
+  { brand: "Hedley & Bennett", score: 77, cited: "10/12", instead: "Chef Works" },
+  { brand: "Recess", score: 87, cited: "12/12" },
+  { brand: "Ollie", score: 100, cited: "12/12" },
 ];
 
 function scoreColor(score: number) {
@@ -64,12 +74,13 @@ const ARTICLE_SCHEMA = {
   "@type": "Article",
   headline: "We asked AI what to buy in 21 DTC categories. Brand awareness had almost nothing to do with the answer.",
   datePublished: PUBLISHED,
+  dateModified: COLLECTED,
   url: URL,
   author: { "@type": "Organization", name: "GetPick", url: "https://www.getpick.ai" },
   publisher: { "@type": "Organization", name: "GetPick" },
   about: "AI visibility of direct-to-consumer brands in ChatGPT and Gemini answers",
   description:
-    "A study of 21 direct-to-consumer brands audited with live ChatGPT and Gemini calls. Scores ranged from 31 to 88 out of 100. In 14 of 21 audits, the assistant named a specific competitor instead of the brand.",
+    "July 2026 edition. A study of 21 direct-to-consumer brands audited with 12 unbranded buyer questions each, sent to live AI assistants on July 23, 2026. Scores ranged from 13 to 100 out of 100. In 19 of 21 audits, the assistant named a specific competitor instead of the brand.",
 };
 
 const H2 = "m-0 mt-12 text-[1.75rem] leading-[1.15] tracking-[-0.03em] sm:text-[2rem]";
@@ -84,7 +95,9 @@ export default function StudyPage() {
         ← GetPick
       </Link>
 
-      <p className="m-0 mt-8 text-xs font-black uppercase tracking-[0.14em] text-[#CAFF3C]">Study · July 2026</p>
+      <p className="m-0 mt-8 text-xs font-black uppercase tracking-[0.14em] text-[#CAFF3C]">
+        Study · July 2026 edition — data collected July 23, 2026
+      </p>
       <h1
         className="m-0 mt-3 text-[clamp(2rem,7vw,3.4rem)] leading-[1.03] tracking-[-0.045em]"
         style={{ fontFamily: "var(--font-display)" }}
@@ -97,10 +110,13 @@ export default function StudyPage() {
         of money, making sure you know its name.
       </p>
       <p className={P}>
-        We asked ChatGPT and Gemini what to buy in its category. Allbirds scored <strong className="text-[#F0F0EC]">46 out of 100</strong>.
+        We asked a live AI assistant twelve questions a real buyer would type in its category. Allbirds was named{" "}
+        <strong className="text-[#F0F0EC]">zero times out of twelve</strong> and scored{" "}
+        <strong className="text-[#F0F0EC]">25 out of 100</strong>.
       </p>
       <p className={P}>
-        Ridge Wallet — a company you may well have never heard of — scored <strong className="text-[#F0F0EC]">81</strong>.
+        Ollie — a dog-food subscription most people could not pick out of a lineup — was named on all twelve questions
+        and scored <strong className="text-[#F0F0EC]">100</strong>.
       </p>
       <p className={P}>
         That gap is the finding. Across 21 direct-to-consumer brands we audited, how famous a brand is turned out to be a
@@ -116,32 +132,47 @@ export default function StudyPage() {
       <p className={P}>
         For each brand we generated the questions a real buyer would type before purchasing in that category — not
         brand-name searches, but demand-side questions like <em>&ldquo;best machine washable sneakers for everyday
-        wear&rdquo;</em>. We sent those questions to live AI assistants at audit time. No simulated prompts, no cached
-        guesses, no modelled estimates. Then we recorded whether the assistant named the brand, or named someone else.
+        wear&rdquo;</em>. Twelve questions per brand, for all 21 brands. We sent those questions to a live AI assistant
+        at audit time — no simulated prompts, no cached guesses, no modelled estimates — and recorded whether the
+        assistant named the brand, or named someone else. Two guardrails are enforced in code on every question: it must
+        not contain the audited brand&apos;s name or domain, and it must not echo the brand&apos;s own homepage copy.
+        Every audit in this edition is stored with a debug trace proving where its questions came from.
+      </p>
+      <p className={P}>
+        <strong className="text-[#F0F0EC]">This edition corrects our own methodology — openly.</strong> The study was
+        first published on July 19, 2026. On July 21–22 we found and fixed a flaw in our engine: a share of the
+        AI-generated buyer questions could mention the audited brand or paraphrase its homepage copy, which inflates
+        mention rates — and four brands had been audited on only 3 questions instead of 12. So on July 23 we re-ran all
+        21 audits from scratch with the corrected engine. Every score on this page comes from that re-run; no pre-fix
+        score remains anywhere on this page. The correction was not cosmetic: the median score fell from 65 to 38 once
+        the questions were guaranteed unbranded. We are publishing the corrected numbers instead of quietly editing the
+        old ones, because a study about trust in AI answers should not need a footnote about trust in its author.
       </p>
       <p className={P}>
         <strong className="text-[#F0F0EC]">Limitations, stated plainly.</strong> The sample is 21 brands — enough to show
-        a pattern, not enough to publish a law. Seventeen brands were audited across 12 buyer questions; four across 3,
-        so their scores are lower-resolution and are marked below. Answers from AI assistants vary between runs and
-        change over time; this is a snapshot, not a permanent ranking. And we are not a neutral party: we sell a product
-        that fixes exactly the problem this study describes. Read accordingly — and note that we published our own score
-        too, including the part that embarrassed us.
+        a pattern, not enough to publish a law. This edition&apos;s answer engine is ChatGPT (gpt-4o-mini), asked live on
+        July 23, 2026; answers from AI assistants vary between runs and change over time, so this is a snapshot, not a
+        permanent ranking. And we are not a neutral party: we sell a product that fixes exactly the problem this study
+        describes. Read accordingly — and note that we published our own score too, which is now the worst score in the
+        table.
       </p>
 
       <h2 className={H2} style={{ fontFamily: "var(--font-display)" }}>
         Finding 1: awareness and AI visibility are close to unrelated
       </h2>
       <p className={P}>
-        The spread was wide: <strong className="text-[#F0F0EC]">31 to 88 out of 100</strong>, with a median of 65.
+        The spread was wide: <strong className="text-[#F0F0EC]">13 to 100 out of 100</strong>, with a median of 38.
       </p>
       <p className={P}>
-        What it did not track was brand size. Necessaire — well funded, stocked in Sephora, the kind of brand that gets
-        written about — scored 35. Brooklinen scored 88. Hedley &amp; Bennett, whose aprons are on television, scored 31
-        and was named by AI on only 3 of the 12 buyer questions we tested.
+        What it did not track was brand size. Brooklinen — one of the most written-about DTC brands of the last decade —
+        scored 29 and was named on 2 of 12 buyer questions. Allbirds scored 25 and was never named at all. Meanwhile
+        Hedley &amp; Bennett, an apron maker, scored 77 and was named on 10 of 12 questions, and Ollie was named on all
+        twelve.
       </p>
       <p className={P}>
-        Four of the 21 brands scored below 50. More than half landed between 50 and 69 — recommended sometimes,
-        invisible often, which is arguably the most dangerous place to be, because nothing looks broken.
+        Fifteen of the 21 brands scored below 50. Eight scored below 30 — effectively invisible in their own category.
+        Once every question is guaranteed not to contain your brand name, most brands discover that the assistant simply
+        answers with someone else.
       </p>
       <p className={P}>
         The reason is mechanical rather than mysterious. Traditional brand building buys recall in a human&apos;s memory.
@@ -151,25 +182,26 @@ export default function StudyPage() {
       </p>
 
       <h2 className={H2} style={{ fontFamily: "var(--font-display)" }}>
-        Finding 2: someone else is being named, and it is often smaller than you
+        Finding 2: someone else is being named — and the winner is often a category default
       </h2>
       <p className={P}>
-        In <strong className="text-[#F0F0EC]">14 of the 21 audits, the assistant named a specific competitor</strong> in
-        the brand&apos;s place. This is the part founders tend to find genuinely unpleasant, and it is the most useful
-        signal in the data.
+        In <strong className="text-[#F0F0EC]">19 of the 21 audits, the assistant named a specific competitor</strong> on
+        questions where the audited brand was absent. This is the part founders tend to find genuinely unpleasant, and
+        it is the most useful signal in the data.
       </p>
       <p className={P}>
-        Hedley &amp; Bennett lost to Tilit. Necessaire lost to Aesop. Versed lost to Cocokind. De Soi lost to Ghia. Spot
-        &amp; Tango lost to Ollie. Dagne Dover lost to Calpak. Tower 28 lost to Kosas.
+        The same names keep winning. CeraVe was named in place of four different indie skincare brands — Bubble,
+        Topicals, Versed and Necessaire. Patagonia took the answers from two bag brands, Baboon to the Moon and Dagne
+        Dover. Brooklinen lost to Parachute, Ridge Wallet to Bellroy, Our Place to GreenPan, Moon Juice to Ritual.
       </p>
       <p className={P}>
-        Several of those winners are smaller companies with a fraction of the marketing budget. They are not winning on
-        brand. They are winning because when a model assembles an answer about the category, their content is what is
-        available to assemble.
+        When a model is not sure, it reaches for the brand with the deepest written footprint in the category — reviews,
+        comparisons, ingredient pages, buying guides. That is why a drugstore staple beats venture-backed challengers,
+        and why a B2B kitchenware supplier (Chef Works) is what the assistant offers instead of Hedley &amp; Bennett.
       </p>
       <p className={P}>
         That is bad news and good news in the same sentence. Bad, because ad spend does not defend this position. Good,
-        because the thing that does win here is cheap to produce.
+        because the thing that does win here — plain, crawlable category content — is cheap to produce.
       </p>
 
       <h2 className={H2} style={{ fontFamily: "var(--font-display)" }}>Finding 3: the losses are unusually fixable</h2>
@@ -191,6 +223,9 @@ export default function StudyPage() {
       </p>
 
       <h2 className={H2} style={{ fontFamily: "var(--font-display)" }}>The table</h2>
+      <p className={P}>
+        All 21 brands, 12 unbranded buyer questions each, live ChatGPT calls collected on July 23, 2026.
+      </p>
       <div className="mt-5 overflow-hidden rounded-2xl border border-white/[0.08]">
         <table className="w-full border-collapse text-left text-sm">
           <thead>
@@ -206,50 +241,51 @@ export default function StudyPage() {
               <tr key={row.brand} className="border-t border-white/[0.06]">
                 <td className={`px-4 py-3 font-bold ${row.us ? "text-[#CAFF3C]" : "text-[#F0F0EC]"}`}>
                   {row.brand}
-                  {row.lowRes ? <span className="text-[#777787]"> *</span> : null}
+                  {row.offCategory ? <span className="text-[#777787]"> *</span> : null}
                 </td>
                 <td className="px-4 py-3 text-right font-black" style={{ color: scoreColor(row.score) }}>
                   {row.score}
                 </td>
-                <td className="px-4 py-3 font-medium text-[#A7A7B4]">{row.cited ?? "—"}</td>
+                <td className="px-4 py-3 font-medium text-[#A7A7B4]">{row.cited}</td>
                 <td className="px-4 py-3 font-medium text-[#A7A7B4]">{row.instead ?? "—"}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <p className="m-0 mt-3 text-xs font-bold text-[#777787]">* audited across 3 buyer questions rather than 12.</p>
+      <p className="m-0 mt-3 text-xs font-bold leading-5 text-[#777787]">
+        * on several of this brand&apos;s questions the assistant answered with brands from an unrelated category
+        (sportswear names in reply to software or supplement questions). We show the most-named on-category rival; the
+        full raw answers are preserved in the audit records.
+      </p>
 
       <h2 className={H2} style={{ fontFamily: "var(--font-display)" }}>
-        We audited ourselves, and it went badly in an interesting way
+        We audited ourselves, and we now hold the worst score in the table
       </h2>
       <p className={P}>
-        We scored 61, and AI recommends us on 9 of 12 buyer questions — respectable.
+        In the July 19 edition we scored 61, and we reported that the assistant had us filed in the wrong category —
+        <em>&ldquo;an intuitive no-code solution for local businesses&rdquo;</em> — even though our visibility number
+        looked respectable. We said we would fix our machine-readable signals, re-audit, and report whether it moved.
       </p>
       <p className={P}>
-        The problem was what it said about us. Asked to describe GetPick — formerly Citeable — the assistant called us{" "}
-        <em>&ldquo;an intuitive no-code solution for local businesses.&rdquo;</em> The buyer questions it generated for
-        us were about local restaurants and food brands.
+        Here is the report. The category fix worked: the assistant now files GetPick under{" "}
+        <em>generative engine optimization software</em>, which is what we are. The visibility did not survive the
+        methodology correction: with twelve fully unbranded questions, we scored{" "}
+        <strong className="text-[#F0F0EC]">13 out of 100</strong> and were named zero times. The tools named instead
+        were SEMrush, Ahrefs and Moz.
       </p>
       <p className={P}>
-        The audit also caught a naming problem, which explains the signature change on this study: it is now signed
-        GetPick, formerly Citeable. Our old name was already carried by two other players in this exact category — the
-        same attribution failure we measure for everyone else — so we renamed. The data in the table is unchanged.
+        One more thing we found in our own raw answers, and are reporting because it is interesting: on seven of our
+        twelve software questions, the assistant confidently recommended sneaker brands. When a model has thin coverage
+        of a niche, it does not say &ldquo;I don&apos;t know&rdquo; — it reaches for whatever brand names feel
+        plausible. If your category is young, that is what your buyers are being told.
       </p>
       <p className={P}>
-        We do not sell to local businesses. We sell to DTC and e-commerce brands. The AI had us filed in the wrong
-        category entirely — confidently, and in a way no dashboard metric would have flagged, because our visibility
-        number looked fine.
-      </p>
-      <p className={P}>
-        This turns out to be the more important lesson in the whole study.{" "}
+        This confirms the more important lesson in the whole study.{" "}
         <strong className="text-[#F0F0EC]">Being cited is not the goal. Being cited in the category where your buyers
-        are asking is the goal.</strong> A brand can score well and still be invisible to the people who would actually
-        buy from it.
-      </p>
-      <p className={P}>
-        We have since published an llms.txt, declared our category and audience in structured data, and explicitly
-        allowed the AI crawlers. We will re-audit and report whether it moved. If it does not, we will say so.
+        are asking is the goal.</strong> We fixed the category label; now we have to earn the citations, with exactly
+        the plain, question-answering content this study keeps pointing at. We will re-audit and report whether it
+        moved. If it does not, we will say so — again.
       </p>
 
       <h2 className={H2} style={{ fontFamily: "var(--font-display)" }}>What to do with this</h2>
@@ -283,8 +319,9 @@ export default function StudyPage() {
       </div>
 
       <p className="m-0 mt-10 text-xs font-bold leading-5 text-[#777787]">
-        Method, dates and per-brand results available on request. If you are one of the brands in this table and want
-        your full audit, ask and we will send it.
+        First published July 19, 2026. Current edition: scores recalculated with the corrected methodology, all data
+        collected July 23, 2026. Method, per-brand results and raw answers available on request. If you are one of the
+        brands in this table and want your full audit, ask and we will send it.
       </p>
     </main>
   );
