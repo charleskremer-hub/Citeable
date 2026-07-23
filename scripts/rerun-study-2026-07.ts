@@ -16,19 +16,26 @@
  *
  * Sorties locales (versionnées dans artifacts/study-rerun-2026-07/) :
  *  - raw/<slug>.json           : réponse complète d'audit-status par marque
- *  - results.json              : agrégat (score, cited x/12, rival, promptDebug)
+ *  - results.json              : agrégat criblé anti-écho (score, réponses
+ *    valides vs échos de l'exemple du prompt, cited x/valides, rival,
+ *    promptDebug) — voir le bloc echoScreening en tête du fichier
  *  - sponsored-placements-veille.md : journal AC5 — présence/absence de
  *    marqueurs d'emplacements sponsorisés dans la seule sortie moteur que le
  *    pipeline persiste : la liste structurée des marques recommandées
  *    (« recommended_brands: X, Y, Z »). La prose brute du modèle n'est PAS
  *    stockée — limite structurelle documentée dans le journal lui-même.
  *
- * Usage : node scripts/rerun-study-2026-07.ts
+ * Usage :
+ *   node scripts/rerun-study-2026-07.ts               # collecte live complète
+ *   node scripts/rerun-study-2026-07.ts --reprocess   # re-crible les raw/
+ *     existants (détection des échos de l'exemple du prompt) et régénère
+ *     results.json sans aucun appel réseau
  */
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
+import { matchesLegacyPromptExample } from "../src/lib/prompt-example-echo.ts";
 
 const BASE_URL = process.env.STUDY_RERUN_BASE_URL ?? "https://www.getpick.ai";
 // Domaine anonyme = supprimé par shouldSuppressEmail : aucun email ne part.
@@ -78,6 +85,7 @@ type SurfaceResult = {
   competitors?: string[];
   rawAnswerSnippet?: string;
   realLlmCall?: boolean;
+  brandSentiment?: { label?: string; justification?: string };
 };
 
 type BuyerIntentPrompt = {
@@ -106,12 +114,26 @@ type RunAuditResponse = {
   error?: string;
 };
 
+// Statut des données IA d'une marque après criblage anti-écho :
+//  - clean : les 12 réponses sont de vraies réponses du modèle.
+//  - contaminated_floor : une partie des réponses recopiait l'exemple du
+//    prompt (artefact) ; elles sont écartées de citedCount/namedInstead, mais
+//    le score stocké en base les a comptées « non cité » — c'est un plancher.
+//  - no_valid_ai_data : TOUTES les réponses étaient des échos ; aucune donnée
+//    IA exploitable, aucune affirmation de visibilité possible.
+type AiDataStatus = "clean" | "contaminated_floor" | "no_valid_ai_data";
+
 type BrandResult = {
   brand: string;
   websiteUrl: string;
   auditId: string;
   score: number;
   questionsAsked: number;
+  // Réponses restantes après retrait des échos de l'exemple du prompt.
+  validAnswers: number;
+  echoAnswers: number;
+  aiDataStatus: AiDataStatus;
+  // Comptés sur les réponses VALIDES uniquement.
   citedCount: number;
   namedInstead: string | null;
   promptDebug: string | null;
@@ -162,6 +184,18 @@ async function getAuditStatus(auditId: string): Promise<AuditStatusResponse> {
   const response = await fetch(`${BASE_URL}/api/audit-status?audit_id=${encodeURIComponent(auditId)}`);
   if (!response.ok) throw new Error(`audit-status HTTP ${response.status}`);
   return (await response.json()) as AuditStatusResponse;
+}
+
+// Une réponse est un écho si elle porte la signature exacte de l'ANCIEN
+// exemple du prompt moteur : trio On/Hoka/Veja dans le même ordre + la
+// justification de l'exemple recopiée mot pour mot. 29 des 252 réponses du
+// re-run du 23/07 portaient cette signature (dont 17 en réponse à des
+// questions logiciel, café, compléments, sacs ou cocktails — catégoriquement
+// impossible en réponse authentique). Ces réponses sont des artefacts du
+// prompt, pas des recommandations : elles sont écartées de tous les comptes.
+export function isPromptEchoAnswer(prompt: BuyerIntentPrompt): boolean {
+  const aiSurface = prompt.surfaces.find((surface) => surface.kind === "ai_engine");
+  return matchesLegacyPromptExample(prompt.competitors, aiSurface?.brandSentiment?.justification);
 }
 
 export function mostFrequentCompetitor(prompts: BuyerIntentPrompt[]): string | null {
@@ -224,33 +258,60 @@ async function runOneAttempt(brand: string, url: string): Promise<AuditStatusRes
   throw new Error(`audit ${auditId} timed out after ${BRAND_TIMEOUT_MS / 60000} min`);
 }
 
+// Construit le résultat agrégé d'une marque avec criblage anti-écho :
+// citedCount et namedInstead sont comptés sur les réponses valides uniquement.
+// Partagé entre la collecte live et le retraitement --reprocess des raw/.
+export function buildBrandResult(brand: string, url: string, status: AuditStatusResponse, collectedAt: string): BrandResult {
+  const prompts = status.buyer_intent_prompts ?? [];
+  const validPrompts = prompts.filter((prompt) => !isPromptEchoAnswer(prompt));
+  const echoAnswers = prompts.length - validPrompts.length;
+  const aiDataStatus: AiDataStatus = echoAnswers === 0 ? "clean" : validPrompts.length === 0 ? "no_valid_ai_data" : "contaminated_floor";
+
+  return {
+    brand,
+    websiteUrl: url,
+    auditId: status.audit_id,
+    score: status.score ?? 0,
+    questionsAsked: prompts.length,
+    validAnswers: validPrompts.length,
+    echoAnswers,
+    aiDataStatus,
+    citedCount: validPrompts.filter((prompt) => prompt.brandMentioned).length,
+    namedInstead: mostFrequentCompetitor(validPrompts),
+    promptDebug: status.prompt_debug ?? null,
+    engine: status.answer_engine?.engine ?? null,
+    model: status.answer_engine?.model ?? null,
+    realLlmCall: status.answer_engine?.realLlmCall ?? false,
+    category: status.category ?? null,
+    collectedAt,
+    sponsoredMarkers: scanSponsoredMarkers(prompts),
+  };
+}
+
 async function runBrand(brand: string, url: string): Promise<BrandResult> {
   let lastError: unknown;
+  let contaminatedFallback: { result: BrandResult; status: AuditStatusResponse } | null = null;
+
   for (let attempt = 1; attempt <= MAX_ATTEMPTS_PER_BRAND; attempt += 1) {
     try {
       console.log(`[study-rerun] ${brand} — attempt ${attempt}`);
       const status = await runOneAttempt(brand, url);
-      const prompts = status.buyer_intent_prompts ?? [];
-      const result: BrandResult = {
-        brand,
-        websiteUrl: url,
-        auditId: status.audit_id,
-        score: status.score ?? 0,
-        questionsAsked: prompts.length,
-        citedCount: prompts.filter((prompt) => prompt.brandMentioned).length,
-        namedInstead: mostFrequentCompetitor(prompts),
-        promptDebug: status.prompt_debug ?? null,
-        engine: status.answer_engine?.engine ?? null,
-        model: status.answer_engine?.model ?? null,
-        realLlmCall: status.answer_engine?.realLlmCall ?? false,
-        category: status.category ?? null,
-        collectedAt: new Date().toISOString(),
-        sponsoredMarkers: scanSponsoredMarkers(prompts),
-      };
+      const result = buildBrandResult(brand, url, status, new Date().toISOString());
+
+      // Des réponses recopiant l'exemple du prompt sont des artefacts : on
+      // retente la marque tant qu'il reste des essais, et on garde le dernier
+      // run contaminé (flagué) plutôt que de perdre la marque si rien de
+      // propre n'est obtenu.
+      if (result.echoAnswers > 0 && attempt < MAX_ATTEMPTS_PER_BRAND) {
+        contaminatedFallback = { result, status };
+        console.warn(`[study-rerun] ${brand} — ${result.echoAnswers} prompt-echo answer(s) detected, retrying`);
+        continue;
+      }
+
       writeFileSync(join(RAW_DIR, `${slugify(brand)}.json`), JSON.stringify(status, null, 2));
       console.log(
-        `[study-rerun] ${brand} — score ${result.score}, cited ${result.citedCount}/${result.questionsAsked}, ` +
-          `promptDebug=${result.promptDebug}, sponsored markers=${result.sponsoredMarkers.length}`
+        `[study-rerun] ${brand} — score ${result.score}, cited ${result.citedCount}/${result.validAnswers} valid ` +
+          `(${result.echoAnswers} echo), promptDebug=${result.promptDebug}, sponsored markers=${result.sponsoredMarkers.length}`
       );
       return result;
     } catch (error) {
@@ -258,6 +319,13 @@ async function runBrand(brand: string, url: string): Promise<BrandResult> {
       console.warn(`[study-rerun] ${brand} — attempt ${attempt} failed: ${error instanceof Error ? error.message : error}`);
     }
   }
+
+  if (contaminatedFallback) {
+    writeFileSync(join(RAW_DIR, `${slugify(brand)}.json`), JSON.stringify(contaminatedFallback.status, null, 2));
+    console.warn(`[study-rerun] ${brand} — kept contaminated run (${contaminatedFallback.result.echoAnswers} echo answers) after ${MAX_ATTEMPTS_PER_BRAND} attempts`);
+    return contaminatedFallback.result;
+  }
+
   throw new Error(`[study-rerun] ${brand} — all attempts failed: ${lastError instanceof Error ? lastError.message : lastError}`);
 }
 
@@ -330,6 +398,85 @@ function buildVeilleMarkdown(results: BrandResult[]) {
   return lines.join("\n");
 }
 
+// Bloc de synthèse du criblage anti-écho, écrit en tête de results.json pour
+// que le fichier soit auto-portant : quiconque lit les chiffres voit d'abord
+// combien de réponses étaient des artefacts et comment elles ont été traitées.
+function buildEchoScreeningSummary(results: BrandResult[]) {
+  const totalAnswers = results.reduce((sum, result) => sum + result.questionsAsked, 0);
+  const echoAnswers = results.reduce((sum, result) => sum + result.echoAnswers, 0);
+  const affected = results.filter((result) => result.echoAnswers > 0);
+
+  return {
+    screenedAt: new Date().toISOString(),
+    method:
+      "Every answer whose competitor list is exactly the legacy prompt-format example (On, Hoka, Veja in that order) " +
+      "with the example's sentiment justification copied verbatim is a prompt-echo artifact, not a model recommendation. " +
+      "Echo answers are excluded from citedCount, validAnswers and namedInstead. The stored score counted them as " +
+      "'brand not named', so scores of affected brands are floors. Detection: matchesLegacyPromptExample in " +
+      "src/lib/prompt-example-echo.ts; engine fix: placeholder-only format example + answerEchoesPromptExample guard.",
+    totalAnswers,
+    echoAnswersDiscarded: echoAnswers,
+    brandsAffected: affected.map((result) => ({ brand: result.brand, echoAnswers: result.echoAnswers, aiDataStatus: result.aiDataStatus })),
+  };
+}
+
+function writeResults(results: BrandResult[], failures: Array<{ brand: string; error: string }>, generatedAt: string) {
+  results.sort((left, right) => left.score - right.score || left.brand.localeCompare(right.brand));
+  writeFileSync(
+    join(OUT_DIR, "results.json"),
+    JSON.stringify(
+      {
+        runEmail: RUN_EMAIL,
+        auditTier: AUDIT_TIER,
+        baseUrl: BASE_URL,
+        generatedAt,
+        echoScreening: buildEchoScreeningSummary(results),
+        results,
+        failures,
+      },
+      null,
+      2
+    )
+  );
+}
+
+// Retraite les réponses brutes déjà collectées (raw/<slug>.json) avec le
+// criblage anti-écho et régénère results.json — sans aucun nouvel appel
+// réseau. C'est le mode utilisé pour corriger les agrégats du run du 23/07,
+// dont 29 réponses recopiaient l'exemple du prompt. collectedAt et
+// generatedAt sont repris du results.json existant : les données n'ont pas
+// été recollectées, seulement re-criblées.
+function reprocessFromRaw() {
+  type PreviousResults = { generatedAt?: string; results?: Array<{ auditId?: string; collectedAt?: string }>; failures?: Array<{ brand: string; error: string }> };
+  const previous: PreviousResults = JSON.parse(readFileSync(join(OUT_DIR, "results.json"), "utf8")) as PreviousResults;
+  const collectedAtByAuditId = new Map<string, string>();
+  for (const entry of previous.results ?? []) {
+    if (entry.auditId && entry.collectedAt) collectedAtByAuditId.set(entry.auditId, entry.collectedAt);
+  }
+
+  const results: BrandResult[] = [];
+  for (const file of readdirSync(RAW_DIR).filter((name) => name.endsWith(".json")).sort()) {
+    const status = JSON.parse(readFileSync(join(RAW_DIR, file), "utf8")) as AuditStatusResponse & { brand_name?: string; website_url?: string };
+    const brand = BRANDS.find((entry) => slugify(entry.brand) === file.replace(/\.json$/, ""));
+    if (!brand) throw new Error(`[study-rerun] raw file ${file} does not match any study brand`);
+    const collectedAt = collectedAtByAuditId.get(status.audit_id) ?? previous.generatedAt ?? new Date().toISOString();
+    results.push(buildBrandResult(brand.brand, brand.url, status, collectedAt));
+  }
+
+  writeResults(results, previous.failures ?? [], previous.generatedAt ?? new Date().toISOString());
+  console.log("[study-rerun] reprocess done.");
+  console.table(
+    results.map((result) => ({
+      brand: result.brand,
+      score: result.score,
+      cited: `${result.citedCount}/${result.validAnswers}`,
+      echo: result.echoAnswers,
+      status: result.aiDataStatus,
+      instead: result.namedInstead ?? "—",
+    }))
+  );
+}
+
 async function main() {
   mkdirSync(RAW_DIR, { recursive: true });
   // STUDY_RERUN_ONLY="Allbirds,Recess" → smoke test sur un sous-ensemble.
@@ -354,11 +501,7 @@ async function main() {
   });
   await Promise.all(workers);
 
-  results.sort((left, right) => left.score - right.score || left.brand.localeCompare(right.brand));
-  writeFileSync(
-    join(OUT_DIR, "results.json"),
-    JSON.stringify({ runEmail: RUN_EMAIL, auditTier: AUDIT_TIER, baseUrl: BASE_URL, generatedAt: new Date().toISOString(), results, failures }, null, 2)
-  );
+  writeResults(results, failures, new Date().toISOString());
   writeFileSync(join(OUT_DIR, "sponsored-placements-veille.md"), buildVeilleMarkdown(results));
 
   console.log("\n[study-rerun] Done.");
@@ -366,7 +509,8 @@ async function main() {
     results.map((result) => ({
       brand: result.brand,
       score: result.score,
-      cited: `${result.citedCount}/${result.questionsAsked}`,
+      cited: `${result.citedCount}/${result.validAnswers}`,
+      echo: result.echoAnswers,
       instead: result.namedInstead ?? "—",
       promptDebug: result.promptDebug,
     }))
@@ -382,10 +526,15 @@ async function main() {
 const isDirectRun = typeof process.argv[1] === "string" && import.meta.url === pathToFileURL(process.argv[1]).href;
 
 if (isDirectRun) {
-  main().catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+  if (process.argv.includes("--reprocess")) {
+    // Retraitement local des raw/ existants (criblage anti-écho), zéro réseau.
+    reprocessFromRaw();
+  } else {
+    main().catch((error) => {
+      console.error(error);
+      process.exit(1);
+    });
+  }
 }
 
 export type { BuyerIntentPrompt };
