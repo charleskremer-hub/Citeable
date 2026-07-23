@@ -1843,13 +1843,19 @@ export function hasYoutubeCitationSignal(sources: Pick<SourceCitationReport, "do
 }
 
 /**
- * Vrai quand aucune source citée par les moteurs IA n'est une page/chaîne
- * YouTube — signal de présence vidéo faible ou nulle, détectable sans appel
- * réseau supplémentaire. Sert uniquement à décider d'afficher (ou non) la
- * recommandation de contenu YouTube côté rapport Monitor.
+ * Vrai quand les moteurs IA ont cité des sources ET qu'aucune n'est une
+ * page/chaîne YouTube — signal de présence vidéo faible ou nulle, détectable
+ * sans appel réseau supplémentaire. Sert uniquement à décider d'afficher (ou
+ * non) la recommandation de contenu YouTube côté rapport Monitor.
+ *
+ * Sans AUCUNE source extraite (moteurs muets sur leurs sources, ou audit
+ * antérieur à la feature), on n'a aucun signal sur la présence vidéo de la
+ * marque : on se tait. Même discipline que `categoryPerception` — un verdict
+ * affirmé sans donnée est un faux positif qui détruit la confiance dans tout
+ * le rapport.
  */
 export function youtubeContentTipIsRelevant(sources: Pick<SourceCitationReport, "domain">[] = []) {
-  return !hasYoutubeCitationSignal(sources);
+  return sources.length > 0 && !hasYoutubeCitationSignal(sources);
 }
 
 function monitoringSnapshotFromRuns(current: StoredPromptRow, runs: StoredPromptRow[]): MonitoringSnapshot {

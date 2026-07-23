@@ -6,7 +6,7 @@ import { ensureAuditSchema, pool } from "@/lib/db";
 import { recordFunnelEvent } from "@/lib/funnel";
 import { auditCopy, brandSentimentView, localeFromHeaders, localeFromUnknown, localizeCategoryLabel, localizePlainAction, type Locale } from "@/lib/i18n";
 import { UNKNOWN_CATEGORY } from "@/lib/audit-engine";
-import { categoryPerceptionFromPrompts, fetchWithHostFallback, generateGeoAgentAssetsFromAudit, isAnonymousEmail, isAuditedBrandName, robotsTxtFixForBlockedCrawlers, youtubeContentTipIsRelevant } from "@/lib/audit-engine";
+import { categoryPerceptionFromPrompts, extractSourceCitationReports, fetchWithHostFallback, generateGeoAgentAssetsFromAudit, isAnonymousEmail, isAuditedBrandName, robotsTxtFixForBlockedCrawlers, youtubeContentTipIsRelevant } from "@/lib/audit-engine";
 import type { BrandSentiment, BuyerIntentPromptResult, CategoryPerception, IcpSegmentMetadata, PlainAction, SourceCitationReport } from "@/lib/audit-engine";
 import LocaleLang from "@/app/LocaleLang";
 import AuditPoller from "./AuditPoller";
@@ -432,10 +432,14 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const copiedLabel = locale === "fr" ? "Copié ✓" : "Copied ✓";
   const monitorActions = (audit.raw_results?.monitoring?.actions?.slice(0, 3) ?? []).map((action) => localizePlainAction(action, locale));
   // Tip contenu "YouTube = signal #1" (étude Ahrefs 75k marques) : ponctuel, affiché
-  // uniquement quand aucune source citée par les moteurs IA n'est une vidéo YouTube.
-  // Page-only, zéro appel réseau, réutilise `monitoring.sources` déjà calculé.
-  const youtubeTipRelevant =
-    complete && !failed && isMonitorReport && youtubeContentTipIsRelevant(audit.raw_results?.monitoring?.sources ?? []);
+  // uniquement quand des sources ont été citées par les moteurs IA et qu'aucune
+  // n'est une vidéo YouTube. Page-only, zéro appel réseau : `monitoring.sources`
+  // si présent, sinon recalcul depuis les questions stockées (audits antérieurs
+  // à la feature — sans ce repli, ils passeraient un tableau vide et le tip
+  // s'afficherait sans donnée).
+  const youtubeTipSources =
+    audit.raw_results?.monitoring?.sources ?? extractSourceCitationReports(audit.raw_results?.buyerIntentPrompts ?? []);
+  const youtubeTipRelevant = complete && !failed && isMonitorReport && youtubeContentTipIsRelevant(youtubeTipSources);
   const monitoringTrend = (audit.raw_results?.monitoring?.trend ?? [])
     .filter((point) => point && typeof point.score === "number")
     .map((point) => ({ score: point.score, createdAt: point.createdAt }));
