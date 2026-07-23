@@ -6,8 +6,8 @@ import { ensureAuditSchema, pool } from "@/lib/db";
 import { recordFunnelEvent } from "@/lib/funnel";
 import { auditCopy, brandSentimentView, localeFromHeaders, localeFromUnknown, localizeCategoryLabel, localizePlainAction, type Locale } from "@/lib/i18n";
 import { UNKNOWN_CATEGORY } from "@/lib/audit-engine";
-import { categoryPerceptionFromPrompts, fetchWithHostFallback, generateGeoAgentAssetsFromAudit, isAnonymousEmail, isAuditedBrandName, robotsTxtFixForBlockedCrawlers } from "@/lib/audit-engine";
-import type { BrandSentiment, BuyerIntentPromptResult, CategoryPerception, IcpSegmentMetadata, PlainAction } from "@/lib/audit-engine";
+import { categoryPerceptionFromPrompts, fetchWithHostFallback, generateGeoAgentAssetsFromAudit, isAnonymousEmail, isAuditedBrandName, robotsTxtFixForBlockedCrawlers, youtubeContentTipIsRelevant } from "@/lib/audit-engine";
+import type { BrandSentiment, BuyerIntentPromptResult, CategoryPerception, IcpSegmentMetadata, PlainAction, SourceCitationReport } from "@/lib/audit-engine";
 import LocaleLang from "@/app/LocaleLang";
 import AuditPoller from "./AuditPoller";
 import AgentAuditChat from "./AgentAuditChat";
@@ -43,7 +43,7 @@ type AuditRow = {
     structuredDataFound?: boolean;
     locale?: string;
     buyerIntentPrompts?: BuyerIntentPromptResult[];
-    monitoring?: { actions?: PlainAction[]; trend?: { score: number; createdAt: string }[]; scoreDelta?: number | null };
+    monitoring?: { actions?: PlainAction[]; sources?: SourceCitationReport[]; trend?: { score: number; createdAt: string }[]; scoreDelta?: number | null };
   } | null;
 };
 
@@ -431,6 +431,11 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const copyLabel = locale === "fr" ? "Copier" : "Copy";
   const copiedLabel = locale === "fr" ? "Copié ✓" : "Copied ✓";
   const monitorActions = (audit.raw_results?.monitoring?.actions?.slice(0, 3) ?? []).map((action) => localizePlainAction(action, locale));
+  // Tip contenu "YouTube = signal #1" (étude Ahrefs 75k marques) : ponctuel, affiché
+  // uniquement quand aucune source citée par les moteurs IA n'est une vidéo YouTube.
+  // Page-only, zéro appel réseau, réutilise `monitoring.sources` déjà calculé.
+  const youtubeTipRelevant =
+    complete && !failed && isMonitorReport && youtubeContentTipIsRelevant(audit.raw_results?.monitoring?.sources ?? []);
   const monitoringTrend = (audit.raw_results?.monitoring?.trend ?? [])
     .filter((point) => point && typeof point.score === "number")
     .map((point) => ({ score: point.score, createdAt: point.createdAt }));
@@ -1105,6 +1110,19 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
               ) : (
                 <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#D6D6DF]">{copy.monitorEmpty}</p>
               )}
+
+              {youtubeTipRelevant ? (
+                <div
+                  className="mt-3 rounded-2xl border border-[#FF8F6B]/25 bg-[#FF8F6B]/[0.06] p-4"
+                  data-testid="youtube-content-tip"
+                >
+                  <span className="rounded-full border border-[#FF8F6B]/30 bg-[#FF8F6B]/10 px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#FF8F6B]">
+                    {copy.youtubeTipBadge}
+                  </span>
+                  <p className="m-0 mt-1.5 text-sm font-black text-[#F0F0EC]">{copy.youtubeTipTitle}</p>
+                  <p className="m-0 mt-2 text-sm font-bold leading-6 text-[#D6D6DF]">{copy.youtubeTipBody}</p>
+                </div>
+              ) : null}
             </section>
           ) : null}
 

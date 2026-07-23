@@ -1831,6 +1831,27 @@ export function extractSourceCitationReports(prompts: BuyerIntentPromptResult[])
     .slice(0, 8);
 }
 
+// --- Tip contenu "YouTube = signal #1" --------------------------------------
+// Étude Ahrefs sur 75k marques : les mentions YouTube sont le signal le plus
+// corrélé à la visibilité IA, plus que tout autre facteur. On ne fait AUCUN
+// appel réseau supplémentaire : on réutilise les sources déjà extraites des
+// réponses des moteurs IA (`extractSourceCitationReports`, calculé pour
+// chaque audit) pour détecter si une mention YouTube apparaît déjà dans les
+// citations. Additif uniquement — aucune fonction existante n'est modifiée.
+export function hasYoutubeCitationSignal(sources: Pick<SourceCitationReport, "domain">[] = []) {
+  return sources.some((source) => /(^|\.)youtube\.com$|(^|\.)youtu\.be$/i.test(source.domain));
+}
+
+/**
+ * Vrai quand aucune source citée par les moteurs IA n'est une page/chaîne
+ * YouTube — signal de présence vidéo faible ou nulle, détectable sans appel
+ * réseau supplémentaire. Sert uniquement à décider d'afficher (ou non) la
+ * recommandation de contenu YouTube côté rapport Monitor.
+ */
+export function youtubeContentTipIsRelevant(sources: Pick<SourceCitationReport, "domain">[] = []) {
+  return !hasYoutubeCitationSignal(sources);
+}
+
 function monitoringSnapshotFromRuns(current: StoredPromptRow, runs: StoredPromptRow[]): MonitoringSnapshot {
   const trend = runs
     .filter((run) => run.score !== null && run.score !== undefined)

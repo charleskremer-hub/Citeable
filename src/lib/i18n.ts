@@ -440,6 +440,10 @@ export const auditCopy = {
     actionImpactHigh: "Highest impact",
     actionImpactMedium: "Next up",
     actionImpactSupport: "Then",
+    youtubeTipBadge: "Content tip",
+    youtubeTipTitle: "YouTube is the #1 AI-visibility signal — and you have none",
+    youtubeTipBody:
+      "An Ahrefs study of 75,000 brands found YouTube mentions correlate with AI visibility more than any other single signal. None of the sources the engines cited for you were a YouTube video — publishing one (a product demo, an honest comparison, a review) is a lever most brands your size still haven't pulled.",
   },
   fr: {
     navCta: "Démarrer Agent — 19 €/mois →",
@@ -545,6 +549,10 @@ export const auditCopy = {
     actionImpactHigh: "Impact max",
     actionImpactMedium: "Ensuite",
     actionImpactSupport: "Puis",
+    youtubeTipBadge: "Astuce contenu",
+    youtubeTipTitle: "YouTube est le signal #1 de visibilité IA — et tu n'en as aucun",
+    youtubeTipBody:
+      "Une étude Ahrefs sur 75 000 marques montre que les mentions YouTube sont le signal le plus corrélé à la visibilité dans l'IA, plus que n'importe quel autre facteur pris seul. Aucune des sources citées par les moteurs pour toi n'est une vidéo YouTube — en publier une (démo produit, comparatif honnête, avis) est un levier que la plupart des marques de ta taille n'ont pas encore actionné.",
   },
 } as const;
 
