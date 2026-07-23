@@ -18,7 +18,10 @@
  *  - raw/<slug>.json           : réponse complète d'audit-status par marque
  *  - results.json              : agrégat (score, cited x/12, rival, promptDebug)
  *  - sponsored-placements-veille.md : journal AC5 — présence/absence de
- *    marqueurs d'emplacements sponsorisés dans les réponses brutes des moteurs.
+ *    marqueurs d'emplacements sponsorisés dans la seule sortie moteur que le
+ *    pipeline persiste : la liste structurée des marques recommandées
+ *    (« recommended_brands: X, Y, Z »). La prose brute du modèle n'est PAS
+ *    stockée — limite structurelle documentée dans le journal lui-même.
  *
  * Usage : node scripts/rerun-study-2026-07.ts
  */
@@ -29,7 +32,9 @@ import { pathToFileURL } from "node:url";
 
 const BASE_URL = process.env.STUDY_RERUN_BASE_URL ?? "https://www.getpick.ai";
 // Domaine anonyme = supprimé par shouldSuppressEmail : aucun email ne part.
-const RUN_EMAIL = "study-rerun-2026-07@anonymous.citeable.invalid";
+// Exporté : scripts/deactivate-study-rerun-monitoring.ts cible exactement
+// cet email pour désactiver le monitoring mensuel créé par le re-run.
+export const RUN_EMAIL = "study-rerun-2026-07@anonymous.citeable.invalid";
 const AUDIT_TIER = "agent_19eur"; // 12 questions acheteur, moteur ChatGPT.
 const OUT_DIR = join(process.cwd(), "artifacts", "study-rerun-2026-07");
 const RAW_DIR = join(OUT_DIR, "raw");
@@ -118,8 +123,12 @@ type BrandResult = {
   sponsoredMarkers: Array<{ prompt: string; marker: string; snippet: string }>;
 };
 
-// Marqueurs d'emplacements sponsorisés à surveiller dans les réponses brutes
-// (AC5 — prérequis de l'item Should « veille armée »).
+// Marqueurs d'emplacements sponsorisés à surveiller (AC5 — prérequis de
+// l'item Should « veille armée »). Attention à la portée : le moteur ne
+// persiste que la liste extraite des marques recommandées (audit-engine.ts,
+// parseStructuredBrandResponse remplace la réponse par « recommended_brands:
+// X, Y, Z »), donc ce motif ne peut matcher que dans des NOMS de marques —
+// jamais dans la prose d'une réponse, qui n'est stockée nulle part.
 export const SPONSORED_MARKER_PATTERN =
   /\b(sponsored|sponsorisé|sponsorship|paid\s+(?:placement|partnership|promotion|listing)|promoted|advertisement|#ad|publicité|annonce\s+sponsorisée)\b/i;
 
@@ -260,14 +269,18 @@ function buildVeilleMarkdown(results: BrandResult[]) {
     "",
     `Re-run étude 21 marques, édition juillet 2026 — collecte du ${runDate}.`,
     "",
-    "Chaque réponse brute des moteurs (snippets stockés par audit, champ",
-    "`rawAnswerSnippet` des surfaces `ai_engine`) a été scannée avec le motif :",
+    "Ce qui a été scanné : le champ `rawAnswerSnippet` de chaque surface",
+    "`ai_engine` stockée par audit. Ce champ ne contient PAS la prose brute du",
+    "modèle : le moteur instruit le modèle de répondre uniquement en JSON",
+    "structuré et remplace la réponse par la liste extraite",
+    "« recommended_brands: X, Y, Z » (voir la limite structurelle plus bas).",
+    "Motif appliqué :",
     "",
     "```",
     SPONSORED_MARKER_PATTERN.source,
     "```",
     "",
-    `## Verdict : ${totalHits === 0 ? "AUCUN marqueur d'emplacement sponsorisé détecté" : `${totalHits} marqueur(s) détecté(s)`}`,
+    `## Verdict : ${totalHits === 0 ? "AUCUN marqueur détecté dans les listes de marques recommandées" : `${totalHits} marqueur(s) détecté(s)`}`,
     "",
     "| Marque | Moteur | Questions scannées | Marqueurs trouvés |",
     "|---|---|---|---|",
@@ -293,9 +306,25 @@ function buildVeilleMarkdown(results: BrandResult[]) {
     "Prérequis de l'item Should « veille armée » (zéro dev produit associé) :",
     "si un moteur commence à insérer des emplacements sponsorisés dans ses",
     "recommandations d'achat, la promesse GEO change de nature. Ce journal est",
-    "le point de comparaison daté. Limite connue : les snippets stockés sont",
-    "tronqués (~900 caractères par réponse) ; un marqueur situé au-delà de la",
-    "troncature ne serait pas détecté.",
+    "le point de comparaison daté — dans les limites de portée ci-dessous.",
+    "",
+    "## Limite structurelle — portée réelle de ce scan",
+    "",
+    "Le pipeline d'audit ne stocke aucune réponse rédigée du modèle. Chaque",
+    "`rawAnswerSnippet` est la liste structurée des marques recommandées",
+    "(25 à 72 caractères sur ce run), produite côté moteur en remplacement de",
+    "la réponse brute (`parseStructuredBrandResponse` dans",
+    "`src/lib/audit-engine.ts`). Ce scan ne peut donc détecter un marqueur",
+    "sponsorisé QUE s'il apparaît dans un nom de marque recommandé — jamais",
+    "dans la prose d'une réponse, qui n'existe nulle part en base.",
+    "",
+    "Conséquence assumée : ce journal établit l'absence de marqueurs dans les",
+    "listes de marques recommandées à la date de collecte, et rien de plus.",
+    "Pour armer réellement la veille (détecter un emplacement sponsorisé",
+    "inséré dans la prose d'un moteur), il faut d'abord persister la réponse",
+    "brute complète du modèle par surface — dev côté moteur, hors périmètre",
+    "de cette story, consigné ici comme prérequis restant de l'item Should",
+    "« veille armée ».",
     ""
   );
   return lines.join("\n");
