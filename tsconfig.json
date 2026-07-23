@@ -9,6 +9,10 @@
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
+    // Requis pour les tests node:test qui importent le script avec son
+    // extension .ts explicite (résolution ESM native de Node). Sans effet
+    // sur le build Next (noEmit: true).
+    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
