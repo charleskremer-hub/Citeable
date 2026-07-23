@@ -78,7 +78,9 @@ const ARTICLE_SCHEMA = {
   url: URL,
   author: { "@type": "Organization", name: "GetPick", url: "https://www.getpick.ai" },
   publisher: { "@type": "Organization", name: "GetPick" },
-  about: "AI visibility of direct-to-consumer brands in ChatGPT and Gemini answers",
+  // Moteur de CETTE édition uniquement — ChatGPT (gpt-4o-mini). Ne pas citer
+  // d'autres moteurs ici : le schéma est consommé tel quel par les crawlers.
+  about: "AI visibility of direct-to-consumer brands in ChatGPT (gpt-4o-mini) answers",
   description:
     "July 2026 edition. A study of 21 direct-to-consumer brands audited with 12 unbranded buyer questions each, sent to live AI assistants on July 23, 2026. Scores ranged from 13 to 100 out of 100. In 19 of 21 audits, the assistant named a specific competitor instead of the brand.",
 };
@@ -170,7 +172,7 @@ export default function StudyPage() {
         twelve.
       </p>
       <p className={P}>
-        Fifteen of the 21 brands scored below 50. Eight scored below 30 — effectively invisible in their own category.
+        Sixteen of the 21 brands scored below 50. Nine scored below 30 — effectively invisible in their own category.
         Once every question is guaranteed not to contain your brand name, most brands discover that the assistant simply
         answers with someone else.
       </p>
@@ -255,8 +257,10 @@ export default function StudyPage() {
       </div>
       <p className="m-0 mt-3 text-xs font-bold leading-5 text-[#777787]">
         * on several of this brand&apos;s questions the assistant answered with brands from an unrelated category
-        (sportswear names in reply to software or supplement questions). We show the most-named on-category rival; the
-        full raw answers are preserved in the audit records.
+        (sportswear names in reply to software or supplement questions). For these rows we show a representative
+        on-category rival: several tied for most mentions — SEMrush, Ahrefs and Moz at three each for GetPick; Gaia
+        Herbs, Herb Pharm, New Chapter and others at one each for Arrae. The full raw answers are preserved in the
+        audit records.
       </p>
 
       <h2 className={H2} style={{ fontFamily: "var(--font-display)" }}>
