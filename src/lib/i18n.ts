@@ -35,6 +35,7 @@ export function localeFromUnknown(value: unknown): Locale {
 export const homeCopy = {
   en: {
     navAudit: "Free audit",
+    navCompare: "Compare",
     // 1. HERO — pain + transformation
     heroEyebrow: "The GEO agent for DTC brands",
     heroTitle: "When a shopper asks AI what to buy, it answers with a rival.",
@@ -185,6 +186,7 @@ export const homeCopy = {
   },
   fr: {
     navAudit: "Audit gratuit",
+    navCompare: "Comparatif",
     // 1. HERO — douleur + transformation
     heroEyebrow: "L'agent GEO des marques DTC",
     heroTitle: "Quand un client demande quoi acheter, l'IA répond le nom d'un rival.",
