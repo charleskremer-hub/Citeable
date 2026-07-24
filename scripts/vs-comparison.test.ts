@@ -158,3 +158,20 @@ test("AC5 — aucune donnée d'outil ne porte de propriété `score`", () => {
     assert.ok(!("score" in tool), `${tool.name} ne doit pas porter de score figé`);
   }
 });
+
+// L'intro « voir l'étude » renvoie vers /study : elle ne doit figer AUCUNE preuve
+// périssable (nombre de marques auditées, moteurs testés). Sinon un rerun de
+// l'étude (ex. édition juillet 2026, autre échantillon/moteurs) contredirait /vs.
+test("AC5 — studyIntro ne fige ni chiffre de preuve ni moteur nommé (FR + EN)", () => {
+  for (const locale of LOCALES) {
+    const intro = vsCopy[locale].studyIntro;
+    assert.ok(
+      !/\d/.test(intro),
+      `${locale}: studyIntro ne doit figer aucun chiffre (nb de marques, scores) — renvoyer vers /study`
+    );
+    assert.ok(
+      !/\b(ChatGPT|Gemini|Perplexity|Claude|Copilot|Grok)\b/i.test(intro),
+      `${locale}: studyIntro ne doit nommer aucun moteur figé — la liste vit dans /study`
+    );
+  }
+});

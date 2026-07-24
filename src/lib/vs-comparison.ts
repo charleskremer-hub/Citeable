@@ -75,6 +75,11 @@ export const VS_TOOLS: VsToolRow[] = [
   {
     name: "Peec",
     entryPlan: { en: "Starter", fr: "Starter" },
+    // Starter = 89 €/mois, re-vérifié 2026-07. La page pricing officielle est
+    // rendue en JS (le chiffre n'est pas lisible par un crawler), donc la valeur
+    // a été recoupée : plusieurs relevés indépendants citent « Starter 89 €/mois »
+    // (accès ChatGPT/Perplexity/Google AIO, 25 prompts). sourceUrl reste la page
+    // officielle (source primaire, vérifiable par un humain dans le navigateur).
     entryPrice: 89,
     currency: "EUR",
     priceAsOf: "2026-07",
@@ -152,7 +157,7 @@ export const vsCopy: Record<Locale, {
     th: { tool: "Tool", price: "Entry price", does: "What it actually does", source: "Source" },
     priceNote: "Entry prices as read on each tool's pricing page — recorded 2026-07. Prices move; check the source.",
     studyIntro:
-      "We don't reprint scores here — they go stale. The proof lives in our study: 21 DTC brands audited with live ChatGPT and Gemini calls.",
+      "We don't reprint the numbers here — they go stale. The proof lives in our study: real DTC brands audited with live AI-engine calls.",
     studyCta: "See the study →",
     backHome: "← GetPick",
     metaTitle: "GetPick vs Otterly, Peec, Rankscale & Profound — the best GEO tool for DTC brands",
@@ -168,7 +173,7 @@ export const vsCopy: Record<Locale, {
     th: { tool: "Outil", price: "Prix d'entrée", does: "Ce que ça fait vraiment", source: "Source" },
     priceNote: "Prix d'entrée relevés sur la page pricing de chaque outil — relevé 2026-07. Les prix bougent ; vérifie la source.",
     studyIntro:
-      "On ne réimprime aucun score ici — ça se périme. La preuve vit dans notre étude : 21 marques DTC auditées en appels ChatGPT et Gemini réels.",
+      "On ne réimprime aucun chiffre ici — ça se périme. La preuve vit dans notre étude : de vraies marques DTC auditées en appels réels sur les moteurs IA.",
     studyCta: "Voir l'étude →",
     backHome: "← GetPick",
     metaTitle: "GetPick vs Otterly, Peec, Rankscale & Profound — le meilleur outil GEO pour les marques DTC",
@@ -186,6 +191,15 @@ function vsFaqCopy(locale: Locale): { question: string; answer: string }[] {
   const rankscale = VS_TOOLS.find((t) => t.name === "Rankscale")!;
   const profound = VS_TOOLS.find((t) => t.name === "Profound")!;
 
+  // Plancher/plafond du tarif d'entrée dérivés des données réelles — chacun rendu
+  // avec SA devise (formatVsPrice), jamais une devise codée en dur. Les rivaux
+  // mêlent € (Rankscale, Peec) et $ (Otterly, Profound) : afficher « $20–99 »
+  // était faux (Rankscale = 20 €). On borne donc par le moins cher et le plus
+  // cher, chacun dans sa devise.
+  const byEntryPrice = [...VS_COMPETITORS].sort((a, b) => a.entryPrice - b.entryPrice);
+  const cheapest = byEntryPrice[0];
+  const priciest = byEntryPrice[byEntryPrice.length - 1];
+
   if (locale === "fr") {
     return [
       {
@@ -202,7 +216,7 @@ function vsFaqCopy(locale: Locale): { question: string; answer: string }[] {
       },
       {
         question:
-          "Pourquoi GetPick coûte 9 € quand ces outils démarrent entre 20 et 99 $/mois ?",
+          `Pourquoi GetPick coûte ${formatVsPrice(VS_GETPICK, "fr")} quand ces outils démarrent entre ${formatVsPrice(cheapest, "fr")} et ${formatVsPrice(priciest, "fr")}/mois ?`,
         answer:
           "GetPick fait un seul travail pour un fondateur seul — diagnostiquer, écrire, surveiller — donc il tourne léger et le prix reste fixe. La vraie comparaison, ce ne sont pas ces outils : c'est l'agence GEO à 2 000–20 000 €/mois.",
       },
@@ -221,7 +235,7 @@ function vsFaqCopy(locale: Locale): { question: string; answer: string }[] {
         "Those four are monitoring platforms: they report your AI visibility. GetPick diagnoses who gets named instead of you, writes the copy-paste fixes, and re-checks the answers weekly — the work a GEO agency does, not just the dashboard.",
     },
     {
-      question: "Why does GetPick cost €9 when these tools start at $20–99/month?",
+      question: `Why does GetPick cost ${formatVsPrice(VS_GETPICK, "en")} when these tools start at ${formatVsPrice(cheapest, "en")}–${formatVsPrice(priciest, "en")}/month?`,
       answer:
         "GetPick does one job for one founder — diagnose, write, watch — so it runs lean and the price stays flat. The honest comparison isn't those tools anyway: it's a GEO agency at €2,000–20,000/month.",
     },
