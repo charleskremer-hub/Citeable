@@ -36,6 +36,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly" as const,
       priority: 0.9,
     },
+    {
+      // Page comparative citable « GetPick vs les outils GEO nommés » : c'est là
+      // que l'acheteur et les LLM comparent réellement (les listicles), pas
+      // seulement sur la home.
+      url: `${siteUrl}/vs`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.85,
+    },
+    {
+      url: `${siteUrl}/fr/vs`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.85,
+    },
     ...answerPages.map((page) => ({
       url: `${siteUrl}/${page.locale}/${page.slug}`,
       lastModified: now,
