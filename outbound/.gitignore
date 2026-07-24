@@ -3,6 +3,8 @@
 keys.env
 sdr_state.json
 sdr_prospects_enriched.csv
+sdr_conversion_*_enriched.csv
+instantly_leads_backup_*.json
 sdr_output.csv
 sdr_output_enriched.csv
 sdr_review*.md
