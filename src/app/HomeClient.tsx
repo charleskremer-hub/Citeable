@@ -72,6 +72,7 @@ export default function HomeClient({ locale }: HomeClientProps) {
       if (!res.ok || !redirectUrl) throw new Error(data.error ?? "Failed");
 
       window.posthog?.capture("audit_requested", { source: "hero_cta", brand_name: brandName, audit_id: data.audit_id, locale });
+      window.gtag?.("event", "audit_requested", { source: "hero_cta", audit_id: data.audit_id, locale });
       window.location.assign(redirectUrl);
     } catch {
       window.posthog?.capture("audit_submit_failed", { source: "hero_cta", locale });
@@ -342,7 +343,11 @@ export default function HomeClient({ locale }: HomeClientProps) {
                   </ul>
                   <a
                     href={href}
-                    onClick={() => window.posthog?.capture(tier.plan === "free" ? "audit_cta_clicked" : "purchase_started", { plan: tier.plan, source: "pricing_card", locale })}
+                    onClick={() => {
+                      const evt = tier.plan === "free" ? "audit_cta_clicked" : "purchase_started";
+                      window.posthog?.capture(evt, { plan: tier.plan, source: "pricing_card", locale });
+                      window.gtag?.("event", evt, { plan: tier.plan, source: "pricing_card", locale });
+                    }}
                     className={`block rounded-xl px-5 py-3 text-center text-sm font-black no-underline transition hover:brightness-110 ${tier.highlight ? "bg-[#CAFF3C] text-[#09090B]" : "bg-white/[0.08] text-[#F0F0EC]"}`}
                   >
                     {tier.cta}

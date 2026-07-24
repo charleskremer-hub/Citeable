@@ -1,8 +1,18 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { DM_Serif_Display, DM_Sans } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { localeFromHeaders } from "@/lib/i18n";
+
+/**
+ * Google Analytics 4 — piloté par `NEXT_PUBLIC_GA_MEASUREMENT_ID` (à poser sur
+ * Vercel, jamais en dur ici). Absente, aucun script GA n'est rendu : le build
+ * reste propre en local et en preview. GA4 apporte le haut de funnel qui nous
+ * manquait (sessions, sources d'acquisition) — le trafic est le goulot (ICP §9).
+ * La conversion audit → email reste mesurée côté serveur (`funnel_events`).
+ */
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
 const dmSerifDisplay = DM_Serif_Display({
   variable: "--font-display",
@@ -101,6 +111,20 @@ export default async function RootLayout({
           src="https://phospho-nanocorp-prod--nanocorp-api-fastapi-app.modal.run/analytics/v1.js?c=9ce8bf27-b673-4c40-8ef6-ddfa5a1d7504"
           defer
         />
+        {GA_MEASUREMENT_ID ? (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="ga4-init" strategy="afterInteractive">
+              {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${GA_MEASUREMENT_ID}');`}
+            </Script>
+          </>
+        ) : null}
       </head>
       <body className="min-h-full bg-[#09090B] text-[#F0F0EC] antialiased">
         {children}
