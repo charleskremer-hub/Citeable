@@ -62,8 +62,15 @@ export const VS_TOOLS: VsToolRow[] = [
   {
     name: "Otterly",
     entryPlan: { en: "Lite", fr: "Lite" },
+    // Lite = $25/mois UNIQUEMENT en facturation annuelle (« 15% off on Annual »),
+    // re-vérifié 2026-07 ; la vue par défaut de la page pricing affiche
+    // $29/mois en mensuel. On retient le prix d'entrée plancher ($25) mais on
+    // porte la condition d'engagement via `billing` — même traitement que
+    // Profound (ligne yearly annotée) pour rester cohérent et ne pas afficher un
+    // prix inférieur au tarif mensuel sans caveat.
     entryPrice: 25,
     currency: "USD",
+    billing: { en: "billed yearly", fr: "facturé à l'année" },
     priceAsOf: "2026-07",
     sourceUrl: "https://otterly.ai/pricing",
     sourceLabel: "otterly.ai/pricing",
