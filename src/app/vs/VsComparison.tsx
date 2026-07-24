@@ -97,6 +97,11 @@ export default function VsComparison({ locale }: { locale: Locale }) {
                   <span className="block text-[0.7rem] font-medium text-[#777787]">
                     {locale === "fr" ? "relevé 2026-07" : "recorded 2026-07"}
                   </span>
+                  {tool.sourceNote ? (
+                    <span className="mt-1 block text-[0.7rem] font-medium italic text-[#777787]">
+                      {tool.sourceNote[locale]}
+                    </span>
+                  ) : null}
                 </td>
               </tr>
             ))}

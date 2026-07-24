@@ -17,6 +17,7 @@ import {
   VS_COMPETITORS,
   VS_GETPICK,
   VS_TOOLS,
+  vsBillingSuffix,
   vsCopy,
 } from "@/lib/vs-comparison";
 
@@ -117,6 +118,75 @@ test("AC3 — chaque rival a priceAsOf=2026-07 et une sourceUrl https vérifiabl
     assert.ok(competitor.sourceLabel.length > 0, `${competitor.name} doit avoir un sourceLabel`);
     assert.equal(typeof competitor.entryPrice, "number");
     assert.ok(competitor.entryPrice > 0, `${competitor.name} prix d'entrée > 0`);
+  }
+});
+
+// --- AC3 (couche machine) : les caveats prix voyagent dans le JSON-LD + la FAQ -
+// Régression review adverse : la mention « billed yearly » ne doit pas vivre
+// UNIQUEMENT dans le tableau HTML. Un LLM qui parse l'Offer ou la FAQ doit voir la
+// condition d'engagement, sinon il cite « dès $25/mois » (faux en mensuel).
+
+test("AC3 — chaque Offer JSON-LD porte le caveat de facturation de son outil (FR+EN)", () => {
+  for (const locale of LOCALES) {
+    const parsed = JSON.parse(buildVsItemListJsonLd(locale)) as {
+      itemListElement: Array<{ item: { name: string; offers: { description: string } } }>;
+    };
+    for (const tool of VS_TOOLS) {
+      if (!tool.billing) continue;
+      const offer = parsed.itemListElement.find((el) => el.item.name === tool.name);
+      assert.ok(offer, `${tool.name} doit avoir une Offer`);
+      assert.ok(
+        offer!.item.offers.description.includes(tool.billing[locale]),
+        `${locale}: la description de l'Offer ${tool.name} doit inclure « ${tool.billing[locale]} »`
+      );
+    }
+  }
+});
+
+test("AC3 — la FAQ nomme la facturation annuelle à côté des prix Otterly & Profound (FR+EN)", () => {
+  for (const locale of LOCALES) {
+    const parsed = JSON.parse(buildVsFaqJsonLd(locale)) as {
+      "@graph": Array<{ "@type": string; mainEntity?: Array<{ acceptedAnswer: { text: string } }> }>;
+    };
+    const faq = parsed["@graph"].find((node) => node["@type"] === "FAQPage");
+    const answer = faq?.mainEntity?.[0]?.acceptedAnswer.text ?? "";
+    for (const name of ["Otterly", "Profound"] as const) {
+      const tool = VS_TOOLS.find((t) => t.name === name)!;
+      assert.ok(tool.billing, `${name} doit porter une note de facturation`);
+      assert.ok(
+        answer.includes(tool.billing![locale]),
+        `${locale}: la réponse FAQ doit disclore « ${tool.billing![locale]} » pour ${name}`
+      );
+    }
+  }
+});
+
+test("AC3 — vsBillingSuffix : suffixe pour un outil facturé à l'année, vide sinon", () => {
+  const otterly = VS_TOOLS.find((t) => t.name === "Otterly")!;
+  const rankscale = VS_TOOLS.find((t) => t.name === "Rankscale")!;
+  assert.ok(vsBillingSuffix(otterly, "en").includes("billed yearly"));
+  assert.ok(vsBillingSuffix(otterly, "fr").includes("facturé à l'année"));
+  assert.equal(vsBillingSuffix(rankscale, "en"), "");
+  assert.equal(vsBillingSuffix(rankscale, "fr"), "");
+});
+
+// Régression review adverse (finding 2) : quand la sourceUrl primaire n'est pas
+// lisible par un crawler (Peec, page JS), l'Offer JSON-LD doit DISCLORE ce caveat,
+// pour ne pas laisser un lecteur machine croire que le prix est confirmé à la
+// source qu'il vient de suivre.
+test("AC3 — un sourceNote est propagé dans la description de l'Offer (FR+EN)", () => {
+  for (const locale of LOCALES) {
+    const parsed = JSON.parse(buildVsItemListJsonLd(locale)) as {
+      itemListElement: Array<{ item: { name: string; offers: { description: string } } }>;
+    };
+    for (const tool of VS_TOOLS) {
+      if (!tool.sourceNote) continue;
+      const offer = parsed.itemListElement.find((el) => el.item.name === tool.name);
+      assert.ok(
+        offer!.item.offers.description.includes(tool.sourceNote[locale]),
+        `${locale}: la description de l'Offer ${tool.name} doit inclure son sourceNote`
+      );
+    }
   }
 });
 

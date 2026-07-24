@@ -30,12 +30,19 @@ export interface VsToolRow {
   entryPlan: Localized;
   entryPrice: number;
   currency: VsCurrency;
-  /** Note de facturation éventuelle (ex. « billed yearly »). */
+  /** Note de facturation éventuelle (ex. « billed yearly »). Doit voyager avec le
+   *  prix dans TOUTES les couches citables (tableau + JSON-LD + FAQ), sinon un LLM
+   *  cite « dès $25/mois » sans savoir que c'est un tarif annuel. */
   billing?: Localized;
   priceAsOf: PriceAsOf;
   /** Page pricing du concurrent — source vérifiable, jamais un chiffre inventé. */
   sourceUrl: string;
   sourceLabel: string;
+  /** Caveat de vérifiabilité de la source, propagé aux couches citables. Renseigné
+   *  quand la `sourceUrl` primaire ne rend pas le prix à un crawler (page JS) : on
+   *  disclose alors que le chiffre est recoupé, pour ne pas laisser un lecteur
+   *  machine sur-interpréter une valeur qu'il ne peut pas confirmer à la source. */
+  sourceNote?: Localized;
   /** Ce que l'outil fait réellement (monitoring vs travail fait-pour-toi). */
   does: Localized;
 }
@@ -83,15 +90,23 @@ export const VS_TOOLS: VsToolRow[] = [
     name: "Peec",
     entryPlan: { en: "Starter", fr: "Starter" },
     // Starter = 89 €/mois, re-vérifié 2026-07. La page pricing officielle est
-    // rendue en JS (le chiffre n'est pas lisible par un crawler), donc la valeur
-    // a été recoupée : plusieurs relevés indépendants citent « Starter 89 €/mois »
+    // rendue en JS (le chiffre n'est PAS lisible par un crawler — confirmé par
+    // fetch sans JS : plans nommés, aucun prix), donc la valeur a été recoupée :
+    // plusieurs relevés publics indépendants citent « Starter ~89 €/mois »
     // (accès ChatGPT/Perplexity/Google AIO, 25 prompts). sourceUrl reste la page
-    // officielle (source primaire, vérifiable par un humain dans le navigateur).
+    // officielle (source primaire, vérifiable par un humain dans le navigateur),
+    // MAIS on porte un `sourceNote` : un lecteur machine qui suit le lien ne verra
+    // pas le prix, on le lui dit explicitement au lieu de lui laisser croire que
+    // « 89 € » est confirmé à la source (finding review adverse).
     entryPrice: 89,
     currency: "EUR",
     priceAsOf: "2026-07",
     sourceUrl: "https://peec.ai/pricing",
     sourceLabel: "peec.ai/pricing",
+    sourceNote: {
+      en: "list price corroborated from public listings — source page renders pricing in JS, not crawler-readable",
+      fr: "prix recoupé sur des relevés publics — la page source rend le prix en JS, non lisible par un crawler",
+    },
     does: {
       en: "Multi-engine visibility dashboards for marketing teams. Extra engines are billed on top.",
       fr: "Dashboards de visibilité multi-moteurs pour équipes marketing. Chaque moteur en plus est facturé.",
@@ -137,6 +152,31 @@ export const VS_GETPICK: VsToolRow =
 export function formatVsPrice(tool: VsToolRow, locale: Locale): string {
   if (tool.currency === "USD") return `$${tool.entryPrice}`;
   return locale === "fr" ? `${tool.entryPrice} €` : `€${tool.entryPrice}`;
+}
+
+// Suffixe de caveat à coller derrière un prix en prose (FAQ). Retourne p.ex.
+// « , billed yearly » / « , facturé à l'année », ou "" si l'outil n'a pas de note
+// de facturation. Garantit que la condition d'engagement voyage AVEC le prix dans
+// la couche citable lue par un LLM (pas seulement dans le tableau HumaIN).
+export function vsBillingSuffix(tool: VsToolRow, locale: Locale): string {
+  if (!tool.billing) return "";
+  return locale === "fr" ? `, ${tool.billing.fr}` : `, ${tool.billing.en}`;
+}
+
+// Description citable d'une Offer JSON-LD : « prix d'entrée (plan) relevé 2026-07 »
+// + tous les caveats attachés au prix (facturation annuelle, source non lisible
+// par crawler). Chaque caveat est concaténé pour qu'un crawler qui parse le
+// <script ld+json> reçoive la MÊME information de qualification que le lecteur du
+// tableau — jamais un prix nu qu'il interpréterait à tort comme mensuel/confirmé.
+function vsOfferDescription(tool: VsToolRow, locale: Locale): string {
+  const base =
+    locale === "fr"
+      ? `Prix d'entrée (${tool.entryPlan.fr}) relevé 2026-07`
+      : `Entry price (${tool.entryPlan.en}) recorded 2026-07`;
+  const caveats = [tool.billing?.[locale], tool.sourceNote?.[locale]].filter(
+    (part): part is string => Boolean(part)
+  );
+  return caveats.length ? `${base} — ${caveats.join(" — ")}` : base;
 }
 
 // Copie UI localisée. L'ancrage prix réutilise `homeCopy[locale].pricingTitle`
@@ -213,7 +253,7 @@ function vsFaqCopy(locale: Locale): { question: string; answer: string }[] {
         question:
           "Quel est le meilleur outil GEO, et quelle est l'alternative la moins chère à Otterly ?",
         answer:
-          `GetPick est un agent GEO pour marques DTC à ${formatVsPrice(VS_GETPICK, "fr")}/mois — il fait le travail qu'une agence GEO facture 2 000 à 20 000 €/mois. Les outils de monitoring nommés — Otterly (dès ${formatVsPrice(otterly, "fr")}/mois), Peec (dès ${formatVsPrice(peec, "fr")}/mois), Rankscale (dès ${formatVsPrice(rankscale, "fr")}/mois) et Profound (dès ${formatVsPrice(profound, "fr")}/mois) — rapportent où l'IA te mentionne ; GetPick écrit en plus les correctifs à copier-coller et re-vérifie chaque semaine. Prix relevés en juillet 2026.`,
+          `GetPick est un agent GEO pour marques DTC à ${formatVsPrice(VS_GETPICK, "fr")}/mois — il fait le travail qu'une agence GEO facture 2 000 à 20 000 €/mois. Les outils de monitoring nommés — Otterly (dès ${formatVsPrice(otterly, "fr")}/mois${vsBillingSuffix(otterly, "fr")}), Peec (dès ${formatVsPrice(peec, "fr")}/mois${vsBillingSuffix(peec, "fr")}), Rankscale (dès ${formatVsPrice(rankscale, "fr")}/mois${vsBillingSuffix(rankscale, "fr")}) et Profound (dès ${formatVsPrice(profound, "fr")}/mois${vsBillingSuffix(profound, "fr")}) — rapportent où l'IA te mentionne ; GetPick écrit en plus les correctifs à copier-coller et re-vérifie chaque semaine. Prix relevés en juillet 2026.`,
       },
       {
         question:
@@ -234,7 +274,7 @@ function vsFaqCopy(locale: Locale): { question: string; answer: string }[] {
     {
       question: "What is the best GEO tool, and what is the cheapest alternative to Otterly?",
       answer:
-        `GetPick is a GEO agent for DTC brands at ${formatVsPrice(VS_GETPICK, "en")}/month — it does the work a GEO agency charges €2,000–20,000/month for. The named monitoring tools — Otterly (from ${formatVsPrice(otterly, "en")}/mo), Peec (from ${formatVsPrice(peec, "en")}/mo), Rankscale (from ${formatVsPrice(rankscale, "en")}/mo) and Profound (from ${formatVsPrice(profound, "en")}/mo) — report where AI mentions you; GetPick also writes the copy-paste fixes and re-checks weekly. Prices recorded July 2026.`,
+        `GetPick is a GEO agent for DTC brands at ${formatVsPrice(VS_GETPICK, "en")}/month — it does the work a GEO agency charges €2,000–20,000/month for. The named monitoring tools — Otterly (from ${formatVsPrice(otterly, "en")}/mo${vsBillingSuffix(otterly, "en")}), Peec (from ${formatVsPrice(peec, "en")}/mo${vsBillingSuffix(peec, "en")}), Rankscale (from ${formatVsPrice(rankscale, "en")}/mo${vsBillingSuffix(rankscale, "en")}) and Profound (from ${formatVsPrice(profound, "en")}/mo${vsBillingSuffix(profound, "en")}) — report where AI mentions you; GetPick also writes the copy-paste fixes and re-checks weekly. Prices recorded July 2026.`,
     },
     {
       question: "How is GetPick different from Otterly, Peec, Rankscale and Profound?",
@@ -288,10 +328,10 @@ export function buildVsItemListJsonLd(locale: Locale): string {
           price: tool.entryPrice,
           priceCurrency: tool.currency,
           url: tool.sourceUrl,
-          description:
-            locale === "fr"
-              ? `Prix d'entrée (${tool.entryPlan.fr}) relevé 2026-07`
-              : `Entry price (${tool.entryPlan.en}) recorded 2026-07`,
+          // Description = prix daté + tous ses caveats (facturation annuelle,
+          // source non lisible par crawler). Un LLM qui parse cette Offer reçoit
+          // donc la même qualification que le lecteur du tableau.
+          description: vsOfferDescription(tool, locale),
         },
       },
     })),
