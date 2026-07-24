@@ -76,6 +76,8 @@ https://www.getpick.ai/study
 ## Pages
 
 - [Study](https://www.getpick.ai/study): we asked AI what to buy in 21 DTC categories.
+- [Compare](https://www.getpick.ai/vs): GetPick vs the named GEO tools (Otterly, Peec, Rankscale, Profound) — entry prices, cheapest alternative to Otterly.
+- [Comparatif](https://www.getpick.ai/fr/vs): GetPick face aux outils GEO nommés — meilleur outil GEO, alternative à Otterly.
 - [Home](https://www.getpick.ai): run a free AI visibility audit.
 - [English](https://www.getpick.ai/en): English version.
 - [French](https://www.getpick.ai/fr): version française.
