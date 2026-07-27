@@ -13,6 +13,7 @@ import {
   buildProductJsonLdFix,
   extractProductLinks,
   parseProductPage,
+  pickFlagshipSignal,
   type ProductSignal,
 } from "@/lib/product-shopping";
 
@@ -38,6 +39,24 @@ const graphProductPage = `<!doctype html><html><head>
   { "@context": "https://schema.org", "@graph": [
     { "@type": "WebPage", "name": "PDP" },
     { "@type": "Product", "name": "Nimbus Hoodie", "offers": { "@type": "Offer", "price": "89", "priceCurrency": "USD" } }
+  ] }
+  </script>
+  </head><body></body></html>`;
+
+// JSON-LD Product niché sous WebPage.mainEntity (pattern Google courant).
+const mainEntityProductPage = `<!doctype html><html><head>
+  <script type="application/ld+json">
+  { "@context": "https://schema.org", "@type": "WebPage", "name": "PDP",
+    "mainEntity": { "@type": "Product", "name": "Halo Ring",
+      "offers": { "@type": "Offer", "price": "349", "priceCurrency": "USD" } } }
+  </script>
+  </head><body></body></html>`;
+
+// JSON-LD Product niché sous ItemList.itemListElement[].item.
+const itemListProductPage = `<!doctype html><html><head>
+  <script type="application/ld+json">
+  { "@context": "https://schema.org", "@type": "ItemList", "itemListElement": [
+    { "@type": "ListItem", "position": 1, "item": { "@type": "Product", "name": "Zephyr Tee" } }
   ] }
   </script>
   </head><body></body></html>`;
@@ -76,6 +95,14 @@ const homeWithProductLinks = `<!doctype html><html><head><title>Acme</title></he
   <a href="https://facebook.com/products/spam">Off-site</a>
 </body></html>`;
 
+// Home mêlant pages utilitaires (panier, carte cadeau) et un vrai SKU.
+const homeWithUtilityLinks = `<!doctype html><html><head><title>Acme</title></head><body>
+  <a href="/shop/cart">Cart</a>
+  <a href="/products/gift-card">Gift card</a>
+  <a href="/account/login">Login</a>
+  <a href="/products/real-hero">Real hero</a>
+</body></html>`;
+
 const homeNoProductLinks = `<!doctype html><html><head><title>Acme Blog</title></head><body>
   <nav><a href="/about">About</a><a href="/blog">Blog</a><a href="/contact">Contact</a></nav>
 </body></html>`;
@@ -98,6 +125,19 @@ test("AC1 — JSON-LD @graph contenant Product → détecté", () => {
   const signal = parseProductPage(graphProductPage, `${BASE}/products/nimbus`);
   assert.equal(signal.hasProductJsonLd, true);
   assert.equal(signal.name, "Nimbus Hoodie");
+});
+
+test("AC1 — Product niché sous WebPage.mainEntity → détecté (descente générique)", () => {
+  const signal = parseProductPage(mainEntityProductPage, `${BASE}/products/halo-ring`);
+  assert.equal(signal.hasProductJsonLd, true);
+  assert.equal(signal.name, "Halo Ring");
+  assert.equal(signal.priceAmount, "349");
+});
+
+test("AC1 — Product niché sous ItemList.itemListElement[].item → détecté", () => {
+  const signal = parseProductPage(itemListProductPage, `${BASE}/products/zephyr-tee`);
+  assert.equal(signal.hasProductJsonLd, true);
+  assert.equal(signal.name, "Zephyr Tee");
 });
 
 // --- AC2 : balisage absent → correctif non vide ------------------------------
@@ -169,6 +209,34 @@ test("AC1 — extractProductLinks sur home avec /products/<slug> → liens absol
 
 test("AC4 — extractProductLinks sur home sans lien produit → []", () => {
   assert.deepEqual(extractProductLinks(homeNoProductLinks, BASE), []);
+});
+
+test("finding#3 — pages utilitaires (cart/gift-card/login) exclues, seul le vrai SKU reste", () => {
+  const links = extractProductLinks(homeWithUtilityLinks, BASE);
+  assert.deepEqual(links, ["https://acme-store.com/products/real-hero"]);
+  assert.ok(!links.some((l) => l.includes("/cart")));
+  assert.ok(!links.some((l) => l.includes("gift-card")));
+  assert.ok(!links.some((l) => l.includes("/login")));
+});
+
+// --- pickFlagshipSignal : le verdict suit la couverture markup, pas l'ordre ---
+
+test("finding#2 — un SKU balisé prime, même s'il arrive APRÈS un candidat non balisé", () => {
+  const giftCard: ProductSignal = { name: "Gift card", url: `${BASE}/products/gift-card`, hasProductJsonLd: false };
+  const realHero: ProductSignal = { name: "Real Hero", url: `${BASE}/products/real-hero`, hasProductJsonLd: true };
+  const flagship = pickFlagshipSignal([giftCard, realHero]);
+  assert.equal(flagship?.url, `${BASE}/products/real-hero`);
+  assert.equal(flagship?.hasProductJsonLd, true);
+});
+
+test("finding#2 — aucun markup nulle part → premier candidat joignable retenu (absent)", () => {
+  const a: ProductSignal = { name: "A", url: `${BASE}/products/a`, hasProductJsonLd: false };
+  const b: ProductSignal = { name: "B", url: `${BASE}/products/b`, hasProductJsonLd: false };
+  assert.equal(pickFlagshipSignal([a, b])?.url, `${BASE}/products/a`);
+});
+
+test("finding#2 — liste vide → null (muet sans signal)", () => {
+  assert.equal(pickFlagshipSignal([]), null);
 });
 
 test("AC5 — home SaaS non e-commerce → aucun lien produit ([])", () => {

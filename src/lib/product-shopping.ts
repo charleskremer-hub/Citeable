@@ -59,9 +59,14 @@ function stripCdata(raw: string): string {
   return raw.replace(/^\s*<!\[CDATA\[/i, "").replace(/\]\]>\s*$/i, "").trim();
 }
 
+/** Borne anti-boucle sur un JSON-LD pathologiquement profond/large (jamais un vrai PDP). */
+const MAX_JSONLD_NODES = 2_000;
+
 /**
  * Cherche le premier noeud JSON-LD dont `@type` contient `Product`.
- * Gère les tableaux et `@graph`. Un bloc JSON malformé est ignoré silencieusement
+ * Descente GÉNÉRIQUE (BFS) dans toute la structure : `@graph`, mais aussi les
+ * objets imbriqués arbitraires — `WebPage.mainEntity`, `ItemList.itemListElement[].item`,
+ * etc. (patterns Google courants). Un bloc JSON malformé est ignoré silencieusement
  * (jamais de crash — traité comme « pas de Product »).
  */
 function findProductNode(html: string): Record<string, unknown> | null {
@@ -73,14 +78,23 @@ function findProductNode(html: string): Record<string, unknown> | null {
       continue; // JSON-LD malformé → on n'en tient pas compte
     }
 
-    const stack: unknown[] = Array.isArray(parsed) ? [...parsed] : [parsed];
-    while (stack.length) {
+    const stack: unknown[] = [parsed];
+    let visited = 0;
+    while (stack.length && visited < MAX_JSONLD_NODES) {
       const item = stack.shift();
+      visited += 1;
       if (!item || typeof item !== "object") continue;
+      if (Array.isArray(item)) {
+        stack.push(...item);
+        continue;
+      }
       const record = item as Record<string, unknown>;
-
-      if (Array.isArray(record["@graph"])) stack.push(...(record["@graph"] as unknown[]));
       if (/product/i.test(jsonLdType(record))) return record;
+      // Descente dans toutes les valeurs objet/tableau (couvre @graph, mainEntity,
+      // itemListElement[].item…) sans énumérer chaque clé au cas par cas.
+      for (const value of Object.values(record)) {
+        if (value && typeof value === "object") stack.push(value);
+      }
     }
   }
   return null;
@@ -121,10 +135,26 @@ function fallbackName(html: string): string {
 // --- Fonctions publiques pures ----------------------------------------------
 
 /**
+ * Segments qui matchent la forme `/products?|shop|p/<slug>` mais désignent une
+ * page utilitaire (panier, compte, recherche, carte cadeau…), jamais un SKU
+ * phare. Exclus des candidats pour ne pas générer un correctif sur une page
+ * non-produit (finding review : `/shop/cart`, `/products/gift-card`…).
+ */
+const UTILITY_SEGMENTS = new Set([
+  "cart", "carts", "checkout", "checkouts", "basket", "bag",
+  "account", "accounts", "login", "logout", "signin", "sign-in",
+  "register", "signup", "sign-up", "wishlist", "wishlists",
+  "search", "orders", "order", "returns", "return",
+  "gift-card", "gift-cards", "giftcard", "giftcards",
+  "contact", "about", "faq", "terms", "privacy", "policies", "policy",
+]);
+
+/**
  * Extrait les URLs de pages produit candidates depuis la home.
  * Ne retient que les liens de forme `/product(s)/<slug>`, `/shop/<slug>` ou
  * `/p/<slug>` (un segment unitaire après le préfixe → évite les liens de
- * navigation/collection), résout en absolu, borne le même hôte (apex ↔ www),
+ * navigation/collection), écarte les slugs utilitaires (panier/compte/recherche…
+ * via UTILITY_SEGMENTS), résout en absolu, borne le même hôte (apex ↔ www),
  * dédoublonne et plafonne à MAX_PRODUCT_CANDIDATES. `[]` si aucun signal.
  */
 export function extractProductLinks(homepageHtml: string, baseUrl: string): string[] {
@@ -136,13 +166,23 @@ export function extractProductLinks(homepageHtml: string, baseUrl: string): stri
     }
   })();
 
-  const productPath = /\/(?:products?|shop|p)\/[^/?#"'\s]+/i;
+  // Capture le 1er segment après le préfixe pour filtrer les pages utilitaires.
+  const productPath = /\/(?:products?|shop|p)\/([^/?#"'\s]+)/i;
   const seen = new Set<string>();
   const links: string[] = [];
 
   for (const match of homepageHtml.matchAll(/<a\b[^>]*\bhref=["']([^"']+)["']/gi)) {
     const href = match[1];
-    if (!href || !productPath.test(href)) continue;
+    if (!href) continue;
+    const slugMatch = productPath.exec(href);
+    if (!slugMatch) continue;
+    let slug = slugMatch[1].toLowerCase();
+    try {
+      slug = decodeURIComponent(slug);
+    } catch {
+      /* slug %-encodé invalide → on garde la forme brute */
+    }
+    if (UTILITY_SEGMENTS.has(slug)) continue;
 
     let resolved: URL;
     try {
@@ -254,31 +294,53 @@ async function fetchHtml(url: string): Promise<string | null> {
 }
 
 /**
- * Détecte le SKU phare + son balisage depuis le site (home + 1 page produit
- * joignable). Rend `null` si aucune page produit détectable ou injoignable
- * (discipline « muet sans signal » — AC4). Ne throw jamais (AC5).
+ * Choisit le SKU phare parmi les signaux joignables. Le verdict dépend de la
+ * COUVERTURE réelle du markup, jamais de l'ordre des liens dans le HTML : un SKU
+ * correctement balisé (`hasProductJsonLd`) prime sur tout candidat non balisé.
+ * À défaut de tout markup, on retient le premier candidat joignable (dans l'ordre
+ * des liens) et on rend `markup: "absent"` + correctif. `null` si liste vide.
  */
-export async function detectProductShopping(websiteUrl: string, brandName: string): Promise<ProductShopping | null> {
+export function pickFlagshipSignal(signals: ProductSignal[]): ProductSignal | null {
+  if (signals.length === 0) return null;
+  return signals.find((signal) => signal.hasProductJsonLd) ?? signals[0];
+}
+
+/**
+ * Détecte le SKU phare + son balisage depuis le site (home + pages produit
+ * joignables). Rend `null` si aucune page produit détectable ou injoignable
+ * (discipline « muet sans signal » — AC4). Ne throw jamais (AC5).
+ *
+ * `homepageHtml` optionnel : quand la home a déjà été téléchargée en amont (ex.
+ * `inferCategory`), on la réutilise → zéro fetch home redondant sur le chemin
+ * critique de l'audit. Absent/vide → fetch de repli (module auto-suffisant).
+ * Les pages produit candidates sont récupérées en PARALLÈLE : la latence est
+ * bornée par un seul timeout, quel que soit le nombre de candidats.
+ */
+export async function detectProductShopping(
+  websiteUrl: string,
+  brandName: string,
+  homepageHtml?: string | null
+): Promise<ProductShopping | null> {
   const homeUrl = normalizeUrl(websiteUrl);
-  const homeHtml = await fetchHtml(homeUrl);
+  const homeHtml = homepageHtml && homepageHtml.trim() ? homepageHtml : await fetchHtml(homeUrl);
   if (!homeHtml) return null;
 
   const candidates = extractProductLinks(homeHtml, homeUrl);
-  if (candidates.length === 0) return null;
+  if (candidates.length === 0) return null; // non e-commerce / aucun SKU → muet, zéro fetch produit
 
-  for (const candidate of candidates) {
-    const productHtml = await fetchHtml(candidate);
-    if (!productHtml) continue; // page injoignable → candidat suivant
+  const pages = await Promise.all(candidates.map((candidate) => fetchHtml(candidate)));
+  const signals = candidates
+    .map((candidate, index) => ({ candidate, html: pages[index] }))
+    .filter((entry): entry is { candidate: string; html: string } => entry.html !== null)
+    .map((entry) => parseProductPage(entry.html, entry.candidate));
 
-    const signal = parseProductPage(productHtml, candidate);
-    const markup: "present" | "absent" = signal.hasProductJsonLd ? "present" : "absent";
+  const flagship = pickFlagshipSignal(signals);
+  if (!flagship) return null; // aucun candidat joignable
 
-    return {
-      sku: { name: signal.name, url: signal.url },
-      markup,
-      fixJsonLd: markup === "absent" ? buildProductJsonLdFix(signal, brandName) : undefined,
-    };
-  }
-
-  return null; // aucun candidat joignable
+  const markup: "present" | "absent" = flagship.hasProductJsonLd ? "present" : "absent";
+  return {
+    sku: { name: flagship.name, url: flagship.url },
+    markup,
+    fixJsonLd: markup === "absent" ? buildProductJsonLdFix(flagship, brandName) : undefined,
+  };
 }
