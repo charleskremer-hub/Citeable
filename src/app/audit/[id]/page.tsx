@@ -8,6 +8,7 @@ import { auditCopy, brandSentimentView, localeFromHeaders, localeFromUnknown, lo
 import { UNKNOWN_CATEGORY } from "@/lib/audit-engine";
 import { categoryPerceptionFromPrompts, extractSourceCitationReports, fetchWithHostFallback, generateGeoAgentAssetsFromAudit, isAnonymousEmail, isAuditedBrandName, robotsTxtFixForBlockedCrawlers, youtubeContentTipIsRelevant } from "@/lib/audit-engine";
 import type { BrandSentiment, BuyerIntentPromptResult, CategoryPerception, IcpSegmentMetadata, PlainAction, SourceCitationReport } from "@/lib/audit-engine";
+import type { ProductShopping } from "@/lib/product-shopping";
 import LocaleLang from "@/app/LocaleLang";
 import AuditPoller from "./AuditPoller";
 import AgentAuditChat from "./AgentAuditChat";
@@ -40,6 +41,7 @@ type AuditRow = {
     answerEngine?: { engine?: string; model?: string; realLlmCall?: boolean };
     brandSentiment?: BrandSentiment;
     categoryPerception?: CategoryPerception;
+    productShopping?: ProductShopping | null;
     structuredDataFound?: boolean;
     locale?: string;
     buyerIntentPrompts?: BuyerIntentPromptResult[];
@@ -493,6 +495,12 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const jsonLdSnippet = technicalAssets
     ? `<script type="application/ld+json">\n${technicalAssets.faqJsonLd}\n</script>`
     : "";
+  // Diagnostic produit shopping IA : page-only, muet sans signal (bloc absent si
+  // `productShopping` est null). Non gaté par tier → visible sur les 3 offres.
+  const productShopping = complete && !failed ? audit.raw_results?.productShopping ?? null : null;
+  const productFixSnippet = productShopping?.fixJsonLd
+    ? `<script type="application/ld+json">\n${productShopping.fixJsonLd}\n</script>`
+    : null;
   const aiCrawlOk = aiCrawl?.state === "ok";
   const aiCrawlUnreachable = aiCrawl?.state === "unreachable";
   // « injoignable » n'est PAS « bloqué » : libellé et couleur distincts, sinon on
@@ -1158,6 +1166,62 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
 
               <p className="m-0 mt-4 text-xs font-black uppercase tracking-[0.08em] text-[#8E8E9A]">{copy.techRegenNote}</p>
             </section>
+          ) : null}
+
+          {/* Diagnostic produit shopping IA (SKU phare + balisage Product).
+              Rendu uniquement s'il y a un vrai signal produit détecté depuis le
+              site — sinon rien (discipline « muet sans signal »). Non gaté par
+              tier : visible sur les 3 offres. */}
+          {productShopping ? (
+            (() => {
+              const absent = productShopping.markup === "absent";
+              const tone = absent ? "#FFB84D" : "#CAFF3C";
+
+              return (
+                <section
+                  className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6"
+                  data-testid="product-shopping"
+                >
+                  <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em]" style={{ color: tone }}>
+                    {copy.productEyebrow}
+                  </p>
+                  <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
+                    {copy.productTitle}
+                  </h2>
+
+                  <div className="mt-4 rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3">
+                    <p className="m-0 text-[0.6875rem] font-black uppercase tracking-[0.1em] text-[#8E8E9A]">
+                      {copy.productSkuLabel}
+                    </p>
+                    <p className="m-0 mt-1 text-sm font-bold text-[#F0F0EC]">{productShopping.sku.name}</p>
+                    <a
+                      href={productShopping.sku.url}
+                      target="_blank"
+                      rel="noopener noreferrer nofollow"
+                      className="m-0 mt-1 block break-all text-xs font-bold text-[#8E9A8F] underline"
+                    >
+                      {productShopping.sku.url}
+                    </a>
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <span
+                      className="rounded-full px-2.5 py-1 text-[0.6875rem] font-black uppercase tracking-[0.1em]"
+                      style={{ color: tone, background: `${tone}22`, border: `1px solid ${tone}44` }}
+                    >
+                      {absent ? copy.productMarkupAbsent : copy.productMarkupPresent}
+                    </span>
+                  </div>
+
+                  {productFixSnippet ? (
+                    <div className="mt-4">
+                      <CopyBlock label={copy.productFixLabel} text={productFixSnippet} copyLabel={copyLabel} copiedLabel={copiedLabel} />
+                      <p className="m-0 mt-1.5 text-xs font-bold leading-5 text-[#8E8E9A]">{copy.productFixHint}</p>
+                    </div>
+                  ) : null}
+                </section>
+              );
+            })()
           ) : null}
 
           {complete && !failed && !isFreeReport ? (
