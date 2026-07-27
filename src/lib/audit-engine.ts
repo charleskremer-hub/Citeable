@@ -15,7 +15,11 @@ const OPENAI_UNAVAILABLE = "ChatGPT indisponible, réessaie.";
 const FREE_AUDIT_CACHE_HOURS = 24;
 const FREE_AUDIT_EMAIL_DAILY_LIMIT = 1;
 const FREE_AUDIT_DOMAIN_DAILY_LIMIT = 1;
-const BUYER_PROMPT_SET_VERSION = "relevant_content_clean_category_v2";
+// v3 (24/07) : bump obligatoire après le correctif d'inférence de catégorie.
+// Ce jeton indexe le cache free (voir findFreshFreeGeminiAudit) ; sans bump, les audits
+// invalides déjà en base (granola→« footwear », sacs→« food ») resteraient servis
+// depuis le cache 24h (FREE_AUDIT_CACHE_HOURS) malgré le fix.
+const BUYER_PROMPT_SET_VERSION = "relevant_content_clean_category_v3";
 const DEFAULT_GEMINI_MODEL = "gemini-flash-latest";
 const DEFAULT_OPENAI_MODEL = ["gpt", "4o", "mini"].join("-");
 const COMPETITOR_EXTRACTION_VERSION = "gemini_recommended_brands_sentiment_v5_icp_segments";
@@ -2019,13 +2023,23 @@ function categoryFromHomepageText(text: string, domain: string) {
     [/\bosprey\b|backpacks?|rucksacks?|daypacks?|travel packs?|hiking packs?|outdoor gear|hydration packs?|luggage|packfinder|trekking/, "backpacks and outdoor gear"],
     [/\ballbirds\b|sustainable sneakers?|eco-?friendly shoes?|wool shoes?|tree runners?|running shoes?|walking shoes?|sneakers?|footwear|chaussures?/, "DTC footwear brand"],
     [/boulangerie|bakery|p[aâ]tisserie|pastry|restaurant|bistro|brasserie|traiteur|catering/, "bakery / restaurant"],
+    // 24/07 : petit-déjeuner / céréales. Mots sans ambiguïté (muesli, granola, céréales…),
+    // placés AVANT beauté/mode pour qu'un « Dear Muesli » reste alimentaire même si la page
+    // mélange des signaux lifestyle. Corrige le cas granola inféré « DTC footwear brand ».
+    [/\bmuesli\b|\bm[uü]sli\b|\bgranola\b|\bmüsli\b|céréales?|petit[- ]?déjeuner|\bporridge\b/, "food & beverage"],
     [/\bmkbhd\b|marques brownlee|youtube|youtuber|tiktok|instagram|newsletter|podcast|substack|streamer|content creator|creator|influencer|créateur|créatrice|influenceur|influenceuse/, "creator"],
     [/\beyewear\b|\bglasses\b|sunglasses|eyeglasses|prescription lenses?|progressive lenses?|\boptical\b|opticien|lunettes?|contact lenses?|frames? (?:for|and) lenses?/, "eyewear brand"],
     [/\bjewell?ery\b|\bbijoux\b|engagement rings?|necklaces?|bracelets?/, "jewelry brand"],
     [/mattress(?:es)?|bedding|\bduvet\b|\bpillows?\b|\bliterie\b/, "mattress and bedding brand"],
     [/apparel|clothing|fashion|garments?|menswear|womenswear/, "fashion brand"],
+    // 24/07 : sacs / maroquinerie / bagagerie → accessoires. Placé après « fashion » (une
+    // marque de vêtements qui mentionne « tote bag » reste mode) mais avant « food », pour
+    // qu'un fabricant de sacs en voile recyclée ne bascule plus en alimentaire.
+    [/maroquinerie|bagagerie|\bcabas\b|handbags?|tote bags?|\bpochettes?\b|bandouli[èe]res?|sacs? en voile|sacs? à main|voiles? recycl[ée]|toiles? recycl[ée]/, "bags and accessories"],
     [/skin care|skincare|beauty|cosmetics/, "beauty brand"],
-    [/coffee|tea|beverage|drinks?|snacks?|food & beverage|food and beverage/, "food & beverage"],
+    // Mots bornés (\b) : l'ancien /tea/ non borné matchait « bateau », « manteau », « gâteau »…
+    // et transformait un voilier/sacs en marque « food & beverage ».
+    [/\bcoffee\b|\btea\b|\bthés?|beverages?|\bdrinks?\b|\bsnacks?\b|\bfood\b|food & beverage|food and beverage|\bmuesli\b|\bgranola\b|\bcereals?\b|\bavoine\b|\bbreakfast\b/, "food & beverage"],
     [/plombier|plumbing|leak repair|chauffagiste/, "plumber"],
     [/[ée]lectricien|electrician|electrical contractor/, "electrician"],
     [/dentiste|dental|orthodont/, "dentist"],
@@ -2133,6 +2147,7 @@ function localizedCategoryTerm(categoryTerm: string, language: "en" | "fr") {
   const translations: Array<[RegExp, string]> = [
     [/socks? and apparel|hosiery/, "chaussettes et vêtements"],
     [/backpacks? and outdoor gear/, "sacs à dos et équipement outdoor"],
+    [/bags? and accessories|maroquinerie|handbag/, "sacs et accessoires"],
     [/footwear|shoe|sneaker/, "chaussures"],
     [/plumber/, "plombier"],
     [/electrician/, "électricien"],
@@ -2204,20 +2219,28 @@ async function inferCategory(brandName: string, websiteUrl: string, fallbackChec
   const domain = domainFromWebsite(websiteUrl);
   const fallbackText = `${fallbackCheck.detail} ${fallbackCheck.evidence ?? ""}`;
   let signals = "";
+  // HTML brut de la home, conservé pour réutilisation en aval (ex. détection SKU
+  // produit) → évite un second fetch home redondant sur le chemin critique.
+  let homepageHtml: string | null = null;
 
   try {
     const response = await withTimeout(normalizeWebsiteUrl(websiteUrl));
 
     if (response.ok) {
       const html = await response.text();
+      homepageHtml = html;
       signals = extractHomepageSignals(html);
       const fallbackCategory = categoryFromHomepageText(`${brandName} ${domain} ${signals}`, domain);
-      const category = categoryLooksLikeTechStack(fallbackCategory, signals) ? "DTC footwear brand" : fallbackCategory;
+      // 24/07 : un site clairement « produit physique » (signaux food/apparel…) mal étiqueté
+      // « plateforme/ecommerce » ne doit PLUS être forcé en « DTC footwear brand » — ce hardcode
+      // transformait un granola en marque de chaussures. On rejette l'étiquette tech douteuse et
+      // on laisse le 2e passage puis l'inférence IA reprendre la main (via isGenericCategory).
+      const category = categoryLooksLikeTechStack(fallbackCategory, signals) ? UNKNOWN_CATEGORY : fallbackCategory;
 
-      if (!isGenericCategory(category)) return { category, homepageText: signals };
+      if (!isGenericCategory(category)) return { category, homepageText: signals, homepageHtml };
 
       const secondPassCategory = categoryFromHomepageText(`${brandName} ${domain} ${signals} ${fallbackText}`, domain);
-      if (!isGenericCategory(secondPassCategory)) return { category: secondPassCategory, homepageText: signals };
+      if (!isGenericCategory(secondPassCategory)) return { category: secondPassCategory, homepageText: signals, homepageHtml };
     }
   } catch (error) {
     console.log(`[getpick] category homepage fetch failed: ${error instanceof Error ? error.message : "Unknown error"}`);
@@ -2226,12 +2249,13 @@ async function inferCategory(brandName: string, websiteUrl: string, fallbackChec
   // Phrase rules could not determine a category (e.g. Shopify/anti-bot sites returning little text).
   // Ask the LLM — it usually recognises the brand from its name + domain.
   const aiCategory = await inferCategoryAI(brandName, domain, signals);
-  if (aiCategory) return { category: aiCategory, homepageText: signals || fallbackText };
+  if (aiCategory) return { category: aiCategory, homepageText: signals || fallbackText, homepageHtml };
 
   const fallbackCategory = categoryFromHomepageText(`${brandName} ${domain} ${fallbackText}`, domain);
   return {
     category: isGenericCategory(fallbackCategory) ? UNKNOWN_CATEGORY : fallbackCategory,
     homepageText: signals || fallbackText,
+    homepageHtml,
   };
 }
 
@@ -2263,10 +2287,19 @@ function promptCategoryTerms(category: string) {
     };
   }
 
+  if (/\bbags? and accessories\b|maroquinerie|bagagerie|handbag|\bcabas\b|\btote\b|\bpochette\b|bandouli[èe]re/.test(lower)) {
+    return {
+      categoryTerm: "bags and accessories",
+      useCase: "everyday carry and travel",
+      leader: "Longchamp",
+    };
+  }
+
   if (/fashion|apparel|clothing/.test(lower)) return { categoryTerm: cleanCategory, useCase: "everyday clothing", leader: "Everlane" };
   if (/beauty|skincare|cosmetic/.test(lower)) return { categoryTerm: cleanCategory, useCase: "daily routines", leader: "Glossier" };
   if (/coffee|espresso|roaster|café/.test(lower)) return { categoryTerm: "coffee brand", useCase: "specialty coffee", leader: "Starbucks" };
-  if (/food|beverage|tea|drink/.test(lower)) return { categoryTerm: cleanCategory, useCase: "daily consumption", leader: "Starbucks" };
+  // \btea\b borné : sinon « bateau »/« gâteau » d'une catégorie faisaient basculer en « food ».
+  if (/\bfood\b|beverage|\btea\b|\bdrink|muesli|granola|cereal|breakfast/.test(lower)) return { categoryTerm: cleanCategory, useCase: "daily consumption", leader: "Starbucks" };
   if (/creator|influencer/.test(lower)) return { categoryTerm: cleanCategory, useCase: "audiences looking for people to follow", leader: "top creators" };
 
   if (lower.includes("digital product passport")) {
@@ -4523,7 +4556,9 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
   const competitors = sortedByFrequency(buyerIntentPrompts.flatMap((prompt) => prompt.competitors), 20);
   // Diagnostic produit shopping IA : page-only, HORS du pipeline de score
   // (jamais dans `checks`/`computeScore`). Ne throw jamais → `null` si aucun signal.
-  const productShopping = await detectProductShopping(args.websiteUrl, args.brandName);
+  // Réutilise la home déjà téléchargée par `inferCategory` (zéro fetch home
+  // redondant) ; sur un site non e-commerce, aucun lien produit → zéro fetch.
+  const productShopping = await detectProductShopping(args.websiteUrl, args.brandName, inferred.homepageHtml);
   const firstAnswerEngineSurface = buyerIntentPrompts.flatMap((prompt) => prompt.surfaces).find((surface) => surface.kind === "ai_engine");
   const answerEngine = firstAnswerEngineSurface?.engine && firstAnswerEngineSurface.model
     ? {
@@ -4702,3 +4737,13 @@ export async function runQueuedAudit(auditId: string): Promise<QueuedAuditResult
     await pool.query(`SELECT pg_advisory_unlock(hashtextextended($1, 0))`, [auditId]);
   }
 }
+
+// Seam de test interne (non destiné au runtime applicatif) : expose les fonctions pures
+// d'inférence de catégorie et de génération de questions pour les tests unitaires Node.
+// Aucune I/O, aucune dépendance réseau ; sûr à importer depuis un harnais de test.
+export const __categoryTestHarness = {
+  categoryFromHomepageText,
+  promptCategoryTerms,
+  detectIcpSegment,
+  generateBuyerIntentPrompts,
+};
