@@ -4,6 +4,7 @@ import { recordFunnelEvent } from "./funnel";
 import { localizeCategoryLabel, localizePlainAction, type Locale } from "./i18n";
 import { isWebSearchConfigured, runWebSearch } from "./web-search";
 import { isMailConfigured, sendMail } from "./mailer";
+import { detectProductShopping, type ProductShopping } from "./product-shopping";
 
 const USER_AGENT = "Mozilla/5.0 (compatible; CiteeableBot/1.0)";
 const CHECK_TIMEOUT_MS = 8_000;
@@ -196,6 +197,8 @@ export type AuditReport = {
     model: string;
     realLlmCall: boolean;
   };
+  // Diagnostic produit shopping IA (page-only, additif). `null` = muet sans signal.
+  productShopping?: ProductShopping | null;
 };
 
 export type QueuedAuditResult =
@@ -224,6 +227,7 @@ type AuditRawResults = {
     model: string;
     realLlmCall: boolean;
   };
+  productShopping?: ProductShopping | null;
   geoAgentDescription?: string;
   competitorExtractionVersion?: string;
   buyerPromptSetVersion?: string;
@@ -507,6 +511,9 @@ function reportFromRow(row: AuditRow): AuditReport {
     categoryPerception: row.raw_results?.categoryPerception ?? categoryPerceptionFromPrompts(buyerIntentPrompts, category),
     locale: row.raw_results?.locale ?? recipientLocaleFromSignals(row.email, row.website_url),
     answerEngine: row.raw_results?.answerEngine,
+    // Les audits enregistrés AVANT cette feature n'ont pas de HTML rejouable :
+    // on rend `null` (bloc absent) plutôt que d'inventer un SKU/verdict.
+    productShopping: row.raw_results?.productShopping ?? null,
   };
 }
 
@@ -4514,6 +4521,9 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
   const fixes = buildFixes(checks, icpSegment, inferred.category);
   const score = computeScore(checks, buyerIntentPrompts);
   const competitors = sortedByFrequency(buyerIntentPrompts.flatMap((prompt) => prompt.competitors), 20);
+  // Diagnostic produit shopping IA : page-only, HORS du pipeline de score
+  // (jamais dans `checks`/`computeScore`). Ne throw jamais → `null` si aucun signal.
+  const productShopping = await detectProductShopping(args.websiteUrl, args.brandName);
   const firstAnswerEngineSurface = buyerIntentPrompts.flatMap((prompt) => prompt.surfaces).find((surface) => surface.kind === "ai_engine");
   const answerEngine = firstAnswerEngineSurface?.engine && firstAnswerEngineSurface.model
     ? {
@@ -4544,6 +4554,7 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
     categoryPerception: categoryPerceptionFromPrompts(buyerIntentPrompts, inferred.category),
     locale: auditLocale,
     answerEngine,
+    productShopping,
     promptDebug,
   };
   const emailResult = await sendAuditEmail(args.email, args.brandName, args.websiteUrl, reportWithoutEmail, auditLocale);
@@ -4618,6 +4629,7 @@ export async function completeQueuedAudit(auditId: string): Promise<QueuedAuditR
           locale: report.locale,
           brandSentiment: report.brandSentiment,
           categoryPerception: report.categoryPerception,
+          productShopping: report.productShopping,
           answerEngine: report.answerEngine,
           competitorExtractionVersion: COMPETITOR_EXTRACTION_VERSION,
           buyerPromptSetVersion: BUYER_PROMPT_SET_VERSION,
