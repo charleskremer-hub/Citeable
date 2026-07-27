@@ -107,6 +107,23 @@ const homeNoProductLinks = `<!doctype html><html><head><title>Acme Blog</title><
   <nav><a href="/about">About</a><a href="/blog">Blog</a><a href="/contact">Contact</a></nav>
 </body></html>`;
 
+// Home dont les liens /shop|/p pointent vers des collections/catégories (sale, new,
+// mens…) et un seul vrai SKU. Les collections n'ont pas de JSON-LD Product.
+const homeWithCollectionLinks = `<!doctype html><html><head><title>Acme</title></head><body>
+  <a href="/shop/sale">Sale</a>
+  <a href="/shop/new">New in</a>
+  <a href="/shop/mens">Men</a>
+  <a href="/p/best-sellers">Best sellers</a>
+  <a href="/shop/aurora-serum">Aurora Serum</a>
+</body></html>`;
+
+// JSON-LD Product SANS champ name, page sans og:title ni <title>.
+const jsonLdNoNameNoTitle = `<!doctype html><html><head>
+  <script type="application/ld+json">
+  { "@context": "https://schema.org", "@type": "Product", "offers": { "@type": "Offer", "price": "10" } }
+  </script>
+  </head><body></body></html>`;
+
 const saasHome = `<!doctype html><html><head><title>Flowbase — Analytics for teams</title></head><body>
   <nav><a href="/pricing">Pricing</a><a href="/docs">Docs</a><a href="/login">Log in</a></nav>
   <h1>Ship analytics faster</h1><a href="/signup">Start free trial</a>
@@ -243,6 +260,12 @@ test("AC5 — home SaaS non e-commerce → aucun lien produit ([])", () => {
   assert.deepEqual(extractProductLinks(saasHome, "https://flowbase.com"), []);
 });
 
+test("finding — slugs de collection (/shop/sale, /shop/mens…) exclus, seul le vrai SKU reste", () => {
+  const links = extractProductLinks(homeWithCollectionLinks, BASE);
+  assert.deepEqual(links, ["https://acme-store.com/shop/aurora-serum"]);
+  assert.ok(!links.some((l) => /\/(sale|new|mens|best-sellers)\b/.test(l)));
+});
+
 // --- buildProductJsonLdFix ---------------------------------------------------
 
 test("AC2/AC3 — buildProductJsonLdFix : JSON parsable, brand=marque, price=valeur brute", () => {
@@ -266,4 +289,28 @@ test("AC2 — buildProductJsonLdFix : name vide → repli sur le nom de marque",
   const signal: ProductSignal = { name: "", url: `${BASE}/products/x`, hasProductJsonLd: false };
   const parsed = JSON.parse(buildProductJsonLdFix(signal, "Acme"));
   assert.equal(parsed.name, "Acme");
+});
+
+// --- finding : name JSON-LD absent + page sans titre → repli url (jamais vide) ---
+
+test("finding — Product sans name + page sans og:title/title → name = url (AC1, jamais vide)", () => {
+  const signal = parseProductPage(jsonLdNoNameNoTitle, `${BASE}/products/no-name`);
+  assert.equal(signal.hasProductJsonLd, true);
+  assert.equal(signal.name, `${BASE}/products/no-name`);
+  assert.notEqual(signal.name, "");
+});
+
+// --- finding : correctif sûr à coller dans <script> (échappement < > &) -------
+
+test("finding — buildProductJsonLdFix échappe </script> : aucun < > & littéral, reparse à l'identique", () => {
+  const hostileName = 'Cool Shoes</script><img src=x onerror=alert(1)> & more';
+  const signal: ProductSignal = { name: hostileName, url: `${BASE}/products/x`, hasProductJsonLd: false };
+  const fix = buildProductJsonLdFix(signal, "Acme");
+  // Aucun caractère qui pourrait fermer/ouvrir une balise ou une entité une fois collé.
+  assert.ok(!fix.includes("<"));
+  assert.ok(!fix.includes(">"));
+  assert.ok(!fix.includes("&"));
+  assert.ok(!fix.toLowerCase().includes("</script>"));
+  // Le JSON reste valide et reparse EXACTEMENT au nom d'origine (échappement \\uXXXX réversible).
+  assert.equal(JSON.parse(fix).name, hostileName);
 });

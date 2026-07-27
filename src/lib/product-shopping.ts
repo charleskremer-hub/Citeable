@@ -136,9 +136,10 @@ function fallbackName(html: string): string {
 
 /**
  * Segments qui matchent la forme `/products?|shop|p/<slug>` mais désignent une
- * page utilitaire (panier, compte, recherche, carte cadeau…), jamais un SKU
- * phare. Exclus des candidats pour ne pas générer un correctif sur une page
- * non-produit (finding review : `/shop/cart`, `/products/gift-card`…).
+ * page utilitaire (panier, compte, recherche, carte cadeau…) OU une page de
+ * collection/catégorie/navigation (sale, new, all, mens…), jamais un SKU phare.
+ * Exclus des candidats pour ne pas générer un correctif sur une page non-produit
+ * (finding review : `/shop/cart`, `/products/gift-card`, `/shop/sale`…).
  */
 const UTILITY_SEGMENTS = new Set([
   "cart", "carts", "checkout", "checkouts", "basket", "bag",
@@ -147,6 +148,15 @@ const UTILITY_SEGMENTS = new Set([
   "search", "orders", "order", "returns", "return",
   "gift-card", "gift-cards", "giftcard", "giftcards",
   "contact", "about", "faq", "terms", "privacy", "policies", "policy",
+  // Collections / catégories / navigation : matchent `/shop/<slug>` ou `/p/<slug>`
+  // mais n'ont pas de JSON-LD Product → conduiraient à un faux « SKU phare = sale »
+  // et à un correctif Product collé sur une page de collection.
+  "sale", "sales", "clearance", "new", "news", "new-arrivals", "newin", "new-in",
+  "all", "all-products", "shop", "shop-all", "products", "product",
+  "collection", "collections", "catalog", "catalogue", "category", "categories",
+  "men", "mens", "women", "womens", "kids", "unisex",
+  "best-sellers", "bestsellers", "best-seller", "featured", "trending", "popular",
+  "gifts", "gift", "brands", "brand", "home", "index",
 ]);
 
 /**
@@ -215,7 +225,9 @@ export function parseProductPage(html: string, url: string): ProductSignal {
   if (productNode) {
     const offer = firstOffer(productNode);
     return {
-      name: rawScalar(productNode["name"]) ?? fallbackName(html) ?? url,
+      // fallbackName rend une chaîne VIDE (pas undefined) sans og:title ni <title> ;
+      // `|| url` garantit donc un nom non vide (AC1 : au moins 1 SKU avec son nom).
+      name: rawScalar(productNode["name"]) ?? (fallbackName(html) || url),
       url,
       priceAmount: offer ? rawScalar(offer["price"]) : undefined,
       priceCurrency: offer ? rawScalar(offer["priceCurrency"]) : undefined,
@@ -257,7 +269,7 @@ export function buildProductJsonLdFix(signal: ProductSignal, brandName: string):
   if (signal.priceCurrency) offers.priceCurrency = signal.priceCurrency;
   offers.availability = signal.availability ?? "https://schema.org/InStock";
 
-  return JSON.stringify(
+  const json = JSON.stringify(
     {
       "@context": "https://schema.org",
       "@type": "Product",
@@ -268,6 +280,20 @@ export function buildProductJsonLdFix(signal: ProductSignal, brandName: string):
     null,
     2
   );
+
+  // Le correctif est destiné à être collé DANS <script type="application/ld+json">…</script>.
+  // JSON.stringify n'échappe ni `<` ni `>` ni `&` : un nom contenant `</script>` (repris tel
+  // quel de la page du fondateur) fermerait la balise prématurément et injecterait du markup.
+  // On échappe en \uXXXX — JSON reste valide et reparse à la même chaîne (reco Google : < > &).
+  return escapeForScriptTag(json);
+}
+
+/** Rend un JSON sûr à insérer dans <script> : échappe `<`, `>`, `&` en \uXXXX (JSON reste valide). */
+function escapeForScriptTag(json: string): string {
+  return json
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026");
 }
 
 // --- Orchestrateur async fin -------------------------------------------------
