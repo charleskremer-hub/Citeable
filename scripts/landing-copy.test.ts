@@ -96,6 +96,14 @@ const AC2_MARKETS = {
 const EXCLUDES_FRANCE = { en: /not (in )?France/, fr: /pas (la |en )France/ } as const;
 const RESTRICTS_TIERS = { en: /Free and Go tiers/, fr: /tiers Free et Go/ } as const;
 
+// Qualificatif temporel accepté : soit un adverbe/nom de portée courante
+// (« currently », « current rollout », « diffusion actuelle »), soit une date
+// explicite au format publié (« as of 28 July 2026 », « au 28 juillet 2026 »).
+const TEMPORAL_QUALIFIER = {
+  en: /current(ly| rollout)|as of \d{1,2} \p{L}+ 20\d{2}/iu,
+  fr: /actuel(le|lement)|à ce jour|au \d{1,2} \p{L}+ 20\d{2}/iu,
+} as const satisfies Record<Locale, RegExp>;
+
 // La portée est exigée sur CHAQUE surface publiée séparément : le bloc « EN
 // BREF » est cité isolément par les moteurs, il ne peut pas s'appuyer sur la
 // portée présente dans l'entrée FAQ.
@@ -122,6 +130,23 @@ for (const locale of LOCALES) {
 
     test(`AC2 — ${locale} / ${surface}: la diffusion est restreinte aux tiers Free et Go`, () => {
       assert.match(text, RESTRICTS_TIERS[locale], `${locale} / ${surface}: la restriction aux tiers Free et Go est obligatoire`);
+    });
+
+    // La liste des marchés est périssable : elle est passée de 5 à 7 en 24 h
+    // pendant la rédaction de cette story. Publiée au présent permanent, elle
+    // devient une affirmation exhaustive fausse dès la prochaine ouverture — et
+    // le TL;DR est notre surface la plus citée verbatim par les moteurs, donc
+    // celle où une liste sans date fait le plus de dégâts. Le test des 7 marchés
+    // fige le contenu mais ne détecte aucune péremption : on exige donc en plus
+    // qu'un qualificatif temporel soit attaché à la liste, sur CHAQUE surface.
+    // Le « Depuis le 22 juillet 2026 » en tête de phrase ne compte pas : il
+    // porte sur l'ouverture self-serve, pas sur la portée géographique.
+    test(`AC2 — ${locale} / ${surface}: la portée porte un qualificatif temporel`, () => {
+      assert.match(
+        text,
+        TEMPORAL_QUALIFIER[locale],
+        `${locale} / ${surface}: la liste de marchés doit être datée ou qualifiée (« current rollout », « currently », « diffusion actuelle », « au JJ mois AAAA »)`
+      );
     });
   }
 }
@@ -283,16 +308,30 @@ test("AC5 — la question d'achat ads figure exactement une fois dans « Buyer q
   assert.ok(buyerBlock.includes(question), "la question doit vivre dans le bloc « Buyer questions GetPick answers »");
 });
 
-// Cohérence produit ↔ fichier machine : `llms.txt` est le fichier que nous
-// demandons explicitement aux IA de lire et de citer. Un chiffre produit faux
-// y circule tel quel dans les réponses IA nous concernant — on le verrouille
-// donc sur la constante réelle du moteur, lue dans la source (aucun import :
-// `audit-engine` tire des dépendances réseau).
-test("llms.txt — le nombre de questions par tier est celui du moteur d'audit", () => {
+// Cohérence produit ↔ surfaces machine. Deux surfaces annoncent le compte de
+// questions par tier à un lecteur non humain : `public/llms.txt` (le fichier
+// que nous demandons explicitement aux IA de lire) et le JSON-LD
+// `SoftwareApplication` de `src/app/layout.tsx` (rendu sur TOUTES les pages,
+// donc le signal structuré de plus haute confiance). Les verrouiller sur une
+// seule des deux laisse l'autre diverger en silence — c'est exactement ce qui
+// s'est produit le 28/07 : llms.txt corrigé à 6, JSON-LD resté à 3, soit deux
+// chiffres produit contradictoires sur le même domaine. Les deux sont donc
+// exigées ici, contre la constante réelle du moteur lue dans la source (aucun
+// import : `audit-engine` tire des dépendances réseau).
+//
+// La regex est ancrée sur `const count =` : `audit-engine.ts` contient un
+// SECOND ternaire de même forme deux lignes plus bas (`const minAi = tier ===
+// "free" ? 3 : 4;`). Un `match` non ancré prend la première occurrence dans
+// l'ordre du fichier et lirait 3/4 au moindre réordonnancement — c'est-à-dire
+// qu'il exigerait précisément le chiffre faux que cette story vient de retirer.
+const TIER_COUNT_RE = /const count = tier === "free" \? (\d+) : (\d+);/;
+
+test("surfaces machine — le nombre de questions par tier est celui du moteur d'audit", () => {
   const engineSource = readRepoFile("src", "lib", "audit-engine.ts");
-  const match = engineSource.match(/tier === "free" \? (\d+) : (\d+)/);
-  assert.ok(match, "audit-engine.ts doit porter le ternaire `tier === \"free\" ? N : M`");
+  const match = engineSource.match(TIER_COUNT_RE);
+  assert.ok(match, 'audit-engine.ts doit porter `const count = tier === "free" ? N : M;`');
   const [, free, paid] = match!;
+
   assert.ok(
     llmsTxtFlat.includes(`Free audit: ${free} buyer questions`),
     `llms.txt doit annoncer « Free audit: ${free} buyer questions » (valeur du moteur)`
@@ -301,6 +340,37 @@ test("llms.txt — le nombre de questions par tier est celui du moteur d'audit",
     llmsTxtFlat.includes(`${paid} buyer questions`),
     `llms.txt doit annoncer « ${paid} buyer questions » pour le tier payant (valeur du moteur)`
   );
+
+  const layoutSource = readRepoFile("src", "app", "layout.tsx");
+  assert.ok(
+    layoutSource.includes(`AI visibility audit on ${free} real buyer questions.`),
+    `le JSON-LD de layout.tsx doit annoncer « ${free} real buyer questions » pour l'offre gratuite (valeur du moteur)`
+  );
+  assert.ok(
+    layoutSource.includes(`${paid} buyer questions, weekly tracking`),
+    `le JSON-LD de layout.tsx doit annoncer « ${paid} buyer questions » pour Monitor (valeur du moteur)`
+  );
+});
+
+// Aucune surface ne doit porter un autre compte que celui du moteur : le test
+// ci-dessus vérifie la présence du bon chiffre, celui-ci interdit la survivance
+// de l'ancien. Sans lui, une surface pourrait annoncer « 6 » quelque part et
+// garder « 3 » ailleurs dans le même fichier sans que rien n'échoue.
+test("surfaces machine — aucun compte de questions périmé ne survit", () => {
+  const engineSource = readRepoFile("src", "lib", "audit-engine.ts");
+  const [, free, paid] = engineSource.match(TIER_COUNT_RE)!;
+  const surfaces = [
+    ["public/llms.txt", llmsTxtFlat],
+    ["src/app/layout.tsx", readRepoFile("src", "app", "layout.tsx")],
+  ] as const;
+  for (const [label, source] of surfaces) {
+    for (const [, count] of source.matchAll(/(\d+)\s+(?:real\s+)?buyer questions/g)) {
+      assert.ok(
+        count === free || count === paid,
+        `${label}: « ${count} buyer questions » ne correspond à aucun compte du moteur (${free} gratuit / ${paid} payant)`
+      );
+    }
+  }
 });
 
 // --- AC6 : la formulation obsolète n'est plus dans la copy expédiée ----------
