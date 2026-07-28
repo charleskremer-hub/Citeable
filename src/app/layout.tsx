@@ -61,7 +61,13 @@ const STRUCTURED_DATA = {
       name: "Free audit",
       price: "0",
       priceCurrency: "EUR",
-      description: "AI visibility audit on 3 real buyer questions.",
+      // Le compte de questions vient du moteur (`audit-engine.ts`, `const count =
+      // tier === "free" ? N : M`), pas d'une valeur de copy : ce JSON-LD est rendu
+      // sur TOUTES les pages, c'est le signal structuré de plus haute confiance
+      // pour un crawler IA et il ne peut pas contredire `public/llms.txt`.
+      // Verrouillé par « surfaces machine — le nombre de questions par tier est
+      // celui du moteur d'audit » (scripts/landing-copy.test.ts).
+      description: "AI visibility audit on 6 real buyer questions.",
     },
     {
       "@type": "Offer",
