@@ -3,6 +3,8 @@ import { headers } from "next/headers";
 import { DM_Serif_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { localeFromHeaders } from "@/lib/i18n";
+import { Analytics } from "@vercel/analytics/next";
+import PostHogInit from "./PostHogInit";
 
 const dmSerifDisplay = DM_Serif_Display({
   variable: "--font-display",
@@ -103,13 +105,11 @@ export default async function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }}
         />
-        <script
-          src="https://phospho-nanocorp-prod--nanocorp-api-fastapi-app.modal.run/analytics/v1.js?c=9ce8bf27-b673-4c40-8ef6-ddfa5a1d7504"
-          defer
-        />
       </head>
       <body className="min-h-full bg-[#09090B] text-[#F0F0EC] antialiased">
         {children}
+        <Analytics />
+        <PostHogInit />
       </body>
     </html>
   );

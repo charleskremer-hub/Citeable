@@ -3,13 +3,13 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { AGENT_CHECKOUT_URL, MONITOR_CHECKOUT_URL } from "@/lib/checkout-links";
 import { ensureAuditSchema, pool } from "@/lib/db";
-import { recordFunnelEvent } from "@/lib/funnel";
 import { auditCopy, brandSentimentView, localeFromHeaders, localeFromUnknown, localizeCategoryLabel, localizePlainAction, type Locale } from "@/lib/i18n";
 import { UNKNOWN_CATEGORY } from "@/lib/audit-engine";
 import { categoryPerceptionFromPrompts, extractSourceCitationReports, fetchWithHostFallback, generateGeoAgentAssetsFromAudit, isAnonymousEmail, isAuditedBrandName, robotsTxtFixForBlockedCrawlers, youtubeContentTipIsRelevant } from "@/lib/audit-engine";
 import type { BrandSentiment, BuyerIntentPromptResult, CategoryPerception, IcpSegmentMetadata, PlainAction, SourceCitationReport } from "@/lib/audit-engine";
 import LocaleLang from "@/app/LocaleLang";
 import AuditPoller from "./AuditPoller";
+import ReportViewBeacon from "./ReportViewBeacon";
 import AgentAuditChat from "./AgentAuditChat";
 import FunnelCheckoutLink from "./FunnelCheckoutLink";
 import { VisibilityMonitorCard } from "./VisibilityMonitorCard";
@@ -410,12 +410,13 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   const isMonitorReport = audit.raw_results?.auditTier === "monitor_9eur";
   const isFreeReport = !isAgentReport && !isMonitorReport;
 
-  await recordFunnelEvent({
-    eventName: "report_viewed",
-    auditId: audit.id,
-    source: "audit_page",
-    metadata: { brandName: audit.brand_name, websiteUrl: audit.website_url, auditTier: audit.raw_results?.auditTier ?? "free", complete, failed },
-  });
+  // `report_viewed` N'EST PLUS ENREGISTRÉ ICI. Ce rendu serveur se produit à
+  // chaque requête — F5, retour arrière, pré-rendu, crawler, et le sondage
+  // d'AuditPoller toutes les 3 secondes pendant qu'un audit tourne. Compter une
+  // vue à chaque passage rendait la north star indiscernable de notre propre
+  // automatisation (+10 vues internes sur 59 le 27/07). L'événement part
+  // désormais du navigateur, une fois par session, filtré des bots et du trafic
+  // interne : voir ReportViewBeacon ci-dessous et src/lib/traffic-filter.ts.
 
   const topCompetitor = rankedCompetitors[0]?.name ?? competitors[0];
   const displayCategory = localizeCategoryLabel(audit.raw_results?.category, locale);
@@ -604,6 +605,14 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
         websiteUrl={audit.website_url}
         complete={complete || failed}
         locale={locale}
+      />
+      <ReportViewBeacon
+        auditId={audit.id}
+        brandName={audit.brand_name}
+        websiteUrl={audit.website_url}
+        auditTier={audit.raw_results?.auditTier ?? "free"}
+        complete={complete}
+        failed={failed}
       />
 
       <section className="mx-auto flex min-h-screen w-full max-w-3xl flex-col px-4 py-5 sm:px-6 sm:py-8">

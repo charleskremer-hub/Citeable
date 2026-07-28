@@ -187,6 +187,7 @@ export const homeCopy = {
     closingCta: "Get picked →",
     footerTagline: "The GEO agent for DTC brands. It gets you recommended by ChatGPT and Gemini.",
     rights: "All rights reserved.",
+    footerProspection: "Outbound policy",
   },
   fr: {
     navAudit: "Audit gratuit",
@@ -342,6 +343,7 @@ export const homeCopy = {
     closingCta: "Lancer mon audit gratuit →",
     footerTagline: "L'agent GEO des marques DTC. Il te fait recommander par ChatGPT et Gemini.",
     rights: "Tous droits réservés.",
+    footerProspection: "Politique de prospection",
   },
 } as const;
 

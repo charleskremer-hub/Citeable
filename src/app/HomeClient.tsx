@@ -460,7 +460,12 @@ export default function HomeClient({ locale }: HomeClientProps) {
           <div className="text-lg tracking-[-0.02em]" style={{ fontFamily: "var(--font-display)" }}>GetPick</div>
           <p className="m-0 text-sm text-[#686879]">{copy.footerTagline}</p>
         </div>
-        <p className="m-0 text-sm text-[#444454]">© {new Date().getFullYear()} GetPick. {copy.rights}</p>
+        <div className="flex flex-wrap items-center gap-4">
+          <Link href="/prospection" className="m-0 text-sm text-[#686879] no-underline hover:text-[#F0F0EC]">
+            {copy.footerProspection}
+          </Link>
+          <p className="m-0 text-sm text-[#444454]">© {new Date().getFullYear()} GetPick. {copy.rights}</p>
+        </div>
       </footer>
     </div>
   );

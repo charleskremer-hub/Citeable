@@ -51,6 +51,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly" as const,
       priority: 0.85,
     },
+    {
+      // Citée dans le pied de chaque email sortant : elle doit être atteignable
+      // et indexable, sans concurrencer les pages produit (priorité basse).
+      url: `${siteUrl}/prospection`,
+      lastModified: now,
+      changeFrequency: "yearly" as const,
+      priority: 0.3,
+    },
     ...answerPages.map((page) => ({
       url: `${siteUrl}/${page.locale}/${page.slug}`,
       lastModified: now,

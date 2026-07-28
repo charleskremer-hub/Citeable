@@ -8,16 +8,21 @@
     "start": "next start",
     "lint": "eslint",
     "test": "node --test --import ./scripts/test-loader.mjs 'scripts/**/*.test.ts'",
-    "verify:live": "node scripts/verify-live.mjs"
+    "verify:live": "node scripts/verify-live.mjs",
+    "migrate": "node scripts/migrate.mjs",
+    "migrate:dry": "node scripts/migrate.mjs --dry",
+    "emit:migration": "node scripts/emit-migration.mjs"
   },
   "dependencies": {
     "@types/pg": "^8.20.0",
+    "@vercel/analytics": "^2.0.1",
     "next": "16.2.10",
     "pg": "^8.22.0",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
