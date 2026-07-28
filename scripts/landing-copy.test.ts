@@ -179,6 +179,26 @@ const FORBIDDEN_PROSE = [
   /anyone can (buy|advertise)/i,
 ] as const;
 
+// La DATE d'ouverture self-serve est elle aussi non tranchée, et pour la même
+// raison que le seuil d'entrée : aiweekly.co et explainx.ai la datent du
+// 22/07/2026, contexthints.com du 05/05/2026 — et contexthints.com est la source
+// que nous citons nous-mêmes dans le même paragraphe pour le CPC 3-5 $. Un
+// lecteur qui suit notre propre lien y lit une autre date que la nôtre.
+// Publier « depuis le 22/07 » n'était pas rattrapable en disant qu'on ne parlait
+// que de l'ouverture self-serve : c'est précisément là-dessus que porte la
+// contradiction. Le fait publiable est l'état présent, vérifié à la source ce
+// jour — les placements SONT ouverts à l'achat en self-serve — sans date de
+// début. Même discipline que le seuil d'entrée : non tranché, non publié.
+const FORBIDDEN_DATES = [
+  /22 july 2026/i,
+  /22 juillet 2026/i,
+  /22\/07\/2026/,
+  /2026-07-22/,
+  /5 may 2026/i,
+  /5 mai 2026/i,
+  /2026-05-05/,
+] as const;
+
 const shippedCopy = () =>
   [
     ...LOCALES.flatMap((locale) => [
@@ -208,6 +228,47 @@ test("AC3 — le seuil d'entrée annonceur n'est pas publié non plus en prose",
   }
 });
 
+test("AC3 — aucune date d'ouverture self-serve n'est publiée : les sources se contredisent", () => {
+  const shipped = shippedCopy();
+  for (const forbidden of FORBIDDEN_DATES) {
+    assert.doesNotMatch(
+      shipped,
+      forbidden,
+      `la date d'ouverture self-serve « ${forbidden.source} » est contredite entre sources : interdite de publication`
+    );
+  }
+});
+
+// Le fait reste publiable, seule la date de début ne l'est pas. Si la phrase
+// disparaissait entièrement, le ban ci-dessus passerait au vert pour la mauvaise
+// raison — on exige donc que l'état présent soit toujours affirmé sur chaque
+// surface, avec un ancrage temporel de vérification (« as of » / « verified » /
+// « au JJ mois AAAA »), qui date notre constat et non l'événement.
+test("AC3 — l'ouverture self-serve reste publiée comme un état présent, daté de notre vérification", () => {
+  const surfaces: readonly (readonly [string, string])[] = [
+    ...LOCALES.flatMap(
+      (locale) =>
+        [
+          [`${locale} / TL;DR`, homeCopy[locale].tldrBody],
+          [`${locale} / réponse FAQ`, adsFaqItem(locale).answer],
+        ] as const
+    ),
+    ["public/llms.txt", llmsTxtFlat],
+  ];
+  for (const [surface, text] of surfaces) {
+    assert.match(
+      text,
+      /(now open to buy self-serve|open to buy self-serve, verified|désormais ouverts à l'achat en self-serve)/i,
+      `${surface}: l'ouverture self-serve doit rester affirmée au présent`
+    );
+    assert.match(
+      text,
+      /as of \d{1,2} \p{L}+ 20\d{2}|verified \d{1,2} \p{L}+ 20\d{2}|au \d{1,2} \p{L}+ 20\d{2}/iu,
+      `${surface}: l'affirmation doit porter la date de NOTRE vérification`
+    );
+  }
+});
+
 test("AC3 — le journal de run atteste la revérification à la source des chiffres publiés", () => {
   const runs = readRepoFile("outbound", "AGENT_RUNS.md");
   const line = runs
@@ -227,7 +288,7 @@ test("AC3 — chaque chiffre publié est adossé à une source datée dans le ba
   // validerait des claims empruntés à un item voisin.
   const end = backlog.indexOf("\n- **", start);
   const block = backlog.slice(start, end === -1 ? undefined : end);
-  for (const claim of ["22 juillet 2026", "3-5", "Free et Go", "carrousel"]) {
+  for (const claim of ["self-serve", "3-5", "Free et Go", "carrousel"]) {
     assert.ok(block.includes(claim), `le claim « ${claim} » doit figurer dans le bloc sourcé du backlog`);
   }
   // Un claim sans URL n'est pas un claim sourcé.
@@ -235,6 +296,15 @@ test("AC3 — chaque chiffre publié est adossé à une source datée dans le ba
     (block.match(/https:\/\//g) ?? []).length >= 4,
     "le bloc de claims doit porter au moins une URL par claim publié"
   );
+  // La date d'ouverture n'est plus publiée, mais la trace de POURQUOI doit
+  // survivre : sans les deux dates concurrentes écrites noir sur blanc, le
+  // prochain rédacteur remettra « depuis le 22/07 » en croyant combler un oubli.
+  for (const trace of ["22 juillet 2026", "2026-05-05"]) {
+    assert.ok(
+      block.includes(trace),
+      `le backlog doit garder trace de la date concurrente « ${trace} » qui motive la non-publication`
+    );
+  }
 });
 
 // --- AC4 : TL;DR — phrase ajoutée, parité FR/EN, non-régression --------------
