@@ -76,35 +76,54 @@ for (const locale of LOCALES) {
 
 // --- AC2 : portée réelle — un lecteur français ne doit pas se croire concerné -
 
-// Les marchés sont matchés par expression régulière : la forme longue
-// (« United States ») et la forme courte usuelle en copy (« the US ») sont
-// toutes deux acceptables, seul compte que le marché soit nommé.
+// `\b` ne fonctionne pas ici : en JS il ne s'amorce qu'entre un `\w` ASCII et
+// un non-`\w`, donc `/\bÉtats-Unis\b/` ne matche JAMAIS (« É » n'est pas `\w`,
+// même avec le drapeau `u`). On borne donc avec des lookarounds sur les
+// propriétés Unicode Lettre/Nombre, qui traitent « É » comme une lettre.
+const namesMarket = (text: string, aliases: readonly string[]) =>
+  aliases.some((alias) => new RegExp(`(?<![\\p{L}\\p{N}])${alias}(?![\\p{L}\\p{N}])`, "u").test(text));
+
+// Les 7 marchés servis, vérifiés à la source le 2026-07-28 (bloc « Claims
+// publiés » du backlog). La forme longue (« United States ») et la forme
+// courte usuelle en copy (« the US ») sont toutes deux acceptables ; seul
+// compte que le marché soit nommé. La liste est exhaustive et le test l'exige
+// entièrement : un seuil partiel laisserait disparaître un marché en silence.
 const AC2_MARKETS = {
-  en: [/\b(the US|United States)\b/, /\b(the UK|United Kingdom)\b/, /\bCanada\b/, /\bAustralia\b/, /\bNew Zealand\b/],
-  fr: [/\b(États-Unis|US)\b/, /\b(Royaume-Uni|UK)\b/, /\bCanada\b/, /\bAustralie\b/, /\bNouvelle-Zélande\b/],
-} as const;
+  en: [["the US", "United States"], ["the UK", "United Kingdom"], ["Canada"], ["Australia"], ["New Zealand"], ["Japan"], ["South Korea"]],
+  fr: [["États-Unis"], ["Royaume-Uni"], ["Canada"], ["Australie"], ["Nouvelle-Zélande"], ["Japon"], ["Corée du Sud"]],
+} as const satisfies Record<Locale, readonly (readonly string[])[]>;
+
+const EXCLUDES_FRANCE = { en: /not (in )?France/, fr: /pas (la |en )France/ } as const;
+const RESTRICTS_TIERS = { en: /Free and Go tiers/, fr: /tiers Free et Go/ } as const;
+
+// La portée est exigée sur CHAQUE surface publiée séparément : le bloc « EN
+// BREF » est cité isolément par les moteurs, il ne peut pas s'appuyer sur la
+// portée présente dans l'entrée FAQ.
+const AC2_SURFACES = (locale: Locale) =>
+  [
+    ["réponse FAQ", adsFaqItem(locale).answer],
+    ["TL;DR", homeCopy[locale].tldrBody],
+  ] as const;
 
 for (const locale of LOCALES) {
-  test(`AC2 — ${locale}: la réponse nomme la portée géographique et exclut la France`, () => {
-    const { answer } = adsFaqItem(locale);
-    const named = AC2_MARKETS[locale].filter((market) => market.test(answer));
-    assert.ok(
-      named.length >= 4,
-      `${locale}: au moins 4 des marchés servis doivent être nommés (trouvés : ${named.length})`
-    );
-    assert.ok(
-      locale === "fr" ? answer.includes("pas la France") : answer.includes("not France"),
-      `${locale}: l'exclusion explicite de la France est obligatoire`
-    );
-  });
+  for (const [surface, text] of AC2_SURFACES(locale)) {
+    test(`AC2 — ${locale} / ${surface}: les 7 marchés servis sont nommés`, () => {
+      const missing = AC2_MARKETS[locale].filter((aliases) => !namesMarket(text, aliases));
+      assert.equal(
+        missing.length,
+        0,
+        `${locale} / ${surface}: marché(s) non nommé(s) : ${missing.map((aliases) => aliases[0]).join(", ")}`
+      );
+    });
 
-  test(`AC2 — ${locale}: la réponse restreint la diffusion aux tiers Free et Go`, () => {
-    const { answer } = adsFaqItem(locale);
-    assert.ok(
-      locale === "fr" ? answer.includes("tiers Free et Go") : answer.includes("Free and Go tiers"),
-      `${locale}: la restriction aux tiers Free et Go est obligatoire`
-    );
-  });
+    test(`AC2 — ${locale} / ${surface}: la France est explicitement exclue`, () => {
+      assert.match(text, EXCLUDES_FRANCE[locale], `${locale} / ${surface}: l'exclusion explicite de la France est obligatoire`);
+    });
+
+    test(`AC2 — ${locale} / ${surface}: la diffusion est restreinte aux tiers Free et Go`, () => {
+      assert.match(text, RESTRICTS_TIERS[locale], `${locale} / ${surface}: la restriction aux tiers Free et Go est obligatoire`);
+    });
+  }
 }
 
 // --- AC3 : discipline de sourcing — aucune donnée non tranchée publiée -------
@@ -122,18 +141,44 @@ const FORBIDDEN_SUBSTRINGS = [
   "minimum spend",
 ] as const;
 
-test("AC3 — aucune donnée non tranchée (seuil d'entrée annonceur) dans la copy expédiée", () => {
-  const shipped = [
+// Le chiffre n'est que la forme la plus visible du claim interdit. Sa forme
+// PROSE — « n'importe quel annonceur peut acheter » / « any advertiser can
+// buy » — affirme la même chose : que le seuil d'entrée est nul. Elle est donc
+// bannie au même titre, sinon le ban ne tient que sur la ponctuation.
+const FORBIDDEN_PROSE = [
+  /n'importe quel annonceur/i,
+  /tout annonceur peut/i,
+  /à tous les annonceurs/i,
+  /any advertiser/i,
+  /all advertisers/i,
+  /anyone can (buy|advertise)/i,
+] as const;
+
+const shippedCopy = () =>
+  [
     ...LOCALES.flatMap((locale) => [
       homeCopy[locale].tldrBody,
       ...homeCopy[locale].faqItems.flatMap((item) => [item.question, item.answer]),
     ]),
     llmsTxt,
   ].join("\n");
+
+test("AC3 — aucune donnée non tranchée (seuil d'entrée annonceur) dans la copy expédiée", () => {
+  const shipped = shippedCopy();
   for (const forbidden of FORBIDDEN_SUBSTRINGS) {
     assert.ok(
       !shipped.toLowerCase().includes(forbidden.toLowerCase()),
       `la sous-chaîne non tranchée « ${forbidden} » ne doit pas être publiée`
+    );
+  }
+});
+
+test("AC3 — le seuil d'entrée annonceur n'est pas publié non plus en prose", () => {
+  const shipped = shippedCopy();
+  for (const forbidden of FORBIDDEN_PROSE) {
+    assert.ok(
+      !forbidden.test(shipped),
+      `la formulation « ${forbidden.source} » affirme un seuil d'entrée nul, claim non tranché : interdit de publication`
     );
   }
 });
@@ -236,6 +281,26 @@ test("AC5 — la question d'achat ads figure exactement une fois dans « Buyer q
     llmsTxt.indexOf("## Original research")
   );
   assert.ok(buyerBlock.includes(question), "la question doit vivre dans le bloc « Buyer questions GetPick answers »");
+});
+
+// Cohérence produit ↔ fichier machine : `llms.txt` est le fichier que nous
+// demandons explicitement aux IA de lire et de citer. Un chiffre produit faux
+// y circule tel quel dans les réponses IA nous concernant — on le verrouille
+// donc sur la constante réelle du moteur, lue dans la source (aucun import :
+// `audit-engine` tire des dépendances réseau).
+test("llms.txt — le nombre de questions par tier est celui du moteur d'audit", () => {
+  const engineSource = readRepoFile("src", "lib", "audit-engine.ts");
+  const match = engineSource.match(/tier === "free" \? (\d+) : (\d+)/);
+  assert.ok(match, "audit-engine.ts doit porter le ternaire `tier === \"free\" ? N : M`");
+  const [, free, paid] = match!;
+  assert.ok(
+    llmsTxtFlat.includes(`Free audit: ${free} buyer questions`),
+    `llms.txt doit annoncer « Free audit: ${free} buyer questions » (valeur du moteur)`
+  );
+  assert.ok(
+    llmsTxtFlat.includes(`${paid} buyer questions`),
+    `llms.txt doit annoncer « ${paid} buyer questions » pour le tier payant (valeur du moteur)`
+  );
 });
 
 // --- AC6 : la formulation obsolète n'est plus dans la copy expédiée ----------
