@@ -286,7 +286,7 @@ test("AC5 — la section reprend la formulation corrigée (placement, carrousel,
   for (const milestone of [
     "below the end of a ChatGPT response",
     "sponsored",
-    "shopping carousel is not sold",
+    "shopping carousel",
     "paid ads are ignored",
     "not France",
     "Free and Go tiers",
@@ -295,6 +295,43 @@ test("AC5 — la section reprend la formulation corrigée (placement, carrousel,
   ]) {
     assert.ok(llmsTxtFlat.includes(milestone), `llms.txt doit contenir « ${milestone} »`);
   }
+});
+
+// Le carrousel shopping : la source (Peec AI) observe que la SÉLECTION ignore
+// le payant. Elle n'établit pas qu'OpenAI ne VEND pas ce placement — c'est une
+// affirmation sur sa politique commerciale, que rien ne tranche. La landing
+// FR/EN attribue correctement ; `llms.txt` doit en faire autant, d'autant que
+// c'est le fichier que nous demandons explicitement aux moteurs de citer : la
+// première phrase d'une puce est la plus courte, donc la plus citable.
+test("AC5 — le claim sur le carrousel est attribué, jamais affirmé en voix propre", () => {
+  assert.ok(
+    llmsTxtFlat.includes("Independent research published in June 2026 by Peec AI"),
+    "llms.txt doit attribuer nommément la recherche sur le carrousel shopping"
+  );
+  assert.doesNotMatch(
+    llmsTxtFlat,
+    /carousel (is|was|are) not (sold|for sale)|does not sell the (shopping )?carousel/i,
+    "llms.txt ne doit pas affirmer en voix propre qu'OpenAI ne vend pas le carrousel — aucune source ne l'établit"
+  );
+});
+
+// La liste de marchés sur la surface machine doit porter une date EXPLICITE,
+// pas un simple « currently » : llms.txt est lu hors contexte et sans page
+// d'origine, un adverbe de portée n'y date rien. La liste est passée de 5 à 7
+// marchés en 24 h pendant la rédaction de cette story — sans date, elle devient
+// une affirmation exhaustive fausse à la prochaine ouverture de marché.
+test("AC5 — la portée géographique de llms.txt est datée et complète", () => {
+  assert.match(
+    llmsTxtFlat,
+    /as of \d{1,2} \p{L}+ 20\d{2}/iu,
+    "llms.txt doit dater explicitement la liste des marchés (« As of JJ Month AAAA »)"
+  );
+
+  const missing = AC2_MARKETS.en.filter((aliases) => !namesMarket(llmsTxtFlat, aliases));
+  assert.equal(missing.length, 0, `llms.txt: marché(s) non nommé(s) : ${missing.map((a) => a[0]).join(", ")}`);
+
+  assert.match(llmsTxtFlat, EXCLUDES_FRANCE.en, "llms.txt doit exclure explicitement la France");
+  assert.match(llmsTxtFlat, RESTRICTS_TIERS.en, "llms.txt doit restreindre la diffusion aux tiers Free et Go");
 });
 
 test("AC5 — la question d'achat ads figure exactement une fois dans « Buyer questions »", () => {

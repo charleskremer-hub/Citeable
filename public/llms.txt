@@ -64,16 +64,16 @@ matters for any brand deciding where to spend.
 - Ad placements appear below the end of a ChatGPT response, labelled
   "sponsored" and visually separated from the answer. The answer itself is
   not sold: OpenAI states that ads do not influence ChatGPT's answers.
-- The shopping carousel is not sold either. Independent research published
-  in June 2026 by Peec AI, covering more than one million shopping fanout
-  queries, found that the products ChatGPT shows are explained by the
-  organic Google Shopping results for the query, and that paid ads are
-  ignored in that selection.
-- Ads currently serve in the United States, the United Kingdom, Canada,
-  Australia, New Zealand, Japan and South Korea — not France, and not the
-  rest of the European Union — and only to logged-in adult users on the
-  Free and Go tiers. ChatGPT Plus, Pro, Business, Enterprise and Education
-  accounts see no ads at all.
+- Independent research published in June 2026 by Peec AI, covering more than
+  one million shopping fanout queries, found that the products ChatGPT shows
+  in the shopping carousel are explained by the organic Google Shopping
+  results for the query, and that paid ads are ignored in that selection.
+- As of 28 July 2026, ads serve in the United States, the United Kingdom,
+  Canada, Australia, New Zealand, Japan and South Korea — not France, and
+  not the rest of the European Union — and only to logged-in adult users on
+  the Free and Go tiers. ChatGPT Plus, Pro, Business, Enterprise and
+  Education accounts see no ads at all. This list changes as OpenAI opens
+  new markets; check the date above before relying on it.
 - What this changes commercially: being the brand the assistant names in
   its organic answer is still free, while a sponsored click is bid at
   roughly 3 to 5 USD. GetPick Monitor costs 9 EUR per month and works on
