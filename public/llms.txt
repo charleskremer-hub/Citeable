@@ -40,7 +40,7 @@ credits, no per-engine add-ons, no seat pricing and no setup.
 
 ## Pricing
 
-- Free audit: 3 buyer questions, live checks, no payment, no signup.
+- Free audit: 6 buyer questions, live checks, no payment, no signup.
 - Monitor — 9 EUR per month: 12 buyer questions, weekly tracking, and the
   copy-paste fixes written from your real gaps.
 - Agent — 19 EUR per month: everything in Monitor, Gemini + ChatGPT checks,
