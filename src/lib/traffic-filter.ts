@@ -220,6 +220,21 @@ export const TRAFFIC_CLASSES = ["human", "bot", "internal", "unknown"] as const;
 export type TrafficClass = (typeof TRAFFIC_CLASSES)[number];
 
 /**
+ * Les seules valeurs qu'une CLASSIFICATION peut produire.
+ *
+ * `unknown` est une valeur de LECTURE, mais elle est aussi réellement ÉCRITE en
+ * base par `trafficClassOrUnknown` sur les chemins où la classe d'origine n'a pas
+ * pu être retrouvée (`completeQueuedAudit` sur un audit mis en file avant le
+ * 29/07). Un `metadata->>'trafficClass' IS NOT NULL` ne suffit donc pas à
+ * reconnaître un événement classé : il faut tester l'appartenance à cette liste,
+ * sinon la date de rupture publiée par `traffic_class_since` peut pointer sur un
+ * événement explicitement NON classé.
+ */
+export const CLASSIFIED_TRAFFIC_CLASSES = TRAFFIC_CLASSES.filter(
+  (klass): klass is Exclude<TrafficClass, "unknown"> => klass !== "unknown"
+);
+
+/**
  * Projection du verdict existant sur les trois classes. Aucune règle nouvelle :
  * `classifyTraffic` reste la seule source de vérité de la détection.
  */

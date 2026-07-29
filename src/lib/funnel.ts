@@ -17,6 +17,41 @@ export const FUNNEL_EVENTS = [
 
 export type FunnelEventName = (typeof FUNNEL_EVENTS)[number];
 
+/**
+ * Les seuls événements qu'un NAVIGATEUR a le droit d'émettre sur
+ * `POST /api/funnel`.
+ *
+ * Cette route ne peut pas être authentifiée : elle est appelée par
+ * `navigator.sendBeacon` depuis la page publique du rapport. Tant que le POST
+ * JETAIT les événements non humains, un tiers ne pouvait au pire que gonfler un
+ * total déjà considéré comme bruité ; depuis qu'il MARQUE (29/07), le même tiers
+ * écrit dans la colonne `human` sur laquelle un arbitrage de sprint se prend.
+ *
+ * On restreint donc la surface à ce que le navigateur émet réellement
+ * (`ReportViewBeacon`, `FunnelCheckoutLink`). `audit_started`,
+ * `audit_completed`, `email_captured` et les `followup_*` sont écrits par des
+ * chemins SERVEUR et ne doivent jamais pouvoir l'être depuis l'extérieur.
+ *
+ * Ça ne rend pas le compteur infalsifiable — un `report_viewed` reste forgeable
+ * avec un User-Agent de navigateur — mais ça retire du champ atteignable les
+ * compteurs de haut de funnel (les 147 `audit_started`), et le plafond de lot
+ * ci-dessous coupe l'écriture en masse en une requête.
+ */
+export const CLIENT_FUNNEL_EVENTS = ["report_viewed", "teaser_cta_click", "checkout_opened"] as const;
+
+export type ClientFunnelEventName = (typeof CLIENT_FUNNEL_EVENTS)[number];
+
+export function isClientFunnelEventName(value: unknown): value is ClientFunnelEventName {
+  return typeof value === "string" && (CLIENT_FUNNEL_EVENTS as readonly string[]).includes(value);
+}
+
+/**
+ * Plafond d'événements traités par requête. Le plus gros lot légitime en vaut 2
+ * (`teaser_cta_click` + `checkout_opened` de `FunnelCheckoutLink`) ; 20 laisse
+ * toute la marge nécessaire sans permettre d'insérer 5 000 lignes en un appel.
+ */
+export const MAX_CLIENT_FUNNEL_EVENTS_PER_REQUEST = 20;
+
 type RecordFunnelEventArgs = {
   eventName: FunnelEventName;
   auditId?: string | null;

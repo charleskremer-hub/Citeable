@@ -1,13 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  CLASSIFIED_TRAFFIC_CLASSES,
   TRAFFIC_CLASSES,
   classifyTraffic,
   isTrafficClass,
   trafficClassFromVerdict,
   trafficClassOrUnknown,
 } from "@/lib/traffic-filter";
-import { FUNNEL_EVENTS, foldFunnelCounts } from "@/lib/funnel";
+import { CLIENT_FUNNEL_EVENTS, FUNNEL_EVENTS, foldFunnelCounts, isClientFunnelEventName } from "@/lib/funnel";
 
 const CHROME_MAC =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36";
@@ -39,6 +40,34 @@ test("AC2 — la projection colle exactement au verdict, pour les 4 verdicts pos
   assert.equal(trafficClassFromVerdict({ accepted: false, rejectedBy: "bot", ipHash: null }), "bot");
   assert.equal(trafficClassFromVerdict({ accepted: false, rejectedBy: "internal_cookie", ipHash: null }), "internal");
   assert.equal(trafficClassFromVerdict({ accepted: false, rejectedBy: "internal_ip", ipHash: null }), "internal");
+});
+
+test("AC6 — CLASSIFIED_TRAFFIC_CLASSES == exactement ce qu'une classification peut produire", () => {
+  // La liste sert de filtre SQL pour `traffic_class_since`. Si `unknown` y entrait,
+  // la date de rupture pourrait pointer sur un événement explicitement NON classé
+  // — `completeQueuedAudit` écrit réellement cette valeur.
+  assert.deepEqual([...CLASSIFIED_TRAFFIC_CLASSES].sort(), ["bot", "human", "internal"]);
+  assert.equal(CLASSIFIED_TRAFFIC_CLASSES.includes("unknown" as never), false);
+
+  const produced = new Set([
+    trafficClassFromVerdict({ accepted: true, rejectedBy: null, ipHash: null }),
+    trafficClassFromVerdict({ accepted: false, rejectedBy: "bot", ipHash: null }),
+    trafficClassFromVerdict({ accepted: false, rejectedBy: "internal_cookie", ipHash: null }),
+    trafficClassFromVerdict({ accepted: false, rejectedBy: "internal_ip", ipHash: null }),
+  ]);
+  assert.deepEqual([...produced].sort(), [...CLASSIFIED_TRAFFIC_CLASSES].sort());
+});
+
+test("sécurité — seuls les 3 événements du navigateur sont acceptés sur le POST public", () => {
+  assert.deepEqual([...CLIENT_FUNNEL_EVENTS], ["report_viewed", "teaser_cta_click", "checkout_opened"]);
+  // Tout le reste est écrit par un chemin serveur et ne doit pas être postable.
+  for (const eventName of FUNNEL_EVENTS) {
+    const expected = (CLIENT_FUNNEL_EVENTS as readonly string[]).includes(eventName);
+    assert.equal(isClientFunnelEventName(eventName), expected, eventName);
+  }
+  assert.equal(isClientFunnelEventName("audit_started"), false);
+  assert.equal(isClientFunnelEventName("REPORT_VIEWED"), false);
+  assert.equal(isClientFunnelEventName(42), false);
 });
 
 test("AC2 — l'ordre de priorité de classifyTraffic est conservé : interne avant bot", () => {
