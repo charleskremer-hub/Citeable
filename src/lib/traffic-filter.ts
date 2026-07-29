@@ -1,7 +1,15 @@
 import { createHash } from "node:crypto";
 
 /**
- * Tri du trafic à l'entrée des événements funnel.
+ * Classement du trafic à l'entrée des événements funnel.
+ *
+ * Ce module ne TRIE plus, il CLASSE (29/07). Jusque-là, `classifyTraffic` n'était
+ * appelé que par le `POST /api/funnel`, qui REFUSAIT d'écrire l'événement rejeté :
+ * numérateur filtré, dénominateur (les `audit_started` serveur) non filtré, et
+ * aucune donnée récupérable a posteriori puisque la ligne n'existait nulle part.
+ * Désormais chaque événement porte sa classe dans `metadata.trafficClass` et le
+ * filtrage se fait à la LECTURE (`counts_by_traffic_class`), ce qui rend le
+ * numérateur et le dénominateur comparables.
  *
  * Pourquoi ce module existe. Jusqu'au 28/07, `report_viewed` — la north star —
  * était enregistré côté serveur à CHAQUE rendu de `/audit/<id>`, sans dédup, sans
@@ -196,4 +204,64 @@ export function classifyTraffic(input: {
     return { accepted: false, rejectedBy: "bot", ipHash };
   }
   return { accepted: true, rejectedBy: null, ipHash };
+}
+
+/**
+ * Classes de trafic écrites dans `metadata.trafficClass`.
+ *
+ * `unknown` n'est JAMAIS produit par une classification : c'est la valeur de
+ * lecture pour tout ce qui n'a pas été classé — les événements écrits avant le
+ * 29/07, et les chemins encore non couverts (`followup_*`, `email_captured` de
+ * `/api/claim-audit`). Une ligne non classée ne doit jamais être promue `human`,
+ * sinon l'agrégat raconte l'inverse de ce qu'on cherche à mesurer.
+ */
+export const TRAFFIC_CLASSES = ["human", "bot", "internal", "unknown"] as const;
+
+export type TrafficClass = (typeof TRAFFIC_CLASSES)[number];
+
+/**
+ * Projection du verdict existant sur les trois classes. Aucune règle nouvelle :
+ * `classifyTraffic` reste la seule source de vérité de la détection.
+ */
+export function trafficClassFromVerdict(verdict: TrafficVerdict): Exclude<TrafficClass, "unknown"> {
+  if (verdict.accepted) return "human";
+  if (verdict.rejectedBy === "bot") return "bot";
+  // `internal_cookie` et `internal_ip` répondent à la même question — « est-ce
+  // nous ? » — et se distinguent déjà par `rejectedBy` côté logs.
+  return "internal";
+}
+
+export function isTrafficClass(value: unknown): value is TrafficClass {
+  return typeof value === "string" && (TRAFFIC_CLASSES as readonly string[]).includes(value);
+}
+
+/**
+ * Lecture défensive : tout ce qui n'est pas exactement une des 4 classes retombe
+ * sur `unknown`. Vaut aussi bien pour l'historique (clé absente) que pour une
+ * valeur envoyée par un client (`"HUMAN"`, `"human "`, un objet…).
+ */
+export function trafficClassOrUnknown(value: unknown): TrafficClass {
+  return isTrafficClass(value) ? value : "unknown";
+}
+
+/**
+ * Raccourci pour les routes : classe la requête courante en une ligne.
+ *
+ * NON PUR (lit `process.env`), volontairement gardé sans I/O ni `await` : une
+ * exception ici tomberait dans le `catch` global des routes d'audit et ferait
+ * échouer une création d'audit pour un besoin de mesure.
+ */
+export function requestTrafficClass(headers: { get(name: string): string | null }): {
+  trafficClass: Exclude<TrafficClass, "unknown">;
+  ipHash: string | null;
+} {
+  const verdict = classifyTraffic({
+    userAgent: headers.get("user-agent"),
+    cookieHeader: headers.get("cookie"),
+    ip: clientIpFromHeaders(headers),
+    internalIps: parseInternalIps(process.env.INTERNAL_IPS),
+    ipSalt: process.env.IP_HASH_SALT,
+  });
+
+  return { trafficClass: trafficClassFromVerdict(verdict), ipHash: verdict.ipHash };
 }
