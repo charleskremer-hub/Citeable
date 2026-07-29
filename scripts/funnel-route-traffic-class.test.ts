@@ -62,10 +62,10 @@ function reset() {
   since = null;
 }
 
-function postRequest(userAgent: string, body: unknown) {
+function postRequest(userAgent: string, body: unknown, extraHeaders: Record<string, string> = {}) {
   return new realNext.NextRequest("https://www.getpick.ai/api/funnel", {
     method: "POST",
-    headers: { "content-type": "application/json", "user-agent": userAgent },
+    headers: { "content-type": "application/json", "user-agent": userAgent, ...extraHeaders },
     body: JSON.stringify(body),
   });
 }
@@ -78,6 +78,21 @@ function insertedEvents() {
       metadata: JSON.parse(query.params[3] as string) as Record<string, unknown>,
       dedupeKey: query.params[4] as string | null,
     }));
+}
+
+/**
+ * AC2 — la metadata écrite ne porte aucune donnée personnelle.
+ *
+ * Même helper que `run-audit-traffic-class.test.ts` et
+ * `capture-email-traffic-class.test.ts`. Il manquait ICI, sur la seule route qui
+ * lisait vraiment les en-têtes du navigateur : le critère était couvert là où il
+ * ne risquait rien.
+ */
+function assertNoPersonalData(metadata: Record<string, unknown> | undefined) {
+  const keys = Object.keys(metadata ?? {});
+  for (const forbidden of ["userAgent", "user_agent", "ip", "ipHash", "clientIp", "cookie", "referrer"]) {
+    assert.equal(keys.includes(forbidden), false, `metadata ne doit pas contenir « ${forbidden} » : ${keys.join(", ")}`);
+  }
 }
 
 test("AC4 — un report_viewed de crawler est ENREGISTRÉ et marqué bot, réponse 200", async () => {
@@ -95,22 +110,117 @@ test("AC4 — un report_viewed de crawler est ENREGISTRÉ et marqué bot, répon
   assert.equal(written.length, 1);
   assert.equal(written[0].eventName, "report_viewed");
   assert.equal(written[0].metadata.trafficClass, "bot");
+  assertNoPersonalData(written[0].metadata);
 });
 
-test("AC4 — le dedupe_key transmis est celui du client, inchangé", async () => {
+test("AC2 — aucun UA, aucun referer, aucune empreinte d'IP n'est persisté, même pour nous", async () => {
+  reset();
+  // La requête exacte du finding : navigateur réel, cookie interne, referer de
+  // webmail portant une adresse e-mail, IP transmise par le proxy.
+  const res = await POST(
+    postRequest(
+      CHROME_MAC,
+      { event_name: "report_viewed", metadata: { brandName: "Acme" } },
+      {
+        cookie: "gp_internal=1",
+        referer: "https://mail.google.com/mail/u/0/?email=charles.kremer%40gmail.com#inbox/audit-abcd",
+        "x-forwarded-for": "88.120.4.17",
+      }
+    )
+  );
+
+  assert.equal(res.status, 200);
+  const written = insertedEvents();
+  assert.equal(written.length, 1, "l'événement interne est bien ENREGISTRÉ (marquage, pas rejet)");
+  assert.equal(written[0].metadata.trafficClass, "internal");
+  assertNoPersonalData(written[0].metadata);
+  // La metadata fonctionnelle du client survit, elle.
+  assert.equal(written[0].metadata.brandName, "Acme");
+
+  // Filet supplémentaire : rien de la requête ne doit se retrouver sérialisé,
+  // sous quelque clé que ce soit.
+  const serialized = JSON.stringify(written[0].metadata);
+  for (const forbidden of ["charles.kremer", "mail.google.com", "Chrome/139", "88.120.4.17", "gp_internal"]) {
+    assert.equal(serialized.includes(forbidden), false, `« ${forbidden} » ne doit pas être persisté : ${serialized}`);
+  }
+});
+
+test("AC4 — la clé de dédup est préfixée par la classe constatée côté serveur", async () => {
+  reset();
+  await POST(postRequest(CHROME_MAC, { event_name: "report_viewed", dedupe_key: "report_viewed:abc:session-1" }));
+
+  const written = insertedEvents();
+  assert.equal(written.length, 1);
+  assert.equal(written[0].dedupeKey, "human:report_viewed:abc:session-1");
+  for (const query of queries.filter((call) => call.text.includes("INSERT INTO audit_funnel_events"))) {
+    assert.match(query.text, /ON CONFLICT \(dedupe_key\) DO NOTHING/);
+  }
+});
+
+test("AC4 — un bot ne peut pas voler le slot de dédup partagé d'un humain", async () => {
+  reset();
+  // `ReportViewBeacon` retombe sur cette clé PARTAGÉE quand `sessionStorage` est
+  // refusé : sans préfixe, le contrôle headless du matin ferait disparaître la
+  // vue du prospect de l'après-midi via `ON CONFLICT DO NOTHING`.
+  const shared = "report_viewed:abc:nosession-2026-07-29";
+  await POST(postRequest("HeadlessChrome/139.0.0.0", { event_name: "report_viewed", dedupe_key: shared }));
+  await POST(postRequest(CHROME_MAC, { event_name: "report_viewed", dedupe_key: shared }));
+
+  const written = insertedEvents();
+  assert.equal(written.length, 2);
+  assert.equal(written[0].dedupeKey, `bot:${shared}`);
+  assert.equal(written[1].dedupeKey, `human:${shared}`);
+  assert.notEqual(written[0].dedupeKey, written[1].dedupeKey, "les deux classes ne doivent pas partager un slot");
+});
+
+test("AC4 — la dédup intra-classe est inchangée : même classe, même clé, même slot", async () => {
   reset();
   await POST(postRequest(CHROME_MAC, { event_name: "report_viewed", dedupe_key: "report_viewed:abc:session-1" }));
   await POST(postRequest(CHROME_MAC, { event_name: "report_viewed", dedupe_key: "report_viewed:abc:session-1" }));
 
   const written = insertedEvents();
   assert.equal(written.length, 2);
-  // La dédup est faite par `ON CONFLICT (dedupe_key) DO NOTHING` en base : ce que
-  // ce test verrouille est que la clé transmise n'a pas bougé d'un octet.
-  assert.equal(written[0].dedupeKey, "report_viewed:abc:session-1");
-  assert.equal(written[1].dedupeKey, written[0].dedupeKey);
-  for (const query of queries.filter((call) => call.text.includes("INSERT INTO audit_funnel_events"))) {
-    assert.match(query.text, /ON CONFLICT \(dedupe_key\) DO NOTHING/);
-  }
+  // Deux INSERT partent, la base en garde un : c'est le `ON CONFLICT` qui dédup,
+  // et il ne peut le faire que si la clé est identique d'un octet à l'autre.
+  assert.equal(written[0].dedupeKey, written[1].dedupeKey);
+});
+
+test("sécurité — un événement SERVEUR posté par un client anonyme n'est jamais écrit", async () => {
+  reset();
+  const res = await POST(
+    postRequest(CHROME_MAC, {
+      events: [
+        { event_name: "audit_started" },
+        { event_name: "audit_completed" },
+        { event_name: "email_captured" },
+        { event_name: "followup_1_sent" },
+        { event_name: "report_viewed", dedupe_key: "report_viewed:abc:session-1" },
+      ],
+    })
+  );
+
+  const body = await res.json();
+  assert.equal(res.status, 200);
+  assert.equal(body.recorded, 1, "seul l'événement navigateur est retenu");
+  assert.equal(body.ignored, 4);
+
+  const written = insertedEvents();
+  assert.equal(written.length, 1);
+  assert.equal(written[0].eventName, "report_viewed");
+});
+
+test("sécurité — un lot d'événements est plafonné, l'écriture en masse est coupée", async () => {
+  reset();
+  const res = await POST(
+    postRequest(CHROME_MAC, {
+      events: Array.from({ length: 5000 }, () => ({ event_name: "report_viewed" })),
+    })
+  );
+
+  const body = await res.json();
+  assert.equal(res.status, 200);
+  assert.ok(body.recorded <= 20, `au plus 20 événements par requête, reçu ${body.recorded}`);
+  assert.equal(insertedEvents().length, body.recorded);
 });
 
 test("AC4 — anti-usurpation : un client qui se déclare human reste classé bot", async () => {
@@ -190,5 +300,20 @@ test("AC6 — la date de rupture est cherchée sur toute la table, pas sur la fe
   const sinceQuery = queries.find((query) => query.text.includes("MIN(created_at)"));
   assert.ok(sinceQuery);
   assert.equal(sinceQuery.text.includes("14 days"), false, "la date de rupture ne doit pas être bornée à 14 jours");
-  assert.match(sinceQuery.text, /trafficClass' IS NOT NULL/);
+  assert.match(sinceQuery.text, /trafficClass' = ANY/);
+});
+
+test("AC6 — la date de rupture ignore la valeur littérale « unknown », qui est réellement écrite", async () => {
+  reset();
+  await GET(new realNext.NextRequest("https://www.getpick.ai/api/funnel"));
+
+  const sinceQuery = queries.find((query) => query.text.includes("MIN(created_at)"));
+  assert.ok(sinceQuery);
+  // `IS NOT NULL` retiendrait un `audit_completed` marqué 'unknown' par
+  // `completeQueuedAudit` (audit mis en file avant le 29/07, terminé après) et
+  // publierait une rupture pointant sur un événement NON classé.
+  assert.equal(sinceQuery.text.includes("IS NOT NULL"), false);
+  const classes = sinceQuery.params[0] as string[];
+  assert.deepEqual([...classes].sort(), ["bot", "human", "internal"]);
+  assert.equal(classes.includes("unknown"), false);
 });

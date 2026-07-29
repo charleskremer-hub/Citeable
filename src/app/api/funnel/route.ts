@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
-import { FUNNEL_EVENTS, foldFunnelCounts, isFunnelEventName, recordFunnelEvent } from "@/lib/funnel";
-import { requestTrafficClass } from "@/lib/traffic-filter";
+import {
+  CLIENT_FUNNEL_EVENTS,
+  MAX_CLIENT_FUNNEL_EVENTS_PER_REQUEST,
+  foldFunnelCounts,
+  isClientFunnelEventName,
+  recordFunnelEvent,
+} from "@/lib/funnel";
+import { CLASSIFIED_TRAFFIC_CLASSES, requestTrafficClass } from "@/lib/traffic-filter";
 
 export const dynamic = "force-dynamic";
 
@@ -19,14 +25,6 @@ type FunnelEventRow = {
   metadata: Record<string, unknown> | null;
   created_at: Date;
 };
-
-function clientContext(req: NextRequest) {
-  return {
-    path: req.nextUrl.pathname,
-    referrer: req.headers.get("referer")?.slice(0, 500) ?? null,
-    userAgent: req.headers.get("user-agent")?.slice(0, 500) ?? null,
-  };
-}
 
 /**
  * Comparaison à temps constant pour éviter de laisser fuiter la clé octet par octet.
@@ -78,10 +76,17 @@ export async function GET(req: NextRequest) {
   // Date de rupture de mesure, sur la table ENTIÈRE et non sur 14 jours : aucun
   // ratio humain/total calculé à cheval sur cette date ne veut dire quoi que ce
   // soit, puisque tout ce qui précède compte en `unknown`.
+  //
+  // `IS NOT NULL` ne conviendrait pas : `unknown` est une valeur réellement
+  // ÉCRITE (un audit mis en file avant le 29/07 et terminé après retombe dessus
+  // via `trafficClassOrUnknown`). La date de rupture doit pointer sur le premier
+  // événement CLASSÉ, donc sur une des trois classes que produit une
+  // classification — sinon elle contredit sa propre définition.
   const sinceResult = await pool.query<{ since: Date | null }>(
     `SELECT MIN(created_at) AS since
      FROM audit_funnel_events
-     WHERE metadata->>'trafficClass' IS NOT NULL`
+     WHERE metadata->>'trafficClass' = ANY($1::text[])`,
+    [CLASSIFIED_TRAFFIC_CLASSES]
   );
   const trafficClassSince = sinceResult.rows[0]?.since ?? null;
 
@@ -136,39 +141,52 @@ export async function GET(req: NextRequest) {
  * Aucune erreur HTTP n'est renvoyée : un crawler qui reçoit un 4xx réessaie, et
  * un navigateur interne n'a rien à corriger. On répond 200 avec la classe
  * retenue.
+ *
+ * Ce qui est écrit : le nom de l'événement, l'audit, la source, la metadata
+ * fonctionnelle du client, et la classe. RIEN d'autre — pas de User-Agent, pas
+ * de `referer`, pas d'empreinte d'IP. Marquer la classe n'exige aucune de ces
+ * trois données, et le `referer` d'un rapport ouvert depuis une webmail porte
+ * régulièrement une adresse e-mail réelle dans sa query string. La classe est le
+ * RÉSULTAT de la lecture de ces en-têtes ; l'en-tête lui-même n'a pas à survivre
+ * dans une table qu'on agrège pendant des mois.
  */
 export async function POST(req: NextRequest) {
   await ensureAuditSchema();
 
   const payload = await req.json().catch(() => null);
-  const events = Array.isArray(payload?.events) ? payload.events : [payload];
+  const events = (Array.isArray(payload?.events) ? payload.events : [payload]).slice(
+    0,
+    MAX_CLIENT_FUNNEL_EVENTS_PER_REQUEST
+  );
 
-  const { trafficClass, ipHash } = requestTrafficClass(req.headers);
+  const { trafficClass } = requestTrafficClass(req.headers);
 
   let recorded = 0;
+  let ignored = 0;
 
   for (const item of events) {
-    if (!item || typeof item !== "object" || !isFunnelEventName((item as { event_name?: unknown }).event_name)) continue;
+    // Whitelist et non `isFunnelEventName` : un appelant anonyme ne doit pas
+    // pouvoir écrire un `audit_started`, qui n'existe que côté serveur.
+    if (!item || typeof item !== "object" || !isClientFunnelEventName((item as { event_name?: unknown }).event_name)) {
+      ignored += 1;
+      continue;
+    }
 
     const body = item as {
-      event_name: (typeof FUNNEL_EVENTS)[number];
+      event_name: (typeof CLIENT_FUNNEL_EVENTS)[number];
       audit_id?: unknown;
       source?: unknown;
       metadata?: unknown;
       dedupe_key?: unknown;
     };
 
+    const clientDedupeKey = typeof body.dedupe_key === "string" ? body.dedupe_key : null;
+
     await recordFunnelEvent({
       eventName: body.event_name,
       auditId: typeof body.audit_id === "string" ? body.audit_id : null,
       source: typeof body.source === "string" ? body.source : "client",
       metadata: {
-        ...clientContext(req),
-        // Empreinte salée, jamais l'IP : de quoi reconnaître un même visiteur
-        // sans stocker de donnée personnelle. Vaut `null` tant que `IP_HASH_SALT`
-        // n'est pas défini — on préfère ne rien écrire qu'écrire un condensat
-        // que n'importe qui peut inverser par force brute sur l'espace IPv4.
-        ipHash,
         ...(body.metadata && typeof body.metadata === "object" && !Array.isArray(body.metadata) ? body.metadata as Record<string, unknown> : {}),
         // APRÈS le spread de la metadata client, et jamais avant : sinon un
         // crawler se déclare `human` en envoyant `metadata: { trafficClass:
@@ -176,10 +194,25 @@ export async function POST(req: NextRequest) {
         // côté serveur, jamais auto-déclarée.
         trafficClass,
       },
-      dedupeKey: typeof body.dedupe_key === "string" ? body.dedupe_key : null,
+      // La clé de dédup est PRÉFIXÉE par la classe, côté serveur.
+      //
+      // `ReportViewBeacon` retombe sur la clé PARTAGÉE
+      // `report_viewed:<auditId>:nosession-<jour>` dès que `sessionStorage` est
+      // refusé (navigation privée stricte, webview, politique d'entreprise).
+      // Tant que le POST jetait les bots, celui-ci ne consommait pas la clé ;
+      // depuis qu'il écrit, un contrôle headless interne passé le matin
+      // s'approprie le slot du jour et le `ON CONFLICT DO NOTHING` avale
+      // silencieusement la vue du prospect qui suit — la north star perdrait un
+      // humain et gagnerait un bot, sans trace. Préfixer par la classe rend le
+      // vol inter-classes impossible ; la dédup à l'intérieur d'une classe,
+      // elle, est inchangée.
+      dedupeKey: clientDedupeKey ? `${trafficClass}:${clientDedupeKey}` : null,
     });
     recorded += 1;
   }
 
-  return NextResponse.json({ ok: true, recorded, traffic_class: trafficClass }, { headers: { "Cache-Control": "no-store" } });
+  return NextResponse.json(
+    { ok: true, recorded, ignored, traffic_class: trafficClass },
+    { headers: { "Cache-Control": "no-store" } }
+  );
 }
