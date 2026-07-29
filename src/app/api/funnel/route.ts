@@ -149,6 +149,13 @@ export async function GET(req: NextRequest) {
  * ET plafond de débit par appelant (`clientFunnelRateLimiter`), ce dernier compté
  * en mémoire avec une clé à sel éphémère, jamais écrite nulle part. Un flood
  * absent vaut mieux qu'un flood documenté.
+ *
+ * Ce plafond de débit est la seule chose de cette route qui puisse encore
+ * détruire un événement sans trace : il est donc tenu de ne coûter QUE ce qu'un
+ * appelant identifié écrit vraiment. Deux règles en découlent, chacune couvrant
+ * un moyen de l'armer contre un tiers (voir le corps de `POST`) : on ne décompte
+ * que les événements VALIDES, et on ne plafonne pas un appelant qu'on ne sait
+ * pas attribuer.
  */
 export async function POST(req: NextRequest) {
   await ensureAuditSchema();
@@ -161,30 +168,46 @@ export async function POST(req: NextRequest) {
 
   const { trafficClass } = requestTrafficClass(req.headers);
 
-  // Le débit est décompté AVANT de savoir si les événements sont valides : un
-  // appelant qui inonde la route de payloads invalides consomme quand même du
-  // pool Postgres et du temps de fonction.
-  const { allowed, throttled } = clientFunnelRateLimiter.take(requestRateLimitKey(req.headers), events.length);
+  type ClientFunnelEventBody = {
+    event_name: (typeof CLIENT_FUNNEL_EVENTS)[number];
+    audit_id?: unknown;
+    source?: unknown;
+    metadata?: unknown;
+    dedupe_key?: unknown;
+  };
 
-  let recorded = 0;
+  // Validation AVANT tout décompte de débit. Décompter d'abord rendait le
+  // plafond armable CONTRE un tiers : 3 requêtes de 20 événements invalides
+  // consommaient les 60 unités de la minute, et le `report_viewed` humain
+  // suivant sortait en `{allowed: 0}` — un tiers éteignait la mesure d'une IP
+  // partagée (NAT d'entreprise, VPN, 4G) sans qu'une seule ligne soit écrite.
+  // Un événement invalide ne coûte ni INSERT ni ligne : il n'a rien à coûter au
+  // plafond non plus. Le lot reste borné par le `.slice` ci-dessus, qui suffit à
+  // ce que la validation elle-même ne soit pas un vecteur de charge.
+  const valid: ClientFunnelEventBody[] = [];
   let ignored = 0;
 
-  for (const item of events.slice(0, allowed)) {
+  for (const item of events) {
     // Whitelist et non `isFunnelEventName` : un appelant anonyme ne doit pas
     // pouvoir écrire un `audit_started`, qui n'existe que côté serveur.
     if (!item || typeof item !== "object" || !isClientFunnelEventName((item as { event_name?: unknown }).event_name)) {
       ignored += 1;
       continue;
     }
+    valid.push(item as ClientFunnelEventBody);
+  }
 
-    const body = item as {
-      event_name: (typeof CLIENT_FUNNEL_EVENTS)[number];
-      audit_id?: unknown;
-      source?: unknown;
-      metadata?: unknown;
-      dedupe_key?: unknown;
-    };
+  // Pas de clé de comptage = appelant non attribuable (aucun en-tête de proxy).
+  // Le plafond se tait alors au lieu de retomber sur un seau unique partagé par
+  // tous les visiteurs de l'instance. Cf. `requestRateLimitKey`.
+  const rateLimitKey = requestRateLimitKey(req.headers);
+  const { allowed, throttled } = rateLimitKey
+    ? clientFunnelRateLimiter.take(rateLimitKey, valid.length)
+    : { allowed: valid.length, throttled: 0 };
 
+  let recorded = 0;
+
+  for (const body of valid.slice(0, allowed)) {
     const clientDedupeKey = typeof body.dedupe_key === "string" ? body.dedupe_key : null;
 
     await recordFunnelEvent({
@@ -199,10 +222,12 @@ export async function POST(req: NextRequest) {
         // côté serveur, jamais auto-déclarée.
         trafficClass,
       },
-      // Espace de nommage de la clé par classe, côté serveur : un bot ne peut
-      // plus consommer le slot de dédup d'un humain, et la clé du client est
-      // conservée telle quelle pour la classe `human` — donc la dédup humaine
-      // traverse le déploiement sans rupture. Détail dans `namespacedDedupeKey`.
+      // Espace de nommage de la clé, côté serveur, sur deux fronts : un bot ne
+      // peut plus consommer le slot de dédup d'un humain, et AUCUNE classe ne
+      // peut viser une clé d'événement serveur (`audit_completed:<uuid>`…) pour
+      // l'effacer via `ON CONFLICT DO NOTHING`. La clé d'une vue humaine
+      // ordinaire est conservée octet pour octet — la dédup humaine traverse le
+      // déploiement sans rupture. Détail dans `namespacedDedupeKey`.
       dedupeKey: namespacedDedupeKey(trafficClass, clientDedupeKey),
     });
     recorded += 1;

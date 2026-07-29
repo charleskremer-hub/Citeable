@@ -322,10 +322,22 @@ const EPHEMERAL_RATE_LIMIT_SALT = randomBytes(32).toString("hex");
 /**
  * Clé de comptage d'un appelant, dérivée de son IP. Jamais persistée.
  *
- * Sans IP (dev local, appel interne), tout le monde partage le même seau : c'est
- * assumé, un environnement sans proxy n'a pas de flood à contenir.
+ * `null` quand l'appelant n'est PAS attribuable (ni `x-forwarded-for`, ni
+ * `x-real-ip`, ni `x-vercel-forwarded-for`). Ce cas retombait sur la clé
+ * littérale `"no-ip"`, donc TOUS les visiteurs de l'instance partageaient un
+ * seul seau de 60/minute : le 61ᵉ `report_viewed` humain de la minute était
+ * refusé sans laisser de trace — exactement le refus d'écriture silencieux que
+ * la story existe pour supprimer. Un seau qu'on ne sait pas attribuer ne peut
+ * être facturé à personne ; l'appelant doit traiter ce `null` en NE PLAFONNANT
+ * PAS.
+ *
+ * Échec ouvert assumé, cohérent avec la purge de `createFixedWindowLimiter` :
+ * refuser du trafic légitime pour protéger un compteur de mesure serait le pire
+ * des deux mondes. En production le cas ne se présente pas — Vercel pose
+ * toujours `x-forwarded-for`, dérivé de la connexion TCP — et l'écriture reste
+ * de toute façon bornée par `MAX_CLIENT_FUNNEL_EVENTS_PER_REQUEST`.
  */
-export function requestRateLimitKey(headers: { get(name: string): string | null }): string {
+export function requestRateLimitKey(headers: { get(name: string): string | null }): string | null {
   const ip = clientIpFromHeaders(headers);
-  return ip ? (hashIp(ip, EPHEMERAL_RATE_LIMIT_SALT) as string) : "no-ip";
+  return ip ? (hashIp(ip, EPHEMERAL_RATE_LIMIT_SALT) as string) : null;
 }

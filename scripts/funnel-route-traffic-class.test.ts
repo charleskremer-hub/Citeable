@@ -57,6 +57,7 @@ mock.module(dbUrl, {
 const {
   FUNNEL_EVENTS,
   MAX_CLIENT_FUNNEL_EVENTS_PER_MINUTE,
+  SERVER_ONLY_FUNNEL_EVENTS,
   clientFunnelRateLimiter,
   resetTrafficClassSinceCache,
 } = await import("@/lib/funnel");
@@ -71,8 +72,9 @@ function reset() {
   groupedRows = [];
   since = null;
   // Deux états de process à remettre à zéro, sinon les tests se contaminent :
-  // le compteur de débit (partagé, clé « no-ip » puisque les requêtes de test
-  // n'ont pas d'IP) et la mémoïsation de la date de rupture.
+  // le compteur de débit (les requêtes qui portent un `x-forwarded-for` y
+  // laissent une fenêtre ; celles qui n'en portent pas ne sont plus comptées du
+  // tout) et la mémoïsation de la date de rupture.
   clientFunnelRateLimiter.reset();
   resetTrafficClassSinceCache();
 }
@@ -215,6 +217,60 @@ test("AC4 — la dédup intra-classe est inchangée : même classe, même clé, 
   assert.equal(written[0].dedupeKey, written[1].dedupeKey);
 });
 
+test("sécurité — un client ne peut pas EFFACER un audit_completed en squattant sa clé", async () => {
+  reset();
+  // Le finding, reproduit tel quel : le demandeur reçoit son `audit_id` dans le
+  // 202 de `/api/run-audit`, l'audit dure des dizaines de secondes, il poste
+  // pendant ce temps un `report_viewed` avec la clé du `audit_completed` à
+  // venir, depuis un Chrome ordinaire. La classe `human` n'étant pas préfixée,
+  // la clé partait telle quelle et le `ON CONFLICT DO NOTHING` faisait ensuite
+  // disparaître l'`audit_completed` réel.
+  const auditId = "3f2a1b4c-1111-4222-8333-444455556666";
+  const serverKey = `audit_completed:${auditId}`;
+
+  const res = await POST(
+    postRequest(CHROME_MAC, { event_name: "report_viewed", audit_id: auditId, dedupe_key: serverKey })
+  );
+
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  // L'événement est ENREGISTRÉ — on ne réintroduit pas un rejet silencieux.
+  assert.equal(body.recorded, 1);
+  assert.equal(body.traffic_class, "human");
+
+  const written = insertedEvents();
+  assert.equal(written.length, 1);
+  assert.equal(written[0].eventName, "report_viewed");
+  assert.notEqual(written[0].dedupeKey, serverKey, "la clé serveur ne doit jamais être atteignable depuis le client");
+  assert.equal(written[0].dedupeKey, `client:${serverKey}`);
+});
+
+test("sécurité — aucune clé d'événement serveur n'est atteignable, quelle que soit la classe", async () => {
+  reset();
+  const auditId = "3f2a1b4c-1111-4222-8333-444455556666";
+  const serverKeys = SERVER_ONLY_FUNNEL_EVENTS.map((eventName) => `${eventName}:${auditId}`);
+
+  for (const [userAgent, extra] of [
+    [CHROME_MAC, {}],
+    [GPT_BOT, {}],
+    [CHROME_MAC, { cookie: "gp_internal=1" }],
+  ] as const) {
+    for (const serverKey of serverKeys) {
+      await POST(postRequest(userAgent, { event_name: "report_viewed", dedupe_key: serverKey }, extra));
+    }
+  }
+
+  const written = insertedEvents();
+  assert.equal(written.length, serverKeys.length * 3);
+  for (const event of written) {
+    assert.equal(
+      serverKeys.includes(event.dedupeKey ?? ""),
+      false,
+      `la clé « ${event.dedupeKey} » est un slot serveur`
+    );
+  }
+});
+
 test("sécurité — un événement SERVEUR posté par un client anonyme n'est jamais écrit", async () => {
   reset();
   const res = await POST(
@@ -273,6 +329,51 @@ test("sécurité — le DÉBIT d'un même appelant est plafonné, pas seulement 
   assert.equal(recorded, MAX_CLIENT_FUNNEL_EVENTS_PER_MINUTE, "au plus une fenêtre de débit sur 10 000 événements postés");
   assert.equal(recorded + throttled, 10_000, "tout ce qui n'est pas écrit est compté comme rejeté");
   assert.equal(insertedEvents().length, recorded, "rien n'est écrit en base au-delà du plafond");
+});
+
+test("sécurité — des événements INVALIDES ne consomment pas le débit d'un tiers", async () => {
+  reset();
+  // Le finding : `.take()` était appelé AVANT la validation. Trois requêtes de
+  // 20 événements invalides consommaient les 60 unités de la minute, et le
+  // `report_viewed` humain suivant sortait en `{allowed: 0}` — un tiers
+  // éteignait la mesure d'une IP partagée (NAT d'entreprise, VPN, 4G) sans
+  // qu'une seule ligne soit écrite nulle part.
+  const ip = { "x-forwarded-for": "203.0.113.9" };
+  const garbage = { events: Array.from({ length: 20 }, () => ({ event_name: "audit_started" })) };
+
+  for (let index = 0; index < 3; index += 1) {
+    const body = await (await POST(postRequest(CHROME_MAC, garbage, ip))).json();
+    assert.equal(body.recorded, 0);
+    assert.equal(body.ignored, 20);
+    assert.equal(body.throttled, 0, "un événement qui n'écrit rien ne doit rien coûter au plafond");
+  }
+
+  const humaine = await (
+    await POST(postRequest(CHROME_MAC, { event_name: "report_viewed", dedupe_key: "report_viewed:abc:vraie-vue" }, ip))
+  ).json();
+
+  assert.equal(humaine.recorded, 1, "la vue humaine qui suit 60 invalides doit être écrite");
+  assert.equal(humaine.throttled, 0);
+  assert.equal(insertedEvents().length, 1);
+});
+
+test("sécurité — un appelant NON attribuable n'est pas plafonné avec tous les autres", async () => {
+  reset();
+  // Sans en-tête de proxy, `requestRateLimitKey` retombait sur la clé littérale
+  // « no-ip » : TOUS les visiteurs de l'instance partageaient un seul seau de 60
+  // par minute. Le 61ᵉ `report_viewed` humain de la minute disparaissait sans
+  // trace — le refus d'écriture silencieux que cette story supprime.
+  const lot = { events: Array.from({ length: 20 }, () => ({ event_name: "report_viewed" })) };
+
+  let recorded = 0;
+  for (let index = 0; index < 10; index += 1) {
+    const body = await (await POST(postRequest(CHROME_MAC, lot))).json();
+    assert.equal(body.throttled, 0);
+    recorded += body.recorded;
+  }
+
+  assert.equal(recorded, 200, "aucun plafond ne s'applique à un appelant qu'on ne sait pas attribuer");
+  assert.equal(insertedEvents().length, 200);
 });
 
 test("sécurité — le plafond de débit est par appelant, pas global", async () => {

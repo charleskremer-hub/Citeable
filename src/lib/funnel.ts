@@ -82,6 +82,45 @@ export const clientFunnelRateLimiter = createFixedWindowLimiter({
 });
 
 /**
+ * Les événements que SEUL le serveur écrit. Leurs clés de dédup ont toutes la
+ * forme `<event_name>:<id>` (`audit_started:<uuid>`, `audit_completed:<uuid>`,
+ * `email_captured:<uuid>`, `followup_1_sent:<uuid>`…), et `dedupe_key` est
+ * UNIQUE sur TOUTE la table `audit_funnel_events` — pas par événement.
+ */
+export const SERVER_ONLY_FUNNEL_EVENTS = FUNNEL_EVENTS.filter(
+  (eventName) => !(CLIENT_FUNNEL_EVENTS as readonly string[]).includes(eventName)
+) as readonly string[];
+
+/**
+ * Préfixe réservé aux clés client qui empiètent sur l'espace de nommage serveur.
+ * Aucune clé légitime ne commence par là : `ReportViewBeacon` produit
+ * `report_viewed:<auditId>:<sessionId>`.
+ */
+const CLIENT_DEDUPE_NAMESPACE = "client";
+
+/**
+ * La clé fournie par le client vise-t-elle l'espace de nommage d'un événement
+ * SERVEUR ?
+ *
+ * Le scénario réel, reproduit en exécution : le demandeur d'un audit reçoit son
+ * `audit_id` dans le 202 de `/api/run-audit`, et l'audit dure des dizaines de
+ * secondes. Il poste pendant ce temps, avec un User-Agent de navigateur
+ * ordinaire, `{"event_name":"report_viewed","dedupe_key":"audit_completed:<id>"}`.
+ * La classe `human` n'étant pas préfixée, la clé partait telle quelle : la ligne
+ * était écrite, puis `recordFunnelEvent({eventName:'audit_completed', …})`
+ * tombait sur `ON CONFLICT (dedupe_key) DO NOTHING` et l'`audit_completed` réel
+ * n'était JAMAIS écrit. `CLIENT_FUNNEL_EVENTS` empêche d'écrire un événement
+ * serveur, pas d'en effacer un : le contrôle s'arrêtait une porte trop tôt.
+ *
+ * Le segment est lu avant le premier `:` — et la chaîne entière quand elle n'en
+ * porte pas, ce qui ne peut correspondre à aucune clé serveur mais ne coûte rien
+ * à couvrir.
+ */
+function reachesServerDedupeNamespace(clientDedupeKey: string): boolean {
+  return SERVER_ONLY_FUNNEL_EVENTS.includes(clientDedupeKey.split(":", 1)[0]);
+}
+
+/**
  * Espace de nommage de la clé de dédup selon la classe CONSTATÉE côté serveur.
  *
  * Le problème réglé : `ReportViewBeacon` retombe sur la clé PARTAGÉE
@@ -101,12 +140,25 @@ export const clientFunnelRateLimiter = createFixedWindowLimiter({
  * sur la clé du client rend le changement neutre quel que soit l'ordre des
  * déploiements, et supprime le besoin d'une migration des clés existantes.
  *
- * L'asymétrie ne coûte rien : ce qu'on protège, c'est le slot humain contre une
- * consommation par un bot, et c'est exactement ce que le préfixe non-humain fait.
+ * L'asymétrie ne coûte rien pour ce qu'elle protège — le slot humain contre une
+ * consommation par un bot — mais elle laissait la classe `human` seule à ne
+ * porter AUCUN préfixe, donc seule à pouvoir viser une clé serveur. D'où la
+ * garde `reachesServerDedupeNamespace` : les clés humaines ordinaires passent
+ * toujours octet pour octet (pas de rupture du `sessionStorage` au déploiement),
+ * et les seules qui sont réécrites sont celles qu'aucun navigateur n'émet.
+ *
+ * Réécrire plutôt que refuser : l'événement reste ENREGISTRÉ et compté, il perd
+ * seulement le droit de réclamer un slot qui n'est pas le sien. Jeter la ligne
+ * réintroduirait le refus d'écriture silencieux que cette story supprime.
  */
 export function namespacedDedupeKey(trafficClass: TrafficClass, clientDedupeKey: string | null): string | null {
   if (!clientDedupeKey) return null;
-  return trafficClass === "human" ? clientDedupeKey : `${trafficClass}:${clientDedupeKey}`;
+  // Les autres classes sont déjà préfixées par leur nom, qui n'est le nom
+  // d'aucun événement : elles ne peuvent atteindre aucune clé serveur.
+  if (trafficClass !== "human") return `${trafficClass}:${clientDedupeKey}`;
+  return reachesServerDedupeNamespace(clientDedupeKey)
+    ? `${CLIENT_DEDUPE_NAMESPACE}:${clientDedupeKey}`
+    : clientDedupeKey;
 }
 
 type RecordFunnelEventArgs = {
