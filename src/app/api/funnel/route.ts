@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
-import { FUNNEL_EVENTS, isFunnelEventName, recordFunnelEvent } from "@/lib/funnel";
-import { classifyTraffic, clientIpFromHeaders, parseInternalIps } from "@/lib/traffic-filter";
+import { FUNNEL_EVENTS, foldFunnelCounts, isFunnelEventName, recordFunnelEvent } from "@/lib/funnel";
+import { requestTrafficClass } from "@/lib/traffic-filter";
 
 export const dynamic = "force-dynamic";
 
 type FunnelCountRow = {
   event_name: string;
+  traffic_class: string | null;
   count: string;
 };
 
@@ -48,6 +49,11 @@ function secretMatches(provided: string | null, expected: string | undefined) {
  * fuite business + données clients identifiables (RGPD). Les compteurs suffisent
  * au monitoring et ne révèlent aucun client.
  *
+ * `counts_by_traffic_class` (29/07) reste dans le lot public : c'est un compteur
+ * de plus, sans identifiant, sans metadata, sans IP ni User-Agent. Il répond à la
+ * seule question qui rendait les compteurs bruts inexploitables — « ces audits
+ * sont-ils des humains ? » — sans rien ouvrir de nouveau.
+ *
  * Le détail reste accessible avec le header `x-funnel-key` == FUNNEL_ADMIN_KEY.
  * Si la variable d'env n'est pas définie, le mode détaillé est simplement
  * indisponible — jamais ouvert par défaut.
@@ -58,24 +64,35 @@ export async function GET(req: NextRequest) {
   const adminKey = process.env.FUNNEL_ADMIN_KEY;
   const detailed = secretMatches(req.headers.get("x-funnel-key"), adminKey);
 
+  // Une seule requête groupée : `counts` est DÉRIVÉ de la ventilation par
+  // `foldFunnelCounts`, donc la somme des 4 classes ne peut pas diverger du total.
   const countsResult = await pool.query<FunnelCountRow>(
-    `SELECT event_name, COUNT(*)::text AS count
+    `SELECT event_name, metadata->>'trafficClass' AS traffic_class, COUNT(*)::text AS count
      FROM audit_funnel_events
      WHERE created_at >= now() - interval '14 days'
-     GROUP BY event_name`
+     GROUP BY event_name, metadata->>'trafficClass'`
   );
 
-  const counts = Object.fromEntries(FUNNEL_EVENTS.map((eventName) => [eventName, 0])) as Record<(typeof FUNNEL_EVENTS)[number], number>;
+  const { counts, countsByTrafficClass } = foldFunnelCounts(countsResult.rows);
 
-  for (const row of countsResult.rows) {
-    if (isFunnelEventName(row.event_name)) {
-      counts[row.event_name] = Number(row.count);
-    }
-  }
+  // Date de rupture de mesure, sur la table ENTIÈRE et non sur 14 jours : aucun
+  // ratio humain/total calculé à cheval sur cette date ne veut dire quoi que ce
+  // soit, puisque tout ce qui précède compte en `unknown`.
+  const sinceResult = await pool.query<{ since: Date | null }>(
+    `SELECT MIN(created_at) AS since
+     FROM audit_funnel_events
+     WHERE metadata->>'trafficClass' IS NOT NULL`
+  );
+  const trafficClassSince = sinceResult.rows[0]?.since ?? null;
+
+  const trafficBreakdown = {
+    counts_by_traffic_class: countsByTrafficClass,
+    traffic_class_since: trafficClassSince ? new Date(trafficClassSince).toISOString() : null,
+  };
 
   if (!detailed) {
     return NextResponse.json(
-      { ok: true, window: "14d", counts },
+      { ok: true, window: "14d", counts, ...trafficBreakdown },
       { headers: { "Cache-Control": "no-store" } }
     );
   }
@@ -92,6 +109,7 @@ export async function GET(req: NextRequest) {
       ok: true,
       window: "14d",
       counts,
+      ...trafficBreakdown,
       recent_events: recentResult.rows.map((row) => ({
         id: row.id,
         event_name: row.event_name,
@@ -108,16 +126,16 @@ export async function GET(req: NextRequest) {
 /**
  * POST = enregistrement des événements émis par le NAVIGATEUR.
  *
- * Cette route est le seul point d'entrée client du funnel, donc le seul endroit
- * où le tri du trafic a un sens : les événements serveur (`audit_started`,
- * `audit_completed`, `followup_*`) passent directement par `recordFunnelEvent`
- * et ne sont pas concernés.
+ * Cette route est le point d'entrée client du funnel. Depuis le 29/07 elle
+ * MARQUE au lieu de JETER : les événements serveur (`audit_started`,
+ * `audit_completed`) portent eux aussi leur `trafficClass`, et le tri se fait à
+ * la LECTURE (`counts_by_traffic_class`). Refuser l'écriture ici revenait à
+ * filtrer le numérateur sans filtrer le dénominateur, et à détruire une donnée
+ * qu'aucun traitement a posteriori ne pouvait reconstituer.
  *
- * Le tri est un REFUS SILENCIEUX, jamais une erreur HTTP : un crawler qui reçoit
- * un 4xx réessaie, et un navigateur interne n'a rien à corriger. On répond 200
- * avec le compte de ce qui a été écarté et pourquoi, ce qui rend le débruitage
- * lisible depuis les logs sans avoir à tenir un journal CSV à la main comme le
- * 28/07.
+ * Aucune erreur HTTP n'est renvoyée : un crawler qui reçoit un 4xx réessaie, et
+ * un navigateur interne n'a rien à corriger. On répond 200 avec la classe
+ * retenue.
  */
 export async function POST(req: NextRequest) {
   await ensureAuditSchema();
@@ -125,20 +143,7 @@ export async function POST(req: NextRequest) {
   const payload = await req.json().catch(() => null);
   const events = Array.isArray(payload?.events) ? payload.events : [payload];
 
-  const verdict = classifyTraffic({
-    userAgent: req.headers.get("user-agent"),
-    cookieHeader: req.headers.get("cookie"),
-    ip: clientIpFromHeaders(req.headers),
-    internalIps: parseInternalIps(process.env.INTERNAL_IPS),
-    ipSalt: process.env.IP_HASH_SALT,
-  });
-
-  if (!verdict.accepted) {
-    return NextResponse.json(
-      { ok: true, recorded: 0, skipped: events.length, skipped_reason: verdict.rejectedBy },
-      { headers: { "Cache-Control": "no-store" } }
-    );
-  }
+  const { trafficClass, ipHash } = requestTrafficClass(req.headers);
 
   let recorded = 0;
 
@@ -163,13 +168,18 @@ export async function POST(req: NextRequest) {
         // sans stocker de donnée personnelle. Vaut `null` tant que `IP_HASH_SALT`
         // n'est pas défini — on préfère ne rien écrire qu'écrire un condensat
         // que n'importe qui peut inverser par force brute sur l'espace IPv4.
-        ipHash: verdict.ipHash,
+        ipHash,
         ...(body.metadata && typeof body.metadata === "object" && !Array.isArray(body.metadata) ? body.metadata as Record<string, unknown> : {}),
+        // APRÈS le spread de la metadata client, et jamais avant : sinon un
+        // crawler se déclare `human` en envoyant `metadata: { trafficClass:
+        // "human" }` et la mesure ne vaut plus rien. La classe est constatée
+        // côté serveur, jamais auto-déclarée.
+        trafficClass,
       },
       dedupeKey: typeof body.dedupe_key === "string" ? body.dedupe_key : null,
     });
     recorded += 1;
   }
 
-  return NextResponse.json({ ok: true, recorded }, { headers: { "Cache-Control": "no-store" } });
+  return NextResponse.json({ ok: true, recorded, traffic_class: trafficClass }, { headers: { "Cache-Control": "no-store" } });
 }
