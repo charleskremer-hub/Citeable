@@ -161,10 +161,16 @@ export async function POST(req: NextRequest) {
   await ensureAuditSchema();
 
   const payload = await req.json().catch(() => null);
-  const events = (Array.isArray(payload?.events) ? payload.events : [payload]).slice(
-    0,
-    MAX_CLIENT_FUNNEL_EVENTS_PER_REQUEST
-  );
+  const submitted = Array.isArray(payload?.events) ? payload.events : [payload];
+  const events = submitted.slice(0, MAX_CLIENT_FUNNEL_EVENTS_PER_REQUEST);
+
+  // Le surplus au-delà du plafond de lot est COMPTÉ, pas seulement tranché.
+  // Sans ce compteur, un POST de 25 événements valides répondait
+  // `{recorded: 20, ignored: 0, throttled: 0}` : un appelant qui relit sa propre
+  // réponse pour vérifier son envoi concluait au succès complet alors que 20 %
+  // de son lot avait disparu. `recorded + ignored + throttled + dropped` vaut
+  // désormais exactement le nombre d'événements soumis, quel que soit le chemin.
+  const dropped = submitted.length - events.length;
 
   const { trafficClass } = requestTrafficClass(req.headers);
 
@@ -234,7 +240,7 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json(
-    { ok: true, recorded, ignored, throttled, traffic_class: trafficClass },
+    { ok: true, recorded, ignored, throttled, dropped, traffic_class: trafficClass },
     { headers: { "Cache-Control": "no-store" } }
   );
 }

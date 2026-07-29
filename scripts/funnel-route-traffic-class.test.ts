@@ -376,6 +376,53 @@ test("sécurité — un appelant NON attribuable n'est pas plafonné avec tous l
   assert.equal(insertedEvents().length, 200);
 });
 
+test("la réponse rend compte de TOUT ce qui a été soumis, y compris le surplus tranché", async () => {
+  reset();
+  // Le finding : le `.slice(0, 20)` était appliqué avant tout comptage. Un POST
+  // de 25 événements valides répondait `{recorded: 20, ignored: 0, throttled: 0}`
+  // — un appelant qui relit sa réponse pour vérifier son envoi concluait au
+  // succès complet alors que 20 % de son lot avait disparu sans trace.
+  const submitted = 25;
+  const body = await (
+    await POST(
+      postRequest(CHROME_MAC, { events: Array.from({ length: submitted }, () => ({ event_name: "report_viewed" })) })
+    )
+  ).json();
+
+  assert.equal(body.recorded, 20);
+  assert.equal(body.dropped, 5, "le surplus au-delà du plafond de lot doit être compté");
+  assert.equal(
+    body.recorded + body.ignored + body.throttled + body.dropped,
+    submitted,
+    "recorded + ignored + throttled + dropped doit valoir le nombre d'événements soumis"
+  );
+  assert.equal(insertedEvents().length, body.recorded);
+});
+
+test("l'invariant de comptage tient sur les 4 chemins à la fois", async () => {
+  reset();
+  // Un seul lot qui exerce en même temps : le surplus tranché, les invalides,
+  // le plafond de débit et les écritures réussies.
+  const ip = { "x-forwarded-for": "198.51.100.77" };
+  await POST(
+    postRequest(CHROME_MAC, { events: Array.from({ length: 20 }, () => ({ event_name: "report_viewed" })) }, ip)
+  ); // consomme 20 des 60 unités
+
+  const submitted = 60;
+  const mixed = Array.from({ length: submitted }, (_unused, index) =>
+    index % 4 === 0 ? { event_name: "audit_started" } : { event_name: "report_viewed" }
+  );
+  const body = await (await POST(postRequest(CHROME_MAC, { events: mixed }, ip))).json();
+
+  assert.equal(body.dropped, 40, "60 soumis, 20 traités");
+  assert.equal(body.ignored, 5, "un quart des 20 traités sont des événements serveur");
+  assert.equal(
+    body.recorded + body.ignored + body.throttled + body.dropped,
+    submitted,
+    `comptage incohérent : ${JSON.stringify(body)}`
+  );
+});
+
 test("sécurité — le plafond de débit est par appelant, pas global", async () => {
   reset();
   const lot = { events: Array.from({ length: 20 }, () => ({ event_name: "report_viewed" })) };

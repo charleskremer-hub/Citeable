@@ -16,6 +16,43 @@ if (process.env.NODE_ENV !== "production") {
   globalForPg.pgPool = pool;
 }
 
+/**
+ * `CREATE INDEX IF NOT EXISTS`, tolérant à une création CONCURRENTE.
+ *
+ * `IF NOT EXISTS` teste l'existence puis crée, sans verrou entre les deux. Deux
+ * instances lambda qui exécutent `ensureAuditSchema()` dans la même fenêtre — le
+ * premier déploiement après l'ajout d'un index, typiquement — passent toutes
+ * deux le test, et la seconde lève `duplicate key value violates unique
+ * constraint "pg_class_relname_nsp_index"` (23505) ou `relation already exists`
+ * (42P07).
+ *
+ * Sans cette garde, `ensureAuditSchema()` rejetait, le `catch` global de
+ * `/api/run-audit` répondait 500, et un VRAI demandeur se voyait refuser son
+ * audit pour un besoin de mesure — ce que le périmètre de la story interdit
+ * explicitement (« aucun audit refusé, aucun code HTTP changé »).
+ *
+ * On n'avale que ces deux codes, et seulement pour un DDL déjà idempotent par
+ * intention : l'index existe alors bel et bien, ce qui est exactement le
+ * résultat attendu. Toute autre erreur (droits, syntaxe, disque) remonte.
+ *
+ * Les `CREATE UNIQUE INDEX` ne passent VOLONTAIREMENT pas par ici. Postgres y
+ * lève aussi `23505` quand la construction échoue parce que les DONNÉES violent
+ * l'unicité (« Key ... is duplicated ») : avaler ce code sur un index unique
+ * masquerait un vrai problème de données derrière une course de catalogue. Un
+ * index non unique n'a aucune unicité à violer, donc son `23505` ne peut venir
+ * que de `pg_class` — l'ambiguïté n'existe pas.
+ */
+const CONCURRENT_DDL_RACE_CODES = new Set(["23505", "42P07"]);
+
+async function createIndexIfNotExists(sql: string) {
+  try {
+    await pool.query(sql);
+  } catch (error) {
+    if (CONCURRENT_DDL_RACE_CODES.has((error as { code?: string })?.code ?? "")) return;
+    throw error;
+  }
+}
+
 export async function ensureAuditSchema() {
   await pool.query(`CREATE EXTENSION IF NOT EXISTS pgcrypto`);
   await pool.query(`
@@ -49,7 +86,7 @@ export async function ensureAuditSchema() {
   await pool.query(`ALTER TABLE audits ADD COLUMN IF NOT EXISTS followup_2_sent_at TIMESTAMPTZ`);
   await pool.query(`ALTER TABLE audits ADD COLUMN IF NOT EXISTS dedupe_domain TEXT`);
   await pool.query(`UPDATE audits SET dedupe_domain = lower(split_part(regexp_replace(regexp_replace(website_url, '^https?://', ''), '^www\\.', ''), '/', 1)) WHERE dedupe_domain IS NULL`);
-  await pool.query(`CREATE INDEX IF NOT EXISTS audits_dedupe_domain_created_idx ON audits (dedupe_domain, created_at DESC)`);
+  await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS audits_dedupe_domain_created_idx ON audits (dedupe_domain, created_at DESC)`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS audit_email_unsubscribes (
       email TEXT PRIMARY KEY,
@@ -94,7 +131,7 @@ export async function ensureAuditSchema() {
   await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS audit_email_delivery_one_step_per_prospect_idx ON audit_email_delivery_log (email, step) WHERE status IN ('claimed', 'sent', 'failed')`);
   await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS audit_email_delivery_one_day_per_prospect_idx ON audit_email_delivery_log (email, send_day) WHERE status IN ('claimed', 'sent', 'failed')`);
   await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS audit_email_delivery_one_brand_step_day_idx ON audit_email_delivery_log (brand_domain, step, send_day) WHERE brand_domain IS NOT NULL AND status IN ('claimed', 'sent', 'failed')`);
-  await pool.query(`CREATE INDEX IF NOT EXISTS audit_email_delivery_email_created_idx ON audit_email_delivery_log (email, created_at DESC)`);
+  await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS audit_email_delivery_email_created_idx ON audit_email_delivery_log (email, created_at DESC)`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS audit_email_sequence_jobs (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -112,8 +149,8 @@ export async function ensureAuditSchema() {
       UNIQUE (audit_id, step)
     )
   `);
-  await pool.query(`CREATE INDEX IF NOT EXISTS audit_email_sequence_due_idx ON audit_email_sequence_jobs (scheduled_at, sent_at, send_started_at)`);
-  await pool.query(`CREATE INDEX IF NOT EXISTS audit_email_sequence_audit_idx ON audit_email_sequence_jobs (audit_id)`);
+  await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS audit_email_sequence_due_idx ON audit_email_sequence_jobs (scheduled_at, sent_at, send_started_at)`);
+  await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS audit_email_sequence_audit_idx ON audit_email_sequence_jobs (audit_id)`);
   await pool.query(`
     UPDATE audits
     SET followup_1_sent_at = COALESCE(followup_1_sent_at, sent_jobs.sent_at)
@@ -145,11 +182,11 @@ export async function ensureAuditSchema() {
       UNIQUE (email, brand_name, website_url)
     )
   `);
-  await pool.query(`CREATE INDEX IF NOT EXISTS monitored_brands_due_idx ON monitored_brands (active, next_run_at)`);
-  await pool.query(`CREATE INDEX IF NOT EXISTS audits_followup_1_due_idx ON audits (created_at) WHERE score IS NOT NULL AND followup_1_sent_at IS NULL`);
-  await pool.query(`CREATE INDEX IF NOT EXISTS audits_followup_2_due_idx ON audits (created_at) WHERE score IS NOT NULL AND followup_2_sent_at IS NULL`);
-  await pool.query(`CREATE INDEX IF NOT EXISTS audits_brand_site_created_idx ON audits (lower(brand_name), website_url, created_at DESC)`);
-  await pool.query(`CREATE INDEX IF NOT EXISTS audits_domain_score_created_idx ON audits (dedupe_domain, created_at DESC) WHERE score IS NOT NULL`);
+  await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS monitored_brands_due_idx ON monitored_brands (active, next_run_at)`);
+  await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS audits_followup_1_due_idx ON audits (created_at) WHERE score IS NOT NULL AND followup_1_sent_at IS NULL`);
+  await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS audits_followup_2_due_idx ON audits (created_at) WHERE score IS NOT NULL AND followup_2_sent_at IS NULL`);
+  await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS audits_brand_site_created_idx ON audits (lower(brand_name), website_url, created_at DESC)`);
+  await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS audits_domain_score_created_idx ON audits (dedupe_domain, created_at DESC) WHERE score IS NOT NULL`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS audit_funnel_events (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -167,9 +204,9 @@ export async function ensureAuditSchema() {
     ADD CONSTRAINT audit_funnel_events_event_name_check
     CHECK (event_name IN ('audit_started', 'audit_completed', 'report_viewed', 'email_captured', 'teaser_cta_click', 'checkout_opened', 'followup_1_sent', 'followup_2_sent', 'followup_click'))
   `);
-  await pool.query(`CREATE INDEX IF NOT EXISTS audit_funnel_events_created_idx ON audit_funnel_events (created_at DESC)`);
-  await pool.query(`CREATE INDEX IF NOT EXISTS audit_funnel_events_name_created_idx ON audit_funnel_events (event_name, created_at DESC)`);
-  await pool.query(`CREATE INDEX IF NOT EXISTS audit_funnel_events_audit_idx ON audit_funnel_events (audit_id, created_at DESC)`);
+  await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS audit_funnel_events_created_idx ON audit_funnel_events (created_at DESC)`);
+  await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS audit_funnel_events_name_created_idx ON audit_funnel_events (event_name, created_at DESC)`);
+  await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS audit_funnel_events_audit_idx ON audit_funnel_events (audit_id, created_at DESC)`);
   // Sert `traffic_class_since` (voir `TRAFFIC_CLASS_SINCE_SQL`). Sans lui, chaque
   // `GET /api/funnel` — public, `no-store`, sans clé — déclenchait un Seq Scan de
   // toute la table sur `metadata->>'trafficClass'`, sur le même pool Neon que
@@ -180,7 +217,7 @@ export async function ensureAuditSchema() {
   // comme celui de la requête (d'où la constante partagée
   // `CLASSIFIED_TRAFFIC_CLASSES_PREDICATE_SQL`), et la colonne indexée doit être
   // celle du `MIN()` pour que Postgres réponde par la première entrée de l'index.
-  await pool.query(`
+  await createIndexIfNotExists(`
     CREATE INDEX IF NOT EXISTS audit_funnel_events_classified_created_idx
     ON audit_funnel_events (created_at)
     WHERE ${CLASSIFIED_TRAFFIC_CLASSES_PREDICATE_SQL}
