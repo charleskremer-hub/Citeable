@@ -23,24 +23,31 @@ import type { InstantlyEventRecord, OptOutReason } from "./prospection";
  *    Instantly ajoute un jour les en-têtes personnalisés. Voir la route.
  */
 
+/**
+ * Liste lue le 28/07/2026 sur `GET /api/v2/webhooks/event-types` de l'API live,
+ * PAS sur le guide de documentation — qui écrit `link_clicked` là où l'API
+ * répond `email_link_clicked`. Se fier au guide aurait laissé les clics
+ * classés « type inconnu » sans que rien n'échoue, donc sans que ça se voie.
+ */
 export const INSTANTLY_EVENT_TYPES = [
   "email_sent",
-  "email_opened",
-  "link_clicked",
-  "reply_received",
-  "auto_reply_received",
   "email_bounced",
+  "email_opened",
+  "email_link_clicked",
+  "reply_received",
   "lead_unsubscribed",
+  "campaign_completed",
+  "account_error",
   "lead_interested",
-  "lead_neutral",
   "lead_not_interested",
-  "lead_out_of_office",
-  "lead_wrong_person",
+  "lead_neutral",
   "lead_meeting_booked",
   "lead_meeting_completed",
   "lead_closed",
-  "campaign_completed",
-  "account_error",
+  "lead_out_of_office",
+  "lead_wrong_person",
+  "custom_label_any_positive",
+  "custom_label_any_negative",
 ] as const;
 
 export type InstantlyEventType = (typeof INSTANTLY_EVENT_TYPES)[number];

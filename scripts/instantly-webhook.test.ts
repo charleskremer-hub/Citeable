@@ -114,6 +114,10 @@ test("un libellé personnalisé de workspace est journalisé, pas jeté", () => 
   assert.equal(event?.eventType, "a_rappeler_septembre");
   assert.equal(isKnownEventType("a_rappeler_septembre"), false);
   assert.equal(isKnownEventType("reply_received"), true);
+  // Le guide de doc dit « link_clicked » ; l'API dit « email_link_clicked ».
+  // C'est l'API qui fait foi — c'est elle qui émettra les webhooks.
+  assert.equal(isKnownEventType("email_link_clicked"), true);
+  assert.equal(isKnownEventType("link_clicked"), false);
 });
 
 test("seuls les événements qui valent opposition en déclenchent une", () => {
@@ -122,7 +126,7 @@ test("seuls les événements qui valent opposition en déclenchent une", () => {
   assert.equal(optOutReasonFor("lead_not_interested"), "not_interested");
   assert.equal(optOutReasonFor("lead_wrong_person"), "wrong_person");
 
-  for (const eventType of ["email_sent", "email_opened", "link_clicked", "reply_received", "lead_interested", "lead_out_of_office"]) {
+  for (const eventType of ["email_sent", "email_opened", "email_link_clicked", "reply_received", "lead_interested", "lead_out_of_office"]) {
     assert.equal(optOutReasonFor(eventType), null, eventType);
   }
 });
