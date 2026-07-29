@@ -26,6 +26,14 @@ registerHooks({
       if ((specifier.startsWith("./") || specifier.startsWith("../")) && !/\.[a-z]+$/i.test(specifier)) {
         return nextResolve(`${specifier}.ts`, context);
       }
+      // Repli `.js` pour les specifiers BARE sans extension : `next` ne déclare
+      // pas de champ `exports`, donc `import { NextResponse } from "next/server"`
+      // — que le bundler Next résout tout seul — échoue sous l'ESM de Node pur
+      // (« Did you mean next/server.js ? »). Indispensable pour importer un
+      // `route.ts` dans un test.
+      if (!specifier.startsWith(".") && !specifier.startsWith("/") && !/\.[a-z]+$/i.test(specifier)) {
+        return nextResolve(`${specifier}.js`, context);
+      }
       throw error;
     }
   },

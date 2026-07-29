@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test --import ./scripts/test-loader.mjs 'scripts/**/*.test.ts'",
+    "test": "node --test --experimental-test-module-mocks --import ./scripts/test-loader.mjs 'scripts/**/*.test.ts'",
     "verify:live": "node scripts/verify-live.mjs",
     "migrate": "node scripts/migrate.mjs",
     "migrate:dry": "node scripts/migrate.mjs --dry",
