@@ -4448,10 +4448,38 @@ export async function runDueWeeklyRescans(limit = 3) {
         brandDedupeDomain(brand.website_url),
         brand.id,
         brand.last_audit_id,
-        { status: "queued", queuedAt: new Date().toISOString(), runType: "weekly_rescan" },
+        {
+          status: "queued",
+          queuedAt: new Date().toISOString(),
+          runType: "weekly_rescan",
+          // 5ᵉ chemin d'audit, à côté des 4 chemins de requête. Il n'y a AUCUNE
+          // requête entrante à classer ici : c'est notre cron quotidien qui
+          // déclenche le rescan, donc la classe honnête est `internal` — « est-ce
+          // nous ? oui ». Sans cette ligne, `completeQueuedAudit` retombait sur
+          // `unknown` et publiait un `audit_completed` non classé sur une fenêtre
+          // pourtant postérieure à `traffic_class_since`.
+          trafficClass: "internal" satisfies TrafficClass,
+        },
       ]
     );
     const auditId = auditResult.rows[0].id;
+
+    // `audit_completed` était émis sans `audit_started` correspondant : un agent
+    // lisant `/api/funnel` voyait un ratio completed/started > 1 sans explication
+    // possible. Les deux bornes existent maintenant, dans la même classe.
+    await recordFunnelEvent({
+      eventName: "audit_started",
+      auditId,
+      source: "weekly_rescan",
+      metadata: {
+        brandName: brand.brand_name,
+        websiteUrl: brand.website_url,
+        runType: "weekly_rescan",
+        trafficClass: "internal" satisfies TrafficClass,
+      },
+      dedupeKey: `audit_started:${auditId}`,
+    });
+
     const result = await runQueuedAudit(auditId);
 
     if (result.status === "complete") {
