@@ -19,16 +19,22 @@ export const dynamic = "force-dynamic";
  * `001_prospection_compliance` (registre, oppositions, journal des envois). Toute
  * promesse ajoutée ici doit correspondre à quelque chose que le code fait.
  *
- * ⚠️ AVANT MISE EN LIGNE — la mention du responsable de traitement (raison
- * sociale, forme juridique, adresse du siège) est OBLIGATOIRE et je ne l'ai pas
- * dans le dépôt. `LEGAL_ENTITY` ci-dessous est volontairement laissé au nom
- * commercial seul : à compléter par Charles, c'est le seul point de la page qui
- * ne peut pas être déduit du code.
+ * Responsable de traitement renseigné le 2026-07-29 par Charles : c'était le seul
+ * point de la page qui ne pouvait pas être déduit du code, et il est obligatoire
+ * pour que la prospection à froid repose sur une base légale opposable.
+ *
+ * `name` porte la RAISON SOCIALE, pas le nom commercial : c'est KINZE SAS qui est
+ * responsable du traitement, « GetPick » n'est que la marque sous laquelle le
+ * service est exploité. Écrire « GetPick » ici aurait désigné une entité qui
+ * n'existe pas juridiquement, donc une mention inopposable.
+ *
+ * Le numéro RCS n'est pas renseigné : il n'a pas été fourni et ne se déduit pas.
+ * Il n'est pas exigé pour l'identification du responsable de traitement (RGPD
+ * art. 13), mais il le serait pour des mentions légales complètes.
  */
 const LEGAL_ENTITY = {
-  name: "GetPick",
-  // À compléter : raison sociale, forme juridique, adresse du siège, RCS.
-  postalAddress: null as string | null,
+  name: "KINZE SAS",
+  postalAddress: "30 rue Juliette Lamber, 75017 Paris",
   contactEmail: "charles@freegetpick.com",
 };
 
