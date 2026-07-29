@@ -4,6 +4,7 @@ import { recordFunnelEvent } from "./funnel";
 import { localizeCategoryLabel, localizePlainAction, type Locale } from "./i18n";
 import { isWebSearchConfigured, runWebSearch } from "./web-search";
 import { isMailConfigured, sendMail } from "./mailer";
+import { trafficClassOrUnknown, type TrafficClass } from "./traffic-filter";
 
 const USER_AGENT = "Mozilla/5.0 (compatible; CiteeableBot/1.0)";
 const CHECK_TIMEOUT_MS = 8_000;
@@ -232,6 +233,13 @@ type AuditRawResults = {
   startedAt?: string;
   completedAt?: string;
   failedAt?: string;
+  /**
+   * Classe de trafic de la requête qui a DÉMARRÉ cet audit, posée à l'INSERT.
+   * C'est la ligne `audits` qui porte la classe : `audit_completed` la relit ici,
+   * ce qui garantit qu'il porte la même classe que son `audit_started` même quand
+   * l'audit est repris plus tard (retry `POST /api/run-audit { audit_id }`, cron).
+   */
+  trafficClass?: TrafficClass;
 };
 
 type AuditRow = {
@@ -3815,6 +3823,7 @@ export async function createCachedFreeAuditForLead(args: {
   brandName: string;
   websiteUrl: string;
   locale: Locale;
+  trafficClass?: TrafficClass;
 }) {
   const sourceResult = await pool.query<AuditRow>(`SELECT * FROM audits WHERE id = $1 AND score IS NOT NULL`, [args.cachedAuditId]);
   const source = sourceResult.rows[0];
@@ -3830,6 +3839,10 @@ export async function createCachedFreeAuditForLead(args: {
     cachedForLeadAt: new Date().toISOString(),
     emailSent: false,
     emailError: undefined,
+    // ÉCRASE la classe héritée du clone : cette ligne appartient au demandeur
+    // courant, pas à l'auditeur d'origine. Sans ça, un re-run ultérieur émettrait
+    // un `audit_completed` avec la classe de quelqu'un d'autre.
+    trafficClass: trafficClassOrUnknown(args.trafficClass),
   } as AuditRawResults & Record<string, unknown>;
 
   delete rawResults.emailSendStartedAt;
@@ -4634,7 +4647,16 @@ export async function completeQueuedAudit(auditId: string): Promise<QueuedAuditR
       eventName: "audit_completed",
       auditId,
       source: "run_queued_audit",
-      metadata: { brandName: row.brand_name, websiteUrl: row.website_url, auditTier, score: report.score, locale: report.locale },
+      metadata: {
+        brandName: row.brand_name,
+        websiteUrl: row.website_url,
+        auditTier,
+        score: report.score,
+        locale: report.locale,
+        // Héritée de l'`audit_started`, jamais recalculée : ce code tourne dans
+        // un `after()` ou un cron, la requête d'origine n'existe plus.
+        trafficClass: trafficClassOrUnknown(row.raw_results?.trafficClass),
+      },
       dedupeKey: `audit_completed:${auditId}`,
     });
 

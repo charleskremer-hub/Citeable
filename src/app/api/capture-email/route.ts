@@ -3,12 +3,18 @@ import { ensureAuditSchema, pool } from "@/lib/db";
 import { auditTierFromPayload, checkFreeAuditQuota, findFreshFreeGeminiAudit, brandDedupeDomain, createCachedFreeAuditForLead, recipientLocaleFromSignals, runQueuedAudit, validateAuditInputAllowAnonymous } from "@/lib/audit-engine";
 import { recordFunnelEvent } from "@/lib/funnel";
 import { localeFromUnknown } from "@/lib/i18n";
+import { requestTrafficClass } from "@/lib/traffic-filter";
 
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
     await ensureAuditSchema();
+
+    // MARQUAGE, jamais blocage — voir /api/run-audit : aucun code HTTP, aucun
+    // quota, aucune branche ne dépend de cette valeur.
+    const { trafficClass } = requestTrafficClass(req.headers);
+
     const payload = await req.json();
     const { email, brandName, websiteUrl, anonymous } = validateAuditInputAllowAnonymous(payload);
     const auditTier = auditTierFromPayload(payload);
@@ -32,21 +38,21 @@ export async function POST(req: NextRequest) {
       const cachedAudit = await findFreshFreeGeminiAudit(brandName, websiteUrl);
 
       if (cachedAudit) {
-        const cachedLeadAudit = await createCachedFreeAuditForLead({ cachedAuditId: cachedAudit.id, email, brandName, websiteUrl, locale });
+        const cachedLeadAudit = await createCachedFreeAuditForLead({ cachedAuditId: cachedAudit.id, email, brandName, websiteUrl, locale, trafficClass });
         const auditId = cachedLeadAudit?.audit_id ?? cachedAudit.id;
 
         await recordFunnelEvent({
           eventName: "audit_started",
           auditId,
           source: "capture_email_cached",
-          metadata: { brandName, websiteUrl, auditTier, cachedFromAuditId: cachedAudit.id, locale },
+          metadata: { brandName, websiteUrl, auditTier, cachedFromAuditId: cachedAudit.id, locale, trafficClass },
           dedupeKey: `audit_started:${auditId}`,
         });
         await recordFunnelEvent({
           eventName: "audit_completed",
           auditId,
           source: "capture_email_cached",
-          metadata: { brandName, websiteUrl, auditTier, cachedFromAuditId: cachedAudit.id, locale },
+          metadata: { brandName, websiteUrl, auditTier, cachedFromAuditId: cachedAudit.id, locale, trafficClass },
           dedupeKey: `audit_completed:${auditId}`,
         });
 
@@ -80,7 +86,7 @@ export async function POST(req: NextRequest) {
       `INSERT INTO audits (email, brand_name, website_url, dedupe_domain, raw_results)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING id`,
-      [email, brandName, websiteUrl, dedupeDomain, { status: "running", queuedAt: new Date().toISOString(), auditTier, locale, anonymous }]
+      [email, brandName, websiteUrl, dedupeDomain, { status: "running", queuedAt: new Date().toISOString(), auditTier, locale, anonymous, trafficClass }]
     );
 
     const auditId = audit.rows[0].id;
@@ -89,7 +95,7 @@ export async function POST(req: NextRequest) {
       eventName: "audit_started",
       auditId,
       source: "capture_email",
-      metadata: { brandName, websiteUrl, auditTier, locale },
+      metadata: { brandName, websiteUrl, auditTier, locale, trafficClass },
       dedupeKey: `audit_started:${auditId}`,
     });
 

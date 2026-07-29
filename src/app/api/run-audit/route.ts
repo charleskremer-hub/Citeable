@@ -3,6 +3,7 @@ import { ensureAuditSchema, pool } from "@/lib/db";
 import { auditTierFromPayload, checkFreeAuditQuota, findFreshFreeGeminiAudit, brandDedupeDomain, createCachedFreeAuditForLead, recipientLocaleFromSignals, runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
 import { recordFunnelEvent } from "@/lib/funnel";
 import { localeFromUnknown } from "@/lib/i18n";
+import { requestTrafficClass } from "@/lib/traffic-filter";
 
 export const maxDuration = 60;
 
@@ -37,6 +38,13 @@ function runAuditAfterResponse(auditId: string) {
 export async function POST(req: NextRequest) {
   try {
     await ensureAuditSchema();
+
+    // MARQUAGE, jamais blocage : la classe est écrite dans la metadata des
+    // événements et dans `raw_results`, mais ne change aucun code HTTP, aucun
+    // quota, aucune branche. Un audit demandé par un crawler est exécuté comme
+    // celui d'un humain — sinon on ferait disparaître la donnée qu'on mesure.
+    const { trafficClass } = requestTrafficClass(req.headers);
+
     const payload = await req.json();
     const auditTier = auditTierFromPayload(payload);
     const requestedLocale = payload && typeof payload === "object" && "locale" in payload ? localeFromUnknown((payload as Record<string, unknown>).locale) : undefined;
@@ -99,21 +107,21 @@ export async function POST(req: NextRequest) {
       const cachedAudit = await findFreshFreeGeminiAudit(brandName, websiteUrl);
 
       if (cachedAudit) {
-        const cachedLeadAudit = await createCachedFreeAuditForLead({ cachedAuditId: cachedAudit.id, email, brandName, websiteUrl, locale });
+        const cachedLeadAudit = await createCachedFreeAuditForLead({ cachedAuditId: cachedAudit.id, email, brandName, websiteUrl, locale, trafficClass });
         const createdOrCachedAuditId = cachedLeadAudit?.audit_id ?? cachedAudit.id;
 
         await recordFunnelEvent({
           eventName: "audit_started",
           auditId: createdOrCachedAuditId,
           source: "run_audit_cached",
-          metadata: { brandName, websiteUrl, auditTier, cachedFromAuditId: cachedAudit.id, locale },
+          metadata: { brandName, websiteUrl, auditTier, cachedFromAuditId: cachedAudit.id, locale, trafficClass },
           dedupeKey: `audit_started:${createdOrCachedAuditId}`,
         });
         await recordFunnelEvent({
           eventName: "audit_completed",
           auditId: createdOrCachedAuditId,
           source: "run_audit_cached",
-          metadata: { brandName, websiteUrl, auditTier, cachedFromAuditId: cachedAudit.id, locale },
+          metadata: { brandName, websiteUrl, auditTier, cachedFromAuditId: cachedAudit.id, locale, trafficClass },
           dedupeKey: `audit_completed:${createdOrCachedAuditId}`,
         });
 
@@ -141,7 +149,7 @@ export async function POST(req: NextRequest) {
       `INSERT INTO audits (email, brand_name, website_url, dedupe_domain, raw_results)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING id`,
-      [email, brandName, websiteUrl, dedupeDomain, { status: "queued", queuedAt: new Date().toISOString(), auditTier, locale }]
+      [email, brandName, websiteUrl, dedupeDomain, { status: "queued", queuedAt: new Date().toISOString(), auditTier, locale, trafficClass }]
     );
     const createdAuditId = audit.rows[0].id;
 
@@ -149,7 +157,7 @@ export async function POST(req: NextRequest) {
       eventName: "audit_started",
       auditId: createdAuditId,
       source: "run_audit",
-      metadata: { brandName, websiteUrl, auditTier, locale },
+      metadata: { brandName, websiteUrl, auditTier, locale, trafficClass },
       dedupeKey: `audit_started:${createdAuditId}`,
     });
 
