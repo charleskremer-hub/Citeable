@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 
 /**
  * Classement du trafic à l'entrée des événements funnel.
@@ -235,6 +235,32 @@ export const CLASSIFIED_TRAFFIC_CLASSES = TRAFFIC_CLASSES.filter(
 );
 
 /**
+ * La même liste, en littéral SQL : `'human', 'bot', 'internal'`.
+ *
+ * Source UNIQUE partagée par la requête (`readTrafficClassSince`) et par le
+ * prédicat de l'index partiel qui la sert (`ensureAuditSchema`). Postgres
+ * n'utilise un index partiel que si le prédicat de la requête implique celui de
+ * l'index ; un paramètre `= ANY($1::text[])` ne le permet pas, et deux listes
+ * écrites à la main dériveraient tôt ou tard. D'où la génération commune.
+ *
+ * Les valeurs viennent d'une constante du module, jamais d'une entrée : le garde
+ * ci-dessous est là pour qu'un ajout de classe contenant un caractère exotique
+ * échoue au chargement du module plutôt que de produire du SQL douteux.
+ */
+export const CLASSIFIED_TRAFFIC_CLASSES_SQL = CLASSIFIED_TRAFFIC_CLASSES.map((klass) => {
+  if (!/^[a-z_]+$/.test(klass)) {
+    throw new Error(`Classe de trafic non interpolable en SQL : ${klass}`);
+  }
+  return `'${klass}'`;
+}).join(", ");
+
+/**
+ * Le prédicat complet « cet événement a été classé », partagé mot pour mot entre
+ * la requête et l'index partiel qui la sert.
+ */
+export const CLASSIFIED_TRAFFIC_CLASSES_PREDICATE_SQL = `metadata->>'trafficClass' IN (${CLASSIFIED_TRAFFIC_CLASSES_SQL})`;
+
+/**
  * Projection du verdict existant sur les trois classes. Aucune règle nouvelle :
  * `classifyTraffic` reste la seule source de vérité de la détection.
  */
@@ -279,4 +305,27 @@ export function requestTrafficClass(headers: { get(name: string): string | null 
   });
 
   return { trafficClass: trafficClassFromVerdict(verdict), ipHash: verdict.ipHash };
+}
+
+/**
+ * Sel tiré au démarrage du process, jamais configuré, jamais journalisé, jamais
+ * écrit nulle part. Il ne sert QU'à regrouper en mémoire les requêtes d'un même
+ * appelant le temps d'une fenêtre de quelques secondes.
+ *
+ * Volontairement distinct de `IP_HASH_SALT` : ce dernier est stable, donc les
+ * empreintes qu'il produit sont corrélables dans le temps — c'est justement ce
+ * qu'on ne veut pas ici. Avec un sel éphémère, la clé de comptage meurt avec
+ * l'instance et ne peut être rapprochée d'aucune donnée stockée.
+ */
+const EPHEMERAL_RATE_LIMIT_SALT = randomBytes(32).toString("hex");
+
+/**
+ * Clé de comptage d'un appelant, dérivée de son IP. Jamais persistée.
+ *
+ * Sans IP (dev local, appel interne), tout le monde partage le même seau : c'est
+ * assumé, un environnement sans proxy n'a pas de flood à contenir.
+ */
+export function requestRateLimitKey(headers: { get(name: string): string | null }): string {
+  const ip = clientIpFromHeaders(headers);
+  return ip ? (hashIp(ip, EPHEMERAL_RATE_LIMIT_SALT) as string) : "no-ip";
 }

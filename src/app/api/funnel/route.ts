@@ -3,11 +3,14 @@ import { ensureAuditSchema, pool } from "@/lib/db";
 import {
   CLIENT_FUNNEL_EVENTS,
   MAX_CLIENT_FUNNEL_EVENTS_PER_REQUEST,
+  clientFunnelRateLimiter,
   foldFunnelCounts,
   isClientFunnelEventName,
+  namespacedDedupeKey,
+  readTrafficClassSince,
   recordFunnelEvent,
 } from "@/lib/funnel";
-import { CLASSIFIED_TRAFFIC_CLASSES, requestTrafficClass } from "@/lib/traffic-filter";
+import { requestRateLimitKey, requestTrafficClass } from "@/lib/traffic-filter";
 
 export const dynamic = "force-dynamic";
 
@@ -75,20 +78,9 @@ export async function GET(req: NextRequest) {
 
   // Date de rupture de mesure, sur la table ENTIÈRE et non sur 14 jours : aucun
   // ratio humain/total calculé à cheval sur cette date ne veut dire quoi que ce
-  // soit, puisque tout ce qui précède compte en `unknown`.
-  //
-  // `IS NOT NULL` ne conviendrait pas : `unknown` est une valeur réellement
-  // ÉCRITE (un audit mis en file avant le 29/07 et terminé après retombe dessus
-  // via `trafficClassOrUnknown`). La date de rupture doit pointer sur le premier
-  // événement CLASSÉ, donc sur une des trois classes que produit une
-  // classification — sinon elle contredit sa propre définition.
-  const sinceResult = await pool.query<{ since: Date | null }>(
-    `SELECT MIN(created_at) AS since
-     FROM audit_funnel_events
-     WHERE metadata->>'trafficClass' = ANY($1::text[])`,
-    [CLASSIFIED_TRAFFIC_CLASSES]
-  );
-  const trafficClassSince = sinceResult.rows[0]?.since ?? null;
+  // soit, puisque tout ce qui précède compte en `unknown`. Requête, index partiel
+  // et mémoïsation : voir `readTrafficClassSince`.
+  const trafficClassSince = await readTrafficClassSince();
 
   const trafficBreakdown = {
     counts_by_traffic_class: countsByTrafficClass,
@@ -149,6 +141,14 @@ export async function GET(req: NextRequest) {
  * régulièrement une adresse e-mail réelle dans sa query string. La classe est le
  * RÉSULTAT de la lecture de ces en-têtes ; l'en-tête lui-même n'a pas à survivre
  * dans une table qu'on agrège pendant des mois.
+ *
+ * Ne rien persister sur l'appelant prive en revanche l'admin de la trace qui
+ * permettait de dater et qualifier une écriture en masse a posteriori. La
+ * réponse n'est pas de réintroduire cette trace — c'est de rendre l'écriture en
+ * masse impossible : plafond par requête (`MAX_CLIENT_FUNNEL_EVENTS_PER_REQUEST`)
+ * ET plafond de débit par appelant (`clientFunnelRateLimiter`), ce dernier compté
+ * en mémoire avec une clé à sel éphémère, jamais écrite nulle part. Un flood
+ * absent vaut mieux qu'un flood documenté.
  */
 export async function POST(req: NextRequest) {
   await ensureAuditSchema();
@@ -161,10 +161,15 @@ export async function POST(req: NextRequest) {
 
   const { trafficClass } = requestTrafficClass(req.headers);
 
+  // Le débit est décompté AVANT de savoir si les événements sont valides : un
+  // appelant qui inonde la route de payloads invalides consomme quand même du
+  // pool Postgres et du temps de fonction.
+  const { allowed, throttled } = clientFunnelRateLimiter.take(requestRateLimitKey(req.headers), events.length);
+
   let recorded = 0;
   let ignored = 0;
 
-  for (const item of events) {
+  for (const item of events.slice(0, allowed)) {
     // Whitelist et non `isFunnelEventName` : un appelant anonyme ne doit pas
     // pouvoir écrire un `audit_started`, qui n'existe que côté serveur.
     if (!item || typeof item !== "object" || !isClientFunnelEventName((item as { event_name?: unknown }).event_name)) {
@@ -194,25 +199,17 @@ export async function POST(req: NextRequest) {
         // côté serveur, jamais auto-déclarée.
         trafficClass,
       },
-      // La clé de dédup est PRÉFIXÉE par la classe, côté serveur.
-      //
-      // `ReportViewBeacon` retombe sur la clé PARTAGÉE
-      // `report_viewed:<auditId>:nosession-<jour>` dès que `sessionStorage` est
-      // refusé (navigation privée stricte, webview, politique d'entreprise).
-      // Tant que le POST jetait les bots, celui-ci ne consommait pas la clé ;
-      // depuis qu'il écrit, un contrôle headless interne passé le matin
-      // s'approprie le slot du jour et le `ON CONFLICT DO NOTHING` avale
-      // silencieusement la vue du prospect qui suit — la north star perdrait un
-      // humain et gagnerait un bot, sans trace. Préfixer par la classe rend le
-      // vol inter-classes impossible ; la dédup à l'intérieur d'une classe,
-      // elle, est inchangée.
-      dedupeKey: clientDedupeKey ? `${trafficClass}:${clientDedupeKey}` : null,
+      // Espace de nommage de la clé par classe, côté serveur : un bot ne peut
+      // plus consommer le slot de dédup d'un humain, et la clé du client est
+      // conservée telle quelle pour la classe `human` — donc la dédup humaine
+      // traverse le déploiement sans rupture. Détail dans `namespacedDedupeKey`.
+      dedupeKey: namespacedDedupeKey(trafficClass, clientDedupeKey),
     });
     recorded += 1;
   }
 
   return NextResponse.json(
-    { ok: true, recorded, ignored, traffic_class: trafficClass },
+    { ok: true, recorded, ignored, throttled, traffic_class: trafficClass },
     { headers: { "Cache-Control": "no-store" } }
   );
 }

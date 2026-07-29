@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import test, { mock } from "node:test";
+import { readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import { resolve } from "node:path";
+import { CLASSIFIED_TRAFFIC_CLASSES_PREDICATE_SQL } from "@/lib/traffic-filter";
 
 /**
  * `GET` et `POST /api/funnel`. Seuls `next/server` et `@/lib/db` sont mockés :
@@ -13,6 +15,9 @@ import { resolve } from "node:path";
  * Aucun import STATIQUE de module applicatif ici : les imports statiques sont
  * hoistés avant les `mock.module`, et `@/lib/funnel` embarquerait alors le vrai
  * `pool` (tentative de connexion Postgres à l'écriture).
+ *
+ * UNE exception : `@/lib/traffic-filter`, qui ne dépend que de `node:crypto` —
+ * il n'atteint ni `@/lib/db` ni `next/server`, donc le hoisting est sans effet.
  */
 
 const repoRoot = resolve(import.meta.dirname, "..");
@@ -49,7 +54,12 @@ mock.module(dbUrl, {
   },
 });
 
-const { FUNNEL_EVENTS } = await import("@/lib/funnel");
+const {
+  FUNNEL_EVENTS,
+  MAX_CLIENT_FUNNEL_EVENTS_PER_MINUTE,
+  clientFunnelRateLimiter,
+  resetTrafficClassSinceCache,
+} = await import("@/lib/funnel");
 const { GET, POST } = await import("@/app/api/funnel/route");
 
 const GPT_BOT = "Mozilla/5.0 (compatible; GPTBot/1.2; +https://openai.com/gptbot)";
@@ -60,6 +70,11 @@ function reset() {
   queries.length = 0;
   groupedRows = [];
   since = null;
+  // Deux états de process à remettre à zéro, sinon les tests se contaminent :
+  // le compteur de débit (partagé, clé « no-ip » puisque les requêtes de test
+  // n'ont pas d'IP) et la mémoïsation de la date de rupture.
+  clientFunnelRateLimiter.reset();
+  resetTrafficClassSinceCache();
 }
 
 function postRequest(userAgent: string, body: unknown, extraHeaders: Record<string, string> = {}) {
@@ -145,13 +160,18 @@ test("AC2 — aucun UA, aucun referer, aucune empreinte d'IP n'est persisté, m�
   }
 });
 
-test("AC4 — la clé de dédup est préfixée par la classe constatée côté serveur", async () => {
+test("AC4 — la clé d'une vue HUMAINE est transmise telle quelle, octet pour octet", async () => {
   reset();
-  await POST(postRequest(CHROME_MAC, { event_name: "report_viewed", dedupe_key: "report_viewed:abc:session-1" }));
+  // Cette clé vit dans le `sessionStorage` du navigateur (`gp_sid`) et survit
+  // donc à un déploiement. La préfixer aurait produit une SECONDE ligne pour la
+  // même session et le même audit dès le premier F5 après mise en production —
+  // un sur-comptage de `report_viewed.human`, la seule série de référence.
+  const clientKey = "report_viewed:abc:session-1";
+  await POST(postRequest(CHROME_MAC, { event_name: "report_viewed", dedupe_key: clientKey }));
 
   const written = insertedEvents();
   assert.equal(written.length, 1);
-  assert.equal(written[0].dedupeKey, "human:report_viewed:abc:session-1");
+  assert.equal(written[0].dedupeKey, clientKey);
   for (const query of queries.filter((call) => call.text.includes("INSERT INTO audit_funnel_events"))) {
     assert.match(query.text, /ON CONFLICT \(dedupe_key\) DO NOTHING/);
   }
@@ -160,8 +180,8 @@ test("AC4 — la clé de dédup est préfixée par la classe constatée côté s
 test("AC4 — un bot ne peut pas voler le slot de dédup partagé d'un humain", async () => {
   reset();
   // `ReportViewBeacon` retombe sur cette clé PARTAGÉE quand `sessionStorage` est
-  // refusé : sans préfixe, le contrôle headless du matin ferait disparaître la
-  // vue du prospect de l'après-midi via `ON CONFLICT DO NOTHING`.
+  // refusé : sans espace de nommage, le contrôle headless du matin ferait
+  // disparaître la vue du prospect de l'après-midi via `ON CONFLICT DO NOTHING`.
   const shared = "report_viewed:abc:nosession-2026-07-29";
   await POST(postRequest("HeadlessChrome/139.0.0.0", { event_name: "report_viewed", dedupe_key: shared }));
   await POST(postRequest(CHROME_MAC, { event_name: "report_viewed", dedupe_key: shared }));
@@ -169,8 +189,18 @@ test("AC4 — un bot ne peut pas voler le slot de dédup partagé d'un humain", 
   const written = insertedEvents();
   assert.equal(written.length, 2);
   assert.equal(written[0].dedupeKey, `bot:${shared}`);
-  assert.equal(written[1].dedupeKey, `human:${shared}`);
+  assert.equal(written[1].dedupeKey, shared);
   assert.notEqual(written[0].dedupeKey, written[1].dedupeKey, "les deux classes ne doivent pas partager un slot");
+});
+
+test("AC4 — un événement interne est lui aussi isolé du slot humain", async () => {
+  reset();
+  const shared = "report_viewed:abc:nosession-2026-07-29";
+  await POST(postRequest(CHROME_MAC, { event_name: "report_viewed", dedupe_key: shared }, { cookie: "gp_internal=1" }));
+
+  const written = insertedEvents();
+  assert.equal(written[0].metadata.trafficClass, "internal");
+  assert.equal(written[0].dedupeKey, `internal:${shared}`);
 });
 
 test("AC4 — la dédup intra-classe est inchangée : même classe, même clé, même slot", async () => {
@@ -221,6 +251,44 @@ test("sécurité — un lot d'événements est plafonné, l'écriture en masse e
   assert.equal(res.status, 200);
   assert.ok(body.recorded <= 20, `au plus 20 événements par requête, reçu ${body.recorded}`);
   assert.equal(insertedEvents().length, body.recorded);
+});
+
+test("sécurité — le DÉBIT d'un même appelant est plafonné, pas seulement le lot", async () => {
+  reset();
+  // Le scénario du finding : une boucle qui rejoue indéfiniment un lot de 20
+  // `report_viewed` avec un User-Agent de navigateur, donc classés `human`.
+  // Sans plafond de débit, 500 requêtes = 10 000 lignes dans la colonne sur
+  // laquelle un arbitrage de sprint se prend.
+  const flood = { events: Array.from({ length: 20 }, () => ({ event_name: "report_viewed" })) };
+
+  let recorded = 0;
+  let throttled = 0;
+  for (let index = 0; index < 500; index += 1) {
+    const body = await (await POST(postRequest(CHROME_MAC, flood, { "x-forwarded-for": "203.0.113.9" }))).json();
+    assert.equal(body.ok, true, "la route répond toujours 200 : un 4xx ferait réessayer le crawler");
+    recorded += body.recorded;
+    throttled += body.throttled;
+  }
+
+  assert.equal(recorded, MAX_CLIENT_FUNNEL_EVENTS_PER_MINUTE, "au plus une fenêtre de débit sur 10 000 événements postés");
+  assert.equal(recorded + throttled, 10_000, "tout ce qui n'est pas écrit est compté comme rejeté");
+  assert.equal(insertedEvents().length, recorded, "rien n'est écrit en base au-delà du plafond");
+});
+
+test("sécurité — le plafond de débit est par appelant, pas global", async () => {
+  reset();
+  const lot = { events: Array.from({ length: 20 }, () => ({ event_name: "report_viewed" })) };
+
+  for (let index = 0; index < 10; index += 1) {
+    await POST(postRequest(CHROME_MAC, lot, { "x-forwarded-for": "203.0.113.9" }));
+  }
+  // Un autre visiteur, derrière une autre IP, ne doit pas payer pour le premier.
+  const other = await (
+    await POST(postRequest(CHROME_MAC, lot, { "x-forwarded-for": "198.51.100.4" }))
+  ).json();
+
+  assert.equal(other.recorded, 20);
+  assert.equal(other.throttled, 0);
 });
 
 test("AC4 — anti-usurpation : un client qui se déclare human reste classé bot", async () => {
@@ -300,7 +368,6 @@ test("AC6 — la date de rupture est cherchée sur toute la table, pas sur la fe
   const sinceQuery = queries.find((query) => query.text.includes("MIN(created_at)"));
   assert.ok(sinceQuery);
   assert.equal(sinceQuery.text.includes("14 days"), false, "la date de rupture ne doit pas être bornée à 14 jours");
-  assert.match(sinceQuery.text, /trafficClass' = ANY/);
 });
 
 test("AC6 — la date de rupture ignore la valeur littérale « unknown », qui est réellement écrite", async () => {
@@ -313,7 +380,63 @@ test("AC6 — la date de rupture ignore la valeur littérale « unknown », qui 
   // `completeQueuedAudit` (audit mis en file avant le 29/07, terminé après) et
   // publierait une rupture pointant sur un événement NON classé.
   assert.equal(sinceQuery.text.includes("IS NOT NULL"), false);
-  const classes = sinceQuery.params[0] as string[];
-  assert.deepEqual([...classes].sort(), ["bot", "human", "internal"]);
-  assert.equal(classes.includes("unknown"), false);
+  assert.equal(sinceQuery.text.includes("'unknown'"), false);
+  for (const klass of ["human", "bot", "internal"]) {
+    assert.ok(sinceQuery.text.includes(`'${klass}'`), `la classe ${klass} doit être dans le prédicat`);
+  }
+});
+
+test("perf — le prédicat est un littéral IN, sinon l'index partiel ne peut pas être utilisé", async () => {
+  reset();
+  await GET(new realNext.NextRequest("https://www.getpick.ai/api/funnel"));
+
+  const sinceQuery = queries.find((query) => query.text.includes("MIN(created_at)"));
+  assert.ok(sinceQuery);
+  // `= ANY($1::text[])` empêche Postgres de reconnaître le prédicat de
+  // `audit_funnel_events_classified_created_idx` : Seq Scan de toute la table à
+  // chaque GET public, sans clé d'accès.
+  assert.equal(sinceQuery.text.includes("ANY("), false);
+  assert.deepEqual(sinceQuery.params, []);
+  assert.ok(sinceQuery.text.includes(CLASSIFIED_TRAFFIC_CLASSES_PREDICATE_SQL));
+  assert.equal(CLASSIFIED_TRAFFIC_CLASSES_PREDICATE_SQL, "metadata->>'trafficClass' IN ('human', 'bot', 'internal')");
+
+  // `@/lib/db` est mocké ici : on vérifie sur la SOURCE que l'index existe et
+  // qu'il est écrit avec la même constante que la requête — c'est cette identité
+  // littérale qui permet à Postgres de reconnaître le prédicat partiel.
+  const dbSource = await readFile(resolve(repoRoot, "src/lib/db.ts"), "utf8");
+  assert.match(dbSource, /CREATE INDEX IF NOT EXISTS audit_funnel_events_classified_created_idx/);
+  assert.match(dbSource, /ON audit_funnel_events \(created_at\)/);
+  assert.ok(
+    dbSource.includes("WHERE ${CLASSIFIED_TRAFFIC_CLASSES_PREDICATE_SQL}"),
+    "le prédicat de l'index doit venir de la constante partagée, pas d'une copie"
+  );
+});
+
+test("perf — une date de rupture non nulle n'est plus jamais recalculée", async () => {
+  reset();
+  since = new Date("2026-07-29T08:15:00.000Z");
+
+  await GET(new realNext.NextRequest("https://www.getpick.ai/api/funnel"));
+  const firstPass = queries.filter((query) => query.text.includes("MIN(created_at)")).length;
+
+  queries.length = 0;
+  const body = await (await GET(new realNext.NextRequest("https://www.getpick.ai/api/funnel"))).json();
+
+  assert.equal(firstPass, 1);
+  // Valeur monotone : `created_at` vaut `now()` à l'insertion, aucun événement
+  // postérieur ne peut être plus ancien que le premier événement classé.
+  assert.equal(queries.filter((query) => query.text.includes("MIN(created_at)")).length, 0);
+  assert.equal(body.traffic_class_since, "2026-07-29T08:15:00.000Z");
+});
+
+test("perf — l'absence de rupture n'est PAS mémorisée, sinon elle le serait à vie", async () => {
+  reset();
+  since = null;
+
+  let body = await (await GET(new realNext.NextRequest("https://www.getpick.ai/api/funnel"))).json();
+  assert.equal(body.traffic_class_since, null);
+
+  since = new Date("2026-07-29T08:15:00.000Z");
+  body = await (await GET(new realNext.NextRequest("https://www.getpick.ai/api/funnel"))).json();
+  assert.equal(body.traffic_class_since, "2026-07-29T08:15:00.000Z", "le premier événement classé doit être vu");
 });

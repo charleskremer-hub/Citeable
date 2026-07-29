@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { CLASSIFIED_TRAFFIC_CLASSES_PREDICATE_SQL } from "./traffic-filter";
 
 const globalForPg = globalThis as unknown as { pgPool?: Pool };
 
@@ -169,6 +170,21 @@ export async function ensureAuditSchema() {
   await pool.query(`CREATE INDEX IF NOT EXISTS audit_funnel_events_created_idx ON audit_funnel_events (created_at DESC)`);
   await pool.query(`CREATE INDEX IF NOT EXISTS audit_funnel_events_name_created_idx ON audit_funnel_events (event_name, created_at DESC)`);
   await pool.query(`CREATE INDEX IF NOT EXISTS audit_funnel_events_audit_idx ON audit_funnel_events (audit_id, created_at DESC)`);
+  // Sert `traffic_class_since` (voir `TRAFFIC_CLASS_SINCE_SQL`). Sans lui, chaque
+  // `GET /api/funnel` — public, `no-store`, sans clé — déclenchait un Seq Scan de
+  // toute la table sur `metadata->>'trafficClass'`, sur le même pool Neon que
+  // `/api/run-audit`, et la table grossit désormais plus vite qu'avant (les
+  // événements bots/internes sont persistés au lieu d'être jetés).
+  //
+  // Index PARTIEL et sur `created_at` : le prédicat doit être écrit exactement
+  // comme celui de la requête (d'où la constante partagée
+  // `CLASSIFIED_TRAFFIC_CLASSES_PREDICATE_SQL`), et la colonne indexée doit être
+  // celle du `MIN()` pour que Postgres réponde par la première entrée de l'index.
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS audit_funnel_events_classified_created_idx
+    ON audit_funnel_events (created_at)
+    WHERE ${CLASSIFIED_TRAFFIC_CLASSES_PREDICATE_SQL}
+  `);
   await pool.query(`
     UPDATE monitored_brands
     SET next_run_at = GREATEST(next_run_at, COALESCE(last_run_at, created_at) + interval '30 days')
