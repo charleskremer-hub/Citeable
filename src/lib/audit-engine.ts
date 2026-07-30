@@ -3418,6 +3418,44 @@ async function generateBuyerIntentPromptsAI(
   return { prompts: null, debug: lastDebug };
 }
 
+/**
+ * Nombre de questions d'achat sondées de front.
+ *
+ * 4 et pas 12 : le but est de tenir dans le plafond d'invocation, pas de saturer
+ * Gemini. Une vague de 4 laisse une marge de retry côté fournisseur et garde la
+ * charge prévisible quand plusieurs audits tournent en même temps.
+ */
+export const PROMPT_CONCURRENCY = 4;
+
+/**
+ * `Promise.all` borné, qui PRÉSERVE L'ORDRE des résultats.
+ *
+ * L'ordre compte ici : les questions d'achat sont rendues au prospect dans
+ * l'ordre où elles ont été générées, et la règle d'arrêt du premier sondage
+ * non « checked » n'a de sens que sur une liste ordonnée. Un `Promise.all` nu
+ * conviendrait pour l'ordre mais lancerait les 12 appels d'un coup.
+ */
+export async function mapWithConcurrency<T, R>(
+  items: readonly T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let next = 0;
+
+  const workers = Array.from({ length: Math.max(1, Math.min(limit, items.length)) }, async () => {
+    for (;;) {
+      const index = next;
+      next += 1;
+      if (index >= items.length) return;
+      results[index] = await fn(items[index], index);
+    }
+  });
+
+  await Promise.all(workers);
+  return results;
+}
+
 async function analyzeBuyerIntentPrompts(brandName: string, websiteUrl: string, domain: string, category: string, homepageText: string, tier: AuditTier, locale?: Locale): Promise<{ prompts: BuyerIntentPromptResult[]; promptDebug: string }> {
   // 3 questions ne suffisaient pas à faire apparaître un écart : mesuré en base le
   // 21/07, les 7 audits gratuits ont tous rendu 3/3 mentions et un score ai_visibility
@@ -3443,10 +3481,35 @@ async function analyzeBuyerIntentPrompts(brandName: string, websiteUrl: string, 
   const results: BuyerIntentPromptResult[] = [];
   const answerEngine = answerEngineForTier(tier);
 
-  for (const prompt of prompts) {
-    const searchSurface = answerEngine
-      ? await probeAnswerEngine(prompt, brandName, domain, answerEngine)
-      : await probeSupplementarySearch(prompt, brandName, domain);
+  // Les questions sont sondées EN PARALLÈLE, par vagues de PROMPT_CONCURRENCY.
+  //
+  // Pourquoi : cette boucle était un `for ... await`, une question à la fois, à
+  // ANSWER_TIMEOUT_MS = 18 s chacune, dans une invocation plafonnée à
+  // `maxDuration = 60`. Le tier gratuit (6 questions) tenait de justesse ; le
+  // tier payant (12) ne pouvait pas tenir — mesuré le 30/07 en production :
+  // `monitor_9eur` 0/5 audits rendus, `free` 2/2 rendus en moins de 90 s.
+  // Ce n'est pas le tier payant qui est trop lourd, c'est le budget qu'on
+  // dépensait en file indienne.
+  //
+  // En parallèle, la durée d'une vague vaut celle de son appel le plus lent, pas
+  // leur somme : 12 questions à 3 vagues de 4 tiennent dans ~3 x 18 s au pire,
+  // sous le plafond, là où la version séquentielle demandait jusqu'à 12 x 18 s.
+  //
+  // La borne existe pour ne pas troquer un dépassement de budget contre un
+  // throttling Gemini : on ne lance jamais 12 appels d'un coup.
+  const surfaces = await mapWithConcurrency(prompts, PROMPT_CONCURRENCY, (prompt) =>
+    answerEngine
+      ? probeAnswerEngine(prompt, brandName, domain, answerEngine)
+      : probeSupplementarySearch(prompt, brandName, domain)
+  );
+
+  // L'ordre et la règle d'arrêt sont ceux d'avant, à l'identique : on parcourt
+  // les résultats DANS L'ORDRE DES QUESTIONS et on s'arrête au premier sondage
+  // non « checked ». Seul le MOMENT où le travail est fait change ; ce que la
+  // fonction rend, non.
+  for (let index = 0; index < prompts.length; index += 1) {
+    const prompt = prompts[index];
+    const searchSurface = surfaces[index];
     const checkedSurfaces = searchSurface.reachable && searchSurface.status === "checked" ? [searchSurface] : [];
     const competitors = uniqueInOrder(checkedSurfaces.flatMap((surface) => surface.competitors), 12);
 
