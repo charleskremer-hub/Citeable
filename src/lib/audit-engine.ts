@@ -3421,11 +3421,22 @@ async function generateBuyerIntentPromptsAI(
 /**
  * Nombre de questions d'achat sondées de front.
  *
- * 4 et pas 12 : le but est de tenir dans le plafond d'invocation, pas de saturer
- * Gemini. Une vague de 4 laisse une marge de retry côté fournisseur et garde la
- * charge prévisible quand plusieurs audits tournent en même temps.
+ * 6 et pas 12 : le but est de tenir dans le plafond d'invocation, pas de saturer
+ * Gemini.
+ *
+ * Passé de 4 à 6 le 30/07 APRÈS mesure en production, pas avant. À 4, les
+ * 12 questions du tier payant tenaient en 3 vagues et le taux de rendu est passé
+ * de 0/5 à 4/5 (12 questions rendues en 26-33 s). Le seul échec restant a duré
+ * 188 s : une marque dont les appels touchent le timeout de 18 s, soit 3 x 18 =
+ * 54 s, plus la génération des questions et le chargement de la page — au-dessus
+ * du plafond de 60 s. À 6, les mêmes 12 questions tiennent en 2 vagues, donc
+ * 2 x 18 = 36 s au pire, ce qui laisse la marge qui manquait.
+ *
+ * On ne monte pas à 12 : lancer tous les appels d'un coup troquerait un
+ * dépassement de budget contre un throttling fournisseur, et les mesures
+ * montrent des appels à ~10 s — 2 vagues suffisent largement.
  */
-export const PROMPT_CONCURRENCY = 4;
+export const PROMPT_CONCURRENCY = 6;
 
 /**
  * `Promise.all` borné, qui PRÉSERVE L'ORDRE des résultats.
