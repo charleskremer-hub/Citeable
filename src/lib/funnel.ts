@@ -11,10 +11,6 @@ export const FUNNEL_EVENTS = [
   "audit_started",
   "audit_completed",
   "report_viewed",
-  // Porte de capture (30/07) : montée à l'écran du gate, AVANT la décision de
-  // réclamer ou non. Sans elle, `email_captured / report_viewed` ne dit pas si
-  // le gate a seulement été loupé (jamais monté) ou vu-et-refusé.
-  "gate_shown",
   // Audit sans friction : l'audit démarre sans email, le lead est capturé plus
   // tard sur le rapport en échange du détail (voir /api/claim-audit).
   "email_captured",
@@ -47,7 +43,7 @@ export type FunnelEventName = (typeof FUNNEL_EVENTS)[number];
  * compteurs de haut de funnel (les 147 `audit_started`), et le plafond de lot
  * ci-dessous coupe l'écriture en masse en une requête.
  */
-export const CLIENT_FUNNEL_EVENTS = ["report_viewed", "gate_shown", "teaser_cta_click", "checkout_opened"] as const;
+export const CLIENT_FUNNEL_EVENTS = ["report_viewed", "teaser_cta_click", "checkout_opened"] as const;
 
 export type ClientFunnelEventName = (typeof CLIENT_FUNNEL_EVENTS)[number];
 

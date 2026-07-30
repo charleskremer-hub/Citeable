@@ -202,7 +202,7 @@ export async function ensureAuditSchema() {
   await pool.query(`
     ALTER TABLE audit_funnel_events
     ADD CONSTRAINT audit_funnel_events_event_name_check
-    CHECK (event_name IN ('audit_started', 'audit_completed', 'report_viewed', 'gate_shown', 'email_captured', 'teaser_cta_click', 'checkout_opened', 'followup_1_sent', 'followup_2_sent', 'followup_click'))
+    CHECK (event_name IN ('audit_started', 'audit_completed', 'report_viewed', 'email_captured', 'teaser_cta_click', 'checkout_opened', 'followup_1_sent', 'followup_2_sent', 'followup_click'))
   `);
   await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS audit_funnel_events_created_idx ON audit_funnel_events (created_at DESC)`);
   await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS audit_funnel_events_name_created_idx ON audit_funnel_events (event_name, created_at DESC)`);
