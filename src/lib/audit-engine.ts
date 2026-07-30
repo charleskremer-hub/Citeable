@@ -1341,25 +1341,44 @@ function isAnswerEngineError(response: AnswerEngineResponse): response is Answer
 // Gemini et ChatGPT recevaient deux copies littéralement identiques de ces règles,
 // maintenues à la main. Un seul constructeur : ajouter un champ ne peut plus faire
 // diverger les deux moteurs, ce qui rendrait les rapports incomparables entre tiers.
-function answerEnginePrompt(question: string, context: AnswerEngineQuestionContext) {
+/**
+ * La question d'achat est posée À L'AVEUGLE : ni nom de marque, ni domaine.
+ *
+ * Ce que ce produit prétend mesurer, c'est « le moteur cite-t-il spontanément
+ * cette marque quand un acheteur pose une vraie question ? ». L'ancienne version
+ * envoyait `Audited brand: X` avec la question, puis lisait la réponse du modèle
+ * à « as-tu cité X ? ». **On nommait la marque, puis on demandait au modèle s'il
+ * la recommandait.**
+ *
+ * Mesuré le 30/07 : quatre marques minuscules du registre Agence Bio sortaient
+ * à 6/6 mentions, scores 94/79/94/91, et le texte brut les plaçait EN TÊTE —
+ * `recommended_brands: Abies Lagrimus, Edmond Fallot, Maison Marc` et
+ * `recommended_brands: ACAOYER, La Maison du Chocolat, Pierre Hermé`. Aucune
+ * réponse organique ne fait ça : le nom était dans le contexte, le modèle le
+ * replaçait. C'est la même faute que les questions brandées corrigées le 21/07,
+ * un cran plus profond — le nom avait quitté la QUESTION, pas l'ÉVALUATION.
+ *
+ * Un vrai acheteur ne dit pas au moteur quelle marque il espère voir. Nous non
+ * plus, désormais : la question part seule, et c'est NOUS qui cherchons la
+ * marque dans la réponse libre (`mentionsBrandOrDomain`).
+ *
+ * Conséquence assumée : `audited_brand_sentiment` et `audited_brand_category`
+ * ne peuvent plus venir de cet appel — ils exigeaient le nom. Ils retombent sur
+ * `not_enough_signal`, ce que l'affichage gère déjà. Les rétablir demande un
+ * second appel, une fois par audit et non par question ; c'est une story à part,
+ * et il vaut mieux une donnée absente qu'une donnée produite par un modèle amorcé.
+ */
+export function answerEnginePrompt(question: string) {
   return [
-    "You are answering a real buyer-intent recommendation question for a visibility audit.",
+    "You are answering a real buyer-intent recommendation question, exactly as you would for a shopper who typed it.",
     `Buyer question: ${question}`,
-    `Audited brand: ${context.brandName}`,
-    `Audited domain: ${context.domain}`,
     "Return ONLY valid JSON with this exact shape:",
-    '{"recommended_brands":["On","Hoka","Veja"],"audited_brand_sentiment":"positive","audited_brand_sentiment_reason":"described as a trusted premium option","audited_brand_category":"running shoes"}',
+    '{"recommended_brands":["On","Hoka","Veja"]}',
     "Rules:",
     "- recommended_brands must contain only real brand/company/product names that answer the buyer question.",
-    `- Include ${context.brandName} only if you would genuinely recommend or cite it for this question.`,
-    `- Do not include ${context.domain} unless it is itself the brand name.`,
+    "- Rank them the way you would actually present them to the shopper, best first.",
     "- Do not include generic words, categories, adjectives, personas, locations, headings, explanations, URLs, or prose tokens.",
     "- If you cannot name any recommended brands, return an empty recommended_brands array.",
-    `- audited_brand_sentiment must describe only how you are presenting ${context.brandName} in this answer: positive, neutral, negative, or not_enough_signal.`,
-    "- Use not_enough_signal if the audited brand is not clearly described in the answer.",
-    "- audited_brand_sentiment_reason must be one short, non-technical phrase in plain English, or exactly not enough signal.",
-    `- audited_brand_category must state, in 2 to 4 words, what kind of product or service you believe ${context.brandName} sells, based only on what you already know about it — for example "running shoes", "skincare", "project management software".`,
-    `- Return an empty string for audited_brand_category if you do not know what ${context.brandName} sells. Never guess from the buyer question itself.`,
   ].join("\n");
 }
 
@@ -1377,7 +1396,7 @@ function createGeminiProvider(): AnswerEngineProvider {
     async ask(question: string, context: AnswerEngineQuestionContext) {
       if (!apiKey) throw new Error(GEMINI_UNAVAILABLE);
 
-      const prompt = answerEnginePrompt(question, context);
+      const prompt = answerEnginePrompt(question);
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
       let lastError = GEMINI_UNAVAILABLE;
 
@@ -1438,7 +1457,7 @@ function createOpenAIProvider(): AnswerEngineProvider {
     async ask(question: string, context: AnswerEngineQuestionContext) {
       if (!apiKey) throw new Error(OPENAI_UNAVAILABLE);
 
-      const prompt = answerEnginePrompt(question, context);
+      const prompt = answerEnginePrompt(question);
       let lastRateLimitError: AnswerEngineError | null = null;
 
       for (let attempt = 0; attempt < 2; attempt += 1) {
@@ -3253,7 +3272,11 @@ async function probeAnswerEngine(prompt: string, brandName: string, domain: stri
     // qu'il l'a nommée : on corrige brandMentioned au lieu de sous-estimer le score,
     // et le filtre ci-dessous la retire de la liste des concurrents (bug du 20/07).
     const brandListedAsCompetitor = (structuredAnswer.competitorBrands ?? []).some((brand) => isAuditedBrandName(brand, brandName, domain));
-    const brandMentioned = (structuredAnswer.brandMentioned ?? mentionsBrandOrDomain(structuredAnswer.answer, brandName, domain)) || brandListedAsCompetitor;
+    // La mention est constatée PAR NOUS dans la réponse libre, jamais déclarée par
+    // le modèle : il ne connaît plus le nom de la marque, et même s'il le
+    // connaissait, lui demander de s'auto-évaluer est ce qui a produit des scores
+    // de 94 pour des marques invisibles.
+    const brandMentioned = mentionsBrandOrDomain(structuredAnswer.answer, brandName, domain) || brandListedAsCompetitor;
     const competitors = filterStructuredCompetitorBrands(structuredAnswer.competitorBrands, brandName, domain, prompt);
 
     return {
