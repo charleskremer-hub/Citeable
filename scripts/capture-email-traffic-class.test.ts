@@ -65,6 +65,7 @@ mock.module(funnelUrl, {
 mock.module(auditEngineUrl, {
   namedExports: {
     auditTierFromPayload: () => "free",
+    resolveAuditTier: () => ({ tier: "free", requested: "free", downgradedFrom: null }),
     checkFreeAuditQuota: async () => (quotaAllowed ? { allowed: true } : { allowed: false, error: "Quota atteint", limitType: "domain", retryAfterHours: 24 }),
     findFreshFreeGeminiAudit: async () => cachedAudit,
     brandDedupeDomain: (url: string) => url,

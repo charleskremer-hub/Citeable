@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
-import { auditTierFromPayload, checkFreeAuditQuota, findFreshFreeGeminiAudit, brandDedupeDomain, createCachedFreeAuditForLead, recipientLocaleFromSignals, runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
+import { resolveAuditTier, checkFreeAuditQuota, findFreshFreeGeminiAudit, brandDedupeDomain, createCachedFreeAuditForLead, recipientLocaleFromSignals, runQueuedAudit, validateAuditInput } from "@/lib/audit-engine";
 import { recordFunnelEvent } from "@/lib/funnel";
 import { localeFromUnknown } from "@/lib/i18n";
 import { requestTrafficClass } from "@/lib/traffic-filter";
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     const { trafficClass } = requestTrafficClass(req.headers);
 
     const payload = await req.json();
-    const auditTier = auditTierFromPayload(payload);
+    const { tier: auditTier, downgradedFrom: tierDowngradedFrom } = resolveAuditTier(payload, req.headers);
     const requestedLocale = payload && typeof payload === "object" && "locale" in payload ? localeFromUnknown((payload as Record<string, unknown>).locale) : undefined;
     const auditId = typeof payload.audit_id === "string" ? payload.audit_id : undefined;
 
@@ -114,14 +114,14 @@ export async function POST(req: NextRequest) {
           eventName: "audit_started",
           auditId: createdOrCachedAuditId,
           source: "run_audit_cached",
-          metadata: { brandName, websiteUrl, auditTier, cachedFromAuditId: cachedAudit.id, locale, trafficClass },
+          metadata: { brandName, websiteUrl, auditTier, tierDowngradedFrom, cachedFromAuditId: cachedAudit.id, locale, trafficClass },
           dedupeKey: `audit_started:${createdOrCachedAuditId}`,
         });
         await recordFunnelEvent({
           eventName: "audit_completed",
           auditId: createdOrCachedAuditId,
           source: "run_audit_cached",
-          metadata: { brandName, websiteUrl, auditTier, cachedFromAuditId: cachedAudit.id, locale, trafficClass },
+          metadata: { brandName, websiteUrl, auditTier, tierDowngradedFrom, cachedFromAuditId: cachedAudit.id, locale, trafficClass },
           dedupeKey: `audit_completed:${createdOrCachedAuditId}`,
         });
 
@@ -157,7 +157,7 @@ export async function POST(req: NextRequest) {
       eventName: "audit_started",
       auditId: createdAuditId,
       source: "run_audit",
-      metadata: { brandName, websiteUrl, auditTier, locale, trafficClass },
+      metadata: { brandName, websiteUrl, auditTier, tierDowngradedFrom, locale, trafficClass },
       dedupeKey: `audit_started:${createdAuditId}`,
     });
 

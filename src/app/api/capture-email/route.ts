@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
-import { auditTierFromPayload, checkFreeAuditQuota, findFreshFreeGeminiAudit, brandDedupeDomain, createCachedFreeAuditForLead, recipientLocaleFromSignals, runQueuedAudit, validateAuditInputAllowAnonymous } from "@/lib/audit-engine";
+import { resolveAuditTier, checkFreeAuditQuota, findFreshFreeGeminiAudit, brandDedupeDomain, createCachedFreeAuditForLead, recipientLocaleFromSignals, runQueuedAudit, validateAuditInputAllowAnonymous } from "@/lib/audit-engine";
 import { recordFunnelEvent } from "@/lib/funnel";
 import { localeFromUnknown } from "@/lib/i18n";
 import { requestTrafficClass } from "@/lib/traffic-filter";
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
 
     const payload = await req.json();
     const { email, brandName, websiteUrl, anonymous } = validateAuditInputAllowAnonymous(payload);
-    const auditTier = auditTierFromPayload(payload);
+    const { tier: auditTier, downgradedFrom: tierDowngradedFrom } = resolveAuditTier(payload, req.headers);
     const locale = payload && typeof payload === "object" && "locale" in payload ? localeFromUnknown((payload as Record<string, unknown>).locale) : recipientLocaleFromSignals(email, websiteUrl);
     const dedupeDomain = brandDedupeDomain(websiteUrl);
 
@@ -45,14 +45,14 @@ export async function POST(req: NextRequest) {
           eventName: "audit_started",
           auditId,
           source: "capture_email_cached",
-          metadata: { brandName, websiteUrl, auditTier, cachedFromAuditId: cachedAudit.id, locale, trafficClass },
+          metadata: { brandName, websiteUrl, auditTier, tierDowngradedFrom, cachedFromAuditId: cachedAudit.id, locale, trafficClass },
           dedupeKey: `audit_started:${auditId}`,
         });
         await recordFunnelEvent({
           eventName: "audit_completed",
           auditId,
           source: "capture_email_cached",
-          metadata: { brandName, websiteUrl, auditTier, cachedFromAuditId: cachedAudit.id, locale, trafficClass },
+          metadata: { brandName, websiteUrl, auditTier, tierDowngradedFrom, cachedFromAuditId: cachedAudit.id, locale, trafficClass },
           dedupeKey: `audit_completed:${auditId}`,
         });
 
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
       eventName: "audit_started",
       auditId,
       source: "capture_email",
-      metadata: { brandName, websiteUrl, auditTier, locale, trafficClass },
+      metadata: { brandName, websiteUrl, auditTier, tierDowngradedFrom, locale, trafficClass },
       dedupeKey: `audit_started:${auditId}`,
     });
 

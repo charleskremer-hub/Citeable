@@ -375,6 +375,71 @@ export function auditTierFromPayload(input: Record<string, unknown>): AuditTier 
   return "free";
 }
 
+/**
+ * En-tête portant la clé qui AUTORISE un tier payant.
+ *
+ * `auditTierFromPayload()` ci-dessus ne fait que LIRE une intention dans le
+ * corps de la requête. Elle n'autorise rien, et elle ne le doit pas — c'est ce
+ * mélange qui a laissé le produit payant accessible à quiconque postait
+ * `{"audit_tier":"monitor_9eur"}` : 12 questions d'achat au lieu de 6, sans
+ * paiement, sur les deux routes publiques.
+ */
+export const AUDIT_TIER_KEY_HEADER = "x-getpick-audit-key";
+
+/**
+ * Le tier réellement servi, une fois l'intention confrontée à un droit.
+ *
+ * Il n'existe AUJOURD'HUI aucun lien paiement → droit dans ce dépôt : pas de
+ * table d'abonnements, pas de Stripe, aucun récepteur de webhook de paiement.
+ * `monitored_brands` ne peut pas servir de source de droit — elle est peuplée
+ * PAR un audit payant qui a déjà tourné (`audit-engine.ts`, INSERT en fin de
+ * `runAudit`), donc s'en servir pour autoriser ce même audit serait circulaire.
+ *
+ * Tant que ce lien n'existe pas, le seul droit défendable est une clé serveur :
+ * elle couvre notre propre outillage (protocoles de mesure répétés, dogfooding)
+ * et laisse une couture nette là où le vrai contrôle d'abonnement viendra.
+ *
+ * FAIL-SAFE, dans ce sens uniquement : clé absente de l'environnement, clé vide,
+ * en-tête absent ou clé fausse => on sert `free`. Une erreur de configuration
+ * doit coûter un audit gratuit de trop, jamais le produit payant donné.
+ *
+ * On ne rejette pas la requête (pas de 402) : refuser révélerait quel tier
+ * existe et casserait les intégrations. On sert le tier gratuit, et on dit dans
+ * `downgradedFrom` ce qui a été demandé, pour que la tentative soit visible en
+ * base au lieu d'être muette.
+ */
+export function resolveAuditTier(
+  payload: Record<string, unknown>,
+  headers: { get(name: string): string | null }
+): { tier: AuditTier; requested: AuditTier; downgradedFrom: AuditTier | null } {
+  const requested = auditTierFromPayload(payload);
+
+  if (requested === "free") {
+    return { tier: "free", requested, downgradedFrom: null };
+  }
+
+  const expected = (process.env.INTERNAL_AUDIT_KEY ?? "").trim();
+  const provided = (headers.get(AUDIT_TIER_KEY_HEADER) ?? "").trim();
+
+  // Comparaison à temps constant : la clé ne doit pas se deviner en mesurant.
+  const authorized =
+    expected.length > 0 && provided.length === expected.length && timingSafeEqualString(provided, expected);
+
+  if (authorized) {
+    return { tier: requested, requested, downgradedFrom: null };
+  }
+
+  return { tier: "free", requested, downgradedFrom: requested };
+}
+
+function timingSafeEqualString(a: string, b: string): boolean {
+  let diff = 0;
+  for (let i = 0; i < a.length; i += 1) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
 export async function findFreshFreeGeminiAudit(brandName: string, websiteUrl: string) {
   const domain = domainFromWebsite(websiteUrl);
   const cached = await pool.query<CachedFreeAuditRow>(
