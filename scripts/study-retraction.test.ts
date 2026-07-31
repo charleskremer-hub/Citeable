@@ -377,6 +377,33 @@ for (const [surface, text, motive] of DATED_SURFACES()) {
   });
 }
 
+// `studyPageCopy` n'est une image des surfaces publiées que si la page rend
+// TOUT ce qu'il déclare. Sans ce test, la divergence est muette dans les deux
+// sens : une clé peut être déclarée et jamais rendue (`cta.fr` l'était), et le
+// bloc <section> français peut disparaître de la page sans qu'une seule
+// assertion bronche — les tests scanneraient encore `body.fr`, chaîne devenue
+// morte. Les deux trous se ferment par la même exigence.
+//
+// « Rendue » signifie : la page cite le chemin d'accès (`studyPageCopy.body.fr`),
+// ou la valeur part dans le JSON-LD, que la page rend en bloc via
+// `studyArticleSchema`.
+const schemaJson = JSON.stringify(studyArticleSchema);
+const accessorOf = (path: string) => path.replace(/\[\d+\]/g, "");
+
+test("AC4 — /study rend TOUTE chaîne déclarée par studyPageCopy : aucune chaîne morte", () => {
+  const dead = collectStrings(studyPageCopy, "studyPageCopy")
+    .filter(([path, text]) => !studyPageSource.includes(accessorOf(path)) && !schemaJson.includes(text))
+    .map(([path]) => accessorOf(path));
+
+  assert.deepEqual(
+    [...new Set(dead)],
+    [],
+    `chaîne(s) déclarée(s) dans studyPageCopy et rendue(s) nulle part par src/app/study/page.tsx : ${[
+      ...new Set(dead),
+    ].join(", ")} — le test des surfaces de /study les scanne comme publiées alors qu'aucun lecteur ne les voit ; soit la page les rend, soit elles sortent du module`
+  );
+});
+
 for (const locale of LOCALES) {
   test(`AC4 — la note de retrait ${locale} est rendue par la page`, { skip: skipUnlessWithdrawn }, () => {
     const note = studyRetractionNote[locale];
@@ -384,6 +411,13 @@ for (const locale of LOCALES) {
     assert.ok(
       studyPageCopy.body[locale].includes(note),
       `la note de retrait ${locale} doit être un paragraphe du corps de /study, pas une chaîne morte`
+    );
+    // Le maillon manquant : le paragraphe existe dans le module, encore faut-il
+    // que la page le rende. Effacer le bloc <section> français passait sans ça.
+    assert.match(
+      studyPageSource,
+      new RegExp(`studyPageCopy\\.body\\.${locale}\\b`),
+      `src/app/study/page.tsx doit rendre studyPageCopy.body.${locale} : sans ce bloc, la note de retrait ${locale} n'est publiée nulle part`
     );
   });
 }

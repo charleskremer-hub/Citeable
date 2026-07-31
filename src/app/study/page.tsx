@@ -48,6 +48,25 @@ function Paragraph({ children }: { children: React.ReactNode }) {
   return <p className="m-0 mt-4 text-[1.02rem] font-medium leading-[1.75] text-[#C7C7D1]">{children}</p>;
 }
 
+/**
+ * Le CTA de sortie, rendu UNE FOIS PAR LANGUE — au pied du bloc EN, au pied du
+ * bloc FR. Un unique CTA anglais en fin de page laissait `studyPageCopy.cta.fr`
+ * déclaré mais jamais rendu : une chaîne morte que le test scannait comme une
+ * « surface de /study » alors qu'aucun lecteur ne la voyait jamais.
+ */
+function Cta({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="m-0 mt-10">
+      <Link
+        href="/"
+        className="inline-flex rounded-xl border border-[#CAFF3C]/30 bg-[#CAFF3C]/[0.07] px-5 py-3 text-sm font-black text-[#CAFF3C] no-underline transition hover:bg-[#CAFF3C]/[0.12]"
+      >
+        {children}
+      </Link>
+    </p>
+  );
+}
+
 export default function StudyPage() {
   return (
     <main className="mx-auto max-w-3xl px-5 py-14 sm:px-6 sm:py-20" style={{ fontFamily: "var(--font-sans)" }}>
@@ -72,6 +91,8 @@ export default function StudyPage() {
         <Paragraph key={paragraph}>{paragraph}</Paragraph>
       ))}
 
+      <Cta>{studyPageCopy.cta.en}</Cta>
+
       {/* La même note en français : la page est liée depuis /vs ET /fr/vs. */}
       <section className="mt-14 border-t border-white/[0.08] pt-10">
         <p className="m-0 text-xs font-black uppercase tracking-[0.14em] text-[#8E8E9A]">
@@ -92,16 +113,9 @@ export default function StudyPage() {
         {studyPageCopy.body.fr.map((paragraph) => (
           <Paragraph key={paragraph}>{paragraph}</Paragraph>
         ))}
-      </section>
 
-      <p className="m-0 mt-10">
-        <Link
-          href="/"
-          className="inline-flex rounded-xl border border-[#CAFF3C]/30 bg-[#CAFF3C]/[0.07] px-5 py-3 text-sm font-black text-[#CAFF3C] no-underline transition hover:bg-[#CAFF3C]/[0.12]"
-        >
-          {studyPageCopy.cta.en}
-        </Link>
-      </p>
+        <Cta>{studyPageCopy.cta.fr}</Cta>
+      </section>
     </main>
   );
 }
