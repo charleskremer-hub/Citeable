@@ -45,10 +45,12 @@ ne construit pas de workflow, il veut le résultat ». L'espace vide n'est donc 
 2. **On nomme le rival** — l'audit nomme le concurrent recommandé à la place, quand
    il y en a un. C'est le déclencheur émotionnel. ⛔️ **Le ratio « 14/21 » est RETIRÉ le 2026-07-31 — instrument corrigé le 2026-07-30, en attente du rerun**
    (mesure contaminée, cf. `src/lib/study-status.ts` et `/study`) :
-   ne le remettre dans aucun contenu tant que le rerun aveugle n'a pas publié. Preuve
-   utilisable en attendant : un audit aveugle nominatif (ex. Skintips, 0 mention sur
-   12 questions, rivaux CeraVe 7/12 et La Roche-Posay 7/12 —
-   `outbound/CEO_RUN_2026-07-31.md` l. 191).
+   ne le remettre dans aucun contenu tant que le rerun aveugle n'a pas publié.
+   En attendant, la capacité se démontre **sans chiffre publié** : l'audit nomme le
+   rival, et la démonstration se fait en direct sur la marque du prospect lui-même.
+   Le résultat chiffré d'une marque auditée — client ou prospect — ne part dans
+   aucun contenu public sans son accord écrit, et aucun compte de mentions ne
+   revient en copy avant le rerun.
 3. **Vrais appels LLM en direct** — jamais de prompts simulés (différenciateur vs
    Semrush, documenté).
 4. **Zéro unité de compte** — pas de crédits, pas de calculateur, 9 €. Le marché
