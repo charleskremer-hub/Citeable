@@ -25,7 +25,7 @@ options réelles sont :
 
 | Alternative | Coût réel | Ce qui cloche pour lui |
 |---|---|---|
-| **Ne rien faire** (le défaut, ~95 % du marché) | 0 | Il ne sait même pas qu'il perd des ventes — notre étude : 14/21 marques ont un rival nommé à leur place |
+| **Ne rien faire** (le défaut, ~95 % du marché) | 0 | Il ne sait même pas qu'il perd des ventes — nos audits à l'aveugle nomment régulièrement un rival à la place de la marque (chiffre agrégé retiré le 31/07/2026, rerun en cours) |
 | **Demander lui-même à ChatGPT** | 0 | Anecdotique, une question, pas de suivi, pas de correctifs |
 | **Outils de monitoring** (Peec, Profound, Otterly, Scrunch…) | 99–400 $/mois | Dashboards, crédits, calculateurs — conçus pour des équipes marketing, pas pour un fondateur seul. Et ils INFORMENT, ils n'agissent pas |
 | **Générateurs one-shot** (citeable.eu) | 39 € une fois | Un fichier statique, aucune boucle : les réponses IA bougent, le fichier non |
@@ -42,8 +42,13 @@ ne construit pas de workflow, il veut le résultat ». L'espace vide n'est donc 
 1. **On écrit les correctifs** — Monitor livre du contenu à copier-coller, généré
    depuis le VRAI écart mesuré (la question précise où le rival est cité). Aucun
    outil de monitoring ne fait ça à notre prix ; l'agence le fait à 300× notre prix.
-2. **On nomme le rival** — 14/21 audits nomment le concurrent recommandé à la place.
-   C'est le déclencheur émotionnel, prouvé par nos données.
+2. **On nomme le rival** — l'audit nomme le concurrent recommandé à la place, quand
+   il y en a un. C'est le déclencheur émotionnel. ⛔️ **Le ratio « 14/21 » est RETIRÉ le 2026-07-31 — instrument corrigé le 2026-07-30, en attente du rerun**
+   (mesure contaminée, cf. `src/lib/study-status.ts` et `/study`) :
+   ne le remettre dans aucun contenu tant que le rerun aveugle n'a pas publié. Preuve
+   utilisable en attendant : un audit aveugle nominatif (ex. Skintips, 0 mention sur
+   12 questions, rivaux CeraVe 7/12 et La Roche-Posay 7/12 —
+   `outbound/CEO_RUN_2026-07-31.md` l. 191).
 3. **Vrais appels LLM en direct** — jamais de prompts simulés (différenciateur vs
    Semrush, documenté).
 4. **Zéro unité de compte** — pas de crédits, pas de calculateur, 9 €. Le marché
@@ -91,7 +96,10 @@ chaque évolution produit doit renforcer « il AGIT », jamais « il affiche ».
   l'IA répond [Rival]. » · EN « When a shopper asks what to buy, AI answers
   [Rival]. »
 - **Ancrage prix** : « Le travail d'une agence GEO (2 000–20 000 €/mois). 9 €. »
-- **Preuve** : l'étude 21 marques + « live checks, never simulated ».
+- **Preuve** : ⛔️ plus l'étude 21 marques (chiffres retirés le 2026-07-31, rerun
+  aveugle en cours). En attendant : « live checks, never simulated », un audit
+  aveugle nominatif traçable, et la page de retrait elle-même — constater plutôt
+  que déclarer, y compris sur soi.
 
 ## 6. Le nom (dérivé, enfin, du positionnement)
 
