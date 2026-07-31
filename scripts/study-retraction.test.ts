@@ -27,6 +27,15 @@ import {
   studyPageCopy,
   studyRetractionNote,
 } from "@/lib/study-status";
+// Import de NAMESPACE, en plus des imports nommés. Les bans de l'AC2 balaient
+// TOUT ce que le module exporte, pas les deux objets qu'on avait pensé à citer :
+// `page.tsx` ne déclare aucune chaîne en propre (test plus bas), donc un chiffre
+// republié atterrit forcément dans un export de ce module — et jusqu'ici il
+// suffisait de le poser à côté de `studyPageCopy` (`export const studyHighlights
+// = ["…31 to 88…"]`, rendu par `{studyHighlights.map(…)}`) pour passer au
+// travers. Balayer le namespace ferme le contournement par construction :
+// l'export ajouté demain est scanné sans qu'on ait à l'inscrire ici.
+import * as studyStatusModule from "@/lib/study-status";
 import { vsCopy } from "@/lib/vs-comparison";
 
 const LOCALES = ["en", "fr"] as const satisfies readonly Locale[];
@@ -277,12 +286,27 @@ const SURFACE_OF: Readonly<Record<string, string>> = {
   "studyPageCopy.ogDescription": "openGraph.description",
 };
 
+// Le balayage porte sur le MODULE ENTIER, export par export — pas sur la liste
+// des exports qu'on a pensé à citer. Les chemins gardent leur nom d'export en
+// tête (`studyPageCopy.metaTitle`, `studyHighlights[0]`), donc un échec localise
+// la chaîne fautive aussi précisément qu'avant.
 const STUDY_SURFACES = (): readonly (readonly [string, string])[] => [
-  ...collectStrings(studyPageCopy, "studyPageCopy").map(
-    ([path, text]) => [SURFACE_OF[path] ?? path, text] as const
-  ),
+  ...Object.entries(studyStatusModule)
+    .flatMap(([exportName, value]) => collectStrings(value, exportName))
+    .map(([path, text]) => [SURFACE_OF[path] ?? path, text] as const),
   ["JSON-LD Article", JSON.stringify(studyArticleSchema)],
 ];
+
+// Filet du filet : le balayage ci-dessus ne voit que des chaînes déjà exportées.
+// Si le module cesse un jour d'exporter `studyPageCopy`, les surfaces de /study
+// disparaîtraient du scan sans qu'une assertion bronche.
+test("AC2 — le balayage des surfaces couvre bien le module de copy", () => {
+  const scanned = STUDY_SURFACES().length;
+  assert.ok(
+    scanned >= collectStrings(studyPageCopy, "studyPageCopy").length + 1,
+    `le balayage ne voit que ${scanned} chaîne(s) : il doit couvrir au moins toute la copy de /study plus le JSON-LD`
+  );
+});
 
 for (const [surface, text] of STUDY_SURFACES()) {
   test(`AC2 — ${surface} ne porte aucune valeur de l'ancien instrument`, { skip: skipUnlessWithdrawn }, () => {
@@ -548,6 +572,37 @@ test("périmètre — chaque ligne de POSITIONING_V2.md portant « 14/21 » le m
   }
 });
 
+// La garde ci-dessus ne regardait QUE les lignes portant « 14/21 ». Elle laissait
+// donc passer ce qui s'était glissé juste à côté : une preuve de remplacement
+// chiffrée (« ex. <marque>, 0 mention sur 12 questions, rivaux CeraVe 7/12 »),
+// qui republie le format banni ET nomme un rival de l'étude — dans le document
+// même que la prochaine story de copy prend pour source. Le ban de noms et les
+// motifs multi-caractères couvrent maintenant le fichier ENTIER.
+//
+// Le ban de nombres NUS en est volontairement absent : ce document publie des
+// prix (« 99–400 $ », « 39 € ») et des dates en écriture française
+// (« 31/07/2026 »), qui ne sont ni des scores ni des comptes de mentions. Ce
+// qu'on interdit ici, c'est le format d'un résultat d'audit et le nom d'une
+// marque de l'étude — les deux formes sous lesquelles la mesure contaminée
+// revient en copy.
+test("périmètre — POSITIONING_V2.md ne porte ni nom de l'étude ni format de résultat d'audit", { skip: skipUnlessWithdrawn }, () => {
+  const positioning = readRepoFile("POSITIONING_V2.md");
+  assertNoBannedName("POSITIONING_V2.md", positioning);
+  for (const [label, pattern] of BANNED_PATTERNS) {
+    const offending = positioning
+      .split("\n")
+      .map((line, index) => [index + 1, line] as const)
+      // Le ratio « 14/21 » a sa propre garde juste au-dessus : elle l'autorise
+      // sur une ligne qui le marque retiré, ce que ce ban-ci ignorerait.
+      .filter(([, line]) => pattern.test(line) && !/14\s*\/\s*21/.test(line));
+    assert.deepEqual(
+      offending.map(([lineNumber]) => lineNumber),
+      [],
+      `POSITIONING_V2.md l.${offending.map(([lineNumber]) => lineNumber).join(", ")} : ${label} est un format de résultat d'audit produit par l'instrument contaminé — il ne peut pas servir de preuve de remplacement, même en note interne : c'est ce document que la copy recopie`
+    );
+  }
+});
+
 // --- AC5 : republier passe par la constante, jamais par ce fichier ----------
 
 // Ce test tourne dans LES DEUX états, exprès. Tant que les chiffres sont
@@ -594,3 +649,68 @@ test(
     );
   }
 );
+
+// --- AC5, l'autre moitié : republier RETIRE l'aveu des surfaces --------------
+//
+// Le trou que ce bloc ferme. Jusqu'ici, basculer `status` à "published" ne
+// faisait que LEVER des bans : toute la copy de ce module raconte le retrait en
+// dur, et rien n'exigeait qu'elle change. On obtenait donc, CI verte, une page
+// qui titrait « figures withdrawn on <date> », affichait « Dataset produced on
+// <date postérieure> », promettait « nothing is republished until it has landed »
+// — et deux cartes « Withdrawn » / « Retiré » sur la landing, plus un
+// « RETRACTED » dans llms.txt. Exactement la faute que la story interdit : que
+// la surface publiée soit fausse le jour où elle est publiée.
+//
+// Ces tests ne tournent QUE dans l'état republié. Ils rendent la bascule du
+// drapeau seule ROUGE, et forcent la réécriture de la copy avec la republication.
+// Ils n'interdisent pas de raconter l'histoire : le corps de /study peut dire
+// « ces chiffres avaient été retirés le <date>, les voici rejoués ». Ce qui est
+// interdit, c'est de continuer à AFFIRMER le retrait — sur les surfaces courtes
+// qui donnent son identité à la page, et par le marqueur que lisent les machines.
+
+const CURRENTLY_WITHDRAWN = /retract|withdraw|withdrew|withdrawn|retir/i;
+
+// Surfaces d'IDENTITÉ : titre, accroche, cartes de la landing, intro de /vs.
+// Chacune tient en une ligne et étiquette l'étude ; aucune n'a la place de
+// nuancer. Le corps de page en est absent EXPRÈS.
+const IDENTITY_SURFACES = (): readonly (readonly [string, string])[] => [
+  ["metadata.title", studyPageCopy.metaTitle],
+  ["openGraph.title", studyPageCopy.ogTitle],
+  ...LOCALES.flatMap(
+    (locale) =>
+      [
+        [`studyPageCopy.eyebrow.${locale}`, studyPageCopy.eyebrow[locale]],
+        [`studyPageCopy.headline.${locale}`, studyPageCopy.headline[locale]],
+        [`homeCopy.${locale} (bloc étude)`, homeStudyBlock(locale)],
+        [`vsCopy.${locale}.studyIntro`, vsCopy[locale].studyIntro],
+      ] as const
+  ),
+];
+
+for (const [surface, text] of IDENTITY_SURFACES()) {
+  test(`AC5 — republié : ${surface} n'étiquette plus l'étude comme retirée`, { skip: skipUnlessPublished }, () => {
+    assert.doesNotMatch(
+      text,
+      CURRENTLY_WITHDRAWN,
+      `${surface} affirme encore le retrait alors que status = "published" : « ${text} ». Republier n'est pas lever un drapeau — la copy de \`src/lib/study-status.ts\` (et le bloc étude de \`src/lib/i18n.ts\`) est à réécrire avec les nouveaux chiffres, sinon la surface publiée se contredit le jour même`
+    );
+  });
+}
+
+for (const locale of LOCALES) {
+  test(`AC5 — republié : le corps ${locale} ne promet plus « rien n'est republié »`, { skip: skipUnlessPublished }, () => {
+    const note = studyRetractionNote[locale];
+    assert.ok(
+      !studyPageCopy.body[locale].some((paragraph) => paragraph.includes(note)),
+      `le corps ${locale} de /study rend encore la note de retrait mot pour mot alors que status = "published" — elle se termine par « rien n'est republié tant qu'il n'a pas rendu », ce que la page dément d'un paragraphe plus bas`
+    );
+  });
+}
+
+test("AC5 — republié : public/llms.txt ne porte plus le marqueur RETRACTED", { skip: skipUnlessPublished }, () => {
+  assert.doesNotMatch(
+    llmsSection("## Original research", "## Pages"),
+    /\bRETRACTED\b/,
+    "public/llms.txt annonce encore RETRACTED en tête de « ## Original research » : c'est le marqueur que les assistants lisent en premier, il dément l'étude republiée"
+  );
+});

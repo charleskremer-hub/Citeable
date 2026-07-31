@@ -12,10 +12,20 @@
  * `public/llms.txt` est un fichier statique : il n'est pas dérivé, c'est le test
  * qui le raccroche à cette constante.
  *
- * REPUBLIER : passer `status` à "published" et renseigner `datasetDate` avec la
- * date du jeu de données produit par le rerun. Le test lève alors les bans tout
- * seul et exige que `datasetDate` soit strictement postérieure à
- * `instrumentFixedOn` — aucune ligne de test n'est à modifier.
+ * REPUBLIER, ET CE QUE ÇA COÛTE VRAIMENT. Basculer `status` à "published" et
+ * renseigner `datasetDate` NE SUFFIT PAS, et le test le fait savoir : toute la
+ * copy ci-dessous raconte le retrait en dur. Le drapeau seul produirait une page
+ * qui titre « figures withdrawn on … » tout en datant un jeu de données
+ * postérieur, avec deux cartes « Withdrawn » sur la landing et un « RETRACTED »
+ * dans `llms.txt`. Le bloc « AC5 — republié » de
+ * `scripts/study-retraction.test.ts` rougit sur cet état-là.
+ *
+ * Republier, c'est donc : (1) `status` + `datasetDate` — strictement postérieure
+ * à `instrumentFixedOn` ; (2) réécrire la copy de ce module et le bloc étude de
+ * `src/lib/i18n.ts` avec les nouveaux chiffres ; (3) retirer le marqueur
+ * `RETRACTED` de `public/llms.txt` ; (4) réécrire `vsCopy.*.studyIntro`. Aucune
+ * ligne de test n'est à modifier pour autant : les bans se lèvent et les
+ * exigences de l'état republié s'activent par la seule constante.
  *
  * Pas de `as const` sur `STUDY_DATA_STATUS` : le type large est ce qui permet au
  * test de comparer `status` aux deux valeurs sans que TypeScript déclare la
