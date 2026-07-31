@@ -208,7 +208,7 @@ export const vsCopy: Record<Locale, {
     // sur /study, qui est la surface datée.
     studyIntro:
       "We don't reprint numbers here — they go stale, and ours did worse than that: we withdrew the figures of our own study, because the measurement that produced them was defective. The page says what broke, and what replaced it.",
-    studyCta: "See the study →",
+    studyCta: "Read what we withdrew, and why →",
     backHome: "← GetPick",
     metaTitle: "GetPick vs Otterly, Peec, Rankscale & Profound — the best GEO tool for DTC brands",
     metaDescription:
@@ -224,7 +224,7 @@ export const vsCopy: Record<Locale, {
     priceNote: "Prix d'entrée relevés sur la page pricing de chaque outil — relevé 2026-07. Les prix bougent ; vérifie la source.",
     studyIntro:
       "On ne réimprime aucun chiffre ici — ça se périme, et les nôtres ont fait pire : on a retiré les chiffres de notre propre étude, parce que la mesure qui les avait produits était défectueuse. La page dit ce qui a cassé, et ce qui l'a remplacé.",
-    studyCta: "Voir l'étude →",
+    studyCta: "Lire ce qu'on a retiré, et pourquoi →",
     backHome: "← GetPick",
     metaTitle: "GetPick vs Otterly, Peec, Rankscale & Profound — le meilleur outil GEO pour les marques DTC",
     metaDescription:

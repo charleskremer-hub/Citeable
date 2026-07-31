@@ -76,7 +76,11 @@ export const homeCopy = {
       { num: "3", time: "Same day", title: "See the rival, publish the fixes", body: "The agent names who gets recommended in your place — and writes the copy-paste content that wins the answer back." },
     ],
     // 4. Proof — the study
-    studyEyebrow: "The proof",
+    // « The proof » annonçait une preuve juste au-dessus d'un bloc qui dit que
+    // les chiffres sont retirés — l'accroche démentait le bloc qu'elle
+    // introduisait. Ce qu'on met en avant maintenant, c'est le fait de l'avoir
+    // dit : c'est ce qui reste vrai tant que le rerun n'a pas rendu.
+    studyEyebrow: "We publish our own mistakes",
     studyTitle: "We withdrew the figures of our 21-brand study. Here is what broke.",
     // Aucune valeur chiffrée de l'ancien instrument ici : les dates viennent de
     // STUDY_DATA_STATUS, et rien d'autre n'est numérique. Les deux `value` sont
@@ -235,7 +239,7 @@ export const homeCopy = {
       { num: "3", time: "Le jour même", title: "Tu vois le rival, tu publies les correctifs", body: "L'agent nomme qui est recommandé à ta place — et écrit le contenu à copier-coller pour reprendre la réponse." },
     ],
     // 4. Preuve — l'étude
-    studyEyebrow: "La preuve",
+    studyEyebrow: "On publie nos propres erreurs",
     studyTitle: "On a retiré les chiffres de notre étude 21 marques. Voici ce qui a cassé.",
     // Parité stricte avec l'EN : même nombre d'affirmations, mêmes dates ISO,
     // même motif énoncé.

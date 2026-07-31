@@ -2,6 +2,7 @@ import { test, expect, type Page, type APIRequestContext } from "@playwright/tes
 
 // Import relatif volontaire : Playwright ne garantit pas le mapping de l'alias `@/`.
 import { STUDY_DATA_STATUS } from "../src/lib/study-status";
+import { vsCopy } from "../src/lib/vs-comparison";
 
 // E2E — parcours utilisateur réel de la page comparative citable /vs et /fr/vs.
 // Un scénario exécutable par critère d'acceptation (Given/When/Then), + scénarios
@@ -179,9 +180,15 @@ test("AC4 — Given la page publiée, Then FR+EN dans sitemap.xml & llms.txt, ca
 
 // --- AC5 : lien « voir l'étude » → /study (200), preuve NON dupliquée ---------
 
+// Le libellé du CTA est LU dans `vsCopy`, jamais réécrit ici. Il était figé en
+// dur (`/See the study/i`) : le jour où la copy a cessé de promettre une étude
+// au-dessus d'une page de rétractation, ces deux scénarios sont devenus rouges
+// alors que le parcours marchait. Un spec qui recopie la copy teste sa propre
+// copie ; branché sur le module, il suit la reformulation et ne garde son rouge
+// que pour ce qu'il vérifie vraiment — que le lien mène bien à /study.
 for (const { locale, path, cta } of [
-  { locale: "EN", path: "/vs", cta: /See the study/i },
-  { locale: "FR", path: "/fr/vs", cta: /Voir l'étude/i },
+  { locale: "EN", path: "/vs", cta: vsCopy.en.studyCta },
+  { locale: "FR", path: "/fr/vs", cta: vsCopy.fr.studyCta },
 ]) {
   test(`AC5 (${locale}) — Given le lien « voir l'étude », When je le suis, Then /study 200 et preuve non figée sur /vs`, async ({
     page,

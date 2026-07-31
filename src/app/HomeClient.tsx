@@ -264,7 +264,7 @@ export default function HomeClient({ locale }: HomeClientProps) {
             {copy.studyTitle}
           </h2>
 
-          <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-8 grid gap-3 sm:grid-cols-2">
             {copy.studyStats.map((stat) => (
               <div key={stat.value} className="rounded-2xl border border-white/[0.08] bg-[#111116] p-5">
                 <p className="m-0 text-4xl tracking-[-0.04em] text-[#CAFF3C]" style={{ fontFamily: "var(--font-display)" }}>{stat.value}</p>

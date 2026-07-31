@@ -442,12 +442,29 @@ test("AC3 — public/llms.txt ne nomme aucune marque de l'étude, section par se
 // serait le plus tentant — deux `value` neutres et un CTA muet suffiraient à
 // faire passer l'AC3 sans que la landing dise jamais que les chiffres sont
 // retirés, ni quand, ni pourquoi.
+// `studyEyebrow` en fait partie : c'est la première ligne lue du bloc. Elle
+// disait « The proof » / « La preuve » juste au-dessus d'un titre annonçant le
+// retrait des chiffres — l'accroche démentait le bloc qu'elle introduisait, et
+// aucune assertion ne la regardait.
 const homeStudyBlock = (locale: Locale) =>
   [
+    homeCopy[locale].studyEyebrow,
     homeCopy[locale].studyTitle,
     ...homeCopy[locale].studyStats.map((stat) => `${stat.value} ${stat.label}`),
     homeCopy[locale].studyCta,
   ].join(" ");
+
+// L'accroche ne peut pas promettre une preuve tant que les chiffres sont
+// retirés : c'est la promesse que le titre juste en dessous dément.
+for (const locale of LOCALES) {
+  test(`AC4 — homeCopy.${locale}.studyEyebrow ne promet pas une preuve retirée`, { skip: skipUnlessWithdrawn }, () => {
+    assert.doesNotMatch(
+      homeCopy[locale].studyEyebrow,
+      /\bthe proof\b|\bla preuve\b/i,
+      `homeCopy.${locale}.studyEyebrow = « ${homeCopy[locale].studyEyebrow} » annonce une preuve, au-dessus d'un bloc qui dit que les chiffres sont retirés`
+    );
+  });
+}
 
 const DATED_SURFACES = (): readonly (readonly [string, string, string])[] => [
   ["homeCopy.en (bloc étude)", homeStudyBlock("en"), STUDY_RETRACTION_REASON.gist.en],
@@ -546,16 +563,24 @@ test("AC4 — /study reste indexable et listée dans le sitemap", () => {
 // renvoyer vers la page qui la déclare impubliable est une promesse démentie au
 // clic — c'est ce que disait « The proof lives in our study » avant ce correctif.
 
+// Le CTA compte autant que l'intro, et il compte même davantage : c'est le
+// libellé cliqué. « See the study → » / « Voir l'étude → » promettait une étude
+// au-dessus d'une page qui n'en est plus une — l'intro disait le retrait, le
+// bouton le reniait sur la même ligne.
 for (const locale of LOCALES) {
-  test(`AC4 — vsCopy.${locale}.studyIntro ne promet pas une preuve retirée`, { skip: skipUnlessWithdrawn }, () => {
-    const intro = vsCopy[locale].studyIntro;
-    assertNoBannedValue(`vsCopy.${locale}.studyIntro`, intro);
-    assert.match(
-      intro,
-      /retract|withdraw|withdrew|withdrawn|retir/i,
-      `vsCopy.${locale}.studyIntro : le lien vers /study doit annoncer le retrait, pas une preuve — sinon la page tient une promesse que /study dément au clic`
-    );
-  });
+  for (const [field, text] of [
+    ["studyIntro", vsCopy[locale].studyIntro],
+    ["studyCta", vsCopy[locale].studyCta],
+  ] as const) {
+    test(`AC4 — vsCopy.${locale}.${field} ne promet pas une preuve retirée`, { skip: skipUnlessWithdrawn }, () => {
+      assertNoBannedValue(`vsCopy.${locale}.${field}`, text);
+      assert.match(
+        text,
+        /retract|withdraw|withdrew|withdrawn|retir/i,
+        `vsCopy.${locale}.${field} : le lien vers /study doit annoncer le retrait, pas une preuve — sinon la page tient une promesse que /study dément au clic`
+      );
+    });
+  }
 }
 
 // --- Garde de périmètre : le claim « 14/21 » de POSITIONING_V2.md -----------
@@ -683,6 +708,7 @@ const IDENTITY_SURFACES = (): readonly (readonly [string, string])[] => [
         [`studyPageCopy.headline.${locale}`, studyPageCopy.headline[locale]],
         [`homeCopy.${locale} (bloc étude)`, homeStudyBlock(locale)],
         [`vsCopy.${locale}.studyIntro`, vsCopy[locale].studyIntro],
+        [`vsCopy.${locale}.studyCta`, vsCopy[locale].studyCta],
       ] as const
   ),
 ];
