@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
-import { resolveAuditTier, checkFreeAuditQuota, findFreshFreeGeminiAudit, brandDedupeDomain, createCachedFreeAuditForLead, recipientLocaleFromSignals, runQueuedAudit, validateAuditInputAllowAnonymous } from "@/lib/audit-engine";
+import { checkFreeAuditQuota, findFreshFreeGeminiAudit, brandDedupeDomain, createCachedFreeAuditForLead, recipientLocaleFromSignals, runQueuedAudit, validateAuditInputAllowAnonymous } from "@/lib/audit-engine";
 import { recordFunnelEvent } from "@/lib/funnel";
 import { localeFromUnknown } from "@/lib/i18n";
 import { requestTrafficClass } from "@/lib/traffic-filter";
+import { resolveAuditTierWithEntitlement } from "@/lib/entitlement";
 
 export const maxDuration = 60;
 
@@ -17,7 +18,13 @@ export async function POST(req: NextRequest) {
 
     const payload = await req.json();
     const { email, brandName, websiteUrl, anonymous } = validateAuditInputAllowAnonymous(payload);
-    const { tier: auditTier, downgradedFrom: tierDowngradedFrom } = resolveAuditTier(payload, req.headers);
+    // Le droit est resolu APRES la validation, parce qu'il a besoin de l'email :
+    // c'est la cle de la table des abonnements. Cle interne -> abonnement actif ->
+    // sinon `free`. Toute panne de base retombe sur `free` (voir entitlement.ts) :
+    // Neon indisponible ne doit ni offrir le produit payant, ni jeter une 500 sur
+    // une route publique.
+    const { tier: auditTier, downgradedFrom: tierDowngradedFrom } =
+      await resolveAuditTierWithEntitlement(payload, req.headers, anonymous ? null : email);
     const locale = payload && typeof payload === "object" && "locale" in payload ? localeFromUnknown((payload as Record<string, unknown>).locale) : recipientLocaleFromSignals(email, websiteUrl);
     const dedupeDomain = brandDedupeDomain(websiteUrl);
 
