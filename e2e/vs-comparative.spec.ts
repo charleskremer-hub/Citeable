@@ -193,12 +193,22 @@ for (const { locale, path, cta } of [
     await link.click();
     await page.waitForURL("**/study");
     expect(page.url()).toMatch(/\/study$/);
-    // /study n'affiche plus de chiffre d'étude : elle affiche le retrait, daté.
-    // Les dates viennent de la constante — quand le rerun republiera, ce test
-    // suivra tout seul.
-    await expect(page.locator("body")).toContainText(STUDY_DATA_STATUS.withdrawnOn);
-    await expect(page.locator("body")).toContainText(STUDY_DATA_STATUS.instrumentFixedOn);
-    await expect(page.locator("body")).toContainText(/retract|withdraw|withdrew|withdrawn|retir/i);
+    // Ce que /study doit porter dépend de l'état du jeu de données, pas de ce
+    // fichier : `studyPageCopy` cesse d'écrire la note de retrait le jour où le
+    // rerun republie. Brancher sur `status` est ce qui rend la promesse de l'AC5
+    // vraie — republier passe par la constante, jamais par l'édition d'un spec.
+    if (STUDY_DATA_STATUS.status === "withdrawn") {
+      // Retrait affirmé et daté : les deux dates et le mot, pas de chiffre d'étude.
+      await expect(page.locator("body")).toContainText(STUDY_DATA_STATUS.withdrawnOn);
+      await expect(page.locator("body")).toContainText(STUDY_DATA_STATUS.instrumentFixedOn);
+      await expect(page.locator("body")).toContainText(/retract|withdraw|withdrew|withdrawn|retir/i);
+    } else {
+      // Republié : la page doit dater le jeu de données qu'elle publie, sans quoi
+      // on ne saurait pas s'il vient d'avant ou d'après le correctif d'instrument.
+      const datasetDate = STUDY_DATA_STATUS.datasetDate;
+      expect(datasetDate, "status = published exige un datasetDate dans STUDY_DATA_STATUS").toBeTruthy();
+      await expect(page.locator("body")).toContainText(String(datasetDate));
+    }
 
     // La preuve n'est PAS dupliquée sur /vs : aucun nom de marque de l'étude,
     // aucun score /100 figé recopié dans la page comparative.
