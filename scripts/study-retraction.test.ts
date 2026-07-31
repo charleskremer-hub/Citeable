@@ -77,21 +77,62 @@ const BANNED_PATTERNS: readonly (readonly [string, RegExp])[] = [
   ["un score « n sur 100 »", bounded("\\d{1,3}\\s*(?:/|out of|sur)\\s*100", "iu")],
 ];
 
-// Noms propres publiés par l'ancienne étude : les marques auditées dont un score
-// nominatif circulait, et les rivaux nommés — qui sortaient du même appel amorcé
-// et tombent donc avec les scores.
-const BANNED_NAMES = [
-  "Tilit",
+// Noms propres publiés par l'ancienne étude — la LISTE ENTIÈRE du tableau `ROWS`
+// (`git show main:src/app/study/page.tsx`, l.29-51), pas les seuls noms qui
+// voisinaient un score dans la copy. Les 21 marques auditées ET les rivaux
+// « recommandés à la place » sortent du même appel amorcé : une paire
+// marque→rival republiée en prose (« Cuts s'est fait battre par Lululemon »)
+// republie l'instrument contaminé, même sans un chiffre pour l'accompagner.
+//
+// GetPick est absent de la liste, pour une raison : c'est nous, et notre nom est
+// écrit partout sur ces surfaces. Son rival nommé, lui, est banni comme les
+// autres.
+//
+// Certains de ces noms sont aussi des mots courants (« Cuts », « Versed »,
+// « Recess », « Jot », « Bubble »). Le ban ne porte que sur les surfaces de
+// l'étude, où un tel mot est presque sûrement la marque ; et une collision
+// donnerait un rouge à reformuler, pas un chiffre republié — l'échec va dans le
+// bon sens.
+const AUDITED_BRANDS = [
+  "Allbirds",
+  "Arrae",
+  "Baboon to the Moon",
+  "Brooklinen",
+  "Bubble",
+  "Cometeer",
+  "Cuts",
+  "Dagne Dover",
+  "De Soi",
+  "Hedley & Bennett",
+  "Moon Juice",
+  "Necessaire",
+  "Ollie",
+  "Our Place",
+  "Recess",
+  "Ridge Wallet",
+  "Spot & Tango",
+  "Topicals",
+  "Tower 28",
+  "Versed",
+] as const;
+
+const NAMED_RIVALS = [
   "Aesop",
+  "BrightLocal",
+  "Calpak",
+  "CeraVe",
   "Cocokind",
   "Ghia",
-  "Ollie",
-  "Calpak",
+  "Jot",
   "Kosas",
-  "Allbirds",
-  "Ridge Wallet",
-  "Hedley & Bennett",
+  "Love Wellness",
+  "Lululemon",
+  "Nom Nom",
+  "Paula's Choice",
+  "Tilit",
 ] as const;
+
+const BANNED_NAMES = [...new Set<string>([...AUDITED_BRANDS, ...NAMED_RIVALS])];
 
 const BANNED_NAME_PATTERNS: readonly (readonly [string, RegExp])[] = BANNED_NAMES.map(
   (name) => [`le nom « ${name} »`, bounded(name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "iu")] as const
@@ -100,6 +141,24 @@ const BANNED_NAME_PATTERNS: readonly (readonly [string, RegExp])[] = BANNED_NAME
 const BANNED_NUMBERS: readonly (readonly [string, RegExp])[] = OLD_SCORES.map(
   (score) => [`le score « ${score} » de l'ancien tableau`, bounded(String(score))] as const
 );
+
+// Ban de NOMS SEULS, sans les nombres. Sert à couvrir des surfaces ENTIÈRES —
+// toute la landing, tout `llms.txt` — et pas seulement leur bloc « étude ».
+// Le scénario est une story de copy qui écrit demain, n'importe où sur la page,
+// « dans notre audit, Cuts s'est fait battre par Lululemon » : une paire
+// marque→rival de l'instrument contaminé, republiée sans un seul chiffre pour
+// la trahir. Les nombres restent hors de ce ban : ces surfaces publient
+// légitimement des prix, des durées et des dates.
+const assertNoBannedName = (surface: string, text: string) => {
+  const masked = mask(text);
+  for (const [label, pattern] of BANNED_NAME_PATTERNS) {
+    assert.doesNotMatch(
+      masked,
+      pattern,
+      `surface « ${surface} » : ${label} sort de l'étude retirée — le nommer republie une paire marque→rival produite par l'instrument contaminé, chiffre ou pas`
+    );
+  }
+};
 
 // Ban STRICT : nombres nus compris. Réservé aux chaînes de copy (de la prose),
 // jamais au source brut.
@@ -287,6 +346,17 @@ for (const locale of LOCALES) {
   });
 }
 
+// Le ban chiffré ci-dessus ne couvre que le bloc « étude ». Une marque de
+// l'étude est bannie de la landing ENTIÈRE : le hero, la FAQ ou un témoignage
+// sont des surfaces publiées comme les autres.
+for (const locale of LOCALES) {
+  test(`AC3 — ${locale}: aucune surface de la landing ne nomme une marque de l'étude`, { skip: skipUnlessWithdrawn }, () => {
+    for (const [path, text] of collectStrings(homeCopy[locale], `homeCopy.${locale}`)) {
+      assertNoBannedName(path, text);
+    }
+  });
+}
+
 test("AC3 — parité FR/EN : même nombre de studyStats", () => {
   const [en, fr] = LOCALES.map((locale) => homeCopy[locale].studyStats.length);
   assert.equal(en, fr, `parité rompue : en=${en} stat(s), fr=${fr} stat(s)`);
@@ -329,6 +399,14 @@ for (const [surface, text] of [
     assertNoBannedValue(surface, text);
   });
 }
+
+// Idem pour `llms.txt` : le ban chiffré vise ses deux sections « étude », le ban
+// de noms vise le fichier entier — c'est le fichier que les assistants lisent en
+// premier, une marque de l'étude nommée dans « ## Notes for AI assistants » y
+// circulerait aussi bien que dans « ## Original research ».
+test("AC3 — public/llms.txt ne nomme aucune marque de l'étude, section par section", { skip: skipUnlessWithdrawn }, () => {
+  assertNoBannedName("public/llms.txt", llmsTxtFlat);
+});
 
 // --- AC4 : le retrait est affirmé positivement et daté ----------------------
 // Sans ce bloc, effacer purement et simplement les chiffres suffirait à faire
