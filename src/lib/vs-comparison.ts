@@ -203,8 +203,11 @@ export const vsCopy: Record<Locale, {
     agencyAnchor: homeCopy.en.pricingTitle,
     th: { tool: "Tool", price: "Entry price", does: "What it actually does", source: "Source" },
     priceNote: "Entry prices as read on each tool's pricing page — recorded 2026-07. Prices move; check the source.",
+    // AC5 (`scripts/vs-comparison.test.ts`) : ce champ ne doit contenir AUCUN
+    // chiffre — donc ni le nombre de marques, ni la date de retrait. Elles vivent
+    // sur /study, qui est la surface datée.
     studyIntro:
-      "We don't reprint the numbers here — they go stale. The proof lives in our study: real DTC brands audited with live AI-engine calls.",
+      "We don't reprint numbers here — they go stale, and ours did worse than that: we withdrew the figures of our own study, because the measurement that produced them was defective. The page says what broke, and what replaced it.",
     studyCta: "See the study →",
     backHome: "← GetPick",
     metaTitle: "GetPick vs Otterly, Peec, Rankscale & Profound — the best GEO tool for DTC brands",
@@ -220,7 +223,7 @@ export const vsCopy: Record<Locale, {
     th: { tool: "Outil", price: "Prix d'entrée", does: "Ce que ça fait vraiment", source: "Source" },
     priceNote: "Prix d'entrée relevés sur la page pricing de chaque outil — relevé 2026-07. Les prix bougent ; vérifie la source.",
     studyIntro:
-      "On ne réimprime aucun chiffre ici — ça se périme. La preuve vit dans notre étude : de vraies marques DTC auditées en appels réels sur les moteurs IA.",
+      "On ne réimprime aucun chiffre ici — ça se périme, et les nôtres ont fait pire : on a retiré les chiffres de notre propre étude, parce que la mesure qui les avait produits était défectueuse. La page dit ce qui a cassé, et ce qui l'a remplacé.",
     studyCta: "Voir l'étude →",
     backHome: "← GetPick",
     metaTitle: "GetPick vs Otterly, Peec, Rankscale & Profound — le meilleur outil GEO pour les marques DTC",

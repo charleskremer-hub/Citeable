@@ -27,6 +27,7 @@ import {
   studyPageCopy,
   studyRetractionNote,
 } from "@/lib/study-status";
+import { vsCopy } from "@/lib/vs-comparison";
 
 const LOCALES = ["en", "fr"] as const satisfies readonly Locale[];
 
@@ -363,6 +364,24 @@ test("AC4 — /study reste indexable et listée dans le sitemap", () => {
   );
   assert.match(readRepoFile("src", "app", "sitemap.ts"), /\/study/, "l'entrée /study doit rester dans le sitemap");
 });
+
+// --- AC4, périmètre /vs : la page qui pointe vers l'étude n'en promet pas la preuve
+// `/vs` et `/fr/vs` rendent `vsCopy[locale].studyIntro` juste au-dessus d'un CTA
+// vers /study. Tant que les chiffres sont retirés, annoncer une preuve puis
+// renvoyer vers la page qui la déclare impubliable est une promesse démentie au
+// clic — c'est ce que disait « The proof lives in our study » avant ce correctif.
+
+for (const locale of LOCALES) {
+  test(`AC4 — vsCopy.${locale}.studyIntro ne promet pas une preuve retirée`, { skip: skipUnlessWithdrawn }, () => {
+    const intro = vsCopy[locale].studyIntro;
+    assertNoBannedValue(`vsCopy.${locale}.studyIntro`, intro);
+    assert.match(
+      intro,
+      /retract|withdraw|withdrew|withdrawn|retir/i,
+      `vsCopy.${locale}.studyIntro : le lien vers /study doit annoncer le retrait, pas une preuve — sinon la page tient une promesse que /study dément au clic`
+    );
+  });
+}
 
 // --- Garde de périmètre : le claim « 14/21 » de POSITIONING_V2.md -----------
 // Sans elle, la prochaine story de copy republierait le ratio de bonne foi.
