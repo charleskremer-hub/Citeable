@@ -1,4 +1,4 @@
-import { STUDY_DATA_STATUS } from "./study-status";
+import { STUDY_DATA_STATUS, STUDY_RETRACTION_REASON } from "./study-status";
 
 export type Locale = "en" | "fr";
 
@@ -81,8 +81,10 @@ export const homeCopy = {
     // Aucune valeur chiffrée de l'ancien instrument ici : les dates viennent de
     // STUDY_DATA_STATUS, et rien d'autre n'est numérique. Les deux `value` sont
     // distinctes — HomeClient les utilise comme clé React.
+    // Le MOTIF est énoncé, pas seulement le fait : sans lui, effacer les chiffres
+    // de la landing suffirait à passer les bans de l'AC3 sans rien avouer (AC4).
     studyStats: [
-      { value: "Withdrawn", label: `figures withdrawn on ${STUDY_DATA_STATUS.withdrawnOn} — the measurement that produced them was defective` },
+      { value: "Withdrawn", label: `figures withdrawn on ${STUDY_DATA_STATUS.withdrawnOn} — ${STUDY_RETRACTION_REASON.gist.en}` },
       { value: "Fixed", label: `instrument fixed on ${STUDY_DATA_STATUS.instrumentFixedOn} — the rerun on the blind measurement is under way` },
     ],
     studyCta: "Read why we withdrew them →",
@@ -235,9 +237,10 @@ export const homeCopy = {
     // 4. Preuve — l'étude
     studyEyebrow: "La preuve",
     studyTitle: "On a retiré les chiffres de notre étude 21 marques. Voici ce qui a cassé.",
-    // Parité stricte avec l'EN : même nombre d'affirmations, mêmes dates ISO.
+    // Parité stricte avec l'EN : même nombre d'affirmations, mêmes dates ISO,
+    // même motif énoncé.
     studyStats: [
-      { value: "Retiré", label: `chiffres retirés le ${STUDY_DATA_STATUS.withdrawnOn} — la mesure qui les a produits était défectueuse` },
+      { value: "Retiré", label: `chiffres retirés le ${STUDY_DATA_STATUS.withdrawnOn} — ${STUDY_RETRACTION_REASON.gist.fr}` },
       { value: "Corrigé", label: `instrument corrigé le ${STUDY_DATA_STATUS.instrumentFixedOn} — le rerun sur la mesure aveugle est en cours` },
     ],
     studyCta: "Lire pourquoi on les a retirés →",

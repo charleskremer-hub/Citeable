@@ -113,13 +113,25 @@ const assertNoBannedValue = (surface: string, text: string) => {
   }
 };
 
-// Ban de source brute : motifs et noms uniquement. Un nombre nu y matcherait une
-// classe Tailwind ou une opacité, pas un chiffre publié.
+// Réduit un source TSX à ce qui peut atterrir dans le HTML rendu. Deux passes,
+// et deux seulement :
+//   1. les commentaires (`/* … */`, `// …`, `{/* … */}`) — jamais rendus ;
+//   2. les affectations `nom = "…"` / `nom={…}` — c'est-à-dire les attributs JSX
+//      (`className="px-5 py-14"`, `style={{ … }}`) et les constantes de classes
+//      (`const P = "leading-[1.75]"`).
+// Ce sont les SEULS endroits où un nombre nu n'est pas un chiffre publié. Les
+// retirer permet d'appliquer le ban STRICT — nombres compris — au texte des
+// nœuds JSX, là où un score réintroduit en dur se lit vraiment.
+const renderableSource = (source: string) =>
+  source
+    .replace(/\/\*[\s\S]*?\*\//g, " ")
+    // `[^:]` protège les `//` d'URL (`https://…`), qui ne sont pas des commentaires.
+    .replace(/(^|[^:])\/\/[^\n]*/g, "$1 ")
+    .replace(/[A-Za-z_$][\w$-]*\s*=\s*(?:"[^"]*"|'[^']*'|`[^`]*`|\{(?:[^{}]|\{[^{}]*\})*\})/g, " ");
+
+// Ban de source : STRICT, appliqué au source réduit à son texte rendu.
 const assertNoBannedValueInSource = (surface: string, text: string) => {
-  const masked = mask(text);
-  for (const [label, pattern] of [...BANNED_PATTERNS, ...BANNED_NAME_PATTERNS]) {
-    assert.doesNotMatch(masked, pattern, `surface « ${surface} » : ${label} ne peut pas être publié`);
-  }
+  assertNoBannedValue(surface, renderableSource(text));
 };
 
 // --- AC1 : source de vérité unique ------------------------------------------
@@ -159,14 +171,33 @@ test("AC1 — le correctif de l'instrument précède le retrait", () => {
 
 // --- AC2 : les quatre surfaces de /study ------------------------------------
 
+// Toute chaîne de `studyPageCopy` est une chaîne rendue par /study : la page
+// n'écrit rien en propre. On les collecte donc TOUTES, récursivement, au lieu de
+// tenir une liste à la main — une clé ajoutée demain (un CTA, un chapeau, un
+// intertitre) est bannie sans qu'on ait pensé à l'inscrire ici.
+const collectStrings = (value: unknown, path: string): readonly (readonly [string, string])[] => {
+  if (typeof value === "string") return [[path, value] as const];
+  if (Array.isArray(value)) return value.flatMap((item, index) => collectStrings(item, `${path}[${index}]`));
+  if (value !== null && typeof value === "object") {
+    return Object.entries(value).flatMap(([key, item]) => collectStrings(item, `${path}.${key}`));
+  }
+  return [];
+};
+
+// Nom de la surface publiée pour les clés qui en portent une — les autres sont
+// nommées par leur chemin dans le module, qui les localise tout aussi bien.
+const SURFACE_OF: Readonly<Record<string, string>> = {
+  "studyPageCopy.metaTitle": "metadata.title",
+  "studyPageCopy.metaDescription": "metadata.description",
+  "studyPageCopy.ogTitle": "openGraph.title",
+  "studyPageCopy.ogDescription": "openGraph.description",
+};
+
 const STUDY_SURFACES = (): readonly (readonly [string, string])[] => [
-  ["metadata.description", studyPageCopy.metaDescription],
-  ["metadata.title", studyPageCopy.metaTitle],
-  ["openGraph.description", studyPageCopy.ogDescription],
-  ["openGraph.title", studyPageCopy.ogTitle],
+  ...collectStrings(studyPageCopy, "studyPageCopy").map(
+    ([path, text]) => [SURFACE_OF[path] ?? path, text] as const
+  ),
   ["JSON-LD Article", JSON.stringify(studyArticleSchema)],
-  ["corps de /study (en)", [studyPageCopy.headline.en, studyPageCopy.eyebrow.en, ...studyPageCopy.body.en].join(" ")],
-  ["corps de /study (fr)", [studyPageCopy.headline.fr, studyPageCopy.eyebrow.fr, ...studyPageCopy.body.fr].join(" ")],
 ];
 
 for (const [surface, text] of STUDY_SURFACES()) {
@@ -264,7 +295,21 @@ for (const [surface, text] of [
 // passer les bans de l'AC2/AC3 — c'est le « ban vert par suppression » trouvé en
 // review le 28/07.
 
+// Le bloc « étude » de la landing, tel qu'il est rendu : titre, statistiques
+// (valeur ET libellé), CTA. C'est la surface où le ban vert par suppression
+// serait le plus tentant — deux `value` neutres et un CTA muet suffiraient à
+// faire passer l'AC3 sans que la landing dise jamais que les chiffres sont
+// retirés, ni quand, ni pourquoi.
+const homeStudyBlock = (locale: Locale) =>
+  [
+    homeCopy[locale].studyTitle,
+    ...homeCopy[locale].studyStats.map((stat) => `${stat.value} ${stat.label}`),
+    homeCopy[locale].studyCta,
+  ].join(" ");
+
 const DATED_SURFACES = (): readonly (readonly [string, string, string])[] => [
+  ["homeCopy.en (bloc étude)", homeStudyBlock("en"), STUDY_RETRACTION_REASON.gist.en],
+  ["homeCopy.fr (bloc étude)", homeStudyBlock("fr"), STUDY_RETRACTION_REASON.gist.fr],
   ["metadata.description", studyPageCopy.metaDescription, STUDY_RETRACTION_REASON.gist.en],
   ["openGraph.description", studyPageCopy.ogDescription, STUDY_RETRACTION_REASON.gist.en],
   ["JSON-LD Article", JSON.stringify(studyArticleSchema), STUDY_RETRACTION_REASON.gist.en],
