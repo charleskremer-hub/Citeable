@@ -114,26 +114,50 @@ const assertNoBannedValue = (surface: string, text: string) => {
   }
 };
 
-// Réduit un source TSX à ce qui peut atterrir dans le HTML rendu. Deux passes,
-// et deux seulement :
+// Réduit un source TSX à ce qui peut atterrir dans le HTML rendu.
+//
+// CE QU'ON EFFACE, ET RIEN D'AUTRE :
 //   1. les commentaires (`/* … */`, `// …`, `{/* … */}`) — jamais rendus ;
-//   2. les affectations `nom = "…"` / `nom={…}` — c'est-à-dire les attributs JSX
-//      (`className="px-5 py-14"`, `style={{ … }}`) et les constantes de classes
-//      (`const P = "leading-[1.75]"`).
-// Ce sont les SEULS endroits où un nombre nu n'est pas un chiffre publié. Les
-// retirer permet d'appliquer le ban STRICT — nombres compris — au texte des
-// nœuds JSX, là où un score réintroduit en dur se lit vraiment.
-const renderableSource = (source: string) =>
+//   2. les valeurs de DEUX attributs NOMMÉS, `className` et `style` — les seuls
+//      qui portent légitimement des nombres (`leading-[1.75]`, `px-5`).
+//
+// On n'efface PAS la forme générique `identifiant = "…"`. C'est exactement sous
+// cette forme qu'un chiffre se réintroduit — `const SUMMARY = "Scores ranged
+// from 31 to 88…"` suivi de `<p>{SUMMARY}</p>` est un chiffre publié, pas une
+// classe. Une constante de chaîne dans `page.tsx` est donc scannée comme le
+// reste ; le test « aucune déclaration de chaîne » plus bas la refuse d'emblée,
+// pour que l'échec nomme la cause au lieu de dénoncer un faux « score 75 » lu
+// dans une liste de classes extraite en constante.
+const stripComments = (source: string) =>
   source
     .replace(/\/\*[\s\S]*?\*\//g, " ")
     // `[^:]` protège les `//` d'URL (`https://…`), qui ne sont pas des commentaires.
-    .replace(/(^|[^:])\/\/[^\n]*/g, "$1 ")
-    .replace(/[A-Za-z_$][\w$-]*\s*=\s*(?:"[^"]*"|'[^']*'|`[^`]*`|\{(?:[^{}]|\{[^{}]*\})*\})/g, " ");
+    .replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
+
+const renderableSource = (source: string) =>
+  stripComments(source)
+    .replace(/\bclassName\s*=\s*(?:"[^"]*"|'[^']*'|\{(?:[^{}]|\{[^{}]*\})*\})/g, " ")
+    .replace(/\bstyle\s*=\s*\{(?:[^{}]|\{[^{}]*\})*\}/g, " ");
 
 // Ban de source : STRICT, appliqué au source réduit à son texte rendu.
 const assertNoBannedValueInSource = (surface: string, text: string) => {
   assertNoBannedValue(surface, renderableSource(text));
 };
+
+// Déclarations de chaîne (`const X = "…"`, `let X: T = \`…\``). Interdites dans
+// `/study` : toute la copy vient de `@/lib/study-status`, et les classes restent
+// en ligne dans `className`. Seuls les champs de configuration de segment de
+// route de Next (`export const dynamic = "force-static"`) sont admis.
+const STRING_DECLARATION = /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*(?::[^=\n]+)?=\s*["'`]/g;
+const ROUTE_SEGMENT_CONFIG = new Set([
+  "dynamic",
+  "dynamicParams",
+  "revalidate",
+  "fetchCache",
+  "runtime",
+  "preferredRegion",
+  "maxDuration",
+]);
 
 // --- AC1 : source de vérité unique ------------------------------------------
 // L'import en tête de fichier fait déjà échouer TOUTE la suite si le module ou
@@ -214,6 +238,21 @@ test("AC2 — la source de /study ne réintroduit aucune valeur en dur", { skip:
     studyPageSource,
     /study-status/,
     "la page doit lire son état dans `@/lib/study-status`, seule source de vérité"
+  );
+});
+
+// Sans ce test, le ban de source resterait contournable de bonne foi : une liste
+// de classes extraite en `const P = "… leading-[1.75] …"` déclencherait un faux
+// rouge (« score 75 »), et la tentation serait de ré-exempter les déclarations —
+// c'est-à-dire de rouvrir le trou par lequel `const SUMMARY = "…31 to 88…"`
+// passe. On tranche en amont : /study ne déclare aucune chaîne, point.
+test("AC2 — /study ne déclare aucune chaîne : toute sa copy vient de study-status", () => {
+  const declared = [...stripComments(studyPageSource).matchAll(STRING_DECLARATION)].map(([, name]) => name);
+  const offending = declared.filter((name) => !ROUTE_SEGMENT_CONFIG.has(name));
+  assert.deepEqual(
+    offending,
+    [],
+    `src/app/study/page.tsx déclare ${offending.map((name) => `\`${name}\``).join(", ")} : toute chaîne rendue par /study doit venir de \`@/lib/study-status\`, et les classes Tailwind rester en ligne dans \`className\` — une constante de chaîne ici sort du seul endroit où un nombre est lisible comme une classe et non comme un chiffre publié`
   );
 });
 

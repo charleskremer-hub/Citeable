@@ -37,7 +37,16 @@ export const metadata: Metadata = {
   },
 };
 
-const P = "m-0 mt-4 text-[1.02rem] font-medium leading-[1.75] text-[#C7C7D1]";
+/**
+ * Le paragraphe de corps. Les classes restent DANS l'attribut `className` : une
+ * constante de chaîne (`const P = "… leading-[1.75] …"`) sortirait du seul
+ * endroit où le test de retrait sait qu'un nombre est une classe et non un
+ * chiffre publié. `scripts/study-retraction.test.ts` interdit d'ailleurs toute
+ * déclaration de chaîne dans ce fichier.
+ */
+function Paragraph({ children }: { children: React.ReactNode }) {
+  return <p className="m-0 mt-4 text-[1.02rem] font-medium leading-[1.75] text-[#C7C7D1]">{children}</p>;
+}
 
 export default function StudyPage() {
   return (
@@ -60,9 +69,7 @@ export default function StudyPage() {
       </h1>
 
       {studyPageCopy.body.en.map((paragraph) => (
-        <p key={paragraph} className={P}>
-          {paragraph}
-        </p>
+        <Paragraph key={paragraph}>{paragraph}</Paragraph>
       ))}
 
       {/* La même note en français : la page est liée depuis /vs ET /fr/vs. */}
@@ -83,9 +90,7 @@ export default function StudyPage() {
         </h2>
 
         {studyPageCopy.body.fr.map((paragraph) => (
-          <p key={paragraph} className={P}>
-            {paragraph}
-          </p>
+          <Paragraph key={paragraph}>{paragraph}</Paragraph>
         ))}
       </section>
 
