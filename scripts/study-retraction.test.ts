@@ -472,6 +472,32 @@ test("périmètre — chaque ligne de POSITIONING_V2.md portant « 14/21 » le m
 
 // --- AC5 : republier passe par la constante, jamais par ce fichier ----------
 
+// Ce test tourne dans LES DEUX états, exprès. Tant que les chiffres sont
+// retirés, `datasetDate` n'est pas défini et rien ne rend cette ligne — mais
+// c'est justement à ce moment-là qu'on peut la perdre sans s'en apercevoir.
+// L'AC5 de `e2e/vs-comparative.spec.ts` exige `datasetDate` dans le corps de
+// /study dès que `status` bascule ; si la page ne sait pas le rendre, le
+// basculement de la constante rougit la CI e2e au lieu de lever le cliquet.
+test("AC5 — /study sait dater le jeu de données dès qu'il est republié", () => {
+  assert.match(
+    studyPageSource,
+    /STUDY_DATA_STATUS\.status\s*!==\s*"published"|status\s*!==\s*"published"/,
+    "src/app/study/page.tsx doit conditionner la ligne de datation à `status`"
+  );
+  assert.match(
+    studyPageSource,
+    /datasetDate/,
+    "src/app/study/page.tsx doit rendre `STUDY_DATA_STATUS.datasetDate` : sans elle, republier fait échouer l'AC5 e2e au lieu de lever le cliquet"
+  );
+  for (const locale of LOCALES) {
+    assert.match(
+      studyPageSource,
+      new RegExp(`studyPageCopy\\.datasetLabel\\.${locale}\\b`),
+      `la ligne de datation doit être rendue en ${locale} : /study est bilingue`
+    );
+  }
+});
+
 test(
   "AC5 — republier exige un jeu de données postérieur au correctif de l'instrument",
   { skip: skipUnlessPublished },

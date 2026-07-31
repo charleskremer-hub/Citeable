@@ -129,6 +129,20 @@ export const studyPageCopy = {
 
   frenchHeading: "En français",
 
+  /**
+   * Libellé de la ligne qui date le jeu de données. La page ne la rend QUE
+   * lorsque `status` vaut "published" — et elle doit la rendre : republier sans
+   * dire de quand datent les chiffres ne permet pas de savoir s'ils précèdent
+   * ou suivent le correctif de l'instrument. C'est aussi ce que le spec e2e
+   * `e2e/vs-comparative.spec.ts` (AC5) attend du corps de /study une fois
+   * `status` basculé : le cliquet se lève par la constante, sans édition de
+   * test, seulement si la date atterrit vraiment dans le HTML.
+   */
+  datasetLabel: {
+    en: "Dataset produced on",
+    fr: "Jeu de données produit le",
+  },
+
   cta: {
     en: "Run an audit on the corrected measurement →",
     fr: "Lancer un audit sur la mesure corrigée →",

@@ -67,6 +67,23 @@ function Cta({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * La ligne qui date le jeu de données. Rien tant que les chiffres sont retirés
+ * — il n'y a pas de jeu de données à dater ; la date dès que `status` passe à
+ * "published". C'est ce rendu, et lui seul, qui fait que republier ne demande
+ * aucune édition de test : l'AC5 de `e2e/vs-comparative.spec.ts` lit
+ * `datasetDate` dans le corps de /study.
+ */
+function DatasetLine({ label }: { label: string }) {
+  const { status, datasetDate } = STUDY_DATA_STATUS;
+  if (status !== "published" || !datasetDate) return null;
+  return (
+    <Paragraph>
+      {label} {datasetDate}
+    </Paragraph>
+  );
+}
+
 export default function StudyPage() {
   return (
     <main className="mx-auto max-w-3xl px-5 py-14 sm:px-6 sm:py-20" style={{ fontFamily: "var(--font-sans)" }}>
@@ -86,6 +103,8 @@ export default function StudyPage() {
       >
         {studyPageCopy.headline.en}
       </h1>
+
+      <DatasetLine label={studyPageCopy.datasetLabel.en} />
 
       {studyPageCopy.body.en.map((paragraph) => (
         <Paragraph key={paragraph}>{paragraph}</Paragraph>
@@ -109,6 +128,8 @@ export default function StudyPage() {
         >
           {studyPageCopy.headline.fr}
         </h2>
+
+        <DatasetLine label={studyPageCopy.datasetLabel.fr} />
 
         {studyPageCopy.body.fr.map((paragraph) => (
           <Paragraph key={paragraph}>{paragraph}</Paragraph>
