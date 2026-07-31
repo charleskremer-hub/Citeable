@@ -1,3 +1,5 @@
+import { STUDY_DATA_STATUS } from "./study-status";
+
 export type Locale = "en" | "fr";
 
 type HeaderReader = {
@@ -75,14 +77,15 @@ export const homeCopy = {
     ],
     // 4. Proof — the study
     studyEyebrow: "The proof",
-    studyTitle: "We audited 21 DTC brands. Fame barely mattered.",
+    studyTitle: "We withdrew the figures of our 21-brand study. Here is what broke.",
+    // Aucune valeur chiffrée de l'ancien instrument ici : les dates viennent de
+    // STUDY_DATA_STATUS, et rien d'autre n'est numérique. Les deux `value` sont
+    // distinctes — HomeClient les utilise comme clé React.
     studyStats: [
-      { value: "21", label: "DTC brands audited with live AI calls" },
-      { value: "31–88", label: "the score range, out of 100" },
-      { value: "46 vs 81", label: "Allbirds vs Ridge Wallet — awareness doesn't predict AI visibility" },
-      { value: "14 / 21", label: "audits where AI named a rival instead of the brand" },
+      { value: "Withdrawn", label: `figures withdrawn on ${STUDY_DATA_STATUS.withdrawnOn} — the measurement that produced them was defective` },
+      { value: "Fixed", label: `instrument fixed on ${STUDY_DATA_STATUS.instrumentFixedOn} — the rerun on the blind measurement is under way` },
     ],
-    studyCta: "Read the full study →",
+    studyCta: "Read why we withdrew them →",
     // 5. The deliverable
     deliverableEyebrow: "What you get",
     deliverableTitle: "Not a dashboard. A verdict, a name, and the fix.",
@@ -231,14 +234,13 @@ export const homeCopy = {
     ],
     // 4. Preuve — l'étude
     studyEyebrow: "La preuve",
-    studyTitle: "On a audité 21 marques DTC. La notoriété n'a presque rien changé.",
+    studyTitle: "On a retiré les chiffres de notre étude 21 marques. Voici ce qui a cassé.",
+    // Parité stricte avec l'EN : même nombre d'affirmations, mêmes dates ISO.
     studyStats: [
-      { value: "21", label: "marques DTC auditées avec de vrais appels IA" },
-      { value: "31–88", label: "l'écart des scores, sur 100" },
-      { value: "46 vs 81", label: "Allbirds vs Ridge Wallet — la notoriété ne prédit pas la visibilité IA" },
-      { value: "14 / 21", label: "audits où l'IA nomme un rival à la place de la marque" },
+      { value: "Retiré", label: `chiffres retirés le ${STUDY_DATA_STATUS.withdrawnOn} — la mesure qui les a produits était défectueuse` },
+      { value: "Corrigé", label: `instrument corrigé le ${STUDY_DATA_STATUS.instrumentFixedOn} — le rerun sur la mesure aveugle est en cours` },
     ],
-    studyCta: "Lire l'étude complète →",
+    studyCta: "Lire pourquoi on les a retirés →",
     // 5. Le livrable
     deliverableEyebrow: "Le livrable",
     deliverableTitle: "Pas un dashboard. Un verdict, un nom, le correctif.",

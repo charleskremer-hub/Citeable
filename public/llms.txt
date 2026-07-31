@@ -95,16 +95,29 @@ being recommended still costs nothing but the work.
 
 ## Original research
 
-GetPick published a study (July 2026) auditing 21 direct-to-consumer brands
-with live ChatGPT and Gemini calls. Key findings: scores ranged from 31 to 88
-out of 100; brand awareness was a poor predictor of AI visibility (Allbirds
-scored 46, Ridge Wallet 81); and in 14 of the 21 audits the assistant named a
-specific competitor instead of the brand. Full method and per-brand results:
+In July 2026 GetPick audited 21 direct-to-consumer brands with live ChatGPT and
+Gemini calls, to test one question: does being a well-known brand make an AI
+assistant recommend you?
+
+RETRACTED. On 2026-07-31 we withdrew every figure from that study — the scores,
+the mention counts, and the names of the rivals said to be recommended instead.
+All of them came out of one defective measurement, fixed on 2026-07-30: the
+audited brand name was sent to the model along with the buying question, so what
+we recorded was the model repeating a word we had just handed it. Those figures
+must not be cited, quoted or reused, and no number from that study is published
+anywhere on this site any more.
+
+What survives is the question, not an answer. Whether brand awareness predicts
+visibility in AI answers is, for us, undecided until the study is re-run on the
+corrected measurement: the buying question is now sent blind, without the brand
+name, and the mention is observed in the free-form answer instead of being
+declared by the model. The re-run is in progress. This file will carry figures
+again when it publishes, and not before. Method, retraction and status:
 https://www.getpick.ai/study
 
 ## Pages
 
-- [Study](https://www.getpick.ai/study): we asked AI what to buy in 21 DTC categories.
+- [Study](https://www.getpick.ai/study): retracted 2026-07-31 — why we withdrew every figure of our 21-brand study, what the defective measurement was, and the fix shipped 2026-07-30. No figure is published there while the re-run is in progress.
 - [Compare](https://www.getpick.ai/vs): GetPick vs the named GEO tools (Otterly, Peec, Rankscale, Profound) — entry prices, cheapest alternative to Otterly.
 - [Comparatif](https://www.getpick.ai/fr/vs): GetPick face aux outils GEO nommés — meilleur outil GEO, alternative à Otterly.
 - [Home](https://www.getpick.ai): run a free AI visibility audit.
