@@ -22,7 +22,13 @@ const PREAMBLE =
 
 // Date du jour, threadée partout. Corrige le bug historique « date-inconnue » :
 // on lit réellement args.date fourni par la tâche planifiée.
-const DATE = (args && typeof args.date === 'string' && args.date.trim()) ? args.date.trim() : 'date-inconnue';
+// `args` arrive parfois sous forme de chaîne JSON selon l'appelant : on tolère les deux.
+const ARGS = (() => {
+  if (args && typeof args === 'object') return args;
+  if (typeof args === 'string') { try { return JSON.parse(args); } catch { return {}; } }
+  return {};
+})();
+const DATE = (typeof ARGS.date === 'string' && ARGS.date.trim()) ? ARGS.date.trim() : 'date-inconnue';
 
 function slugify(s) {
   return String(s)

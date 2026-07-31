@@ -894,9 +894,15 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             </section>
           ) : null}
 
-          {reportLocked ? <ClaimReportGate auditId={audit.id} locale={locale} /> : null}
-
-          {complete && !failed && !reportLocked ? (
+          {/*
+            Score, verdict, rival nommé et part de voix sont GRATUITS (decision
+            Charles, 30/07) : ils prouvent le problème, donc ils restent visibles
+            même sur un rapport verrouillé. Seul ce qui RÉSOUT le problème (fixes
+            copy-paste, fichiers machine, détail question par question — voir
+            `technicalAssets` plus bas) reste derrière `reportLocked`. Cette
+            section ne doit donc plus dépendre de `reportLocked`.
+          */}
+          {complete && !failed ? (
             <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6">
               <div className="mb-4 flex items-end justify-between gap-4">
                 <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
@@ -985,6 +991,16 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
               )}
             </section>
           ) : null}
+
+          {/*
+            Le gate se place ICI : juste après la preuve gratuite (score, verdict,
+            rival nommé, part de voix ci-dessus), juste avant ce qu'il verrouille
+            (fichiers techniques, détail question par question plus bas). Reste
+            haut dans la page — pas de scroll long depuis le verdict pour le
+            découvrir — sans pour autant précéder la preuve qu'il est censé faire
+            suite à.
+          */}
+          {reportLocked ? <ClaimReportGate auditId={audit.id} locale={locale} /> : null}
 
           {complete && !failed && isAgentReport ? (
             <AgentAuditChat

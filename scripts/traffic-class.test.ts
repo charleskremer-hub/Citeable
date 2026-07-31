@@ -58,8 +58,8 @@ test("AC6 — CLASSIFIED_TRAFFIC_CLASSES == exactement ce qu'une classification 
   assert.deepEqual([...produced].sort(), [...CLASSIFIED_TRAFFIC_CLASSES].sort());
 });
 
-test("sécurité — seuls les 3 événements du navigateur sont acceptés sur le POST public", () => {
-  assert.deepEqual([...CLIENT_FUNNEL_EVENTS], ["report_viewed", "teaser_cta_click", "checkout_opened"]);
+test("sécurité — seuls les 4 événements du navigateur sont acceptés sur le POST public", () => {
+  assert.deepEqual([...CLIENT_FUNNEL_EVENTS], ["report_viewed", "gate_shown", "teaser_cta_click", "checkout_opened"]);
   // Tout le reste est écrit par un chemin serveur et ne doit pas être postable.
   for (const eventName of FUNNEL_EVENTS) {
     const expected = (CLIENT_FUNNEL_EVENTS as readonly string[]).includes(eventName);

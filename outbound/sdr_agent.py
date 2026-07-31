@@ -21,6 +21,7 @@ Usage :
     python3 sdr_agent.py                     # utilise la SEED_LIST
     python3 sdr_agent.py prospects.csv       # CSV: brand,website[,email,first_name]
     python3 sdr_agent.py prospects.csv --max 50 --threshold 75
+    python3 sdr_agent.py prospects.csv --post --locale fr   # marques FR : questions EN francais
 """
 
 import csv
@@ -38,6 +39,13 @@ from datetime import datetime
 # encore propagé, on passe par www.
 API_BASE = "https://www.getpick.ai"
 AUDIT_TIER = "monitor_9eur"          # 12 questions d'achat -> findings riches
+# `locale` pilote la LANGUE DES QUESTIONS D'ACHAT (il est transmis jusqu'a
+# generateBuyerIntentPromptsAI, src/lib/audit-engine.ts:3355), donc le MARCHE
+# mesure. Mesure du 28/07 sur VELAVI : en "en" l'IA cite Tata Harper / Pai
+# Skincare / Juice Beauty ; en "fr" elle cite Patyka / Sanoflore / Melvita.
+# Pour des marques FR, "en" mesure le mauvais marche et produit un hook que le
+# fondateur ne reconnait pas. Surcharger avec --locale fr.
+DEFAULT_LOCALE = "en"
 DEFAULT_THRESHOLD = 75               # score < seuil => douleur exploitable
 POLL_TIMEOUT = 150                   # secondes max d'attente par audit
 POLL_INTERVAL = 8
@@ -72,12 +80,12 @@ def _get(path):
         return json.load(r)
 
 
-def start_audit(brand, website, idx):
+def start_audit(brand, website, idx, locale=DEFAULT_LOCALE):
     payload = {
         "email": f"sdr-{idx}-{int(time.time())}@example.org",
         "brand_name": brand,
         "website_url": website,
-        "locale": "en",
+        "locale": locale,
         "audit_tier": AUDIT_TIER,
     }
     data = _post("/api/capture-email", payload)
@@ -109,7 +117,13 @@ def analyze(brand, website, audit_id, data):
         for c in (p.get("competitors") or []):
             comp[c] += 1
     top = [c for c, _ in comp.most_common(3)]
-    gap = next((p.get("prompt") for p in checked if not p.get("brandMentioned")), None)
+    # La regle de qualification porte sur la question PERDUE et sur le rival
+    # nomme DESSUS (playbook invariant 1). Le top global ne suffit pas : un
+    # concurrent peut n'apparaitre que sur des questions gagnees — le nommer
+    # dans un email serait un rival suppose.
+    lost = [p for p in checked if not p.get("brandMentioned")]
+    lost_with_rival = [p for p in lost if (p.get("competitors") or [])]
+    first_lost = lost_with_rival[0] if lost_with_rival else (lost[0] if lost else None)
     return {
         "brand": brand,
         "website": website,
@@ -120,7 +134,10 @@ def analyze(brand, website, audit_id, data):
         "recommended": mentioned,
         "checked": len(checked),
         "competitors": top,
-        "gap_prompt": gap,
+        "gap_prompt": (first_lost or {}).get("prompt"),
+        "gap_competitors": (first_lost or {}).get("competitors") or [],
+        "nb_lost": len(lost),
+        "nb_lost_with_rival": len(lost_with_rival),
     }
 
 
@@ -129,24 +146,58 @@ def _norm(s):
 
 
 def qualify(f, threshold=DEFAULT_THRESHOLD):
-    """Qualifie un prospect + QA anti-bruit. Retourne {hook: bool, reason: str}.
-    Hook = concurrent nommé + IA recommande < 75% des questions + score < seuil,
-    ET le concurrent n'est pas la marque elle-même (auto-cite = bruit)."""
+    """Qualifie un prospect + QA anti-bruit. Retourne {hook, reason, rival}.
+
+    Regle appliquee (GTM_PLAYBOOK.md invariant 1, ICP.md §3, et la qualification
+    manuelle du sprint 22/07) :
+
+        perdante = AU MOINS UNE question d'achat perdue AVEC un rival nomme
+                   dessus, ce rival n'etant pas la marque elle-meme.
+
+    Corrige le 29/07 : la version precedente exigeait ratio < 0,75 ET score <
+    threshold. Les 3 perdantes reelles du cycle 1 (Lemahieu 76, Ekyog 82, Soeur
+    82, toutes 5 mentions sur 6 => ratio 0,83) etaient donc JETEES par le code
+    alors qu'elles ont ete qualifiees et redigees a la main
+    (outbound/conversion_sprint_2026-07-22.md). Le filtre eliminait de la bonne
+    qualification, pas du bruit.
+
+    `threshold` est conserve pour compatibilite d'appel : il n'exclut plus rien,
+    il n'est qu'annote dans `reason` (un score eleve reste un signal de
+    "reference plutot que prospect", ICP.md, mais c'est un arbitrage humain).
+    """
     if f.get("score") is None:
-        return {"hook": False, "reason": "audit incomplet"}
-    if not f.get("competitors"):
-        return {"hook": False, "reason": "aucun concurrent cité"}
+        return {"hook": False, "reason": "audit incomplet", "rival": None}
     if not f.get("checked"):
-        return {"hook": False, "reason": "aucune question d'achat vérifiée"}
+        return {"hook": False, "reason": "aucune question d'achat vérifiée", "rival": None}
+
+    lost_total = f["checked"] - f["recommended"]
+    if lost_total <= 0:
+        return {"hook": False,
+                "reason": f"recommandé {f['recommended']}/{f['checked']} — aucune question perdue",
+                "rival": None}
+
+    # Rivaux nommes SUR la question perdue. Fallback sur le top global pour les
+    # findings produits avant l'ajout de gap_competitors (signale dans reason).
+    fallback = "gap_competitors" not in f
+    rivals = f.get("gap_competitors") if not fallback else (f.get("competitors") or [])
+    rivals = [r for r in (rivals or []) if r]
+    if not rivals:
+        return {"hook": False,
+                "reason": f"{lost_total} question(s) perdue(s) mais aucun rival nommé dessus",
+                "rival": None}
+
     brand_n = _norm(f.get("brand"))
-    if brand_n and _norm(f["competitors"][0]) == brand_n:
-        return {"hook": False, "reason": "auto-cite (concurrent = la marque) — bruit"}
-    ratio = f["recommended"] / f["checked"]
-    if ratio >= 0.75:
-        return {"hook": False, "reason": f"recommandé {f['recommended']}/{f['checked']} (>=75%, pas de douleur)"}
-    if f["score"] >= threshold:
-        return {"hook": False, "reason": f"score {f['score']} >= {threshold}"}
-    return {"hook": True, "reason": f"recommandé {f['recommended']}/{f['checked']}, {f['competitors'][0]} cité à sa place"}
+    rivals = [r for r in rivals if not (brand_n and _norm(r) == brand_n)]
+    if not rivals:
+        return {"hook": False, "reason": "auto-cite (concurrent = la marque) — bruit",
+                "rival": None}
+
+    rival = rivals[0]
+    reason = (f"recommandé {f['recommended']}/{f['checked']}, {rival} cité à sa place "
+              f"sur une question perdue (score {f['score']}, seuil indicatif {threshold})")
+    if fallback:
+        reason += " [fallback top-global : rival non rattaché à la question perdue]"
+    return {"hook": True, "reason": reason, "rival": rival}
 
 
 def is_hook(f, threshold):
@@ -230,7 +281,7 @@ def write_outputs(findings, out_dir, threshold):
     return hooks
 
 
-def run_post(csv_path, state_path, max_n):
+def run_post(csv_path, state_path, max_n, locale=DEFAULT_LOCALE):
     """Phase 1 : POST les audits (rapide), écrit l'état {brand,website,audit_id}."""
     if csv_path:
         prospects = load_prospects(csv_path)
@@ -240,9 +291,9 @@ def run_post(csv_path, state_path, max_n):
     state = []
     for idx, p in enumerate(prospects, 1):
         try:
-            aid = start_audit(p["brand"], p["website"], idx)
+            aid = start_audit(p["brand"], p["website"], idx, locale)
             if aid:
-                state.append({**p, "audit_id": aid})
+                state.append({**p, "audit_id": aid, "locale": locale})
                 print(f"[SDR] posted {p['brand']} -> {aid}")
         except Exception as e:
             print(f"[SDR] ! {p['brand']}: {e}")
@@ -278,6 +329,7 @@ def main():
     state_path = "/tmp/sdr_state.json"
     out_dir = "."
     mode = "sync"
+    locale = DEFAULT_LOCALE
     i = 0
     while i < len(args):
         a = args[i]
@@ -286,11 +338,12 @@ def main():
         elif a == "--state": state_path = args[i + 1]; i += 2
         elif a == "--out": out_dir = args[i + 1]; i += 2
         elif a == "--post": mode = "post"; i += 1
+        elif a == "--locale": locale = args[i + 1]; i += 2
         elif a == "--collect": mode = "collect"; i += 1
         else: csv_path = a; i += 1
 
     if mode == "post":
-        run_post(csv_path, state_path, max_n)
+        run_post(csv_path, state_path, max_n, locale)
     elif mode == "collect":
         run_collect(state_path, out_dir, threshold)
     else:
@@ -304,7 +357,7 @@ def main():
         for idx, p in enumerate(prospects, 1):
             print(f"[SDR] ({idx}/{len(prospects)}) audit {p['brand']} …", flush=True)
             try:
-                aid = start_audit(p["brand"], p["website"], idx)
+                aid = start_audit(p["brand"], p["website"], idx, locale)
                 data = poll_audit(aid) if aid else None
                 if not data:
                     print("       ! timeout/erreur"); continue
