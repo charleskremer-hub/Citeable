@@ -1,0 +1,8 @@
+# Ne jamais uploader les secrets ni l'outillage GTM dans le build Vercel.
+outbound/
+artifacts/
+e2e/
+test-results/
+.env.local
+*.env
+**/keys.env
