@@ -7,6 +7,9 @@ import { auditCopy, brandSentimentView, localeFromHeaders, localeFromUnknown, lo
 import { UNKNOWN_CATEGORY } from "@/lib/audit-engine";
 import { categoryPerceptionFromPrompts, extractSourceCitationReports, fetchWithHostFallback, generateGeoAgentAssetsFromAudit, isAnonymousEmail, isAuditedBrandName, robotsTxtFixForBlockedCrawlers, youtubeContentTipIsRelevant } from "@/lib/audit-engine";
 import type { BrandSentiment, BuyerIntentPromptResult, CategoryPerception, IcpSegmentMetadata, PlainAction, SourceCitationReport } from "@/lib/audit-engine";
+import { AUDIT_SHARE_TOKEN_PARAM, verifyAuditShareToken } from "@/lib/audit-share-token";
+import { resolveReportAccess } from "@/lib/report-access";
+import { entitlementForEmail } from "@/lib/subscriptions";
 import LocaleLang from "@/app/LocaleLang";
 import AuditPoller from "./AuditPoller";
 import ReportViewBeacon from "./ReportViewBeacon";
@@ -356,8 +359,34 @@ function StatusPill({ failed, complete, locale }: { failed: boolean; complete: b
   );
 }
 
-export default async function AuditPage({ params }: { params: Promise<{ id: string }> }) {
+/**
+ * Un abonnement actif est-il rattaché à cet audit ?
+ *
+ * LE RATTACHEMENT PASSE PAR L'EMAIL, parce que c'est le seul identifiant que le
+ * client, l'audit et Stripe partagent (voir `src/lib/subscriptions.ts` : il n'y
+ * a pas de table de comptes, et `monitored_brands` serait circulaire).
+ *
+ * FAIL-SAFE : toute panne de base rend `false`. Ne pas pouvoir prouver le droit
+ * n'est pas une raison de l'accorder — c'est exactement l'inverse.
+ */
+async function hasActiveSubscriptionForAudit(email: string): Promise<boolean> {
+  if (!email || isAnonymousEmail(email)) return false;
+  try {
+    return (await entitlementForEmail(email)) !== null;
+  } catch {
+    return false;
+  }
+}
+
+export default async function AuditPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { id } = await params;
+  const query = await searchParams;
   const headerLocale = localeFromHeaders(await headers());
   await ensureAuditSchema();
 
@@ -458,14 +487,27 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   // donc "not_enough_signal". Un ancien rapport n'affiche jamais de verdict inventé.
   const categoryPerception: CategoryPerception =
     audit.raw_results?.categoryPerception ?? categoryPerceptionFromPrompts(questions, audit.raw_results?.category ?? "");
-  // Audit lancé sans email : le verdict reste visible, le détail est échangé
-  // contre l'email (voir ClaimReportGate). Une fois réclamé, le rapport s'ouvre.
+  // La porte du rapport. Elle ne dépend PLUS de l'anonymat de l'email — cette
+  // règle laissait tout audit lancé avec une vraie adresse (donc toute la
+  // prospection, en tier payant) grand ouvert à qui possédait l'URL. Elle dépend
+  // désormais de ce qui a été payé ou explicitement autorisé : voir
+  // `src/lib/report-access.ts` pour la table de décision complète.
   //
-  // On se base sur l'EMAIL de l'audit, pas sur un drapeau `raw_results.anonymous` :
-  // la réclamation met à jour l'email, et un drapeau maintenu en parallèle serait
-  // resté à true, laissant le rapport verrouillé pour toujours. L'email est la
-  // seule source de vérité.
-  const reportLocked = isAnonymousEmail(audit.email) && complete && !failed;
+  // On se base toujours sur l'EMAIL de l'audit pour le cas gratuit, pas sur un
+  // drapeau `raw_results.anonymous` : la réclamation met à jour l'email, et un
+  // drapeau maintenu en parallèle serait resté à true, laissant le rapport
+  // verrouillé pour toujours.
+  const shareTokenParam = query?.[AUDIT_SHARE_TOKEN_PARAM];
+  const shareToken = Array.isArray(shareTokenParam) ? shareTokenParam[0] : shareTokenParam;
+  const reportAccess = resolveReportAccess({
+    auditTier: audit.raw_results?.auditTier,
+    emailIsAnonymous: isAnonymousEmail(audit.email),
+    complete,
+    failed,
+    hasActiveSubscription: await hasActiveSubscriptionForAudit(audit.email),
+    shareTokenValid: verifyAuditShareToken(audit.id, shareToken),
+  });
+  const reportLocked = reportAccess.locked;
 
   const aiCrawl = complete && !failed ? await checkAiCrawlability(audit.website_url) : null;
 
@@ -894,10 +936,46 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             </section>
           ) : null}
 
-          {reportLocked ? <ClaimReportGate auditId={audit.id} locale={locale} /> : null}
+          {/* Deux portes, une seule décision. `claim` échange le détail contre un
+              email (audit gratuit non réclamé), `paywall` l'échange contre
+              l'abonnement qui correspond au tier déjà servi. */}
+          {reportAccess.reason === "claim" ? <ClaimReportGate auditId={audit.id} locale={locale} /> : null}
+
+          {reportAccess.reason === "paywall" ? (
+            <section className="rounded-[1.5rem] border border-[#CAFF3C]/30 bg-[#CAFF3C]/[0.06] p-5 sm:p-6" data-testid="paid-report-gate">
+              <p className="m-0 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">
+                {locale === "fr" ? "Rapport complet" : "Full report"}
+              </p>
+              <h2 className="m-0 mt-2 text-2xl leading-[1.1] tracking-[-0.03em]" style={{ fontFamily: "var(--font-display)" }}>
+                {locale === "fr"
+                  ? "Ton score est calculé. Le détail s'ouvre avec ton abonnement."
+                  : "Your score is calculated. The detail opens with your subscription."}
+              </h2>
+              <p className="m-0 mt-2 text-sm font-bold leading-6 text-[#A7A7B4]">
+                {locale === "fr"
+                  ? "Questions d'achat testées, concurrents cités à ta place, contenus à coller et fichiers techniques : tout est déjà produit pour ta marque."
+                  : "Buyer questions tested, competitors cited instead of you, ready-to-paste content and technical files: all already produced for your brand."}
+              </p>
+              <FunnelCheckoutLink
+                auditId={audit.id}
+                href={isAgentReport ? AGENT_CHECKOUT_URL : MONITOR_CHECKOUT_URL}
+                source="report_paid_gate"
+                className="mt-4 inline-flex rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110"
+              >
+                {isAgentReport
+                  ? locale === "fr" ? "Ouvrir mon rapport — 19 € →" : "Open my report — €19 →"
+                  : locale === "fr" ? "Ouvrir mon rapport — 9 € →" : "Open my report — €9 →"}
+              </FunnelCheckoutLink>
+              <p className="m-0 mt-3 text-xs font-bold text-[#8E8E9A]">
+                {locale === "fr"
+                  ? "Déjà abonné ? Ouvre ce rapport avec l'adresse de ton abonnement."
+                  : "Already subscribed? Open this report with your subscription address."}
+              </p>
+            </section>
+          ) : null}
 
           {complete && !failed && !reportLocked ? (
-            <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6">
+            <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6" data-testid="report-competitors">
               <div className="mb-4 flex items-end justify-between gap-4">
                 <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
                   {isAnswerEngineReport ? copy.competitorsTitle(answerEngineName) : copy.webSearchTitle}
@@ -986,7 +1064,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             </section>
           ) : null}
 
-          {complete && !failed && isAgentReport ? (
+          {complete && !failed && isAgentReport && !reportLocked ? (
             <AgentAuditChat
               auditId={audit.id}
               brandName={audit.brand_name}
@@ -1061,8 +1139,8 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             </section>
           ) : null}
 
-          {complete && !failed && isMonitorReport ? (
-            <section className="rounded-[1.5rem] border border-[#CAFF3C]/20 bg-[#CAFF3C]/[0.055] p-5 sm:p-6">
+          {complete && !failed && isMonitorReport && !reportLocked ? (
+            <section className="rounded-[1.5rem] border border-[#CAFF3C]/20 bg-[#CAFF3C]/[0.055] p-5 sm:p-6" data-testid="monitor-content-blocks">
               <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">
                 {locale === "fr" ? "Monitor · contenu à coller" : "Monitor · content to paste"}
               </p>
@@ -1169,8 +1247,8 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             </section>
           ) : null}
 
-          {complete && !failed && !isFreeReport ? (
-            <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6">
+          {complete && !failed && !isFreeReport && !reportLocked ? (
+            <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6" data-testid="buyer-intent-prompts">
               <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
                 <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
                   {isAnswerEngineReport ? copy.questionsTitle(answerEngineName) : copy.webQuestionsTitle}
@@ -1251,7 +1329,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             </section>
           ) : null}
 
-          {isAgentReport && proof ? (
+          {isAgentReport && proof && !reportLocked ? (
             <section className="rounded-[1.5rem] border border-[#CAFF3C]/20 bg-[#CAFF3C]/[0.055] p-5 sm:p-6">
               <p className="m-0 mb-3 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.proofEyebrow}</p>
               <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
