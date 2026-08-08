@@ -117,17 +117,46 @@ test("la page décide par resolveReportAccess, et plus par isAnonymousEmail seul
 });
 
 test("chaque section de détail reste derrière la porte", () => {
-  // Les gardes exactes attendues dans la source, une par section de détail.
-  const guards = [
-    "{complete && !failed && !reportLocked ?", // concurrents + part de voix
-    "{complete && !failed && isAgentReport && !reportLocked ?", // chat agent
-    "{complete && !failed && isMonitorReport && !reportLocked ?", // contenus à coller
-    "{complete && !failed && !isFreeReport && !reportLocked ?", // questions d'achat testées
-    "{isAgentReport && proof && !reportLocked ?", // preuve de traitement
+  // Depuis le lot P1 « verdict en trois blocs », la porte n'est plus une garde
+  // `!reportLocked` répétée sur chaque section : un rapport verrouillé COURT-
+  // CIRCUITE la fonction et rend au plus trois blocs (le verdict + la porte)
+  // avant que la moindre section de détail ne soit construite. Le filet vérifie
+  // cette structure dans la source — et il est plus fort qu'avant : AUCUNE
+  // section marquée ne peut exister dans la branche verrouillée, y compris une
+  // section future qu'on aurait oublié d'ajouter à une liste de gardes.
+  const gate = pageSource.indexOf("if (reportAccess.locked)");
+  assert.ok(gate !== -1, "la page doit court-circuiter sur reportAccess.locked");
+
+  const detailMarkers = [
+    'data-testid="report-competitors"', // concurrents
+    'data-testid="share-of-voice"', // part de voix
+    'data-testid="buyer-intent-prompts"', // questions d'achat testées
+    'data-testid="monitor-content-blocks"', // contenus à coller
+    'data-testid="monitor-actions-gate"', // actions Monitor
+    'data-testid="technical-files"', // fichiers techniques
+    'data-testid="brand-sentiment"', // sentiment
+    'data-testid="category-perception"', // perception de catégorie
+    "<AgentAuditChat", // chat agent
+    "<VisibilityMonitorCard", // carte concurrents/part de voix
+    "generateGeoAgentAssetsFromAudit(", // génération des fichiers techniques
   ];
-  for (const guard of guards) {
-    assert.ok(pageSource.includes(guard), `garde manquante dans la page : ${guard}`);
-  }
-  // Les fichiers techniques sont gardés par le calcul de `technicalAssets`.
-  assert.ok(/technicalAssets =[\s\S]{0,200}!reportLocked/.test(pageSource), "technicalAssets doit dépendre de !reportLocked");
+  const firstDetail = Math.min(
+    ...detailMarkers.map((marker) => {
+      const at = pageSource.indexOf(marker);
+      assert.ok(at !== -1, `marqueur de détail introuvable dans la page : ${marker}`);
+      return at;
+    })
+  );
+  assert.ok(gate < firstDetail, "toute section de détail doit venir APRÈS le court-circuit de la porte");
+
+  // La branche verrouillée : du test de la porte à la première section de
+  // détail. Elle doit rendre la main (return), contenir le verdict et les deux
+  // portes — et RIEN d'autre qui porte un data-testid (les testids du verdict
+  // et des portes vivent dans leurs propres fichiers).
+  const lockedBranch = pageSource.slice(gate, firstDetail);
+  assert.ok(lockedBranch.includes("return ("), "le rapport verrouillé doit sortir avant le détail");
+  assert.ok(lockedBranch.includes("<LockedVerdict"), "blocs 1+2 : le verdict et les questions perdues");
+  assert.ok(lockedBranch.includes("<ClaimReportGate"), "bloc 3 : la porte de capture d'email");
+  assert.ok(lockedBranch.includes("<PaidReportGate"), "bloc 3 : la porte de paiement");
+  assert.ok(!lockedBranch.includes('data-testid="'), "aucune section de détail ne se glisse dans la branche verrouillée");
 });

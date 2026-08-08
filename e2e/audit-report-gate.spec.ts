@@ -15,10 +15,13 @@ import { E2E_AUDIT_SHARE_SECRET } from "../playwright.report-gate.config";
  * ÉCHOUE contre cette règle : elle rendait `false`, donc « ouvert ». C'est le
  * test qui met le trou en évidence.
  *
- * CE QUI EST « LE DÉTAIL ». La porte est posée sous le verdict et le score, qui
- * restent visibles (lot P0 : on ne touche pas au contenu au-dessus de la porte).
- * Sous la porte : concurrents + part de voix, questions d'achat testées,
- * contenus à coller, fichiers techniques, chat agent.
+ * CE QUI EST « LE DÉTAIL » — depuis le lot P1 « verdict en trois blocs ».
+ * Au-dessus de la porte, un rapport verrouillé montre AU PLUS : la phrase de
+ * verdict (construite sur les questions PERDUES et leurs concurrents, 3 max),
+ * les questions perdues en clair (3 max), et la porte comme CTA unique.
+ * Sous la porte : le score chiffré, concurrents + part de voix, le tableau
+ * complet des questions testées (dont les questions GAGNÉES et les concurrents
+ * cités question par question), contenus à coller, fichiers techniques, chat.
  */
 
 // Site audité inexistant, et c'est voulu : la page rend alors « site
@@ -39,24 +42,32 @@ const DETAIL_TECHNICAL = 'data-testid="technical-files"';
 const DETAIL_SHARE_OF_VOICE = 'data-testid="share-of-voice"';
 const GATE_CLAIM = 'data-testid="claim-report-gate"';
 const GATE_PAYWALL = 'data-testid="paid-report-gate"';
+const LOCKED_VERDICT = 'data-testid="locked-verdict"';
 
-// Le texte d'une question d'achat testée. Il n'apparaît QUE sous la porte pour un
-// rapport de tier payant.
+// Le texte d'une question d'achat GAGNÉE (la marque y est citée). Une question
+// gagnée n'est jamais du verdict gratuit — le verdict ne montre que les
+// questions perdues — donc ce texte n'apparaît QUE sous la porte, dans le
+// tableau complet des questions testées.
 const SECRET_PROMPT = "PROMPT-SOUS-LA-PORTE-quelle-huile-d-olive-bio-choisir";
 
+// La question PERDUE : depuis P1, elle est le contenu gratuit du verdict et
+// apparaît donc AU-DESSUS de la porte, en clair.
 const TEASER_PROMPT = "PROMPT-VITRINE-ou-acheter-de-l-huile-d-olive";
 
+// Concurrent cité UNIQUEMENT sur la question gagnée : le verdict ne nomme que
+// les concurrents des questions perdues, donc ce nom reste sous la porte.
 const COMPETITOR_IN_SECRET_PROMPT = "Cachetus";
 
+// Concurrent présent UNIQUEMENT dans `competitors_found` (la colonne) : il
+// n'apparaît que dans la section concurrents/part de voix, donc sous la porte.
+const COMPETITOR_IN_DB_COLUMN = "Secretus";
+
 /**
- * EXPOSITION RÉSIDUELLE, CONNUE ET ASSUMÉE DANS CE LOT.
- *
- * `VisibilityMonitorCard` est rendue AU-DESSUS de la porte (variante `teaser` en
- * gratuit, `dashboard` en Monitor) et y nomme déjà les concurrents cités, la
- * part de voix et le nombre de mentions. Le périmètre P0 est explicite : « ne
- * change pas le contenu au-dessus de la porte », la refonte éditoriale est un
- * lot séparé. On ne teste donc PAS l'absence des noms de concurrents ; on teste
- * l'absence des sections de détail, qui sont ce que la porte protège.
+ * L'EXPOSITION RÉSIDUELLE DU LOT P0 EST FERMÉE PAR P1. `VisibilityMonitorCard`
+ * (qui nommait concurrents et part de voix au-dessus de la porte) est passée
+ * SOUS la porte : un rapport verrouillé ne montre plus que le verdict. Ce que le
+ * verdict expose PAR CONCEPTION — les concurrents des questions perdues, 3 max —
+ * est le produit gratuit voulu, pas une fuite ; tout le reste est testé absent.
  */
 
 function buyerIntentPrompts() {
@@ -74,9 +85,9 @@ function buyerIntentPrompts() {
     {
       prompt: SECRET_PROMPT,
       available: true,
-      brandMentioned: false,
+      brandMentioned: true,
       competitors: [COMPETITOR_IN_SECRET_PROMPT],
-      surfaces: surface(false),
+      surfaces: surface(true),
     },
   ];
 }
@@ -196,7 +207,14 @@ test("AC1 — audit gratuit non réclamé : le détail est ABSENT, la porte de c
   expect(html).toContain(GATE_CLAIM);
 
   // Le verdict reste au-dessus de la porte : on gate le détail, pas le diagnostic.
+  expect(html).toContain(LOCKED_VERDICT);
   expect(html).toContain("Oliveto Gratuit");
+  // La question PERDUE est le contenu gratuit du verdict (P1) : en clair.
+  expect(html).toContain(TEASER_PROMPT);
+  // La question GAGNÉE et son concurrent sont du détail : sous la porte.
+  expect(html).not.toContain(SECRET_PROMPT);
+  expect(html).not.toContain(COMPETITOR_IN_SECRET_PROMPT);
+  expect(html).not.toContain(COMPETITOR_IN_DB_COLUMN);
 });
 
 test("AC1bis — audit gratuit réclamé : le détail est PRÉSENT", async () => {
@@ -217,8 +235,13 @@ test("AC2 — LE TROU : tier payant SANS abonnement actif, le détail est ABSENT
   expect(html).not.toContain(DETAIL_TECHNICAL);
   expect(html).not.toContain(DETAIL_SHARE_OF_VOICE);
   expect(html).not.toContain(SECRET_PROMPT);
+  expect(html).not.toContain(COMPETITOR_IN_SECRET_PROMPT);
+  expect(html).not.toContain(COMPETITOR_IN_DB_COLUMN);
 
   expect(html).toContain(GATE_PAYWALL);
+  // Le verdict gratuit, lui, est là : la question perdue en clair (P1).
+  expect(html).toContain(LOCKED_VERDICT);
+  expect(html).toContain(TEASER_PROMPT);
 });
 
 test("AC3 — tier payant AVEC abonnement actif : le détail est PRÉSENT", async () => {
@@ -229,6 +252,7 @@ test("AC3 — tier payant AVEC abonnement actif : le détail est PRÉSENT", asyn
   expect(html).toContain(DETAIL_MONITOR_CONTENT);
   expect(html).toContain(DETAIL_TECHNICAL);
   expect(html).toContain(SECRET_PROMPT);
+  expect(html).toContain(COMPETITOR_IN_SECRET_PROMPT);
   expect(html).not.toContain(GATE_PAYWALL);
 });
 
