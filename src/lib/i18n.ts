@@ -458,9 +458,17 @@ export const auditCopy = {
       prompts.length === 1
         ? `Closes the gap on: “${prompts[0]}”`
         : `Closes gaps on ${prompts.length} buyer questions, starting with: “${prompts[0]}”`,
-    actionImpactHigh: "Highest impact",
-    actionImpactMedium: "Next up",
-    actionImpactSupport: "Then",
+    // Impact CALCULÉ (lot P2) : le libellé ne porte que des nombres dérivés de
+    // l'audit — questions perdues adressées / questions perdues. Jamais de
+    // pourcentage inventé, jamais de promesse de gain. Sans donnée : neutre.
+    actionImpactMeasured: (addressed: number, lostTotal: number) => {
+      if (lostTotal === 1) return addressed === 1 ? "Addresses the one lost buyer question" : "Doesn't address the lost buyer question";
+      return addressed === 0
+        ? `Addresses none of the ${lostTotal} lost buyer questions`
+        : `Addresses ${addressed} of the ${lostTotal} lost buyer questions`;
+    },
+    actionImpactUnmeasured: "Impact not measured",
+    actionPhase: { foundations: "Foundations", content: "Content", authority: "Authority" },
     youtubeTipBadge: "Content tip",
     youtubeTipTitle: "YouTube is the #1 AI-visibility signal — and you have none",
     youtubeTipBody:
@@ -567,9 +575,15 @@ export const auditCopy = {
       prompts.length === 1
         ? `Comble l'écart sur : « ${prompts[0]} »`
         : `Comble l'écart sur ${prompts.length} questions d'achat, à commencer par : « ${prompts[0]} »`,
-    actionImpactHigh: "Impact max",
-    actionImpactMedium: "Ensuite",
-    actionImpactSupport: "Puis",
+    // Impact CALCULÉ (lot P2) : uniquement des nombres dérivés de l'audit.
+    actionImpactMeasured: (addressed: number, lostTotal: number) => {
+      if (lostTotal === 1) return addressed === 1 ? "Adresse la seule question d'achat perdue" : "N'adresse pas la question d'achat perdue";
+      return addressed === 0
+        ? `N'adresse aucune des ${lostTotal} questions d'achat perdues`
+        : `Adresse ${addressed} des ${lostTotal} questions d'achat perdues`;
+    },
+    actionImpactUnmeasured: "Impact non mesuré",
+    actionPhase: { foundations: "Fondations", content: "Contenu", authority: "Autorité" },
     youtubeTipBadge: "Astuce contenu",
     youtubeTipTitle: "YouTube est le signal #1 de visibilité IA — et tu n'en as aucun",
     youtubeTipBody:

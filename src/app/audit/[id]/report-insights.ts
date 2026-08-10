@@ -8,7 +8,7 @@
  * pur lui aussi pour être testable seul — voir scripts/report-verdict.test.ts.
  */
 import { UNKNOWN_CATEGORY } from "@/lib/audit-engine";
-import type { BuyerIntentPromptResult, IcpSegmentMetadata } from "@/lib/audit-engine";
+import type { BuyerIntentPromptResult, IcpSegmentMetadata, PlainAction } from "@/lib/audit-engine";
 import type { Locale } from "@/lib/i18n";
 
 export function extractPasteable(text: string) {
@@ -287,4 +287,98 @@ export function lockedVerdictHeadline({ brandName, engineName, questionCount, br
   return fr
     ? `Sur ${questionCount} questions d'achat, ${engineName} ne cite ${brandName} que sur ${brandMentionCount}.`
     : `Across ${questionCount} buyer questions, ${engineName} only cites ${brandName} on ${brandMentionCount}.`;
+}
+
+// --- Impact CALCULÉ des actions (lot P2 « impact calculé + phase ») ----------
+// Un rang d'affichage n'est pas une mesure. Ce qui suit dérive l'impact de
+// chaque action depuis les données stockées de l'audit — le recouvrement entre
+// les questions qu'elle adresse (`basedOn`) et les questions d'achat PERDUES —
+// pur, sans réseau, testable seul (voir scripts/report-action-impact.test.ts).
+// Interdits absolus, hérités du verdict : jamais un chiffre rédigé, jamais un
+// pourcentage inventé, jamais une promesse de gain. Quand la donnée manque,
+// l'impact est « non mesuré », il ne fabrique RIEN.
+
+export type ActionPhase = "foundations" | "content" | "authority";
+
+export type ActionImpact =
+  | { measured: true; addressedLostCount: number; lostCount: number }
+  | { measured: false };
+
+export type RankedAction = {
+  action: PlainAction;
+  phase: ActionPhase;
+  impact: ActionImpact;
+};
+
+/** Trois fixes maximum à l'écran — la règle produit, pas un détail de style. */
+export const MAX_DISPLAYED_ACTIONS = 3;
+
+function normalizeActionPrompt(prompt: string) {
+  return prompt.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Phase du plan à laquelle l'action appartient, déduite de sa famille — même
+ * convention de préfixe de titre que `localizePlainAction` (les actions de
+ * `buildPlainActions` sont générées en anglais, leurs titres sont stables).
+ * - foundations : les faits de base que l'IA lit (profils, fiches, annuaires) ;
+ * - content : les pages qui répondent aux questions d'achat ;
+ * - authority : les preuves tierces (listicles, presse, avis).
+ */
+export function actionPhase(action: PlainAction): ActionPhase {
+  const title = action.title;
+
+  if (
+    title.startsWith("Update Google Business Profile") ||
+    title.startsWith("Refresh professional directory") ||
+    title.startsWith("Align social bios")
+  ) {
+    return "foundations";
+  }
+
+  if (
+    title.startsWith("Earn listicle") ||
+    title.startsWith("Ask 3 customers") ||
+    title.startsWith("Get included in top-creator") ||
+    title.startsWith("Build press and entity proof")
+  ) {
+    return "authority";
+  }
+
+  // FAQ/pages produit, page « pourquoi me choisir », et toute action inconnue :
+  // la famille « contenu » est le défaut — c'est une catégorie, pas un chiffre.
+  return "content";
+}
+
+/**
+ * L'impact d'une action = combien de questions d'achat PERDUES elle adresse,
+ * reproductible depuis `raw_results` : `basedOn` (les questions que l'action
+ * cible) croisé avec les questions vérifiées où la marque n'est pas citée.
+ * Sans `basedOn`, ou sans question perdue, il n'y a rien à mesurer : l'impact
+ * est non mesuré, jamais estimé.
+ */
+export function actionImpact(action: PlainAction, questions: BuyerIntentPromptResult[]): ActionImpact {
+  const lost = lostBuyerQuestions(questions);
+
+  if (!lost.length || !action.basedOn?.length) return { measured: false };
+
+  const targeted = new Set(action.basedOn.map(normalizeActionPrompt));
+  const addressedLostCount = lost.filter((question) => targeted.has(normalizeActionPrompt(question.prompt))).length;
+
+  return { measured: true, addressedLostCount, lostCount: lost.length };
+}
+
+/**
+ * Les actions à afficher : chacune portant son impact calculé et sa phase,
+ * triées par impact décroissant (le calculé, pas l'ordre d'arrivée), les
+ * non-mesurées en dernier, ordre d'origine en cas d'égalité, 3 max.
+ */
+export function rankActionsByImpact(actions: PlainAction[], questions: BuyerIntentPromptResult[]): RankedAction[] {
+  const impactValue = (impact: ActionImpact) => (impact.measured ? impact.addressedLostCount : -1);
+
+  return actions
+    .map((action, index) => ({ action, phase: actionPhase(action), impact: actionImpact(action, questions), index }))
+    .sort((left, right) => impactValue(right.impact) - impactValue(left.impact) || left.index - right.index)
+    .slice(0, MAX_DISPLAYED_ACTIONS)
+    .map(({ action, phase, impact }) => ({ action, phase, impact }));
 }

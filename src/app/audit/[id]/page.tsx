@@ -30,11 +30,13 @@ import {
   priorityGapQuestions,
   promptAnalysis,
   promptStatusPill,
+  rankActionsByImpact,
   scoreColor,
   treatmentProof,
   treatmentProofForQuestion,
   uniqueNames,
   verdictCompetitors,
+  type ActionImpact,
   type PromptState,
 } from "./report-insights";
 
@@ -279,7 +281,16 @@ export default async function AuditPage({
     : [];
   const copyLabel = locale === "fr" ? "Copier" : "Copy";
   const copiedLabel = locale === "fr" ? "Copié ✓" : "Copied ✓";
-  const monitorActions = (audit.raw_results?.monitoring?.actions?.slice(0, 3) ?? []).map((action) => localizePlainAction(action, locale));
+  // Impact CALCULÉ (lot P2 « impact calculé + phase ») : chaque action affichée
+  // porte le nombre de questions d'achat PERDUES qu'elle adresse, dérivé de ses
+  // `basedOn` croisés avec les questions stockées — plus jamais un rang
+  // d'affichage déguisé en mesure. Tri par impact décroissant, 3 max. Dérivation
+  // pure (zéro réseau), et jamais exécutée sur un rapport verrouillé : la
+  // branche `reportAccess.locked` a déjà retourné plus haut.
+  const monitorActions = rankActionsByImpact(audit.raw_results?.monitoring?.actions ?? [], questions).map((ranked) => ({
+    ...ranked,
+    action: localizePlainAction(ranked.action, locale),
+  }));
   // Tip contenu "YouTube = signal #1" (étude Ahrefs 75k marques) : ponctuel, affiché
   // uniquement quand des sources ont été citées par les moteurs IA et qu'aucune
   // n'est une vidéo YouTube. Page-only, zéro appel réseau : `monitoring.sources`
@@ -432,8 +443,10 @@ export default async function AuditPage({
         ? "#FFD166"
         : "#CAFF3C";
 
-  const actionImpactLabel = (index: number) =>
-    index === 0 ? copy.actionImpactHigh : index === 1 ? copy.actionImpactMedium : copy.actionImpactSupport;
+  // Le libellé d'impact ne dit que ce que les données prouvent : le compte des
+  // questions perdues adressées quand il est mesurable, un libellé neutre sinon.
+  const actionImpactLabel = (impact: ActionImpact) =>
+    impact.measured ? copy.actionImpactMeasured(impact.addressedLostCount, impact.lostCount) : copy.actionImpactUnmeasured;
 
   return (
     <main className="min-h-screen bg-[#09090B] text-[#F0F0EC]" style={{ fontFamily: "var(--font-sans)" }}>
@@ -850,12 +863,15 @@ export default async function AuditPage({
               {monitorActions.length ? (
                 <>
                   <ol className="m-0 mt-4 grid list-none gap-2 p-0">
-                    {monitorActions.map((action, index) => (
+                    {monitorActions.map(({ action, phase, impact }, index) => (
                       <li key={`${action.title}-${index}`} className="rounded-2xl border border-white/[0.08] bg-black/25 p-4">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-sm font-black text-[#CAFF3C]">{index + 1}.</span>
+                          <span className="rounded-full border border-white/15 bg-white/[0.06] px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#BCBCC8]">
+                            {copy.actionPhase[phase]}
+                          </span>
                           <span className="rounded-full border border-[#CAFF3C]/25 bg-[#CAFF3C]/10 px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#CAFF3C]">
-                            {actionImpactLabel(index)}
+                            {actionImpactLabel(impact)}
                           </span>
                         </div>
                         <p className="m-0 mt-1.5 text-sm font-black text-[#F0F0EC]">{action.title}</p>
@@ -874,8 +890,8 @@ export default async function AuditPage({
                       <p className="m-0 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">
                         {locale === "fr" ? "Action 1 · comment faire" : "Action 1 · how to do it"}
                       </p>
-                      <p className="m-0 text-sm font-bold leading-6 text-[#D6D6DF]">{monitorActions[0].doThis}</p>
-                      <p className="m-0 text-sm font-bold leading-6 text-[#D6D6DF]">{copy.where} {monitorActions[0].where}</p>
+                      <p className="m-0 text-sm font-bold leading-6 text-[#D6D6DF]">{monitorActions[0].action.doThis}</p>
+                      <p className="m-0 text-sm font-bold leading-6 text-[#D6D6DF]">{copy.where} {monitorActions[0].action.where}</p>
                     </div>
                     <div className="absolute inset-0 grid place-items-center gap-2 bg-[#09090B]/55 p-4 text-center backdrop-blur-[1px]">
                       <div className="text-xl">🔒</div>
@@ -938,12 +954,15 @@ export default async function AuditPage({
                 </div>
               ) : monitorActions.length ? (
                 <ol className="m-0 mt-4 grid list-none gap-3 p-0">
-                  {monitorActions.map((action, index) => (
+                  {monitorActions.map(({ action, phase, impact }, index) => (
                     <li key={`${action.title}-${index}`} className="rounded-2xl border border-white/[0.08] bg-black/20 p-4">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-sm font-black text-[#CAFF3C]">{index + 1}.</span>
+                        <span className="rounded-full border border-white/15 bg-white/[0.06] px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#BCBCC8]">
+                          {copy.actionPhase[phase]}
+                        </span>
                         <span className="rounded-full border border-[#CAFF3C]/25 bg-[#CAFF3C]/10 px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#CAFF3C]">
-                          {actionImpactLabel(index)}
+                          {actionImpactLabel(impact)}
                         </span>
                       </div>
                       <p className="m-0 mt-1.5 text-sm font-black text-[#F0F0EC]">{action.title}</p>
