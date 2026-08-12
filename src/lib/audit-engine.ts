@@ -1709,6 +1709,16 @@ export function categoryLabel(category: string | undefined | null) {
   return trimmed && trimmed !== UNKNOWN_CATEGORY ? trimmed : "this category";
 }
 
+/**
+ * Les questions vérifiées de l'audit qui soutiennent une action donnée.
+ * Retourne `undefined` (jamais un tableau vide) quand aucune question ne la
+ * soutient : l'action reste alors sans `basedOn` et son impact « non mesuré ».
+ */
+function supportingQuestions(prompts: BuyerIntentPromptResult[], supports: (prompt: BuyerIntentPromptResult) => boolean) {
+  const supported = uniqueInOrder(prompts.filter((prompt) => prompt.available && supports(prompt)).map((prompt) => prompt.prompt));
+  return supported.length ? supported : undefined;
+}
+
 export function buildPlainActions(
   prompts: BuyerIntentPromptResult[] = [],
   category = UNKNOWN_CATEGORY,
@@ -1721,6 +1731,16 @@ export function buildPlainActions(
     5
   );
   const competitorExamples = uniqueInOrder(competitors.length ? competitors : prompts.flatMap((prompt) => prompt.competitors), 4);
+
+  // `basedOn` de chaque action, DÉRIVÉ des questions réellement vérifiées de
+  // l'audit (`raw_results`) — jamais fabriqué. Même logique dans les trois
+  // familles : la 1re action répond aux questions testées (leur texte les
+  // reprend telles quelles), la 2e vise les mentions tierces là où l'audit a VU
+  // des concurrents cités, la 3e construit la preuve là où la marque n'est PAS
+  // citée. Une action sans question qui la soutient reste sans `basedOn`.
+  const answeredQuestions = testedQuestions.length ? testedQuestions : undefined;
+  const contestedQuestions = supportingQuestions(prompts, (prompt) => prompt.competitors.length > 0);
+  const lostQuestions = supportingQuestions(prompts, (prompt) => !prompt.brandMentioned);
   const questionText = testedQuestions.length
     ? testedQuestions.map((prompt) => `“${prompt}”`).join("; ")
     : "the buyer questions in this audit";
@@ -1734,17 +1754,19 @@ export function buildPlainActions(
         title: "Update Google Business Profile for local intent",
         doThis: `Rewrite your Google Business description and services around these exact local questions: ${questionText}. Add service, city, proof, and booking language.`,
         where: "Google Business Profile: description, services, products/posts, Q&A, photos, and appointment URL.",
-        basedOn: testedQuestions,
+        basedOn: answeredQuestions,
       },
       {
         title: "Refresh professional directory profiles",
         doThis: `Make Doctolib, Resalib, Avvo, Psychology Today, Yelp, or the relevant local directory repeat the same category, city, services, and proof as your site. ${compareText}`,
         where: "Professional directories, local chamber pages, marketplace profiles, and citation sites.",
+        basedOn: contestedQuestions,
       },
       {
         title: "Create a 'why choose me' local proof page",
         doThis: `Publish one page about ${categoryText} that explains who you help, where you operate, reviews, qualifications, and when to book you.`,
         where: "Your website, linked from homepage, contact page, Google Business Profile, and directory bios.",
+        basedOn: lostQuestions,
       },
     ];
   }
@@ -1755,17 +1777,19 @@ export function buildPlainActions(
         title: "Align social bios with the creator niche",
         doThis: `Update Instagram, TikTok, YouTube, LinkedIn, newsletter, and podcast bios so they answer these discovery questions: ${questionText}.`,
         where: "Primary social profiles, creator homepage, newsletter profile, YouTube About, TikTok/Instagram bio, and link-in-bio page.",
-        basedOn: testedQuestions,
+        basedOn: answeredQuestions,
       },
       {
         title: "Get included in top-creator listicles",
         doThis: `Pitch or update credible 'top creators' pages in ${categoryText} with a concise bio, niche, audience proof, best content links, and why those audiences follow you. ${compareText}`,
         where: "Top creator listicles, niche blogs, podcast roundups, newsletter directories, and media lists.",
+        basedOn: contestedQuestions,
       },
       {
         title: "Build press and entity proof",
         doThis: "Collect interviews, press mentions, awards, collaborations, and consistent profile facts before pursuing Wikipedia/Wikidata-style entity visibility.",
         where: "Press page, media kit, creator profiles, Wikidata/Wikipedia eligibility materials, and public interviews.",
+        basedOn: lostQuestions,
       },
     ];
   }
@@ -1775,17 +1799,19 @@ export function buildPlainActions(
       title: "Add FAQ and product-page answers",
       doThis: `Create one crawlable FAQ/product section that answers these exact tested questions in simple words: ${questionText}.`,
       where: "Product pages, category pages, FAQ, and buying-guide pages linked from the homepage and main navigation.",
-      basedOn: testedQuestions,
+      basedOn: answeredQuestions,
     },
     {
       title: "Earn listicle and review mentions",
       doThis: `Create or refresh proof for ${categoryText}. Prioritise one relevant listicle, one review page, and one comparison page that AI can cite. ${compareText}`,
       where: "Industry listicles, review pages, comparison guides, marketplaces, and trusted community threads.",
+      basedOn: contestedQuestions,
     },
     {
       title: "Ask 3 customers for product-specific reviews",
       doThis: "Ask customers to mention the product, use case, result, and why they chose you over alternatives.",
       where: "Product reviews, Google reviews when relevant, marketplaces, Trustpilot, and social proof sections.",
+      basedOn: lostQuestions,
     },
   ];
 }
