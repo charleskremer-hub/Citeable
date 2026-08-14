@@ -44,7 +44,13 @@ export const homeCopy = {
     heroTitleAccent: "GetPick makes it answer with you.",
     heroSubtitle: "It gets your brand recommended by ChatGPT and Gemini — diagnosis, content, monitoring. No agency needed.",
     formTitle: "Run your free audit",
-    formSubtitle: "Brand + website. Email optional.",
+    // « Email optional » était vrai pour LANCER l'audit et faux pour ce qu'on en
+    // voit : une fois le gate déployé (`resolveReportAccess`, tier free non
+    // réclamé -> `locked: "claim"`), un audit lancé sans email s'arrête au verdict
+    // et aux questions perdues. Le score, le détail par question et les correctifs
+    // sont sous la porte. Promettre « optionnel » sans le dire, c'est faire
+    // découvrir la porte au moment exact où on demande l'email.
+    formSubtitle: "Brand + website. Email optional — it unlocks your score and the fixes to publish.",
     freeBadge: "Free",
     success: "You're on the list — we'll be in touch with your free audit.",
     businessLabel: "Business name",
@@ -207,7 +213,7 @@ export const homeCopy = {
     heroTitleAccent: "GetPick fait en sorte que ce soit le tien.",
     heroSubtitle: "Il fait recommander ta marque par ChatGPT et Gemini — diagnostic, contenu, suivi. Sans agence.",
     formTitle: "Lance ton audit gratuit",
-    formSubtitle: "Ta marque + ton site. Email optionnel.",
+    formSubtitle: "Ta marque + ton site. Email optionnel — il débloque ton score et les correctifs à publier.",
     freeBadge: "Gratuit",
     success: "C'est noté — ton audit gratuit arrive bientôt.",
     businessLabel: "Nom de l'entreprise",

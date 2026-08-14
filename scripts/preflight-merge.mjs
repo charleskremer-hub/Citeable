@@ -182,6 +182,19 @@ export function readKeysEnvValue(content, key) {
 const SECRET_KEY = "AUDIT_SHARE_SECRET";
 const GEN_SECRET_CMD = "node -e \"console.log(require('node:crypto').randomBytes(32).toString('base64url'))\"";
 
+/**
+ * `process.env` est typé `NodeJS.ProcessEnv`, dont `NODE_ENV` est REQUIS dans ce
+ * dépôt. Sans cette annotation, tout appelant qui passe un environnement
+ * partiel — c'est-à-dire chaque test de cette fonction — est une erreur TS2345.
+ * Ce n'est pas cosmétique : `next build` type-vérifie aussi le dossier `scripts`
+ * (le `include` du tsconfig couvre tous les fichiers TypeScript du dépôt, et
+ * `next.config.ts` ne pose pas `ignoreBuildErrors`), donc ces erreurs FONT
+ * ÉCHOUER LE BUILD DE PRODUCTION. Elles ne sont vues ni par la suite de tests
+ * ni par eslint.
+ *
+ * @param {Record<string, string | undefined>} processEnv
+ * @param {string} cwd
+ */
 export function checkAuditShareSecret(processEnv = process.env, cwd = process.cwd()) {
   const id = "secret";
   const nom = "AUDIT_SHARE_SECRET présent et utilisable";

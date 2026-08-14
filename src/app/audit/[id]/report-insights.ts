@@ -222,11 +222,58 @@ export function lostBuyerQuestions(questions: BuyerIntentPromptResult[]) {
 }
 
 /**
- * Les concurrents du verdict : UNIQUEMENT ceux cités sur les questions perdues
- * (c'est eux qui prennent la place de la marque), les plus cités d'abord, 3 max.
+ * PLANCHER DE STABILITÉ AVANT DE NOMMER UN RIVAL — et pourquoi il existe.
+ *
+ * La règle de rédaction posée le 30/07, mesurée sur le protocole 5x5, dit :
+ * « ne jamais nommer le rival d'une question perdue — il change jusqu'à 4 fois
+ * sur 5 passages du même instrument, le même jour, dans la même langue. »
+ *
+ * Cette fonction faisait exactement l'inverse : elle prenait le top-3 des
+ * concurrents des questions perdues, sur UN SEUL passage, et ces noms partaient
+ * dans le H1 du verdict — la plus grosse typo de la page, lue par tout visiteur,
+ * affirmée comme un fait. Un rival cité sur UNE question perdue est du bruit
+ * mesuré ; l'écrire en gros est une affirmation que le prospect peut démentir
+ * de tête, et c'est le seul terrain où GetPick est encore défendable.
+ *
+ * On ne peut pas répéter les passages ici (ce serait une dépense par audit), mais
+ * on a 12 questions dans le même audit : un rival cité sur PLUSIEURS d'entre
+ * elles est structurel, un rival cité sur une seule est du bruit. C'est
+ * exactement l'arbitrage fait à la main le 01/08 sur le lot 1, où les marques
+ * sans rival « >= 4/12 » ont été écartées plutôt que de fabriquer un nom.
+ *
+ * Seuil retenu, hérité de ce geste : un tiers des questions d'achat vérifiées,
+ * jamais moins de 2 questions distinctes.
+ *
+ * QUAND PERSONNE NE FRANCHIT LE PLANCHER, ON NE NOMME PERSONNE : le repli sans
+ * nom existe déjà dans `lockedVerdictHeadline` et reste vrai. Mieux vaut
+ * « Gemini ne recommande jamais {marque} » — exact — que « Gemini recommande
+ * Loomera » quand Loomera sortait d'un tirage.
+ */
+export const VERDICT_COMPETITOR_MIN_SHARE = 1 / 3;
+export const VERDICT_COMPETITOR_MIN_QUESTIONS = 2;
+
+/** Le nombre de questions distinctes qu'un rival doit occuper pour être nommable. */
+export function verdictCompetitorThreshold(availableQuestionCount: number) {
+  return Math.max(VERDICT_COMPETITOR_MIN_QUESTIONS, Math.ceil(availableQuestionCount * VERDICT_COMPETITOR_MIN_SHARE));
+}
+
+/**
+ * Les concurrents du verdict : ceux cités sur les questions PERDUES (c'est eux
+ * qui prennent la place de la marque), qui franchissent le plancher de
+ * stabilité ci-dessus, les plus cités d'abord, 3 max.
+ *
+ * Le comptage se fait en QUESTIONS DISTINCTES, pas en occurrences : un rival
+ * nommé deux fois dans la même réponse reste un seul signal.
  */
 export function verdictCompetitors(questions: BuyerIntentPromptResult[]) {
-  return competitorCounts(lostBuyerQuestions(questions).flatMap((question) => question.competitors))
+  const availableCount = questions.filter((question) => question.available).length;
+  const threshold = verdictCompetitorThreshold(availableCount);
+
+  // uniqueNames par question : une question compte au plus une fois par rival.
+  const perQuestion = lostBuyerQuestions(questions).flatMap((question) => uniqueNames(question.competitors));
+
+  return competitorCounts(perQuestion)
+    .filter((item) => item.count >= threshold)
     .slice(0, 3)
     .map((item) => item.name);
 }

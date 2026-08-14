@@ -11,7 +11,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { BuyerIntentPromptResult } from "@/lib/audit-engine";
-import { lockedVerdictHeadline, lostBuyerQuestions, verdictCompetitors } from "@/app/audit/[id]/report-insights";
+import {
+  lockedVerdictHeadline,
+  lostBuyerQuestions,
+  verdictCompetitors,
+  verdictCompetitorThreshold,
+} from "@/app/audit/[id]/report-insights";
 
 function question(prompt: string, brandMentioned: boolean, competitors: string[]): BuyerIntentPromptResult {
   return {
@@ -47,7 +52,15 @@ test("lostBuyerQuestions ne retient que les questions vérifiées où la marque 
   );
 });
 
-test("verdictCompetitors : uniquement les concurrents des questions perdues, les plus cités d'abord, 3 max", () => {
+// MODIFIÉ le 14/08/2026, et le motif compte plus que l'assertion.
+// Ce test verrouillait `["Typology", "Melvita", "Aroma-Zone"]`, donc il
+// verrouillait Aroma-Zone : cité sur UNE seule question perdue sur 4 vérifiées.
+// C'est précisément le « rival d'une question perdue » que la règle du 30/07
+// interdit de nommer, et il partait dans le H1 du verdict. L'ancienne assertion
+// gravait le défaut dans la suite de tests — la corriger était le seul moyen de
+// corriger le produit. Le reste du contrat est inchangé et toujours vérifié ici :
+// questions perdues uniquement, les plus cités d'abord, 3 max.
+test("verdictCompetitors : concurrents des questions perdues, plancher de stabilité franchi, les plus cités d'abord, 3 max", () => {
   const questions = [
     question("perdue-1", false, ["Typology", "Melvita"]),
     question("perdue-2", false, ["Typology", "Aroma-Zone"]),
@@ -56,8 +69,39 @@ test("verdictCompetitors : uniquement les concurrents des questions perdues, les
     question("gagnée", true, ["SousLaPorte"]),
   ];
 
-  assert.deepEqual(verdictCompetitors(questions), ["Typology", "Melvita", "Aroma-Zone"]);
+  // 4 questions vérifiées -> plancher = max(2, ceil(4/3)) = 2 questions distinctes.
+  assert.equal(verdictCompetitorThreshold(4), 2);
+  // Typology 3/4, Melvita 2/4 -> nommés. Aroma-Zone 1/4 et Quatrième 1/4 -> écartés.
+  assert.deepEqual(verdictCompetitors(questions), ["Typology", "Melvita"]);
+  assert.ok(!verdictCompetitors(questions).includes("Aroma-Zone"));
   assert.ok(!verdictCompetitors(questions).includes("SousLaPorte"));
+});
+
+test("verdictCompetitors : aucun rival ne franchit le plancher -> on ne nomme personne", () => {
+  // Le cas qui produisait un nom fabriqué : 12 questions perdues, 12 rivaux
+  // distincts cités une fois chacun. Rien n'est structurel, donc rien n'est nommé.
+  const questions = Array.from({ length: 12 }, (_, index) => question(`perdue-${index}`, false, [`Rival${index}`]));
+
+  assert.equal(verdictCompetitorThreshold(12), 4);
+  assert.deepEqual(verdictCompetitors(questions), []);
+});
+
+test("verdictCompetitors : un rival cité deux fois dans la MÊME question ne compte qu'une fois", () => {
+  const questions = [
+    question("perdue-1", false, ["Typology", "Typology"]),
+    question("perdue-2", false, ["Melvita"]),
+  ];
+
+  // Typology n'occupe qu'1 question sur 2 -> plancher 2 non franchi, malgré 2 occurrences.
+  assert.deepEqual(verdictCompetitors(questions), []);
+});
+
+test("verdictCompetitorThreshold : un tiers des questions vérifiées, jamais moins de 2", () => {
+  assert.equal(verdictCompetitorThreshold(0), 2);
+  assert.equal(verdictCompetitorThreshold(3), 2);
+  assert.equal(verdictCompetitorThreshold(6), 2);
+  assert.equal(verdictCompetitorThreshold(12), 4);
+  assert.equal(verdictCompetitorThreshold(21), 7);
 });
 
 test("marque jamais citée + concurrents nommés : « recommande X, Y et Z. Pas {marque}. »", () => {
