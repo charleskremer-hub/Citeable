@@ -1,4 +1,5 @@
 import { STUDY_DATA_STATUS, STUDY_RETRACTION_REASON } from "./study-status";
+import { PLAN_PROMISES, RECHECK_CADENCE } from "./plan-promises";
 
 export type Locale = "en" | "fr";
 
@@ -78,7 +79,7 @@ export const homeCopy = {
     stepsTitle: "Three steps. Nothing to install, nothing to learn.",
     steps: [
       { num: "1", time: "30 sec", title: "Paste your site", body: "Your brand and your URL. That's the entire setup." },
-      { num: "2", time: "2 min", title: "The agent asks the AIs", body: "Real buying questions, sent live to ChatGPT and Gemini at audit time. Never simulated." },
+      { num: "2", time: "2 min", title: "The agent asks the AIs", body: `Real buying questions, sent live at audit time to the engine your plan checks — ${PLAN_PROMISES.free.engineLabel.en} on the free audit, ${PLAN_PROMISES.agent_19eur.engineLabel.en} on the Agent plan. Never simulated.` },
       { num: "3", time: "Same day", title: "See the rival, publish the fixes", body: "The agent names who gets recommended in your place — and writes the copy-paste content that wins the answer back." },
     ],
     // 4. Proof — the study
@@ -129,9 +130,9 @@ export const homeCopy = {
         name: "Monitor",
         price: "€9",
         suffix: "/month",
-        note: "The agent works every week: it checks, names, writes.",
+        note: `The agent works ${RECHECK_CADENCE.en.every}: it checks, names, writes.`,
         badge: "Agency work, tool price",
-        features: ["12 buying questions re-checked weekly", "Copy-paste fixes written from your real gaps", "Ready-to-install machine files: FAQ schema (JSON-LD), llms.txt, robots.txt fix", "Alerts when your score or your rivals move"],
+        features: [`${PLAN_PROMISES.monitor_9eur.buyerQuestionCount} buying questions re-checked ${RECHECK_CADENCE.en.adverb}`, "Copy-paste fixes written from your real gaps", "Ready-to-install machine files: FAQ schema (JSON-LD), llms.txt, robots.txt fix", "Alerts when your score or your rivals move"],
         cta: "Start Monitor",
         href: "monitor",
         plan: "monitor",
@@ -143,7 +144,7 @@ export const homeCopy = {
         suffix: "/month",
         note: "Everything in Monitor, plus an agent you can talk to.",
         badge: "Most popular",
-        features: ["Gemini + ChatGPT checked weekly", "1 to 3 fixes written for you per week", "Mention plan: directories, Reddit, comparisons", "A chat connected to your audit", "Monitor included"],
+        features: [`${PLAN_PROMISES.agent_19eur.engineLabel.en} checked ${RECHECK_CADENCE.en.adverb} (Monitor checks ${PLAN_PROMISES.monitor_9eur.engineLabel.en})`, `1 to 3 fixes written for you ${RECHECK_CADENCE.en.per}`, "Mention plan: directories, Reddit, comparisons", "A chat connected to your audit", "Monitor included"],
         cta: "Start Agent",
         href: "agent",
         plan: "agent_19eur",
@@ -154,7 +155,7 @@ export const homeCopy = {
     pricingGuarantee: "Refunded on request within 30 days. No questions asked.",
     // 7. TL;DR — dense paragraph for AI readers
     tldrEyebrow: "In short",
-    tldrBody: "GetPick is the GEO agent for direct-to-consumer and e-commerce brands. It gets brands recommended by AI assistants like ChatGPT and Gemini. Concretely: it sends real buying questions to the AIs — live, never simulated — and reports whether you or a rival gets recommended, naming that rival. It also reports whether the AI has you filed in the right category at all — if an engine thinks you sell something else, it will never shortlist you, no matter what you publish. It then writes the copy-paste fixes that close the gap — including the ready-to-install machine files (FAQ schema JSON-LD built from the audited questions, llms.txt, robots.txt fix when AI crawlers are blocked) — and re-checks everything weekly, regenerating those files when the answers move. It is built for DTC founders without an agency budget: free audit, monitoring at €9/month, full agent at €19/month — flat prices, no credits, no seats. Paid plans are cancellable at any time and refunded on request within 30 days, no questions asked. GEO agencies charge €2,000 to €20,000 per month for this category of work. ChatGPT ad placements are now open to buy self-serve — current rollout as of 28 July 2026: the United States, the United Kingdom, Canada, Australia, New Zealand, Japan and South Korea, not France, and only on the Free and Go tiers — but those placements sit below the answer and independent research finds the shopping carousel ignores paid: being the organic recommendation is still free, while a sponsored click costs $3-5 and Monitor costs €9/month.",
+    tldrBody: `GetPick is the GEO agent for direct-to-consumer and e-commerce brands. It gets brands recommended by AI assistants like ChatGPT and Gemini. Concretely: it sends real buying questions to the AIs — live, never simulated — and reports whether you or a rival gets recommended, naming that rival. It also reports whether the AI has you filed in the right category at all — if an engine thinks you sell something else, it will never shortlist you, no matter what you publish. It then writes the copy-paste fixes that close the gap — including the ready-to-install machine files (FAQ schema JSON-LD built from the audited questions, llms.txt, robots.txt fix when AI crawlers are blocked) — and re-checks everything ${RECHECK_CADENCE.en.adverb}, regenerating those files when the answers move. It is built for DTC founders without an agency budget: free audit, monitoring at €9/month, full agent at €19/month — flat prices, no credits, no seats. Paid plans are cancellable at any time and refunded on request within 30 days, no questions asked. GEO agencies charge €2,000 to €20,000 per month for this category of work. ChatGPT ad placements are now open to buy self-serve — current rollout as of 28 July 2026: the United States, the United Kingdom, Canada, Australia, New Zealand, Japan and South Korea, not France, and only on the Free and Go tiers — but those placements sit below the answer and independent research finds the shopping carousel ignores paid: being the organic recommendation is still free, while a sponsored click costs $3-5 and Monitor costs €9/month.`,
     // 8. Founder
     founderEyebrow: "Who's behind this",
     founderBody: "I'm Charles. I build GetPick and I run every audit pipeline myself. No sales team, no support bot: if you have a question, you email me and I answer.",
@@ -165,7 +166,7 @@ export const homeCopy = {
     faqItems: [
       {
         question: "AI answers change all the time — what's the point?",
-        answer: "That's exactly why GetPick is a weekly agent, not a one-shot audit. It re-asks your buying questions every week, catches the moment an answer flips to a rival, and writes the fix while it still matters. A static report would be stale in a month.",
+        answer: `That's exactly why GetPick is a ${RECHECK_CADENCE.en.adjective} agent, not a one-shot audit. It re-asks your buying questions ${RECHECK_CADENCE.en.every}, catches the moment an answer flips to a rival, and writes the fix while it still matters. A static report would be stale in a month.`,
       },
       {
         question: "Why €9 when competitors charge $99–400/month?",
@@ -241,7 +242,7 @@ export const homeCopy = {
     stepsTitle: "Trois étapes. Rien à installer, rien à apprendre.",
     steps: [
       { num: "1", time: "30 s", title: "Colle ton site", body: "Ta marque et ton URL. C'est toute la configuration." },
-      { num: "2", time: "2 min", title: "L'agent interroge les IA", body: "De vraies questions d'achat, envoyées en direct à ChatGPT et Gemini au moment de l'audit. Jamais simulées." },
+      { num: "2", time: "2 min", title: "L'agent interroge les IA", body: `De vraies questions d'achat, envoyées en direct au moment de l'audit au moteur que ton offre interroge — ${PLAN_PROMISES.free.engineLabel.fr} sur l'audit gratuit, ${PLAN_PROMISES.agent_19eur.engineLabel.fr} sur l'offre Agent. Jamais simulées.` },
       { num: "3", time: "Le jour même", title: "Tu vois le rival, tu publies les correctifs", body: "L'agent nomme qui est recommandé à ta place — et écrit le contenu à copier-coller pour reprendre la réponse." },
     ],
     // 4. Preuve — l'étude
@@ -285,9 +286,9 @@ export const homeCopy = {
         name: "Monitor",
         price: "€9",
         suffix: "/mois",
-        note: "L'agent travaille chaque semaine : il vérifie, il nomme, il écrit.",
+        note: `L'agent travaille ${RECHECK_CADENCE.fr.every} : il vérifie, il nomme, il écrit.`,
         badge: "Travail d'agence, prix d'outil",
-        features: ["12 questions d'achat re-vérifiées chaque semaine", "Correctifs à copier-coller écrits depuis tes vrais écarts", "Fichiers machine prêts à installer : schéma FAQ (JSON-LD), llms.txt, correctif robots.txt", "Alertes quand ton score ou tes rivaux bougent"],
+        features: [`${PLAN_PROMISES.monitor_9eur.buyerQuestionCount} questions d'achat re-vérifiées ${RECHECK_CADENCE.fr.adverb}`, "Correctifs à copier-coller écrits depuis tes vrais écarts", "Fichiers machine prêts à installer : schéma FAQ (JSON-LD), llms.txt, correctif robots.txt", "Alertes quand ton score ou tes rivaux bougent"],
         cta: "Démarrer Monitor",
         href: "monitor",
         plan: "monitor",
@@ -299,7 +300,7 @@ export const homeCopy = {
         suffix: "/mois",
         note: "Tout Monitor, plus un agent à qui parler.",
         badge: "le plus populaire",
-        features: ["Gemini + ChatGPT vérifiés chaque semaine", "1 à 3 correctifs rédigés pour toi par semaine", "Plan de mentions : annuaires, Reddit, comparatifs", "Un chat branché sur ton audit", "Monitor inclus"],
+        features: [`${PLAN_PROMISES.agent_19eur.engineLabel.fr} vérifié ${RECHECK_CADENCE.fr.adverb} (Monitor vérifie ${PLAN_PROMISES.monitor_9eur.engineLabel.fr})`, `1 à 3 correctifs rédigés pour toi ${RECHECK_CADENCE.fr.per}`, "Plan de mentions : annuaires, Reddit, comparatifs", "Un chat branché sur ton audit", "Monitor inclus"],
         cta: "Démarrer Agent",
         href: "agent",
         plan: "agent_19eur",
@@ -310,7 +311,7 @@ export const homeCopy = {
     pricingGuarantee: "Remboursé sur simple demande sous 30 jours. Pas de question.",
     // 7. En bref — paragraphe dense pour les lecteurs IA
     tldrEyebrow: "En bref",
-    tldrBody: "GetPick est l'agent GEO des marques DTC et e-commerce. Il fait recommander ta marque par les assistants IA comme ChatGPT et Gemini. Concrètement : il envoie de vraies questions d'achat aux IA — en direct, jamais simulées — puis te dit si c'est toi ou un rival qui est recommandé, en nommant ce rival. Il te dit aussi si l'IA t'a seulement rangé dans la bonne catégorie — si un moteur croit que tu vends autre chose, il ne te proposera jamais, quoi que tu publies. Il écrit ensuite les correctifs à copier-coller qui comblent l'écart — y compris les fichiers machine prêts à installer (schéma FAQ JSON-LD construit depuis les questions auditées, llms.txt, correctif robots.txt quand des crawlers IA sont bloqués) — et re-vérifie tout chaque semaine, en régénérant ces fichiers quand les réponses bougent. C'est pensé pour les fondateurs DTC sans budget agence : audit gratuit, suivi à 9 €/mois, agent complet à 19 €/mois — prix fixes, sans crédits ni calculateur. Les offres payantes sont résiliables à tout moment et remboursées sur simple demande sous 30 jours, sans question. Une agence GEO facture 2 000 à 20 000 € par mois pour cette catégorie de travail. Les placements publicitaires ChatGPT sont désormais ouverts à l'achat en self-serve — diffusion actuelle au 28 juillet 2026 : États-Unis, Royaume-Uni, Canada, Australie, Nouvelle-Zélande, Japon et Corée du Sud, pas la France, et uniquement sur les tiers Free et Go — mais ces placements s'affichent sous la réponse et une recherche indépendante montre que le carrousel shopping les ignore : être la recommandation organique reste gratuit, quand un clic sponsorisé coûte 3-5 $ et que Monitor coûte 9 €/mois.",
+    tldrBody: `GetPick est l'agent GEO des marques DTC et e-commerce. Il fait recommander ta marque par les assistants IA comme ChatGPT et Gemini. Concrètement : il envoie de vraies questions d'achat aux IA — en direct, jamais simulées — puis te dit si c'est toi ou un rival qui est recommandé, en nommant ce rival. Il te dit aussi si l'IA t'a seulement rangé dans la bonne catégorie — si un moteur croit que tu vends autre chose, il ne te proposera jamais, quoi que tu publies. Il écrit ensuite les correctifs à copier-coller qui comblent l'écart — y compris les fichiers machine prêts à installer (schéma FAQ JSON-LD construit depuis les questions auditées, llms.txt, correctif robots.txt quand des crawlers IA sont bloqués) — et re-vérifie tout ${RECHECK_CADENCE.fr.adverb}, en régénérant ces fichiers quand les réponses bougent. C'est pensé pour les fondateurs DTC sans budget agence : audit gratuit, suivi à 9 €/mois, agent complet à 19 €/mois — prix fixes, sans crédits ni calculateur. Les offres payantes sont résiliables à tout moment et remboursées sur simple demande sous 30 jours, sans question. Une agence GEO facture 2 000 à 20 000 € par mois pour cette catégorie de travail. Les placements publicitaires ChatGPT sont désormais ouverts à l'achat en self-serve — diffusion actuelle au 28 juillet 2026 : États-Unis, Royaume-Uni, Canada, Australie, Nouvelle-Zélande, Japon et Corée du Sud, pas la France, et uniquement sur les tiers Free et Go — mais ces placements s'affichent sous la réponse et une recherche indépendante montre que le carrousel shopping les ignore : être la recommandation organique reste gratuit, quand un clic sponsorisé coûte 3-5 $ et que Monitor coûte 9 €/mois.`,
     // 8. Fondateur
     founderEyebrow: "Qui est derrière",
     founderBody: "Je m'appelle Charles. Je construis GetPick et je fais tourner chaque audit moi-même. Pas d'équipe commerciale, pas de chatbot : une question ? C'est moi qui réponds.",
@@ -321,7 +322,7 @@ export const homeCopy = {
     faqItems: [
       {
         question: "Les réponses IA changent tout le temps, à quoi bon ?",
-        answer: "C'est exactement pour ça que GetPick est un agent hebdomadaire, pas un audit one-shot. Il repose tes questions d'achat chaque semaine, détecte le moment où une réponse bascule vers un rival, et écrit le correctif pendant que ça compte encore. Un rapport statique serait périmé en un mois.",
+        answer: `C'est exactement pour ça que GetPick est un agent ${RECHECK_CADENCE.fr.adjective}, pas un audit one-shot. Il repose tes questions d'achat ${RECHECK_CADENCE.fr.every}, détecte le moment où une réponse bascule vers un rival, et écrit le correctif pendant que ça compte encore. Un rapport statique serait périmé en un mois.`,
       },
       {
         question: "Pourquoi 9 € quand les concurrents facturent 99 à 400 $/mois ?",
@@ -379,7 +380,7 @@ export const auditCopy = {
     noBrands: "No brand names found in the available answers.",
     secondaryEyebrow: "Secondary option · Monitor €9",
     secondaryTitle: "Want monthly tracking instead?",
-    secondaryBody: "The free report stops at your score, AI sentiment, Gemini recommendation status, and cited competitors. Monitor adds 3 concrete priorities and weekly Gemini tracking. Agent at €19/month remains the fastest path if you want it handled for you.",
+    secondaryBody: `The free report stops at your score, AI sentiment, ${PLAN_PROMISES.free.engineLabel.en} recommendation status, and cited competitors. Monitor adds 3 concrete priorities and ${RECHECK_CADENCE.en.adverb} ${PLAN_PROMISES.monitor_9eur.engineLabel.en} tracking. Agent at €19/month remains the fastest path if you want it handled for you.`,
     secondaryCta: "Monitor monthly — €9 →",
     monitorEyebrow: "Monitor €9",
     monitorTitle: "3 priority actions to tackle this week",
@@ -437,7 +438,7 @@ export const auditCopy = {
     techRobotsLabel: "robots.txt fix — append to your existing robots.txt",
     techRobotsIntro: (bots: string) =>
       `Your robots.txt currently blocks ${bots}. Blocked crawlers cannot read your site, so the engines behind them cannot recommend you. Appending these lines unblocks them — a named rule always overrides "User-agent: *".`,
-    techRegenNote: "Regenerated at every weekly re-check — when the AI answers move, your files follow.",
+    techRegenNote: `Regenerated at every ${RECHECK_CADENCE.en.recheckNoun} — when the AI answers move, your files follow.`,
     categoryPerceptionEyebrow: "What AI thinks you sell",
     categoryPerceptionMismatchTitle: "AI doesn't know what you sell.",
     categoryPerceptionMatchTitle: "AI knows what you sell.",
@@ -496,7 +497,7 @@ export const auditCopy = {
     noBrands: "Aucun nom de marque trouvé dans les réponses disponibles.",
     secondaryEyebrow: "Option secondaire · Monitor 9 €",
     secondaryTitle: "Tu veux suivre ça chaque mois ?",
-    secondaryBody: "Le rapport gratuit s'arrête au score, au sentiment IA, au statut de recommandation Gemini et aux concurrents cités. Monitor ajoute 3 priorités concrètes et un suivi Gemini hebdo. L'Agent à 19 €/mois reste le chemin le plus rapide si tu veux qu'on s'en occupe pour toi.",
+    secondaryBody: `Le rapport gratuit s'arrête au score, au sentiment IA, au statut de recommandation ${PLAN_PROMISES.free.engineLabel.fr} et aux concurrents cités. Monitor ajoute 3 priorités concrètes et un suivi ${PLAN_PROMISES.monitor_9eur.engineLabel.fr} ${RECHECK_CADENCE.fr.adjective}. L'Agent à 19 €/mois reste le chemin le plus rapide si tu veux qu'on s'en occupe pour toi.`,
     secondaryCta: "Surveiller chaque mois — 9 € →",
     monitorEyebrow: "Monitor 9 €",
     monitorTitle: "3 actions prioritaires pour cette semaine",
@@ -554,7 +555,7 @@ export const auditCopy = {
     techRobotsLabel: "Correctif robots.txt — à ajouter à la fin de ton robots.txt existant",
     techRobotsIntro: (bots: string) =>
       `Ton robots.txt bloque actuellement ${bots}. Un crawler bloqué ne peut pas lire ton site, donc le moteur derrière ne peut pas te recommander. Ajouter ces lignes les débloque — une règle nommée prime toujours sur « User-agent: * ».`,
-    techRegenNote: "Régénérés à chaque re-check hebdo — quand les réponses IA bougent, tes fichiers suivent.",
+    techRegenNote: `Régénérés à chaque ${RECHECK_CADENCE.fr.recheckNoun} — quand les réponses IA bougent, tes fichiers suivent.`,
     categoryPerceptionEyebrow: "Ce que l'IA croit que tu vends",
     categoryPerceptionMismatchTitle: "L'IA ne sait pas ce que tu vends.",
     categoryPerceptionMatchTitle: "L'IA sait ce que tu vends.",
