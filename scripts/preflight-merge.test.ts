@@ -16,13 +16,16 @@ import {
   checkAuditShareSecret,
   checkCommitChain,
   checkOutboundLinks,
+  checkTypecheck,
   classifyOutboundFile,
   extractAuditId,
+  extractTscErrorLines,
   groupLinksByAuditId,
   normalizeSecretValue,
   readKeysEnvValue,
   scanAuditLinks,
   STATUT,
+  TYPECHECK_MAX_LINES,
 } from "./preflight-merge.mjs";
 
 const scriptPath = resolve(dirname(fileURLToPath(import.meta.url)), "preflight-merge.mjs");
@@ -403,5 +406,157 @@ test("checkOutboundLinks : expose par fichier le nombre d'audits distincts, d'oc
     assert.equal(fichier.auditsDistincts, 2);
     assert.equal(fichier.occurrences, 4);
     assert.deepEqual([...fichier.identifiantsNus].sort(), ["aaa", "bbb"]);
+  });
+});
+
+// --- 9. Le type-check TypeScript (tsc --noEmit) ---------------------------------
+//
+// Ce contrôle existe parce que le 14/08/2026 le préflight a rendu un verdict en
+// étant AVEUGLE à la seule classe d'erreur qui faisait échouer le déploiement :
+// 4 erreurs TS2345 dans ce fichier même. `next build` type-vérifie scripts/,
+// mais ni la suite de tests (type stripping) ni eslint ne voient ces erreurs.
+// Les tests ci-dessous injectent un faux tsc : ils mesurent la LOGIQUE du
+// contrôle (0 erreur / N erreurs / tsc indisponible), pas la vitesse de tsc.
+
+type FakeTscRun = {
+  ran: boolean;
+  timedOut: boolean;
+  status: number | null;
+  output: string;
+  raison: string | null;
+};
+
+/** Faux lanceur de tsc : rend exactement ce qu'on lui donne, sans jamais lancer tsc. */
+function fakeTsc(run: FakeTscRun) {
+  return () => run;
+}
+
+const TSC_OUTPUT_4_ERREURS = [
+  "scripts/preflight-merge.test.ts(210,42): error TS2345: Argument of type '{ AUDIT_SHARE_SECRET: string; }' is not assignable to parameter of type 'ProcessEnv'.",
+  "scripts/preflight-merge.test.ts(216,38): error TS2345: Argument of type '{}' is not assignable to parameter of type 'ProcessEnv'.",
+  "scripts/preflight-merge.test.ts(226,33): error TS2345: Argument of type '{}' is not assignable to parameter of type 'ProcessEnv'.",
+  "scripts/preflight-merge.test.ts(229,33): error TS2345: Argument of type '{}' is not assignable to parameter of type 'ProcessEnv'.",
+].join("\n");
+
+test("extractTscErrorLines : compte les lignes « error TSxxxx », et rien d'autre", () => {
+  assert.equal(extractTscErrorLines(TSC_OUTPUT_4_ERREURS).length, 4);
+  assert.deepEqual(extractTscErrorLines(""), []);
+  assert.deepEqual(extractTscErrorLines("Tout va bien, rien à signaler.\n"), []);
+  // Une ligne de continuation d'un message tsc n'est pas une erreur de plus.
+  assert.equal(
+    extractTscErrorLines("src/a.ts(1,1): error TS2322: Type 'string'...\n  Types of property 'x' are incompatible.\n").length,
+    1
+  );
+  assert.deepEqual(extractTscErrorLines(null as unknown as string), []);
+});
+
+test("checkTypecheck : 0 erreur -> OK, et n'empêche pas un GO", () => {
+  const result = checkTypecheck("/nonexistent", fakeTsc({ ran: true, timedOut: false, status: 0, output: "", raison: null }));
+  assert.equal(result.statut, STATUT.OK);
+  assert.equal(result.erreurs, 0);
+  assert.equal(result.commande, null, "un contrôle vert ne réclame aucune commande de réparation");
+  assert.equal(aggregateVerdict([check(STATUT.OK), result]), "GO");
+});
+
+test("checkTypecheck : N erreurs -> BLOQUANT, et le VERDICT global bascule en NO-GO", () => {
+  const result = checkTypecheck(
+    "/nonexistent",
+    fakeTsc({ ran: true, timedOut: false, status: 2, output: TSC_OUTPUT_4_ERREURS, raison: null })
+  );
+  assert.equal(result.statut, STATUT.BLOQUANT);
+  assert.equal(result.erreurs, 4, "le contrôle affiche le NOMBRE d'erreurs mesuré, pas un booléen");
+  assert.ok(
+    result.details.some((line) => line.includes("4 erreur(s) de type")),
+    JSON.stringify(result.details)
+  );
+  // Les premières lignes de tsc sont recopiées : le lecteur sait QUOI corriger.
+  assert.ok(
+    result.details.some((line) => line.includes("preflight-merge.test.ts(210,42): error TS2345")),
+    "les lignes de diagnostic tsc doivent apparaître dans le rapport"
+  );
+  assert.ok(result.commande?.includes("tsc --noEmit"), "la commande exacte à relancer est fournie");
+  // Le point qui compte : l'agrégation prend bien ce nouveau contrôle en compte.
+  assert.equal(aggregateVerdict([check(STATUT.OK), check(STATUT.AVERTISSEMENT), result]), "NO-GO");
+});
+
+test("checkTypecheck : le message dit POURQUOI ça compte (next build type-vérifie scripts/, ni les tests ni eslint ne le voient)", () => {
+  const result = checkTypecheck(
+    "/nonexistent",
+    fakeTsc({ ran: true, timedOut: false, status: 2, output: TSC_OUTPUT_4_ERREURS, raison: null })
+  );
+  const texte = result.details.join("\n");
+  assert.ok(texte.includes("next build"), "le message doit nommer next build");
+  assert.ok(texte.includes("scripts/"), "le message doit dire que scripts/ est type-vérifié par le build");
+  assert.ok(texte.includes("type stripping"), "le message doit dire pourquoi la suite de tests ne voit pas ces erreurs");
+  assert.ok(texte.includes("eslint"), "le message doit dire qu'eslint ne type-vérifie pas");
+});
+
+test("checkTypecheck : les lignes de tsc sont bornées, et le reste est annoncé, jamais tronqué en silence", () => {
+  const beaucoup = Array.from(
+    { length: TYPECHECK_MAX_LINES + 2 },
+    (_, i) => `src/fichier${i}.ts(${i + 1},1): error TS2345: erreur numéro ${i + 1}.`
+  ).join("\n");
+  const result = checkTypecheck("/nonexistent", fakeTsc({ ran: true, timedOut: false, status: 2, output: beaucoup, raison: null }));
+  assert.equal(result.statut, STATUT.BLOQUANT);
+  assert.equal(result.erreurs, TYPECHECK_MAX_LINES + 2, "le COMPTE reste complet même si l'affichage est borné");
+  const lignesTsc = result.details.filter((line) => line.includes("error TS2345"));
+  assert.equal(lignesTsc.length, TYPECHECK_MAX_LINES, `au plus ${TYPECHECK_MAX_LINES} lignes recopiées`);
+  assert.ok(
+    result.details.some((line) => line.includes("et 2 autre(s) ligne(s)")),
+    JSON.stringify(result.details)
+  );
+});
+
+test("checkTypecheck : tsc introuvable -> AVERTISSEMENT qui dit qu'il n'a pas mesuré, JAMAIS [OK] par défaut", () => {
+  const result = checkTypecheck(
+    "/nonexistent",
+    fakeTsc({ ran: false, timedOut: false, status: null, output: "", raison: "tsc est introuvable ou n'a pas pu s'exécuter (spawn tsc ENOENT)." })
+  );
+  assert.equal(result.statut, STATUT.AVERTISSEMENT);
+  assert.notEqual(result.statut, STATUT.OK, "un instrument silencieux n'est pas un feu vert");
+  assert.equal(result.erreurs, null, "aucun chiffre inventé quand rien n'a été mesuré");
+  const texte = result.details.join("\n");
+  assert.ok(texte.includes("N'A PAS PU MESURER"), JSON.stringify(result.details));
+  assert.ok(texte.includes("ENOENT"), "la raison technique exacte est reportée");
+  assert.ok(result.commande?.includes("tsc --noEmit"), "la commande à relancer à la main est fournie");
+});
+
+test("checkTypecheck : dépassement du délai -> AVERTISSEMENT, jamais OK", () => {
+  const result = checkTypecheck(
+    "/nonexistent",
+    fakeTsc({ ran: false, timedOut: true, status: null, output: "", raison: "tsc n'a rien rendu en moins de 180 s et a été interrompu." })
+  );
+  assert.equal(result.statut, STATUT.AVERTISSEMENT);
+  assert.equal(result.erreurs, null);
+  assert.ok(result.details.join("\n").includes("180 s"), JSON.stringify(result.details));
+});
+
+test("checkTypecheck : sortie non nulle sans diagnostic lisible -> AVERTISSEMENT (n'a pas mesuré), jamais OK", () => {
+  const result = checkTypecheck(
+    "/nonexistent",
+    fakeTsc({
+      ran: true,
+      timedOut: false,
+      status: 1,
+      output: "npm error npx canceled due to missing packages and no YES option: [\"tsc@2.0.4\"]\n",
+      raison: null,
+    })
+  );
+  assert.equal(result.statut, STATUT.AVERTISSEMENT);
+  assert.equal(result.erreurs, null, "0 ligne lue n'est pas 0 erreur");
+  assert.ok(result.details.join("\n").includes("N'A PAS PU MESURER"), JSON.stringify(result.details));
+});
+
+test("le contrôle de type-check est branché dans runAllChecks et sort dans --json", () => {
+  withTempDir((dir) => {
+    // Dossier vide : aucun contrôle ne peut aboutir, mais la LISTE des contrôles
+    // doit contenir le type-check — c'est son câblage qu'on mesure ici, pas tsc.
+    const result = spawnSync(process.execPath, [scriptPath, "--json"], { cwd: dir, encoding: "utf8" });
+    const parsed = JSON.parse(result.stdout);
+    const typecheck = parsed.checks.find((c: { id: string }) => c.id === "types");
+    assert.ok(typecheck, `le contrôle de type-check doit figurer dans les contrôles : ${result.stdout}`);
+    assert.ok(/tsc|type/i.test(typecheck.nom), `le libellé doit nommer tsc ou le type-check : ${typecheck.nom}`);
+    // tsc est indisponible dans un dossier vide : AVERTISSEMENT, surtout pas OK.
+    assert.equal(typecheck.statut, STATUT.AVERTISSEMENT, JSON.stringify(typecheck));
   });
 });
