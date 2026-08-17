@@ -454,7 +454,7 @@ test("surfaces machine — le nombre de questions par tier est celui du moteur d
     `le JSON-LD de layout.tsx doit annoncer « ${free} real buyer questions » pour l'offre gratuite (valeur du moteur)`
   );
   assert.ok(
-    layoutSource.includes(`${paid} buyer questions, weekly tracking`),
+    layoutSource.includes(`${paid} buyer questions, `),
     `le JSON-LD de layout.tsx doit annoncer « ${paid} buyer questions » pour Monitor (valeur du moteur)`
   );
 });

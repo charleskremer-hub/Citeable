@@ -1,5 +1,6 @@
 import FunnelCheckoutLink from "./FunnelCheckoutLink";
 import type { Locale } from "@/lib/i18n";
+import { RECHECK_CADENCE } from "@/lib/plan-promises";
 
 type CompetitorMention = { name: string; count: number };
 type TrendPoint = { score: number; createdAt: string };
@@ -136,7 +137,7 @@ export function VisibilityMonitorCard({
         <div className="relative mt-3 overflow-hidden rounded-2xl border border-white/[0.07] bg-black/25 p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="text-xs font-bold text-[#8E9A8F]">
-              {fr ? "Évolution de ton score — re-check hebdo" : "Your score over time — weekly re-check"}
+              {fr ? `Évolution de ton score — ${RECHECK_CADENCE.fr.recheckNoun}` : `Your score over time — ${RECHECK_CADENCE.en.recheckNoun}`}
             </div>
             {deltaText ? (
               <span className="rounded-full border border-white/10 px-2.5 py-1 text-xs font-black" style={{ color: deltaColor }}>
@@ -155,7 +156,7 @@ export function VisibilityMonitorCard({
                 {fr ? "Premier point enregistré ✓" : "First data point recorded ✓"}
               </div>
               <div className="text-xs font-bold text-[#A9B6A3]">
-                {fr ? "Ta courbe de tendance apparaît dès le prochain re-check hebdo." : "Your trend line appears at the next weekly re-check."}
+                {fr ? `Ta courbe de tendance apparaît dès le prochain ${RECHECK_CADENCE.fr.recheckNoun}.` : `Your trend line appears at the next ${RECHECK_CADENCE.en.recheckNoun}.`}
               </div>
             </div>
           )}
@@ -163,7 +164,7 @@ export function VisibilityMonitorCard({
       ) : (
         <div className="relative mt-3 overflow-hidden rounded-2xl border border-white/[0.07] bg-black/25 p-4">
           <div className="text-xs font-bold text-[#8E9A8F]">
-            {fr ? "Évolution de ton score — 8 dernières semaines" : "Your score over time — last 8 weeks"}
+            {fr ? "Évolution de ton score — 8 derniers re-checks" : "Your score over time — last 8 re-checks"}
           </div>
           <svg
             width="100%"
@@ -179,7 +180,7 @@ export function VisibilityMonitorCard({
           <div className="absolute inset-0 grid place-items-center gap-1.5 p-4 text-center">
             <div className="text-xl">🔒</div>
             <div className="text-sm font-black text-[#F0F0EC]">
-              {fr ? "Suis ta progression chaque semaine" : "Track your progress every week"}
+              {fr ? `Suis ta progression ${RECHECK_CADENCE.fr.adverb}` : `Track your progress ${RECHECK_CADENCE.en.every}`}
             </div>
             <div className="text-xs font-bold text-[#A9B6A3]">
               {fr ? "Le gratuit montre aujourd'hui. Monitor montre la tendance." : "Free shows today. Monitor shows the trend."}

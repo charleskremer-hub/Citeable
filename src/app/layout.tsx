@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { DM_Serif_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { localeFromHeaders } from "@/lib/i18n";
+import { RECHECK_CADENCE } from "@/lib/plan-promises";
 import { Analytics } from "@vercel/analytics/next";
 import PostHogInit from "./PostHogInit";
 
@@ -52,7 +53,7 @@ const STRUCTURED_DATA = {
   applicationSubCategory: "GEO agent (AI visibility / AEO)",
   operatingSystem: "Web",
   description:
-    "GetPick is the GEO agent for DTC brands. It gets your brand recommended by AI assistants like ChatGPT and Gemini: it sends real buying questions to the AIs live, names the rival recommended in your place, writes the copy-paste fixes, and monitors weekly. The work a GEO agency charges 2,000-20,000 EUR/month for, at a flat tool price.",
+    `GetPick is the GEO agent for DTC brands. It gets your brand recommended by AI assistants like ChatGPT and Gemini: it sends real buying questions to the AIs live, names the rival recommended in your place, writes the copy-paste fixes, and monitors ${RECHECK_CADENCE.en.adverb}. The work a GEO agency charges 2,000-20,000 EUR/month for, at a flat tool price.`,
   audience: {
     "@type": "Audience",
     audienceType: "Direct-to-consumer and e-commerce brands",
@@ -76,7 +77,7 @@ const STRUCTURED_DATA = {
       name: "Monitor",
       price: "9",
       priceCurrency: "EUR",
-      description: "12 buyer questions, weekly tracking and copy-paste fixes.",
+      description: `12 buyer questions, ${RECHECK_CADENCE.en.adjective} tracking and copy-paste fixes.`,
     },
     {
       "@type": "Offer",

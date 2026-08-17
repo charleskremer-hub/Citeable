@@ -325,6 +325,43 @@ test("cadence — aucune surface expédiée ne promet une cadence que le produit
   }
 });
 
+// Le ban ci-dessus ne lit que les dictionnaires de copy et `llms.txt`. Le
+// 17/08 on a mesuré que la promesse hebdomadaire survivait dans SIX fichiers
+// que ce filet ne regardait pas : le JSON-LD `Offer` et la meta description de
+// `layout.tsx` (rendus sur TOUTES les pages, donc le signal structuré que lit
+// un crawler IA), la page comparative `/vs` et son JSON-LD, la page de rapport
+// ouverte par un lien de prospection, et la carte de suivi montrée à l'ABONNÉ
+// PAYANT. Un filet qui ne couvre pas la surface la plus citable ne protège rien
+// — il rend seulement vert. Le ban porte donc aussi sur les sources.
+//
+// On lit en SOURCE et non par import : ces modules tirent des dépendances
+// réseau (`audit-engine`) ou React. Les faux positifs de vocabulaire technique
+// (`weekly_rescan`, `weeklyEmailSent`, `changeFrequency: "weekly"`…) sont
+// retirés avant l'assertion : ce sont des identifiants, pas des promesses.
+const CADENCE_SOURCE_SURFACES = [
+  ["src/app/layout.tsx", ["src", "app", "layout.tsx"]],
+  ["src/lib/vs-comparison.ts", ["src", "lib", "vs-comparison.ts"]],
+  ["src/app/audit/[id]/page.tsx", ["src", "app", "audit", "[id]", "page.tsx"]],
+  ["src/app/audit/[id]/VisibilityMonitorCard.tsx", ["src", "app", "audit", "[id]", "VisibilityMonitorCard.tsx"]],
+] as const;
+
+/** Identifiants et clés techniques : ils contiennent « weekly » sans rien promettre. */
+const TECHNICAL_WEEKLY = /weekly_rescan|weeklyRescan|weekly_monitoring|weeklyEmail\w*|weeklyActionPlan|sendWeeklyMonitoringEmail|changeFrequency:\s*"weekly"/g;
+
+test("cadence — aucune SOURCE cliente ne promet une cadence que le produit ne sert pas", () => {
+  if (RECHECK_INTERVAL_DAYS === 7) return; // la promesse hebdo serait alors vraie
+  for (const [label, segments] of CADENCE_SOURCE_SURFACES) {
+    const text = readRepoFile(...segments).replace(TECHNICAL_WEEKLY, "");
+    for (const promise of WEEKLY_PROMISES) {
+      assert.doesNotMatch(
+        text,
+        promise,
+        `${label}: promesse hebdomadaire « ${promise.source} » alors que le produit re-teste tous les ${RECHECK_INTERVAL_DAYS} jours`
+      );
+    }
+  }
+});
+
 test("cadence — la cadence réelle est bien publiée sur chaque surface, pas seulement absente", () => {
   // Sans ce test, supprimer toute mention de cadence ferait passer le ban
   // ci-dessus au vert pour la mauvaise raison.

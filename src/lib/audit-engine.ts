@@ -2,7 +2,7 @@ import { createHash, timingSafeEqual } from "crypto";
 import { pool } from "./db";
 import { recordFunnelEvent } from "./funnel";
 import { localizeCategoryLabel, localizePlainAction, type Locale } from "./i18n";
-import { RECHECK_INTERVAL_DAYS } from "./plan-promises";
+import { RECHECK_CADENCE, RECHECK_INTERVAL_DAYS } from "./plan-promises";
 import { isWebSearchConfigured, runWebSearch } from "./web-search";
 import { isMailConfigured, sendMail } from "./mailer";
 import { trafficClassOrUnknown, type TrafficClass } from "./traffic-filter";
@@ -3653,7 +3653,7 @@ function formulaTextForTier(tier: AuditTier) {
   }
 
   if (tier === "monitor_9eur") {
-    return "Your Monitor €9 report watches visibility with Gemini: does Gemini recommend your brand/domain, or cite competitors instead? Monitor adds 3 priority actions to do this week and weekly re-checks.";
+    return `Your Monitor €9 report watches visibility with Gemini: does Gemini recommend your brand/domain, or cite competitors instead? Monitor adds 3 priority actions to do this week and ${RECHECK_CADENCE.en.recheckNoun}s.`;
   }
 
   return formulaText();
