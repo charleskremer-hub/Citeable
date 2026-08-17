@@ -38,7 +38,7 @@ export default function ClaimReportGate({ auditId, locale }: ClaimReportGateProp
   }
 
   return (
-    <section className="rounded-[1.5rem] border border-[#CAFF3C]/30 bg-[#CAFF3C]/[0.06] p-5 sm:p-6">
+    <section className="rounded-[1.5rem] border border-[#CAFF3C]/30 bg-[#CAFF3C]/[0.06] p-5 sm:p-6" data-testid="claim-report-gate">
       <p className="m-0 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">
         {fr ? "Rapport complet" : "Full report"}
       </p>

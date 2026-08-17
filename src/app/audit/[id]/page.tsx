@@ -4,9 +4,11 @@ import { notFound } from "next/navigation";
 import { AGENT_CHECKOUT_URL, MONITOR_CHECKOUT_URL } from "@/lib/checkout-links";
 import { ensureAuditSchema, pool } from "@/lib/db";
 import { auditCopy, brandSentimentView, localeFromHeaders, localeFromUnknown, localizeCategoryLabel, localizePlainAction, type Locale } from "@/lib/i18n";
-import { UNKNOWN_CATEGORY } from "@/lib/audit-engine";
-import { categoryPerceptionFromPrompts, extractSourceCitationReports, fetchWithHostFallback, generateGeoAgentAssetsFromAudit, isAnonymousEmail, isAuditedBrandName, robotsTxtFixForBlockedCrawlers, youtubeContentTipIsRelevant } from "@/lib/audit-engine";
+import { categoryPerceptionFromPrompts, extractSourceCitationReports, generateGeoAgentAssetsFromAudit, isAnonymousEmail, isAuditedBrandName, robotsTxtFixForBlockedCrawlers, youtubeContentTipIsRelevant } from "@/lib/audit-engine";
 import type { BrandSentiment, BuyerIntentPromptResult, CategoryPerception, IcpSegmentMetadata, PlainAction, SourceCitationReport } from "@/lib/audit-engine";
+import { AUDIT_SHARE_TOKEN_PARAM, verifyAuditShareToken } from "@/lib/audit-share-token";
+import { resolveReportAccess } from "@/lib/report-access";
+import { entitlementForEmail } from "@/lib/subscriptions";
 import LocaleLang from "@/app/LocaleLang";
 import AuditPoller from "./AuditPoller";
 import ReportViewBeacon from "./ReportViewBeacon";
@@ -15,13 +17,45 @@ import FunnelCheckoutLink from "./FunnelCheckoutLink";
 import { VisibilityMonitorCard } from "./VisibilityMonitorCard";
 import CopyBlock from "./CopyBlock";
 import ClaimReportGate from "./ClaimReportGate";
+import LockedVerdict from "./LockedVerdict";
+import PaidReportGate from "./PaidReportGate";
+import { checkAiCrawlability } from "./ai-crawlability";
+import {
+  checkedQuestions,
+  competitorCounts,
+  extractPasteable,
+  localizedUnavailableReason,
+  lockedVerdictHeadline,
+  lostBuyerQuestions,
+  priorityGapQuestions,
+  promptAnalysis,
+  promptStatusPill,
+  rankActionsByImpact,
+  scoreColor,
+  treatmentProof,
+  treatmentProofForQuestion,
+  uniqueNames,
+  verdictCompetitors,
+  type ActionImpact,
+  type PromptState,
+} from "./report-insights";
 
 export const dynamic = "force-dynamic";
 
-function extractPasteable(text: string) {
-  const match = text.match(/[«"“]([\s\S]+?)[»"”]/);
-  return (match ? match[1] : text).trim();
-}
+/**
+ * LA PAGE TIENT EN 3+1 BLOCS (lot P1 « verdict en trois blocs »).
+ *
+ * Rapport VERROUILLÉ (`resolveReportAccess(...).locked`) — au plus 3 blocs :
+ *   1. la phrase, pas le score (LockedVerdict / lockedVerdictHeadline) ;
+ *   2. les questions d'achat perdues, en clair, 3 max (LockedVerdict) ;
+ *   3. un CTA unique : la porte elle-même (ClaimReportGate ou PaidReportGate).
+ *
+ * Rapport OUVERT (jeton de partage, abonné, gratuit réclamé, en cours, échoué) :
+ * l'intégralité — score, sentiment, perception de catégorie, part de voix,
+ * concurrents, questions testées, contenus à coller, fichiers techniques.
+ *
+ * La règle d'accès elle-même vit dans src/lib/report-access.ts et ne bouge pas.
+ */
 
 type AuditRow = {
   id: string;
@@ -47,299 +81,6 @@ type AuditRow = {
   } | null;
 };
 
-function scoreColor(score: number) {
-  if (score < 30) return "#FF5F5F";
-  if (score < 60) return "#FFB84D";
-  return "#CAFF3C";
-}
-
-// --- Lisibilité par les crawlers IA -----------------------------------------
-// Si les bots des moteurs IA sont bloqués par robots.txt, la marque ne peut pas
-// être citée, quel que soit son contenu. C'est le check le plus actionnable qui
-// soit : binaire, vérifiable, et corrigeable en une ligne de robots.txt.
-// Volontairement isolé dans la page (aucun impact sur le scoring ni sur le
-// pipeline d'audit) pour rester additif et sans risque pour le funnel.
-const AI_CRAWLERS = ["GPTBot", "OAI-SearchBot", "ChatGPT-User", "ClaudeBot", "PerplexityBot", "Google-Extended"] as const;
-
-type RobotsGroup = { agents: string[]; disallowAll: boolean };
-
-function parseRobotsGroups(robots: string): RobotsGroup[] {
-  const groups: RobotsGroup[] = [];
-  let current: RobotsGroup | null = null;
-  let previousLineWasAgent = false;
-
-  for (const rawLine of robots.split(/\r?\n/)) {
-    const line = rawLine.replace(/#.*$/, "").trim();
-    if (!line) continue;
-
-    const separator = line.indexOf(":");
-    if (separator === -1) continue;
-
-    const key = line.slice(0, separator).trim().toLowerCase();
-    const value = line.slice(separator + 1).trim();
-
-    if (key === "user-agent") {
-      // Des User-agent consécutifs partagent le même bloc de règles.
-      if (!current || !previousLineWasAgent) {
-        current = { agents: [], disallowAll: false };
-        groups.push(current);
-      }
-      current.agents.push(value.toLowerCase());
-      previousLineWasAgent = true;
-      continue;
-    }
-
-    previousLineWasAgent = false;
-    if (current && key === "disallow" && value === "/") current.disallowAll = true;
-  }
-
-  return groups;
-}
-
-function blockedAiCrawlers(robots: string) {
-  const groups = parseRobotsGroups(robots);
-  const wildcardBlocked = groups.some((group) => group.agents.includes("*") && group.disallowAll);
-
-  return AI_CRAWLERS.filter((crawler) => {
-    const named = groups.filter((group) => group.agents.includes(crawler.toLowerCase()));
-    // Une règle nommée l'emporte toujours sur la règle générique "*".
-    if (named.length) return named.some((group) => group.disallowAll);
-    return wildcardBlocked;
-  });
-}
-
-// Trois états distincts — c'est le cœur du correctif :
-//  - "blocked"     : le site répond ET bloque explicitement un crawler IA (vrai négatif)
-//  - "ok"          : le site répond et ne bloque personne
-//  - "unreachable" : ni l'apex ni le www ne répondent (DNS/hébergement), PAS un blocage
-type AiCrawlState = "ok" | "blocked" | "unreachable";
-
-async function checkAiCrawlability(websiteUrl: string): Promise<{
-  state: AiCrawlState;
-  blocked: string[];
-  llmsFound: boolean;
-  resolvedHost: string | null;
-}> {
-  // fetchWithHostFallback bascule apex ↔ www sur échec réseau uniquement
-  // (un 404 sur /llms.txt reste un 404, on ne retente pas l'autre hôte).
-  const load = async (path: string) => {
-    const target = new URL(path, websiteUrl).toString();
-    const result = await fetchWithHostFallback(target);
-    if (!result.response) return { text: null, reachable: false, host: null as string | null };
-    const text = result.response.ok ? await result.response.text().catch(() => null) : null;
-    return { text, reachable: true, host: result.host };
-  };
-
-  const [robots, llms] = await Promise.all([load("/robots.txt"), load("/llms.txt")]);
-
-  // Aucune variante d'hôte n'a répondu sur aucun des deux fichiers : injoignable.
-  if (!robots.reachable && !llms.reachable) {
-    return { state: "unreachable", blocked: [], llmsFound: false, resolvedHost: null };
-  }
-
-  // Pas de robots.txt = tout est autorisé par défaut : ce n'est pas un blocage.
-  const blocked = robots.text ? blockedAiCrawlers(robots.text) : [];
-
-  return {
-    state: blocked.length ? "blocked" : "ok",
-    blocked,
-    llmsFound: llms.text !== null,
-    resolvedHost: robots.host ?? llms.host,
-  };
-}
-
-function uniqueNames(names: string[]) {
-  const seen = new Set<string>();
-
-  return names.filter((name) => {
-    const cleaned = name.trim();
-    const key = cleaned.toLowerCase();
-
-    if (!cleaned || seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-function competitorCounts(names: string[]) {
-  const counts = new Map<string, { name: string; count: number; firstIndex: number }>();
-
-  names.forEach((name, index) => {
-    const cleaned = name.trim().replace(/\s+/g, " ");
-    const key = cleaned.toLowerCase();
-
-    if (!cleaned) return;
-
-    const current = counts.get(key);
-    if (current) {
-      current.count += 1;
-    } else {
-      counts.set(key, { name: cleaned, count: 1, firstIndex: index });
-    }
-  });
-
-  return Array.from(counts.values())
-    .sort((left, right) => right.count - left.count || left.firstIndex - right.firstIndex || left.name.localeCompare(right.name))
-    .slice(0, 12);
-}
-
-
-function localizedUnavailableReason(reason: string | undefined, locale: Locale, engine = "Gemini") {
-  if (!reason) return locale === "fr" ? `${engine} est indisponible ; réessaie.` : `${engine} unavailable; try again.`;
-  // Ancien libellé « Native NanoCorp web_search unavailable » conservé : les audits déjà en base le contiennent.
-  if (reason.includes("Web search unavailable") || reason.includes("Native NanoCorp web_search unavailable")) {
-    return locale === "fr" ? "Recherche web indisponible ; ce rapport utilise uniquement les vérifications terminées." : reason;
-  }
-  if (reason.includes("Gemini indisponible")) return locale === "fr" ? reason : "Gemini unavailable; try again.";
-  if (reason.includes("ChatGPT indisponible")) return locale === "fr" ? reason : "ChatGPT unavailable; try again.";
-  return reason;
-}
-
-type PromptState = "recommended" | "missing" | "unchecked";
-
-function promptAnalysis(question: BuyerIntentPromptResult): { state: PromptState; competitors: string[]; reason?: string } {
-  const aiSurface = question.surfaces.find((surface) => surface.kind === "ai_engine");
-
-  if (aiSurface) {
-    if (aiSurface.status !== "checked") {
-      return { state: "unchecked", competitors: [], reason: aiSurface.unavailableReason };
-    }
-    return { state: aiSurface.brandMentioned ? "recommended" : "missing", competitors: question.competitors };
-  }
-
-  const checked = question.surfaces.find((surface) => surface.kind === "supplementary" && surface.status === "checked");
-  if (checked) {
-    return { state: checked.brandMentioned ? "recommended" : "missing", competitors: question.competitors };
-  }
-
-  return { state: "unchecked", competitors: [], reason: question.surfaces.find((surface) => surface.unavailableReason)?.unavailableReason };
-}
-
-function promptStatusPill(state: PromptState, locale: Locale): { label: string; color: string; bg: string } {
-  if (state === "recommended") return { label: locale === "fr" ? "✓ Recommandé" : "✓ Recommended", color: "#CAFF3C", bg: "rgba(202,255,60,0.12)" };
-  if (state === "missing") return { label: locale === "fr" ? "✗ Pas cité" : "✗ Not cited", color: "#FF8F6B", bg: "rgba(255,143,107,0.12)" };
-  return { label: locale === "fr" ? "— Non vérifié" : "— Not checked", color: "#9A9AA8", bg: "rgba(255,255,255,0.05)" };
-}
-
-function checkedQuestions(questions: BuyerIntentPromptResult[]) {
-  const available = questions.filter((question) => question.available);
-  return available.length ? available : questions;
-}
-
-/**
- * Noun phrase used in every customer-facing fix sentence.
- * When category detection fails we fall back to a segment-appropriate phrase —
- * never a placeholder like "your business type", which reads as a broken template
- * in the exact sample that is supposed to sell the Agent plan.
- * Every call site below must keep it in a prepositional slot (about/around/in ${business}).
- */
-function businessPhrase(category: string | undefined, locale: Locale, segment?: IcpSegmentMetadata) {
-  const trimmed = (category ?? "").trim();
-  if (trimmed && trimmed !== UNKNOWN_CATEGORY) return trimmed;
-  if (segment?.key === "local_independent") return locale === "fr" ? "ce service" : "this service";
-  if (segment?.key === "creator_influencer") return locale === "fr" ? "cette niche" : "this niche";
-  return locale === "fr" ? "cette catégorie" : "this category";
-}
-
-function fixSentence(category: string | undefined, hasCompetitors: boolean, locale: Locale, segment?: IcpSegmentMetadata) {
-  const business = businessPhrase(category, locale, segment);
-
-  if (segment?.key === "local_independent") {
-    return locale === "fr"
-      ? `À corriger : aligne ta fiche Google Business, tes annuaires métier, ta page “pourquoi me choisir” et tes avis locaux autour de ${business}.`
-      : `What to fix: align your Google Business Profile, professional directories, “why choose me” page, and local reviews around ${business}.`;
-  }
-
-  if (segment?.key === "creator_influencer") {
-    return locale === "fr"
-      ? `À corriger : aligne tes bios/profils sociaux, tes mentions “top créateurs”, ta presse et tes preuves d'entité autour de ${business}.`
-      : `What to fix: align social bios/profiles, top-creator listicle mentions, press, and entity proof around ${business}.`;
-  }
-
-  if (hasCompetitors) {
-    return locale === "fr"
-      ? `À corriger : ajoute une page claire sur ${business}, avec FAQ, pages produit, avis et réponses directes aux questions d'achat.`
-      : `What to fix: add a clear FAQ/product page about ${business}, with reviews and direct answers to buyer questions.`;
-  }
-
-  return locale === "fr"
-    ? `À corriger : rends ton site plus clair sur ${business}, tes preuves produit, tes avis et les raisons de choisir ta marque.`
-    : `What to fix: make your site clearer about ${business}, product proof, reviews, and why buyers should choose your brand.`;
-}
-
-function treatmentProofForQuestion(brandName: string, category: string | undefined, question: BuyerIntentPromptResult, competitors: string[], engine: string, locale: Locale, segment?: IcpSegmentMetadata) {
-  const business = businessPhrase(category, locale, segment);
-  const citedCompetitors = uniqueNames([...question.competitors, ...competitors]).slice(0, 3);
-
-  if (locale === "fr") {
-    const competitorText = citedCompetitors.length
-      ? `${engine} cite déjà ${citedCompetitors.join(", ")} sur ce sujet. La page doit expliquer pourquoi choisir ${brandName}, sans les attaquer.`
-      : `Aucun concurrent clair n'est cité sur ce sujet. La page doit rendre ${brandName} plus facile à recommander.`;
-
-    return {
-      gap: question.brandMentioned
-        ? citedCompetitors.length
-          ? `Écart trouvé : ${engine} cite aussi ${citedCompetitors.join(", ")} pour « ${question.prompt} ».`
-          : `Question vérifiée : « ${question.prompt} ».`
-        : `Écart trouvé : ${engine} ne cite pas ${brandName} pour « ${question.prompt} ».`,
-      title: segment?.key === "local_independent" ? `Fiche Google Business / page locale à corriger : « ${question.prompt} »` : segment?.key === "creator_influencer" ? `Bio sociale / listicle à corriger : « ${question.prompt} »` : `FAQ/page produit à créer : « ${question.prompt} »`,
-      draft: segment?.key === "local_independent"
-        ? `Brouillon local à publier après relecture : « ${brandName} accompagne les clients qui cherchent ${business} près de chez eux. Explique la ville servie, les cas traités, les qualifications, les avis vérifiables et la prochaine étape pour réserver. ${competitorText} »`
-        : segment?.key === "creator_influencer"
-          ? `Brouillon profil/listicle à publier après relecture : « ${brandName} est un profil à suivre dans ${business} pour son angle, ses contenus utiles et ses preuves publiques. Ajoute la niche, les plateformes actives, les meilleures preuves et les liens presse/profils. ${competitorText} »`
-          : `Brouillon FAQ à publier après relecture : « Si tu compares les options dans ${business}, commence par ton besoin, les preuves disponibles et la prochaine étape. ${brandName} doit présenter ses cas d'usage, ses avis ou preuves vérifiables, puis répondre directement à cette question. ${competitorText} »`,
-      google: segment?.key === "local_independent"
-        ? `Phrase Google Business à coller : « ${brandName} aide les clients à choisir ${business} avec une prise de rendez-vous claire, des avis vérifiables et des informations locales à jour. »`
-        : segment?.key === "creator_influencer"
-          ? `Phrase bio/profil à coller : « ${brandName} crée du contenu sur ${business} à suivre pour des conseils clairs, des preuves publiques et des liens vers les meilleurs contenus et interviews. »`
-          : `Phrase page produit à coller : « ${brandName} aide les clients à comparer ${business} avec des informations claires, des avis vérifiables et une prochaine étape simple. »`,
-    };
-  }
-
-  const competitorText = citedCompetitors.length
-    ? `${engine} already cites ${citedCompetitors.join(", ")} for this topic, so the page should explain why buyers should choose ${brandName} without attacking them.`
-    : `No clear competitor is cited for this topic, so the page should make ${brandName} easier to recommend.`;
-
-  return {
-    gap: question.brandMentioned
-      ? citedCompetitors.length
-        ? `Gap found: ${engine} also cites ${citedCompetitors.join(", ")} for “${question.prompt}”.`
-        : `Question checked: “${question.prompt}”.`
-      : `Gap found: ${engine} does not cite ${brandName} for “${question.prompt}”.`,
-    title: segment?.key === "local_independent" ? `Google Business / local page fix: “${question.prompt}”` : segment?.key === "creator_influencer" ? `Social bio / listicle fix: “${question.prompt}”` : `FAQ/product page to create: “${question.prompt}”`,
-    draft: segment?.key === "local_independent"
-      ? `Local draft to publish after review: “${brandName} helps clients looking for ${business} nearby. State the city served, cases handled, qualifications, verifiable reviews, and the next booking step. ${competitorText}”`
-      : segment?.key === "creator_influencer"
-        ? `Profile/listicle draft to publish after review: “${brandName} is a creator worth following in ${business} for a clear angle, useful content, and public proof. Add the niche, active platforms, best proof, and press/profile links. ${competitorText}”`
-        : `FAQ draft to publish after review: “If you are comparing options in ${business}, start with your use case, available proof, and the next step. ${brandName} should present its use cases, reviews or verifiable proof, and a direct answer to this question. ${competitorText}”`,
-    google: segment?.key === "local_independent"
-      ? `Google Business sentence to paste: “${brandName} helps clients choose ${business} with clear booking steps, verifiable reviews, and up-to-date local information.”`
-      : segment?.key === "creator_influencer"
-        ? `Social/profile sentence to paste: “${brandName} creates content about ${business} worth following for clear advice, public proof, and links to the best content and interviews.”`
-        : `Product-page sentence to paste: “${brandName} helps buyers compare ${business} with clear information, verifiable reviews, and a simple next step.”`,
-  };
-}
-
-
-function priorityQuestions(questions: BuyerIntentPromptResult[]) {
-  return [
-    ...questions.filter((item) => item.available && !item.brandMentioned),
-    ...questions.filter((item) => item.available && item.brandMentioned && item.competitors.length > 0),
-    ...questions.filter((item) => item.available && item.brandMentioned && item.competitors.length === 0),
-  ];
-}
-
-function priorityGapQuestions(questions: BuyerIntentPromptResult[]) {
-  return priorityQuestions(questions).filter((question) => question.available && (!question.brandMentioned || question.competitors.length > 0));
-}
-
-function treatmentProof(brandName: string, category: string | undefined, questions: BuyerIntentPromptResult[], competitors: string[], engine: string, locale: Locale, segment?: IcpSegmentMetadata) {
-  const question = priorityQuestions(questions)[0];
-
-  return question ? treatmentProofForQuestion(brandName, category, question, competitors, engine, locale, segment) : null;
-}
-
-
 function StatusPill({ failed, complete, locale }: { failed: boolean; complete: boolean; locale: Locale }) {
   const copy = auditCopy[locale];
   const label = failed ? copy.status.failed : complete ? copy.status.complete : copy.status.running;
@@ -356,8 +97,34 @@ function StatusPill({ failed, complete, locale }: { failed: boolean; complete: b
   );
 }
 
-export default async function AuditPage({ params }: { params: Promise<{ id: string }> }) {
+/**
+ * Un abonnement actif est-il rattaché à cet audit ?
+ *
+ * LE RATTACHEMENT PASSE PAR L'EMAIL, parce que c'est le seul identifiant que le
+ * client, l'audit et Stripe partagent (voir `src/lib/subscriptions.ts` : il n'y
+ * a pas de table de comptes, et `monitored_brands` serait circulaire).
+ *
+ * FAIL-SAFE : toute panne de base rend `false`. Ne pas pouvoir prouver le droit
+ * n'est pas une raison de l'accorder — c'est exactement l'inverse.
+ */
+async function hasActiveSubscriptionForAudit(email: string): Promise<boolean> {
+  if (!email || isAnonymousEmail(email)) return false;
+  try {
+    return (await entitlementForEmail(email)) !== null;
+  } catch {
+    return false;
+  }
+}
+
+export default async function AuditPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { id } = await params;
+  const query = await searchParams;
   const headerLocale = localeFromHeaders(await headers());
   await ensureAuditSchema();
 
@@ -389,20 +156,6 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   }));
   const questionCount = complete ? questions.length : 0;
   const brandMentionCount = complete ? questions.filter((question) => question.brandMentioned).length : 0;
-  const competitors = uniqueNames([
-    ...(audit.competitors_found ?? []),
-    ...questions.flatMap((question) => question.competitors),
-  ])
-    .filter((name) => !isSelf(name))
-    .slice(0, 12);
-  const rankedCompetitors = competitorCounts(
-    questions.flatMap((question) => question.competitors).filter((name) => !isSelf(name))
-  );
-  const totalCompetitorMentions = rankedCompetitors.reduce((sum, item) => sum + item.count, 0);
-  const shareOfVoicePct =
-    brandMentionCount + totalCompetitorMentions > 0
-      ? Math.round((brandMentionCount / (brandMentionCount + totalCompetitorMentions)) * 100)
-      : 0;
   const answerEngine = audit.raw_results?.answerEngine;
   const answerEngineName = answerEngine?.engine ?? questions.flatMap((question) => question.surfaces).find((surface) => surface.kind === "ai_engine")?.engine ?? "Gemini";
   const isAnswerEngineReport = questions.some((question) => question.surfaces.some((surface) => surface.kind === "ai_engine"));
@@ -418,6 +171,103 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   // désormais du navigateur, une fois par session, filtré des bots et du trafic
   // interne : voir ReportViewBeacon ci-dessous et src/lib/traffic-filter.ts.
 
+  // La porte du rapport. Elle ne dépend PLUS de l'anonymat de l'email — cette
+  // règle laissait tout audit lancé avec une vraie adresse (donc toute la
+  // prospection, en tier payant) grand ouvert à qui possédait l'URL. Elle dépend
+  // désormais de ce qui a été payé ou explicitement autorisé : voir
+  // `src/lib/report-access.ts` pour la table de décision complète.
+  //
+  // On se base toujours sur l'EMAIL de l'audit pour le cas gratuit, pas sur un
+  // drapeau `raw_results.anonymous` : la réclamation met à jour l'email, et un
+  // drapeau maintenu en parallèle serait resté à true, laissant le rapport
+  // verrouillé pour toujours.
+  const shareTokenParam = query?.[AUDIT_SHARE_TOKEN_PARAM];
+  const shareToken = Array.isArray(shareTokenParam) ? shareTokenParam[0] : shareTokenParam;
+  const reportAccess = resolveReportAccess({
+    auditTier: audit.raw_results?.auditTier,
+    emailIsAnonymous: isAnonymousEmail(audit.email),
+    complete,
+    failed,
+    hasActiveSubscription: await hasActiveSubscriptionForAudit(audit.email),
+    shareTokenValid: verifyAuditShareToken(audit.id, shareToken),
+  });
+
+  // --- RAPPORT VERROUILLÉ : le verdict tient en trois blocs, puis la porte. ---
+  // `locked` implique `complete && !failed` (voir resolveReportAccess) : pas de
+  // poller ici, et aucun sondage réseau du site audité — le détail qui en
+  // dépendrait est sous la porte de toute façon.
+  if (reportAccess.locked) {
+    const lostQuestions = lostBuyerQuestions(questions);
+    const headline = lockedVerdictHeadline({
+      brandName: audit.brand_name,
+      engineName: answerEngineName,
+      questionCount,
+      brandMentionCount,
+      lostCount: lostQuestions.length,
+      competitors: verdictCompetitors(questions),
+      locale,
+    });
+
+    return (
+      <main className="min-h-screen bg-[#09090B] text-[#F0F0EC]" style={{ fontFamily: "var(--font-sans)" }}>
+        <LocaleLang locale={locale} />
+        <ReportViewBeacon
+          auditId={audit.id}
+          brandName={audit.brand_name}
+          websiteUrl={audit.website_url}
+          auditTier={audit.raw_results?.auditTier ?? "free"}
+          complete={complete}
+          failed={failed}
+        />
+
+        <section className="mx-auto flex min-h-screen w-full max-w-3xl flex-col px-4 py-5 sm:px-6 sm:py-8">
+          {/* Pas de CTA dans la nav : le CTA unique du rapport verrouillé, c'est la porte. */}
+          <nav className="mb-6 flex items-center justify-between gap-4">
+            <Link href="/" className="text-xl text-[#F0F0EC] no-underline" style={{ fontFamily: "var(--font-display)" }}>
+              GetPick
+            </Link>
+          </nav>
+
+          <div className="flex flex-1 flex-col justify-center gap-4 pb-8 sm:gap-5">
+            <LockedVerdict
+              brandName={audit.brand_name}
+              websiteUrl={audit.website_url}
+              headline={headline}
+              lostQuestions={lostQuestions.slice(0, 3).map((question) => question.prompt)}
+              locale={locale}
+            />
+
+            {/* Deux portes, une seule décision. `claim` échange le détail contre un
+                email (audit gratuit non réclamé), `paywall` l'échange contre
+                l'abonnement qui correspond au tier déjà servi. */}
+            {reportAccess.reason === "claim" ? (
+              <ClaimReportGate auditId={audit.id} locale={locale} />
+            ) : (
+              <PaidReportGate auditId={audit.id} isAgentReport={isAgentReport} locale={locale} />
+            )}
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  // --- RAPPORT OUVERT (ou en cours, ou échoué) : l'intégralité, comme avant. ---
+
+  const competitors = uniqueNames([
+    ...(audit.competitors_found ?? []),
+    ...questions.flatMap((question) => question.competitors),
+  ])
+    .filter((name) => !isSelf(name))
+    .slice(0, 12);
+  const rankedCompetitors = competitorCounts(
+    questions.flatMap((question) => question.competitors).filter((name) => !isSelf(name))
+  );
+  const totalCompetitorMentions = rankedCompetitors.reduce((sum, item) => sum + item.count, 0);
+  const shareOfVoicePct =
+    brandMentionCount + totalCompetitorMentions > 0
+      ? Math.round((brandMentionCount / (brandMentionCount + totalCompetitorMentions)) * 100)
+      : 0;
+
   const topCompetitor = rankedCompetitors[0]?.name ?? competitors[0];
   const displayCategory = localizeCategoryLabel(audit.raw_results?.category, locale);
   const score = audit.score ?? 0;
@@ -431,7 +281,16 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
     : [];
   const copyLabel = locale === "fr" ? "Copier" : "Copy";
   const copiedLabel = locale === "fr" ? "Copié ✓" : "Copied ✓";
-  const monitorActions = (audit.raw_results?.monitoring?.actions?.slice(0, 3) ?? []).map((action) => localizePlainAction(action, locale));
+  // Impact CALCULÉ (lot P2 « impact calculé + phase ») : chaque action affichée
+  // porte le nombre de questions d'achat PERDUES qu'elle adresse, dérivé de ses
+  // `basedOn` croisés avec les questions stockées — plus jamais un rang
+  // d'affichage déguisé en mesure. Tri par impact décroissant, 3 max. Dérivation
+  // pure (zéro réseau), et jamais exécutée sur un rapport verrouillé : la
+  // branche `reportAccess.locked` a déjà retourné plus haut.
+  const monitorActions = rankActionsByImpact(audit.raw_results?.monitoring?.actions ?? [], questions).map((ranked) => ({
+    ...ranked,
+    action: localizePlainAction(ranked.action, locale),
+  }));
   // Tip contenu "YouTube = signal #1" (étude Ahrefs 75k marques) : ponctuel, affiché
   // uniquement quand des sources ont été citées par les moteurs IA et qu'aucune
   // n'est une vidéo YouTube. Page-only, zéro appel réseau : `monitoring.sources`
@@ -458,21 +317,13 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
   // donc "not_enough_signal". Un ancien rapport n'affiche jamais de verdict inventé.
   const categoryPerception: CategoryPerception =
     audit.raw_results?.categoryPerception ?? categoryPerceptionFromPrompts(questions, audit.raw_results?.category ?? "");
-  // Audit lancé sans email : le verdict reste visible, le détail est échangé
-  // contre l'email (voir ClaimReportGate). Une fois réclamé, le rapport s'ouvre.
-  //
-  // On se base sur l'EMAIL de l'audit, pas sur un drapeau `raw_results.anonymous` :
-  // la réclamation met à jour l'email, et un drapeau maintenu en parallèle serait
-  // resté à true, laissant le rapport verrouillé pour toujours. L'email est la
-  // seule source de vérité.
-  const reportLocked = isAnonymousEmail(audit.email) && complete && !failed;
 
   const aiCrawl = complete && !failed ? await checkAiCrawlability(audit.website_url) : null;
 
   // Fichiers techniques (Monitor + Agent) : générés depuis les VRAIES questions
   // d'achat auditées — le chaînon « l'agent agit » (vs les conseils seuls).
   // Génération pure côté serveur, zéro appel réseau supplémentaire.
-  const technicalAssets = complete && !failed && !isFreeReport && !reportLocked
+  const technicalAssets = complete && !failed && !isFreeReport
     ? generateGeoAgentAssetsFromAudit({
         id: audit.id,
         brand_name: audit.brand_name,
@@ -592,8 +443,10 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
         ? "#FFD166"
         : "#CAFF3C";
 
-  const actionImpactLabel = (index: number) =>
-    index === 0 ? copy.actionImpactHigh : index === 1 ? copy.actionImpactMedium : copy.actionImpactSupport;
+  // Le libellé d'impact ne dit que ce que les données prouvent : le compte des
+  // questions perdues adressées quand il est mesurable, un libellé neutre sinon.
+  const actionImpactLabel = (impact: ActionImpact) =>
+    impact.measured ? copy.actionImpactMeasured(impact.addressedLostCount, impact.lostCount) : copy.actionImpactUnmeasured;
 
   return (
     <main className="min-h-screen bg-[#09090B] text-[#F0F0EC]" style={{ fontFamily: "var(--font-sans)" }}>
@@ -894,10 +747,8 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
             </section>
           ) : null}
 
-          {reportLocked ? <ClaimReportGate auditId={audit.id} locale={locale} /> : null}
-
-          {complete && !failed && !reportLocked ? (
-            <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6">
+          {complete && !failed ? (
+            <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6" data-testid="report-competitors">
               <div className="mb-4 flex items-end justify-between gap-4">
                 <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
                   {isAnswerEngineReport ? copy.competitorsTitle(answerEngineName) : copy.webSearchTitle}
@@ -1012,12 +863,15 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
               {monitorActions.length ? (
                 <>
                   <ol className="m-0 mt-4 grid list-none gap-2 p-0">
-                    {monitorActions.map((action, index) => (
+                    {monitorActions.map(({ action, phase, impact }, index) => (
                       <li key={`${action.title}-${index}`} className="rounded-2xl border border-white/[0.08] bg-black/25 p-4">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-sm font-black text-[#CAFF3C]">{index + 1}.</span>
+                          <span className="rounded-full border border-white/15 bg-white/[0.06] px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#BCBCC8]">
+                            {copy.actionPhase[phase]}
+                          </span>
                           <span className="rounded-full border border-[#CAFF3C]/25 bg-[#CAFF3C]/10 px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#CAFF3C]">
-                            {actionImpactLabel(index)}
+                            {actionImpactLabel(impact)}
                           </span>
                         </div>
                         <p className="m-0 mt-1.5 text-sm font-black text-[#F0F0EC]">{action.title}</p>
@@ -1036,8 +890,8 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                       <p className="m-0 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">
                         {locale === "fr" ? "Action 1 · comment faire" : "Action 1 · how to do it"}
                       </p>
-                      <p className="m-0 text-sm font-bold leading-6 text-[#D6D6DF]">{monitorActions[0].doThis}</p>
-                      <p className="m-0 text-sm font-bold leading-6 text-[#D6D6DF]">{copy.where} {monitorActions[0].where}</p>
+                      <p className="m-0 text-sm font-bold leading-6 text-[#D6D6DF]">{monitorActions[0].action.doThis}</p>
+                      <p className="m-0 text-sm font-bold leading-6 text-[#D6D6DF]">{copy.where} {monitorActions[0].action.where}</p>
                     </div>
                     <div className="absolute inset-0 grid place-items-center gap-2 bg-[#09090B]/55 p-4 text-center backdrop-blur-[1px]">
                       <div className="text-xl">🔒</div>
@@ -1062,7 +916,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
           ) : null}
 
           {complete && !failed && isMonitorReport ? (
-            <section className="rounded-[1.5rem] border border-[#CAFF3C]/20 bg-[#CAFF3C]/[0.055] p-5 sm:p-6">
+            <section className="rounded-[1.5rem] border border-[#CAFF3C]/20 bg-[#CAFF3C]/[0.055] p-5 sm:p-6" data-testid="monitor-content-blocks">
               <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">
                 {locale === "fr" ? "Monitor · contenu à coller" : "Monitor · content to paste"}
               </p>
@@ -1100,12 +954,15 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
                 </div>
               ) : monitorActions.length ? (
                 <ol className="m-0 mt-4 grid list-none gap-3 p-0">
-                  {monitorActions.map((action, index) => (
+                  {monitorActions.map(({ action, phase, impact }, index) => (
                     <li key={`${action.title}-${index}`} className="rounded-2xl border border-white/[0.08] bg-black/20 p-4">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-sm font-black text-[#CAFF3C]">{index + 1}.</span>
+                        <span className="rounded-full border border-white/15 bg-white/[0.06] px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#BCBCC8]">
+                          {copy.actionPhase[phase]}
+                        </span>
                         <span className="rounded-full border border-[#CAFF3C]/25 bg-[#CAFF3C]/10 px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#CAFF3C]">
-                          {actionImpactLabel(index)}
+                          {actionImpactLabel(impact)}
                         </span>
                       </div>
                       <p className="m-0 mt-1.5 text-sm font-black text-[#F0F0EC]">{action.title}</p>
@@ -1170,7 +1027,7 @@ export default async function AuditPage({ params }: { params: Promise<{ id: stri
           ) : null}
 
           {complete && !failed && !isFreeReport ? (
-            <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6">
+            <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6" data-testid="buyer-intent-prompts">
               <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
                 <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
                   {isAnswerEngineReport ? copy.questionsTitle(answerEngineName) : copy.webQuestionsTitle}

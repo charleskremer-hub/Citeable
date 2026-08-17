@@ -44,7 +44,13 @@ export const homeCopy = {
     heroTitleAccent: "GetPick makes it answer with you.",
     heroSubtitle: "It gets your brand recommended by ChatGPT and Gemini — diagnosis, content, monitoring. No agency needed.",
     formTitle: "Run your free audit",
-    formSubtitle: "Brand + website. Email optional.",
+    // « Email optional » était vrai pour LANCER l'audit et faux pour ce qu'on en
+    // voit : une fois le gate déployé (`resolveReportAccess`, tier free non
+    // réclamé -> `locked: "claim"`), un audit lancé sans email s'arrête au verdict
+    // et aux questions perdues. Le score, le détail par question et les correctifs
+    // sont sous la porte. Promettre « optionnel » sans le dire, c'est faire
+    // découvrir la porte au moment exact où on demande l'email.
+    formSubtitle: "Brand + website. Email optional — it unlocks your score and the fixes to publish.",
     freeBadge: "Free",
     success: "You're on the list — we'll be in touch with your free audit.",
     businessLabel: "Business name",
@@ -207,7 +213,7 @@ export const homeCopy = {
     heroTitleAccent: "GetPick fait en sorte que ce soit le tien.",
     heroSubtitle: "Il fait recommander ta marque par ChatGPT et Gemini — diagnostic, contenu, suivi. Sans agence.",
     formTitle: "Lance ton audit gratuit",
-    formSubtitle: "Ta marque + ton site. Email optionnel.",
+    formSubtitle: "Ta marque + ton site. Email optionnel — il débloque ton score et les correctifs à publier.",
     freeBadge: "Gratuit",
     success: "C'est noté — ton audit gratuit arrive bientôt.",
     businessLabel: "Nom de l'entreprise",
@@ -458,9 +464,17 @@ export const auditCopy = {
       prompts.length === 1
         ? `Closes the gap on: “${prompts[0]}”`
         : `Closes gaps on ${prompts.length} buyer questions, starting with: “${prompts[0]}”`,
-    actionImpactHigh: "Highest impact",
-    actionImpactMedium: "Next up",
-    actionImpactSupport: "Then",
+    // Impact CALCULÉ (lot P2) : le libellé ne porte que des nombres dérivés de
+    // l'audit — questions perdues adressées / questions perdues. Jamais de
+    // pourcentage inventé, jamais de promesse de gain. Sans donnée : neutre.
+    actionImpactMeasured: (addressed: number, lostTotal: number) => {
+      if (lostTotal === 1) return addressed === 1 ? "Addresses the one lost buyer question" : "Doesn't address the lost buyer question";
+      return addressed === 0
+        ? `Addresses none of the ${lostTotal} lost buyer questions`
+        : `Addresses ${addressed} of the ${lostTotal} lost buyer questions`;
+    },
+    actionImpactUnmeasured: "Impact not measured",
+    actionPhase: { foundations: "Foundations", content: "Content", authority: "Authority" },
     youtubeTipBadge: "Content tip",
     youtubeTipTitle: "YouTube is the #1 AI-visibility signal — and you have none",
     youtubeTipBody:
@@ -567,9 +581,15 @@ export const auditCopy = {
       prompts.length === 1
         ? `Comble l'écart sur : « ${prompts[0]} »`
         : `Comble l'écart sur ${prompts.length} questions d'achat, à commencer par : « ${prompts[0]} »`,
-    actionImpactHigh: "Impact max",
-    actionImpactMedium: "Ensuite",
-    actionImpactSupport: "Puis",
+    // Impact CALCULÉ (lot P2) : uniquement des nombres dérivés de l'audit.
+    actionImpactMeasured: (addressed: number, lostTotal: number) => {
+      if (lostTotal === 1) return addressed === 1 ? "Adresse la seule question d'achat perdue" : "N'adresse pas la question d'achat perdue";
+      return addressed === 0
+        ? `N'adresse aucune des ${lostTotal} questions d'achat perdues`
+        : `Adresse ${addressed} des ${lostTotal} questions d'achat perdues`;
+    },
+    actionImpactUnmeasured: "Impact non mesuré",
+    actionPhase: { foundations: "Fondations", content: "Contenu", authority: "Autorité" },
     youtubeTipBadge: "Astuce contenu",
     youtubeTipTitle: "YouTube est le signal #1 de visibilité IA — et tu n'en as aucun",
     youtubeTipBody:
