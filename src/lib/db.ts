@@ -1,5 +1,6 @@
 import { Pool } from "pg";
 import { CLASSIFIED_TRAFFIC_CLASSES_PREDICATE_SQL } from "./traffic-filter";
+import { RECHECK_INTERVAL_DAYS } from "./plan-promises";
 
 const globalForPg = globalThis as unknown as { pgPool?: Pool };
 
@@ -224,7 +225,7 @@ export async function ensureAuditSchema() {
   `);
   await pool.query(`
     UPDATE monitored_brands
-    SET next_run_at = GREATEST(next_run_at, COALESCE(last_run_at, created_at) + interval '30 days')
+    SET next_run_at = GREATEST(next_run_at, COALESCE(last_run_at, created_at) + interval '${RECHECK_INTERVAL_DAYS} days')
     WHERE active = true
   `);
   await pool.query(`
@@ -236,7 +237,7 @@ export async function ensureAuditSchema() {
       ORDER BY email, brand_name, website_url, created_at DESC
     )
     INSERT INTO monitored_brands (email, brand_name, website_url, last_audit_id, last_run_at, next_run_at)
-    SELECT email, brand_name, website_url, id, created_at, created_at + interval '30 days'
+    SELECT email, brand_name, website_url, id, created_at, created_at + interval '${RECHECK_INTERVAL_DAYS} days'
     FROM latest
     ON CONFLICT (email, brand_name, website_url) DO NOTHING
   `);

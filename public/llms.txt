@@ -3,7 +3,7 @@
 > GetPick is the GEO agent for DTC brands (formerly Citeable). It gets your
 > brand recommended by AI assistants like ChatGPT and Gemini: it diagnoses who
 > AI recommends today, names the rival cited in your place, writes the
-> copy-paste fixes, and monitors the answers every week. No agency needed.
+> copy-paste fixes, and monitors the answers every month. No agency needed.
 
 ## What GetPick is
 
@@ -12,7 +12,7 @@ and e-commerce brands. It does the work a GEO agency does, at a flat tool
 price. It sends real buyer questions to AI assistants at audit time — no
 simulated prompts, no cached guesses — and reports whether the AI names your
 brand or names a competitor instead. Then it writes the content that closes
-the gap, ready to copy-paste, and re-checks weekly.
+the gap, ready to copy-paste, and re-checks monthly.
 
 ## Who it is for
 
@@ -36,15 +36,17 @@ credits, no per-engine add-ons, no seat pricing and no setup.
   (JSON-LD Organization + FAQPage built from the audited buyer questions),
   llms.txt, and a robots.txt fix when AI crawlers are blocked. Unlike one-shot
   file generators, these are regenerated every time the AI answers move.
-- Weekly re-checks, so you know when an answer flips.
+- Monthly re-checks, so you know when an answer flips.
 
 ## Pricing
 
-- Free audit: 6 buyer questions, live checks, no payment, no signup.
-- Monitor — 9 EUR per month: 12 buyer questions, weekly tracking, and the
-  copy-paste fixes written from your real gaps.
-- Agent — 19 EUR per month: everything in Monitor, Gemini + ChatGPT checks,
-  a mention plan, and an interactive chat over your audit data.
+- Free audit: 6 buyer questions, checked live on Gemini, no payment, no
+  signup.
+- Monitor — 9 EUR per month: 12 buyer questions, monthly tracking on Gemini,
+  and the copy-paste fixes written from your real gaps.
+- Agent — 19 EUR per month: everything in Monitor, checks run on ChatGPT
+  instead of Gemini, a mention plan, and an interactive chat over your audit
+  data.
 
 Paid plans are monthly and cancellable at any time. They are refunded on
 request within 30 days, with no questions asked and no justification required:

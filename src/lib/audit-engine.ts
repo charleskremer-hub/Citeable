@@ -2,6 +2,7 @@ import { createHash, timingSafeEqual } from "crypto";
 import { pool } from "./db";
 import { recordFunnelEvent } from "./funnel";
 import { localizeCategoryLabel, localizePlainAction, type Locale } from "./i18n";
+import { RECHECK_INTERVAL_DAYS } from "./plan-promises";
 import { isWebSearchConfigured, runWebSearch } from "./web-search";
 import { isMailConfigured, sendMail } from "./mailer";
 import { trafficClassOrUnknown, type TrafficClass } from "./traffic-filter";
@@ -4547,7 +4548,7 @@ export async function upsertMonitoredBrandForAudit(auditId: string) {
 
   const monitored = await pool.query<{ id: string }>(
     `INSERT INTO monitored_brands (email, brand_name, website_url, last_audit_id, last_run_at, next_run_at, updated_at)
-     VALUES ($1, $2, $3, $4, now(), now() + interval '30 days', now())
+     VALUES ($1, $2, $3, $4, now(), now() + interval '${RECHECK_INTERVAL_DAYS} days', now())
      ON CONFLICT (email, brand_name, website_url) DO UPDATE
      SET last_audit_id = EXCLUDED.last_audit_id,
          last_run_at = EXCLUDED.last_run_at,
@@ -4685,7 +4686,7 @@ export async function runDueWeeklyRescans(limit = 3) {
         `UPDATE monitored_brands
          SET last_audit_id = $2,
              last_run_at = now(),
-             next_run_at = now() + interval '30 days',
+             next_run_at = now() + interval '${RECHECK_INTERVAL_DAYS} days',
              updated_at = now()
          WHERE id = $1`,
         [brand.id, auditId]
