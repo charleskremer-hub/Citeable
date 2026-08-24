@@ -477,7 +477,187 @@ export function checkLint(cwd = process.cwd()) {
   return { id, nom, statut: STATUT.OK, details: ["eslint a quitté avec le code 0 (résumé non standard, décompte non lu)."], commande: null };
 }
 
-// --- Contrôle 6 : rappel e2e Playwright, non automatisé -----------------------
+// --- Contrôle 6 : type-check TypeScript (tsc --noEmit) -------------------------
+
+/**
+ * POURQUOI CE CONTRÔLE EXISTE — et pourquoi il est au même rang que les autres.
+ * Le 14/08/2026, ce préflight a rendu un verdict sur une chaîne qui portait 4
+ * erreurs TS2345 dans `scripts/preflight-merge.test.ts`, et AUCUN de ses
+ * contrôles ne les voyait :
+ *   - `node scripts/run-tests.mjs` ne les voit pas : le type stripping de Node
+ *     SUPPRIME les annotations de type sans jamais les vérifier ;
+ *   - `npx eslint .` ne les voit pas : eslint ne type-vérifie pas ;
+ *   - or `next build` type-vérifie AUSSI le dossier `scripts/` (le `include` du
+ *     tsconfig couvre tous les `.ts` du dépôt et `next.config.ts` ne pose pas
+ *     `ignoreBuildErrors`), donc ces erreurs FONT ÉCHOUER LE BUILD DE PRODUCTION.
+ * Cinq runs consécutifs ont donc écrit « prêt à merger » sur une chaîne qui
+ * n'aurait pas buildé. C'est la seule classe d'erreur qui faisait réellement
+ * échouer le déploiement, et c'était le seul angle mort de l'instrument.
+ */
+
+/** Au-delà, on renonce à MESURER plutôt que de faire attendre le préflight sans fin. */
+export const TYPECHECK_TIMEOUT_MS = 180_000;
+
+/** Nombre maximum de lignes de diagnostic tsc recopiées dans le rapport. */
+export const TYPECHECK_MAX_LINES = 10;
+
+const TYPECHECK_CMD = "npx tsc --noEmit";
+
+/**
+ * Ce que ce contrôle mesure, et que RIEN d'autre dans ce préflight ne mesure.
+ * Affiché dès que le contrôle n'est pas OK : un lecteur qui voit ce blocage doit
+ * comprendre en une lecture pourquoi il compte, sans aller chercher ailleurs.
+ */
+const TYPECHECK_POURQUOI = Object.freeze([
+  "Pourquoi ça compte : `next build` type-vérifie AUSSI le dossier scripts/ — le `include` du tsconfig couvre tous les .ts du dépôt et next.config.ts ne pose pas `ignoreBuildErrors`. Une erreur de type ici FAIT ÉCHOUER LE BUILD DE PRODUCTION.",
+  "Et rien d'autre ici ne la voit : `node scripts/run-tests.mjs` SUPPRIME les types sans les vérifier (type stripping de Node), et `npx eslint .` ne type-vérifie pas. Sans ce contrôle, le préflight rend GO sur une chaîne qui ne build pas.",
+]);
+
+/** Une ligne de diagnostic tsc en mode non-pretty : `fichier(ligne,col): error TS1234: message`. */
+const TSC_ERROR_LINE_RE = /(?:^|\s)error TS\d+/;
+
+/**
+ * Extrait les lignes d'erreur de la sortie de `tsc --pretty false`.
+ * Aucun chiffre inventé : on compte exactement les lignes qu'on sait lire.
+ *
+ * @param {string} output
+ * @returns {string[]}
+ */
+export function extractTscErrorLines(output) {
+  if (typeof output !== "string") return [];
+  return output
+    .split(/\r?\n/)
+    .map((line) => line.trimEnd())
+    .filter((line) => TSC_ERROR_LINE_RE.test(line));
+}
+
+/**
+ * Résultat brut d'une tentative d'exécution de tsc.
+ * `ran: false` veut dire « je n'ai PAS pu mesurer », pas « 0 erreur ».
+ *
+ * @typedef {{ ran: boolean, timedOut: boolean, status: number | null, output: string, raison: string | null }} TypecheckRun
+ */
+
+/**
+ * Lance `tsc --noEmit`.
+ * `--incremental false` : ce script n'écrit AUCUN fichier, pas même un
+ * `tsconfig.tsbuildinfo` (et deux préflights concurrents ne se marchent pas
+ * dessus). `--pretty false` : une erreur = une ligne, lisible et comptable.
+ *
+ * @param {string} cwd
+ * @returns {TypecheckRun}
+ */
+function runTypecheckCommand(cwd) {
+  const localBin = resolve(cwd, "node_modules", ".bin", "tsc");
+  const useLocalBin = existsSync(localBin);
+  const bin = useLocalBin ? localBin : "npx";
+  const tscArgs = ["--noEmit", "--incremental", "false", "--pretty", "false"];
+  const args = useLocalBin ? tscArgs : ["--no-install", "tsc", ...tscArgs];
+
+  const result = spawnSync(bin, args, {
+    cwd,
+    encoding: "utf8",
+    timeout: TYPECHECK_TIMEOUT_MS,
+    maxBuffer: 32 * 1024 * 1024,
+  });
+  const output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
+  const secondes = Math.round(TYPECHECK_TIMEOUT_MS / 1000);
+
+  if (result.error) {
+    const timedOut = /** @type {NodeJS.ErrnoException} */ (result.error).code === "ETIMEDOUT";
+    return {
+      ran: false,
+      timedOut,
+      status: null,
+      output,
+      raison: timedOut
+        ? `tsc n'a rien rendu en moins de ${secondes} s et a été interrompu.`
+        : `tsc est introuvable ou n'a pas pu s'exécuter (${result.error.message}).`,
+    };
+  }
+  if (result.status === null) {
+    return {
+      ran: false,
+      timedOut: true,
+      status: null,
+      output,
+      raison: `tsc a été interrompu avant de rendre un résultat (signal ${result.signal ?? "inconnu"}, délai ${secondes} s).`,
+    };
+  }
+  return { ran: true, timedOut: false, status: result.status, output, raison: null };
+}
+
+/**
+ * Traduit une exécution de tsc en contrôle.
+ *
+ * INVARIANT : un tsc qui n'a pas pu MESURER ne rend JAMAIS [OK]. Un instrument
+ * silencieux n'est pas un feu vert — c'est exactement la faute que ce contrôle
+ * corrige. Il rend AVERTISSEMENT et dit noir sur blanc qu'il n'a pas mesuré.
+ *
+ * @param {TypecheckRun | null | undefined} run
+ */
+export function classifyTypecheckRun(run) {
+  const id = "types";
+  const nom = "Type-check TypeScript (npx tsc --noEmit)";
+
+  const nonMesure = (raison) => ({
+    id,
+    nom,
+    statut: STATUT.AVERTISSEMENT,
+    details: [
+      `Ce contrôle N'A PAS PU MESURER le type-check : ${raison}`,
+      "Aucune erreur n'a donc été comptée. Ce n'est PAS un « 0 erreur », et ce contrôle ne vaut pas feu vert : à relancer à la main avant de merger.",
+      ...TYPECHECK_POURQUOI,
+    ],
+    commande: TYPECHECK_CMD,
+    erreurs: /** @type {number | null} */ (null),
+  });
+
+  if (!run || run.ran !== true) {
+    return nonMesure(run?.raison ?? "tsc n'a pas pu être exécuté.");
+  }
+
+  const lignes = extractTscErrorLines(run.output);
+  const erreurs = lignes.length;
+
+  if (erreurs > 0) {
+    const montrees = lignes.slice(0, TYPECHECK_MAX_LINES);
+    const details = [
+      `${erreurs} erreur(s) de type relevée(s) par ${TYPECHECK_CMD} (code de sortie ${run.status}).`,
+      ...montrees.map((ligne) => `  ${ligne}`),
+    ];
+    if (erreurs > montrees.length) {
+      details.push(`  … et ${erreurs - montrees.length} autre(s) ligne(s) — tout voir avec : ${TYPECHECK_CMD}`);
+    }
+    details.push("", ...TYPECHECK_POURQUOI);
+    return { id, nom, statut: STATUT.BLOQUANT, details, commande: TYPECHECK_CMD, erreurs };
+  }
+
+  if (run.status !== 0) {
+    return nonMesure(
+      `tsc a quitté avec le code ${run.status} sans qu'aucune ligne « error TSxxxx » soit lisible dans sa sortie (binaire absent, configuration illisible…).`
+    );
+  }
+
+  return {
+    id,
+    nom,
+    statut: STATUT.OK,
+    details: [`0 erreur de type sur l'ensemble du dépôt (${TYPECHECK_CMD}, code de sortie 0).`],
+    commande: null,
+    erreurs,
+  };
+}
+
+/**
+ * @param {string} cwd
+ * @param {(cwd: string) => TypecheckRun} runTsc  injecté par les tests ; en vrai, tsc.
+ */
+export function checkTypecheck(cwd = process.cwd(), runTsc = runTypecheckCommand) {
+  return classifyTypecheckRun(runTsc(cwd));
+}
+
+// --- Contrôle 7 : rappel e2e Playwright, non automatisé -----------------------
 
 export function checkPlaywrightReminder() {
   return {
@@ -524,6 +704,7 @@ export function runAllChecks(cwd = process.cwd(), processEnv = process.env) {
     checkOutboundLinks(cwd),
     checkTestSuite(cwd),
     checkLint(cwd),
+    checkTypecheck(cwd),
     checkPlaywrightReminder(),
   ];
 }
