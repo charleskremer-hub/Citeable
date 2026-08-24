@@ -8,6 +8,7 @@ import { categoryPerceptionFromPrompts, extractSourceCitationReports, generateGe
 import type { BrandSentiment, BuyerIntentPromptResult, CategoryPerception, IcpSegmentMetadata, PlainAction, SourceCitationReport } from "@/lib/audit-engine";
 import { AUDIT_SHARE_TOKEN_PARAM, verifyAuditShareToken } from "@/lib/audit-share-token";
 import { resolveReportAccess } from "@/lib/report-access";
+import { RECHECK_CADENCE } from "@/lib/plan-promises";
 import { entitlementForEmail } from "@/lib/subscriptions";
 import LocaleLang from "@/app/LocaleLang";
 import AuditPoller from "./AuditPoller";
@@ -856,8 +857,8 @@ export default async function AuditPage({
               </h2>
               <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#D6D6DF]">
                 {locale === "fr"
-                  ? "Le gratuit te montre le diagnostic. Monitor te donne la liste d'actions concrètes à faire — reclassée chaque semaine selon ce que l'IA voit."
-                  : "Free shows you the diagnosis. Monitor gives you the concrete action list to run — re-ranked every week from what AI sees."}
+                  ? `Le gratuit te montre le diagnostic. Monitor te donne la liste d'actions concrètes à faire — reclassée ${RECHECK_CADENCE.fr.adverb} selon ce que l'IA voit.`
+                  : `Free shows you the diagnosis. Monitor gives you the concrete action list to run — re-ranked ${RECHECK_CADENCE.en.every} from what AI sees.`}
               </p>
 
               {monitorActions.length ? (
