@@ -177,6 +177,30 @@ function validUuid(value: string | null | undefined) {
   return typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
+/**
+ * Forme EXACTE d'un `audit_id` : uuid v4 complet, ancré des deux côtés.
+ *
+ * Les identifiants d'audit sont produits par `gen_random_uuid()` côté Postgres
+ * (voir `ensureAuditSchema`), qui rend toujours un v4 — d'où le `4` littéral en
+ * position de version, plus strict que le `[1-5]` du chemin d'ÉCRITURE
+ * `validUuid` ci-dessus. Le chemin d'écriture reste tolérant parce qu'il ne fait
+ * que décider d'écrire `NULL` ou non ; le chemin de LECTURE, lui, sert
+ * d'autorisation (connaître l'uuid vaut autorisation) et n'a aucune raison
+ * d'accepter une forme que nous n'émettons pas.
+ *
+ * Les deux ancres `^` et `$` sont la garde essentielle : sans elles, un PRÉFIXE
+ * (`3f2a`, `3f2a1b4c-`) ou un uuid tronqué passerait, et la route deviendrait un
+ * scanner par préfixe sur les identifiants de nos clients. Une valeur qui n'est
+ * pas un uuid v4 entier doit être REFUSÉE, jamais élargie en `LIKE` ni en
+ * `startsWith`.
+ */
+export function isAuditUuidV4(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+  );
+}
+
 export async function recordFunnelEvent({ eventName, auditId, source, metadata = {}, dedupeKey }: RecordFunnelEventArgs) {
   const safeAuditId = validUuid(auditId) ? auditId : null;
   const safeSource = source?.trim().slice(0, 120) || null;

@@ -5,12 +5,13 @@ import {
   MAX_CLIENT_FUNNEL_EVENTS_PER_REQUEST,
   clientFunnelRateLimiter,
   foldFunnelCounts,
+  isAuditUuidV4,
   isClientFunnelEventName,
   namespacedDedupeKey,
   readTrafficClassSince,
   recordFunnelEvent,
 } from "@/lib/funnel";
-import { requestRateLimitKey, requestTrafficClass } from "@/lib/traffic-filter";
+import { TRAFFIC_CLASSES, requestRateLimitKey, requestTrafficClass } from "@/lib/traffic-filter";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,102 @@ type FunnelEventRow = {
   metadata: Record<string, unknown> | null;
   created_at: Date;
 };
+
+type FunnelAuditCountRow = FunnelCountRow & {
+  last_event_at: Date | string | null;
+};
+
+const AUDIT_ID_PARAM = "audit_id";
+
+/**
+ * Compteurs d'UN SEUL audit. `audit_id = $1::uuid` — valeur LIÉE, jamais
+ * concaténée, et de toute façon validée avant d'arriver ici.
+ *
+ * Pas de fenêtre 14 jours sur ce chemin, contrairement à l'agrégat : la question
+ * posée n'est pas « que se passe-t-il en ce moment ? » mais « ce prospect-là
+ * a-t-il ouvert SON rapport ? ». Une fenêtre glissante ferait disparaître la
+ * réponse au bout de deux semaines, c'est-à-dire exactement au moment où on
+ * relit le résultat d'une campagne. L'index `audit_funnel_events_audit_idx
+ * (audit_id, created_at DESC)` sert cette requête sans Seq Scan.
+ */
+const FUNNEL_COUNTS_BY_AUDIT_SQL = `SELECT event_name, metadata->>'trafficClass' AS traffic_class,
+            COUNT(*)::text AS count, MAX(created_at) AS last_event_at
+     FROM audit_funnel_events
+     WHERE audit_id = $1::uuid
+     GROUP BY event_name, metadata->>'trafficClass'`;
+
+type AuditIdSelection =
+  | { kind: "absent" }
+  | { kind: "refused"; error: string; message: string }
+  | { kind: "one"; auditId: string };
+
+/**
+ * Lit `audit_id` dans la query string, ou REFUSE.
+ *
+ * Trois sorties, jamais un repli silencieux :
+ *   - absent  → l'appelant veut l'agrégat, comportement historique intact ;
+ *   - refusé  → 400 explicite (préfixe, uuid partiel, liste, joker, répétition) ;
+ *   - un seul → uuid v4 complet, prêt à être lié en paramètre.
+ *
+ * Ce qui compte ici, c'est que le refus soit un REFUS. Élargir un préfixe en
+ * `LIKE`, ou retomber sur les compteurs agrégés quand la valeur est douteuse,
+ * transformerait la route en balayage des identifiants de nos clients ou
+ * répondrait à côté de la question posée — dans les deux cas sans que l'appelant
+ * puisse s'en apercevoir.
+ */
+function readAuditIdParam(searchParams: URLSearchParams): AuditIdSelection {
+  const enumeration = {
+    kind: "refused",
+    error: "audit_id_enumeration",
+    message: `Un seul « ${AUDIT_ID_PARAM} » par requête. Ni liste, ni tableau, ni valeurs séparées par des virgules, ni joker.`,
+  } as const;
+
+  // Toute clé qui RESSEMBLE à `audit_id` sans l'être exactement (`audit_id[]`,
+  // `audit_id[0]`, `audit_ids`) est une façon d'en passer plusieurs. Sans ce
+  // contrôle, `getAll("audit_id")` ne les voit pas et la requête retomberait sur
+  // les compteurs agrégés — un refus déguisé en réponse.
+  for (const key of Array.from(searchParams.keys())) {
+    const normalized = key.toLowerCase();
+    if (normalized.startsWith(AUDIT_ID_PARAM) && normalized !== AUDIT_ID_PARAM) return enumeration;
+  }
+
+  const values = searchParams.getAll(AUDIT_ID_PARAM);
+  if (values.length === 0) return { kind: "absent" };
+  if (values.length > 1) return enumeration;
+
+  const raw = values[0];
+  // Séparateurs AVANT la validation de forme, uniquement pour rendre le motif
+  // « j'en demande plusieurs » sous son vrai nom plutôt que sous « mal formé ».
+  if (/[,;\s]/.test(raw)) return enumeration;
+
+  if (!isAuditUuidV4(raw)) {
+    return {
+      kind: "refused",
+      error: "audit_id_invalid",
+      message: `« ${AUDIT_ID_PARAM} » doit être un uuid v4 COMPLET. Un préfixe ou un uuid tronqué est refusé, jamais interprété comme un début d'identifiant.`,
+    };
+  }
+
+  return { kind: "one", auditId: raw };
+}
+
+/**
+ * Horodatage du dernier événement de l'audit, ou `null`. Les lignes viennent
+ * d'un `GROUP BY`, chacune portant le `MAX(created_at)` de son groupe : le
+ * maximum des maxima est le dernier événement de l'audit.
+ */
+function latestEventAt(rows: FunnelAuditCountRow[]): string | null {
+  let latest: number | null = null;
+
+  for (const row of rows) {
+    if (!row.last_event_at) continue;
+    const time = new Date(row.last_event_at).getTime();
+    if (!Number.isFinite(time)) continue;
+    if (latest === null || time > latest) latest = time;
+  }
+
+  return latest === null ? null : new Date(latest).toISOString();
+}
 
 /**
  * Comparaison à temps constant pour éviter de laisser fuiter la clé octet par octet.
@@ -58,9 +155,79 @@ function secretMatches(provided: string | null, expected: string | undefined) {
  * Le détail reste accessible avec le header `x-funnel-key` == FUNNEL_ADMIN_KEY.
  * Si la variable d'env n'est pas définie, le mode détaillé est simplement
  * indisponible — jamais ouvert par défaut.
+ *
+ * `?audit_id=<uuid>` (25/08) rend les compteurs D'UN SEUL audit.
+ *
+ * Le problème qu'il règle est une mesure, pas une intuition : les compteurs sont
+ * agrégés sur tout le trafic, donc le jour où `report_viewed.human` passe de 1 à
+ * 2, RIEN ne dit quel audit a été vu, donc quel prospect a mordu. Les deux
+ * premiers e-mails de prospection ont rendu un résultat illisible pour cette
+ * raison exacte.
+ *
+ * Modèle d'autorisation : CONNAÎTRE L'UUID VAUT AUTORISATION. L'identifiant est
+ * un v4 non devinable, émis par nous, envoyé au seul prospect concerné ; aucune
+ * clé d'administration n'est demandée sur ce chemin, ce qui le rend utilisable
+ * depuis un run d'agent sans secret (le mode `detail=1` global, lui, exige
+ * toujours `x-funnel-key`, et n'est pas atteignable ici : ce chemin sort AVANT).
+ *
+ * Ce que ce chemin n'expose PAS, et pour cause : ni `metadata`, ni `source`, ni
+ * `id` de ligne, ni le moindre événement brut. Des compteurs, les classes de
+ * trafic observées, et la date du dernier événement. Le nom de marque audité,
+ * les scores et les URL de rapports restent derrière la clé d'admin.
  */
 export async function GET(req: NextRequest) {
   await ensureAuditSchema();
+
+  const selection = readAuditIdParam(req.nextUrl.searchParams);
+
+  if (selection.kind === "refused") {
+    return NextResponse.json(
+      { ok: false, error: selection.error, message: selection.message },
+      { status: 400, headers: { "Cache-Control": "no-store" } }
+    );
+  }
+
+  if (selection.kind === "one") {
+    const auditResult = await pool.query<FunnelAuditCountRow>(FUNNEL_COUNTS_BY_AUDIT_SQL, [selection.auditId]);
+    const { counts, countsByTrafficClass } = foldFunnelCounts(auditResult.rows);
+
+    // Classes réellement OBSERVÉES sur cet audit. `unknown` y figure quand
+    // l'événement est antérieur à `traffic_class_since` : ça veut dire NON
+    // CLASSÉ, jamais « non humain », et encore moins « humain ». D'où la
+    // publication de la date de rupture juste en dessous, sans quoi un
+    // `unknown` isolé est illisible.
+    const observedTrafficClasses = TRAFFIC_CLASSES.filter((trafficClass) =>
+      Object.values(countsByTrafficClass).some((bucket) => bucket[trafficClass] > 0)
+    );
+
+    const trafficClassSince = await readTrafficClassSince();
+
+    // 200 avec des compteurs à ZÉRO pour un uuid bien formé mais inconnu — et
+    // surtout PAS un 404.
+    //
+    // Un 404 distinguerait « cet uuid existe » de « cet uuid n'existe pas ».
+    // Comme on vient d'accorder l'accès sur la SEULE connaissance de l'uuid,
+    // cette distinction ferait de la route un oracle d'existence pour qui
+    // devine : la réponse ne doit rien dire de plus que ce que l'appelant sait
+    // déjà. « Aucun événement » et « aucun audit » se répondent donc de façon
+    // strictement identique — même statut, même forme, mêmes zéros. C'est aussi
+    // la bonne réponse fonctionnelle : un audit tout juste envoyé et pas encore
+    // ouvert est un audit à zéro, pas une erreur.
+    return NextResponse.json(
+      {
+        ok: true,
+        audit_id: selection.auditId,
+        // Pas de fenêtre glissante ici : voir `FUNNEL_COUNTS_BY_AUDIT_SQL`.
+        window: "all",
+        counts,
+        counts_by_traffic_class: countsByTrafficClass,
+        traffic_classes: observedTrafficClasses,
+        traffic_class_since: trafficClassSince ? new Date(trafficClassSince).toISOString() : null,
+        last_event_at: latestEventAt(auditResult.rows),
+      },
+      { headers: { "Cache-Control": "no-store" } }
+    );
+  }
 
   const adminKey = process.env.FUNNEL_ADMIN_KEY;
   const detailed = secretMatches(req.headers.get("x-funnel-key"), adminKey);
