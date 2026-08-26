@@ -3,6 +3,7 @@ import { createFixedWindowLimiter } from "./rate-limit";
 import {
   CLASSIFIED_TRAFFIC_CLASSES_PREDICATE_SQL,
   TRAFFIC_CLASSES,
+  requestTrafficClass,
   trafficClassOrUnknown,
   type TrafficClass,
 } from "./traffic-filter";
@@ -11,6 +12,33 @@ export const FUNNEL_EVENTS = [
   "audit_started",
   "audit_completed",
   "report_viewed",
+  // Le lien de prospection a été OUVERT : émis côté SERVEUR par la page
+  // `/audit/<id>`, AVANT le rendu, et UNIQUEMENT quand le jeton de partage
+  // signé est valide (voir `recordReportLinkOpened` plus bas).
+  //
+  // POURQUOI IL EXISTE alors que `report_viewed` mesure déjà une ouverture de
+  // rapport. `report_viewed` part d'un beacon CLIENT (`ReportViewBeacon`).
+  // Entre « l'email est parti » et « le rapport est compté », quatre issues
+  // rendent EXACTEMENT le même chiffre 0 : jamais délivré, délivré mais jamais
+  // ouvert, ouvert mais jamais cliqué, ou CLIQUÉ avec l'événement perdu (JS
+  // désactivé, beacon bloqué, onglet fermé avant l'exécution, webview
+  // restrictive). La quatrième est un faux négatif sur le seul signal que nous
+  // ayons : un prospect qui clique et dont le beacon ne part pas est
+  // enregistré exactement comme un prospect qui n'a jamais cliqué. Mesure du
+  // 26/08/2026 : les 2 seuls prospects démarchés (lot du 17/08) ont rendu 0
+  // événement de toute nature, neuf jours après l'envoi — et les quatre issues
+  // restaient indiscernables.
+  //
+  // IL NE REMPLACE PAS `report_viewed` ET NE L'ALIMENTE PAS. `report_viewed`
+  // reste la north star et reste client. Les deux coexistent ; c'est leur
+  // ÉCART qui est l'information.
+  //
+  // IL N'EST DÉLIBÉRÉMENT PAS DANS `CLIENT_FUNNEL_EVENTS` : il atterrit donc
+  // dans `SERVER_ONLY_FUNNEL_EVENTS` (dérivé par filtrage), un navigateur ne
+  // peut pas le forger via `POST /api/funnel`, et l'espace de nommage
+  // `report_link_opened:` de sa clé de dédup devient protégé par
+  // `reachesServerDedupeNamespace`.
+  "report_link_opened",
   // Audit sans friction : l'audit démarre sans email, le lead est capturé plus
   // tard sur le rapport en échange du détail (voir /api/claim-audit).
   "email_captured",
@@ -212,6 +240,110 @@ export async function recordFunnelEvent({ eventName, auditId, source, metadata =
      ON CONFLICT (dedupe_key) DO NOTHING`,
     [eventName, safeAuditId, safeSource, JSON.stringify(metadata), safeDedupeKey]
   );
+}
+
+/**
+ * Jour UTC d'un instant, au format `YYYY-MM-DD`.
+ *
+ * UTC et pas le fuseau du serveur : une fonction serverless peut être servie
+ * depuis n'importe quelle région, et une frontière de jour flottante rendrait
+ * la clé de dédup dépendante de l'endroit où la requête a atterri — donc deux
+ * lignes pour la même ouverture selon l'humeur du routage.
+ */
+function utcDay(now: Date): string {
+  return now.toISOString().slice(0, 10);
+}
+
+/**
+ * Clé de dédup d'une ouverture de lien :
+ * `report_link_opened:<auditId>:<trafficClass>:<YYYY-MM-DD UTC>`.
+ *
+ * POURQUOI DÉDUPLIQUER — ce n'est pas un raffinement, c'est la condition pour
+ * que l'événement veuille dire quelque chose. `src/app/audit/[id]/page.tsx`
+ * porte `export const dynamic = "force-dynamic"` : le rendu serveur est
+ * ré-exécuté à CHAQUE requête, et `AuditPoller` appelle `router.refresh()`
+ * toutes les 3 secondes tant que l'audit n'est pas complet — soit ~20 rendus
+ * serveur par minute sur un rapport en cours. C'est EXACTEMENT la panne de
+ * juillet sur `report_viewed` (un F5 comptait une vue, nos propres
+ * vérifications de liens ont injecté +10 vues en une matinée), documentée dans
+ * le commentaire de retrait de `page.tsx`. Sans clé stable, ce compteur serait
+ * un compteur de rendus, pas un compteur d'ouvertures.
+ *
+ * POURQUOI LA CLASSE DE TRAFIC EST DANS LA CLÉ — `recordFunnelEvent` fait
+ * `ON CONFLICT (dedupe_key) DO NOTHING`, et `dedupe_key` est UNIQUE sur TOUTE
+ * la table `audit_funnel_events`, pas par événement. Le scénario, déjà survenu
+ * sur `report_viewed` et documenté sur `namespacedDedupeKey` : un contrôle
+ * interne passé le matin s'approprie le slot du jour, et le
+ * `ON CONFLICT DO NOTHING` avale silencieusement l'ouverture du prospect qui
+ * suit. Nous ouvrons NOUS-MÊMES les liens de contrôle avec `gp_internal=1` ;
+ * sans la classe dans la clé, nous détruirions la mesure le jour même de sa
+ * création. Une ouverture par audit, PAR CLASSE, par jour UTC.
+ *
+ * POURQUOI LE JOUR ET PAS LA SESSION — il n'y a pas de session ici : l'écriture
+ * précède tout code client, donc tout `sessionStorage`. Le jour UTC est la
+ * granularité la plus fine qu'un chemin purement serveur puisse tenir sans
+ * ré-ouvrir la porte au comptage de rendus. Un prospect qui revient le
+ * lendemain produit une seconde ligne, ce qui est le comportement voulu.
+ *
+ * Le préfixe est le nom de l'événement : il place la clé dans l'espace de
+ * nommage SERVEUR que `reachesServerDedupeNamespace` protège des clés client.
+ */
+export function reportLinkOpenedDedupeKey(auditId: string, trafficClass: TrafficClass, now: Date = new Date()): string {
+  return `report_link_opened:${auditId}:${trafficClass}:${utcDay(now)}`;
+}
+
+/**
+ * Enregistre l'ouverture d'un lien de rapport, côté SERVEUR, avant le rendu.
+ *
+ * `shareTokenValid` est passé par l'appelant plutôt que recalculé ici : la page
+ * vérifie DÉJÀ le jeton pour décider de l'accès au rapport
+ * (`resolveReportAccess`), et deux appels à `verifyAuditShareToken` pour la même
+ * requête, c'est un HMAC inutile et surtout deux vérités possibles.
+ *
+ * SANS JETON VALIDE, RIEN N'EST ÉMIS. Ce compteur mesure les liens de
+ * PROSPECTION, pas le trafic général de `/audit/<id>` : une visite sans jeton,
+ * ou avec un jeton invalide ou expiré, ne dit rien de la campagne.
+ *
+ * LA CLASSE EST CALCULÉE ICI, côté serveur, par `requestTrafficClass` — comme
+ * sur tous les autres chemins serveur (`/api/run-audit`). C'est ce qui fait que
+ * le marquage `gp_internal=1` s'applique : nos propres ouvertures de contrôle
+ * se classent `internal` et n'entrent pas dans le compteur humain.
+ *
+ * UNE PANNE DE MESURE NE DOIT JAMAIS CASSER LA PAGE D'UN PROSPECT.
+ * `recordFunnelEvent` touche Postgres ; si la base tousse, un prospect qui a
+ * cliqué son lien doit voir son rapport, pas une 500. D'où le `try/catch` qui
+ * avale l'erreur et se contente de la journaliser — même principe que
+ * `requestTrafficClass`, « volontairement gardé sans I/O ni await : une
+ * exception ici ferait échouer une création d'audit pour un besoin de mesure ».
+ *
+ * L'appel est ATTENDU (`await`) et non laissé en fire-and-forget : en
+ * serverless, une promesse non attendue peut être tuée avec le process, et
+ * l'événement serait perdu de façon INTERMITTENTE — le pire des cas pour un
+ * compteur, puisque le trou serait invisible.
+ */
+export async function recordReportLinkOpened({
+  auditId,
+  shareTokenValid,
+  requestHeaders,
+}: {
+  auditId: string;
+  shareTokenValid: boolean;
+  requestHeaders: { get(name: string): string | null };
+}): Promise<void> {
+  if (!shareTokenValid) return;
+
+  try {
+    const { trafficClass } = requestTrafficClass(requestHeaders);
+    await recordFunnelEvent({
+      eventName: "report_link_opened",
+      auditId,
+      source: "audit_page",
+      metadata: { trafficClass },
+      dedupeKey: reportLinkOpenedDedupeKey(auditId, trafficClass),
+    });
+  } catch (error) {
+    console.error("report_link_opened non enregistré (la page du prospect reste servie) :", error);
+  }
 }
 
 /**

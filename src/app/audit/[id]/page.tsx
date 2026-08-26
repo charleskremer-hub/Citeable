@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { AGENT_CHECKOUT_URL, MONITOR_CHECKOUT_URL } from "@/lib/checkout-links";
 import { ensureAuditSchema, pool } from "@/lib/db";
+import { recordReportLinkOpened } from "@/lib/funnel";
 import { auditCopy, brandSentimentView, localeFromHeaders, localeFromUnknown, localizeCategoryLabel, localizePlainAction, type Locale } from "@/lib/i18n";
 import { categoryPerceptionFromPrompts, extractSourceCitationReports, generateGeoAgentAssetsFromAudit, isAnonymousEmail, isAuditedBrandName, robotsTxtFixForBlockedCrawlers, youtubeContentTipIsRelevant } from "@/lib/audit-engine";
 import type { BrandSentiment, BuyerIntentPromptResult, CategoryPerception, IcpSegmentMetadata, PlainAction, SourceCitationReport } from "@/lib/audit-engine";
@@ -184,13 +185,38 @@ export default async function AuditPage({
   // verrouillé pour toujours.
   const shareTokenParam = query?.[AUDIT_SHARE_TOKEN_PARAM];
   const shareToken = Array.isArray(shareTokenParam) ? shareTokenParam[0] : shareTokenParam;
+  // UN SEUL appel à `verifyAuditShareToken` par requête. Le jeton sert à deux
+  // décisions — ouvrir le rapport, et compter l'ouverture du lien — et deux
+  // vérifications séparées, c'est un HMAC inutile et surtout deux vérités
+  // possibles pour la même requête.
+  const shareTokenValid = verifyAuditShareToken(audit.id, shareToken);
   const reportAccess = resolveReportAccess({
     auditTier: audit.raw_results?.auditTier,
     emailIsAnonymous: isAnonymousEmail(audit.email),
     complete,
     failed,
     hasActiveSubscription: await hasActiveSubscriptionForAudit(audit.email),
-    shareTokenValid: verifyAuditShareToken(audit.id, shareToken),
+    shareTokenValid,
+  });
+
+  // Le lien de PROSPECTION a été ouvert. Écrit AVANT le rendu, côté serveur,
+  // donc indépendant du beacon client `report_viewed` : c'est ce qui sépare « le
+  // prospect n'a jamais cliqué » de « il a cliqué et nous ne l'avons pas vu ».
+  //
+  // `report_viewed` NE BOUGE PAS : il reste la north star, il reste client, et
+  // cet appel ne l'alimente pas. Voir le commentaire de retrait plus haut dans
+  // ce fichier — c'est précisément parce que ce rendu serveur se répète (F5,
+  // `force-dynamic`, `router.refresh()` toutes les 3 s d'`AuditPoller`) que
+  // l'événement ci-dessous porte une clé de dédup par audit, par classe de
+  // trafic et par jour UTC (voir `reportLinkOpenedDedupeKey`).
+  //
+  // Le filtre de jeton, la classification du trafic et la garde contre une panne
+  // de base vivent dans `recordReportLinkOpened` : cette page ne fait que lui
+  // passer ce qu'elle sait déjà.
+  await recordReportLinkOpened({
+    auditId: audit.id,
+    shareTokenValid,
+    requestHeaders: await headers(),
   });
 
   // --- RAPPORT VERROUILLÉ : le verdict tient en trois blocs, puis la porte. ---

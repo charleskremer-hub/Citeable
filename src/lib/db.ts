@@ -199,11 +199,18 @@ export async function ensureAuditSchema() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     )
   `);
+  // La liste est répétée ici en littéral SQL et NON importée de `FUNNEL_EVENTS`
+  // (`./funnel` importe `pool` d'ici : l'import inverse ferait un cycle). Elle
+  // doit donc être tenue à jour à la main à chaque ajout d'événement — un oubli
+  // ne se voit pas au type-check, il se voit en production sous la forme d'une
+  // violation de contrainte sur l'INSERT. Le `DROP … IF EXISTS` juste au-dessus
+  // fait que la migration est appliquée par le simple déploiement : chaque
+  // `ensureAuditSchema` recrée la contrainte à jour.
   await pool.query(`ALTER TABLE audit_funnel_events DROP CONSTRAINT IF EXISTS audit_funnel_events_event_name_check`);
   await pool.query(`
     ALTER TABLE audit_funnel_events
     ADD CONSTRAINT audit_funnel_events_event_name_check
-    CHECK (event_name IN ('audit_started', 'audit_completed', 'report_viewed', 'email_captured', 'teaser_cta_click', 'checkout_opened', 'followup_1_sent', 'followup_2_sent', 'followup_click'))
+    CHECK (event_name IN ('audit_started', 'audit_completed', 'report_viewed', 'report_link_opened', 'email_captured', 'teaser_cta_click', 'checkout_opened', 'followup_1_sent', 'followup_2_sent', 'followup_click'))
   `);
   await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS audit_funnel_events_created_idx ON audit_funnel_events (created_at DESC)`);
   await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS audit_funnel_events_name_created_idx ON audit_funnel_events (event_name, created_at DESC)`);
