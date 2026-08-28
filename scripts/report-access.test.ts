@@ -127,17 +127,19 @@ test("chaque section de détail reste derrière la porte", () => {
   const gate = pageSource.indexOf("if (reportAccess.locked)");
   assert.ok(gate !== -1, "la page doit court-circuiter sur reportAccess.locked");
 
+  // Lot 1 du 28/08 (« la page dit une chose ») : `report-competitors` et
+  // `share-of-voice` sont SUPPRIMÉS (redondants avec le verdict), et les trois
+  // sections `monitor-actions-gate` / `monitor-content-blocks` /
+  // `technical-files` sont FUSIONNÉES dans l'unique bloc `publish-block`.
+  // La liste suit — la garantie, elle, ne bouge pas : aucune section de détail
+  // hors de la porte.
   const detailMarkers = [
-    'data-testid="report-competitors"', // concurrents
-    'data-testid="share-of-voice"', // part de voix
+    'data-testid="publish-block"', // le bloc « À publier » (actions + contenus + fichiers)
     'data-testid="buyer-intent-prompts"', // questions d'achat testées
-    'data-testid="monitor-content-blocks"', // contenus à coller
-    'data-testid="monitor-actions-gate"', // actions Monitor
-    'data-testid="technical-files"', // fichiers techniques
     'data-testid="brand-sentiment"', // sentiment
     'data-testid="category-perception"', // perception de catégorie
     "<AgentAuditChat", // chat agent
-    "<VisibilityMonitorCard", // carte concurrents/part de voix
+    "<VisibilityMonitorCard", // carte de suivi de l'abonné Monitor
     "generateGeoAgentAssetsFromAudit(", // génération des fichiers techniques
   ];
   const firstDetail = Math.min(

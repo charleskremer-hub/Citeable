@@ -35,11 +35,14 @@ process.env.AUDIT_SHARE_SECRET = E2E_AUDIT_SHARE_SECRET;
 // --- Marqueurs de détail -----------------------------------------------------
 // `data-testid` posés sur les sections gardées : leur présence/absence dans le
 // HTML est exactement le critère « le détail est présent / absent ».
-const DETAIL_COMPETITORS = 'data-testid="report-competitors"';
+// Lot 1 du 28/08 : `report-competitors` / `share-of-voice` supprimés (redondants
+// avec le verdict), et les trois sections Monitor fusionnées dans l'unique bloc
+// `publish-block`. Le contenu déverrouillé (fichiers machine compris) est
+// marqué `technical-files-content` — il ne doit JAMAIS apparaître pour un tier
+// gratuit ni derrière une porte.
+const DETAIL_PUBLISH = 'data-testid="publish-block"';
 const DETAIL_PROMPTS = 'data-testid="buyer-intent-prompts"';
-const DETAIL_MONITOR_CONTENT = 'data-testid="monitor-content-blocks"';
-const DETAIL_TECHNICAL = 'data-testid="technical-files"';
-const DETAIL_SHARE_OF_VOICE = 'data-testid="share-of-voice"';
+const DETAIL_TECHNICAL_CONTENT = 'data-testid="technical-files-content"';
 const GATE_CLAIM = 'data-testid="claim-report-gate"';
 const GATE_PAYWALL = 'data-testid="paid-report-gate"';
 const LOCKED_VERDICT = 'data-testid="locked-verdict"';
@@ -202,8 +205,8 @@ test.beforeAll(async () => {
 test("AC1 — audit gratuit non réclamé : le détail est ABSENT, la porte de capture d'email est là", async () => {
   const html = await get(`/audit/${fixtures.freeUnclaimed.id}`);
 
-  expect(html).not.toContain(DETAIL_COMPETITORS);
-  expect(html).not.toContain(DETAIL_SHARE_OF_VOICE);
+  expect(html).not.toContain(DETAIL_PUBLISH);
+  expect(html).not.toContain(DETAIL_TECHNICAL_CONTENT);
   expect(html).toContain(GATE_CLAIM);
 
   // Le verdict reste au-dessus de la porte : on gate le détail, pas le diagnostic.
@@ -220,8 +223,10 @@ test("AC1 — audit gratuit non réclamé : le détail est ABSENT, la porte de c
 test("AC1bis — audit gratuit réclamé : le détail est PRÉSENT", async () => {
   const html = await get(`/audit/${fixtures.freeClaimed.id}`);
 
-  expect(html).toContain(DETAIL_COMPETITORS);
-  expect(html).toContain(DETAIL_SHARE_OF_VOICE);
+  // Le rapport gratuit OUVERT montre le bloc « À publier » en teaser (noms et
+  // comptes) — jamais le contenu déverrouillé, jamais un extrait de fichier.
+  expect(html).toContain(DETAIL_PUBLISH);
+  expect(html).not.toContain(DETAIL_TECHNICAL_CONTENT);
   expect(html).not.toContain(GATE_CLAIM);
   expect(html).not.toContain(GATE_PAYWALL);
 });
@@ -229,11 +234,9 @@ test("AC1bis — audit gratuit réclamé : le détail est PRÉSENT", async () =>
 test("AC2 — LE TROU : tier payant SANS abonnement actif, le détail est ABSENT", async () => {
   const html = await get(`/audit/${fixtures.paidNoSub.id}`);
 
-  expect(html).not.toContain(DETAIL_COMPETITORS);
+  expect(html).not.toContain(DETAIL_PUBLISH);
   expect(html).not.toContain(DETAIL_PROMPTS);
-  expect(html).not.toContain(DETAIL_MONITOR_CONTENT);
-  expect(html).not.toContain(DETAIL_TECHNICAL);
-  expect(html).not.toContain(DETAIL_SHARE_OF_VOICE);
+  expect(html).not.toContain(DETAIL_TECHNICAL_CONTENT);
   expect(html).not.toContain(SECRET_PROMPT);
   expect(html).not.toContain(COMPETITOR_IN_SECRET_PROMPT);
   expect(html).not.toContain(COMPETITOR_IN_DB_COLUMN);
@@ -247,10 +250,9 @@ test("AC2 — LE TROU : tier payant SANS abonnement actif, le détail est ABSENT
 test("AC3 — tier payant AVEC abonnement actif : le détail est PRÉSENT", async () => {
   const html = await get(`/audit/${fixtures.paidWithSub.id}`);
 
-  expect(html).toContain(DETAIL_COMPETITORS);
+  expect(html).toContain(DETAIL_PUBLISH);
   expect(html).toContain(DETAIL_PROMPTS);
-  expect(html).toContain(DETAIL_MONITOR_CONTENT);
-  expect(html).toContain(DETAIL_TECHNICAL);
+  expect(html).toContain(DETAIL_TECHNICAL_CONTENT);
   expect(html).toContain(SECRET_PROMPT);
   expect(html).toContain(COMPETITOR_IN_SECRET_PROMPT);
   expect(html).not.toContain(GATE_PAYWALL);
@@ -260,7 +262,7 @@ test("AC4 — jeton de partage VALIDE : le détail est PRÉSENT, sans paiement",
   const token = signAuditShareToken(fixtures.paidNoSub.id);
   const html = await get(`/audit/${fixtures.paidNoSub.id}?${AUDIT_SHARE_TOKEN_PARAM}=${encodeURIComponent(token)}`);
 
-  expect(html).toContain(DETAIL_COMPETITORS);
+  expect(html).toContain(DETAIL_PUBLISH);
   expect(html).toContain(DETAIL_PROMPTS);
   expect(html).toContain(SECRET_PROMPT);
   expect(html).not.toContain(GATE_PAYWALL);
@@ -271,7 +273,7 @@ test("AC5 — jeton EXPIRÉ : le détail est ABSENT, sans message d'erreur", asy
   const token = signAuditShareToken(fixtures.paidNoSub.id, 30, Date.now() - 40 * DAY_MS);
   const html = await get(`/audit/${fixtures.paidNoSub.id}?${AUDIT_SHARE_TOKEN_PARAM}=${encodeURIComponent(token)}`);
 
-  expect(html).not.toContain(DETAIL_COMPETITORS);
+  expect(html).not.toContain(DETAIL_PUBLISH);
   expect(html).not.toContain(SECRET_PROMPT);
   expect(html).toContain(GATE_PAYWALL);
   // Repli silencieux : on ne crache pas « jeton invalide » à la figure du prospect.
@@ -288,7 +290,7 @@ test("AC6 — jeton FALSIFIÉ d'un caractère : le détail est ABSENT", async ()
 
   const html = await get(`/audit/${fixtures.paidNoSub.id}?${AUDIT_SHARE_TOKEN_PARAM}=${encodeURIComponent(tampered)}`);
 
-  expect(html).not.toContain(DETAIL_COMPETITORS);
+  expect(html).not.toContain(DETAIL_PUBLISH);
   expect(html).not.toContain(SECRET_PROMPT);
   expect(html).toContain(GATE_PAYWALL);
 });
@@ -299,7 +301,7 @@ test("AC7 — un jeton signé pour l'audit A n'ouvre PAS l'audit B", async () =>
     `/audit/${fixtures.paidNoSub.id}?${AUDIT_SHARE_TOKEN_PARAM}=${encodeURIComponent(tokenForOther)}`
   );
 
-  expect(html).not.toContain(DETAIL_COMPETITORS);
+  expect(html).not.toContain(DETAIL_PUBLISH);
   expect(html).not.toContain(SECRET_PROMPT);
   expect(html).toContain(GATE_PAYWALL);
 });

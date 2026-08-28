@@ -1,4 +1,3 @@
-import FunnelCheckoutLink from "./FunnelCheckoutLink";
 import type { Locale } from "@/lib/i18n";
 import { RECHECK_CADENCE } from "@/lib/plan-promises";
 
@@ -6,7 +5,6 @@ type CompetitorMention = { name: string; count: number };
 type TrendPoint = { score: number; createdAt: string };
 
 type Props = {
-  auditId: string;
   websiteUrl: string;
   engine: string;
   score: number;
@@ -17,7 +15,6 @@ type Props = {
   shareOfVoicePct: number;
   sentimentLabel: string;
   competitors: CompetitorMention[];
-  monitorUrl: string;
   locale: Locale;
   variant?: "teaser" | "dashboard";
   trend?: TrendPoint[];
@@ -48,7 +45,6 @@ function trendPolyline(points: TrendPoint[]) {
 }
 
 export function VisibilityMonitorCard({
-  auditId,
   websiteUrl,
   engine,
   score,
@@ -59,7 +55,6 @@ export function VisibilityMonitorCard({
   shareOfVoicePct,
   sentimentLabel,
   competitors,
-  monitorUrl,
   locale,
   variant = "teaser",
   trend = [],
@@ -189,18 +184,6 @@ export function VisibilityMonitorCard({
         </div>
       )}
 
-      {isDashboard ? null : (
-        <div className="mt-4">
-          <FunnelCheckoutLink
-            auditId={auditId}
-            href={monitorUrl}
-            source="report_monitor_card"
-            className="inline-flex w-full justify-center rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110 sm:w-auto"
-          >
-            {fr ? "Suivre chaque mois — 9 € →" : "Track every month — €9 →"}
-          </FunnelCheckoutLink>
-        </div>
-      )}
     </section>
   );
 }

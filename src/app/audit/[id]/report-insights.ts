@@ -400,3 +400,86 @@ export function rankActionsByImpact(actions: PlainAction[], questions: BuyerInte
     .slice(0, MAX_DISPLAYED_ACTIONS)
     .map(({ action, phase, impact }) => ({ action, phase, impact }));
 }
+
+// --- Le bloc « À publier » (lot 1 « la page dit une chose ») -----------------
+// Un seul bloc, verrouillé derrière Monitor 9 € : le visiteur gratuit voit CE
+// QU'IL OBTIENDRA, nommé et compté — jamais le contenu. Ces fonctions sont
+// PURES et ne reçoivent aucun texte généré : elles ne peuvent structurellement
+// pas faire fuiter un extrait de fichier machine (JSON-LD, llms.txt, robots)
+// vers un tier gratuit. Voir scripts/report-page-contract.test.ts.
+
+export type PublishTeaserItem = { name: string; detail: string };
+
+export function publishTeaserItems(args: {
+  lostQuestions: string[];
+  questionCount: number;
+  blockedBots: string[];
+  locale: Locale;
+}): PublishTeaserItem[] {
+  const { lostQuestions, questionCount, blockedBots, locale } = args;
+  const fr = locale === "fr";
+  const items: PublishTeaserItem[] = [];
+
+  if (lostQuestions.length > 0) {
+    const first = lostQuestions[0];
+    items.push({
+      name: fr
+        ? lostQuestions.length === 1
+          ? "La réponse rédigée à la question que tu perds"
+          : `${lostQuestions.length} réponses rédigées aux questions que tu perds`
+        : lostQuestions.length === 1
+          ? "The written answer to the question you lose"
+          : `${lostQuestions.length} written answers to the questions you lose`,
+      detail: fr ? `À commencer par « ${first} »` : `Starting with “${first}”`,
+    });
+  }
+
+  items.push({
+    name: fr ? "Ton schéma FAQ (JSON-LD)" : "Your FAQ schema (JSON-LD)",
+    detail: fr
+      ? `Construit depuis les ${questionCount} questions d'achat auditées, à coller avant </head>`
+      : `Built from the ${questionCount} audited buyer questions, to paste before </head>`,
+  });
+
+  items.push({
+    name: fr ? "Ton llms.txt" : "Your llms.txt",
+    detail: fr
+      ? "Le résumé que les assistants IA lisent en premier pour savoir quoi recommander"
+      : "The summary AI assistants read first to know what to recommend",
+  });
+
+  // Jamais une étape sans objet : le correctif robots.txt n'est annoncé que si
+  // des crawlers IA sont réellement bloqués aujourd'hui.
+  if (blockedBots.length > 0) {
+    items.push({
+      name: fr ? "Ton correctif robots.txt" : "Your robots.txt fix",
+      detail: fr
+        ? `${blockedBots.join(", ")} ne peuvent pas lire ton site aujourd'hui`
+        : `${blockedBots.join(", ")} cannot read your site today`,
+    });
+  }
+
+  return items;
+}
+
+/**
+ * Le rival du verdict OUVERT, et la question sur laquelle il gagne.
+ *
+ * MÊME PLANCHER que partout ailleurs : seul un concurrent qui franchit
+ * `verdictCompetitors` (src/lib/competitor-floor.ts) peut être nommé — règle
+ * inchangée, aucune exception. On privilégie une question PERDUE (le rival est
+ * recommandé, pas la marque) ; à défaut, une question où il est cité aussi.
+ */
+export function verdictRival(questions: BuyerIntentPromptResult[]): { name: string; prompt: string; replacement: boolean } | null {
+  const nameable = new Set(verdictCompetitors(questions).map((name) => name.trim().toLowerCase()));
+  if (nameable.size === 0) return null;
+
+  const pick = (question: BuyerIntentPromptResult) =>
+    question.competitors.find((candidate) => nameable.has(candidate.trim().toLowerCase()));
+
+  const replacement = questions.find((question) => question.available && !question.brandMentioned && pick(question));
+  const any = replacement ?? questions.find((question) => question.available && pick(question));
+  const name = any ? pick(any) : undefined;
+
+  return name && any ? { name, prompt: any.prompt, replacement: any === replacement } : null;
+}
