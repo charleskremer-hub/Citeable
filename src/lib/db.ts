@@ -129,7 +129,17 @@ export async function ensureAuditSchema() {
       updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
     )
   `);
-  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS audit_email_delivery_one_step_per_prospect_idx ON audit_email_delivery_log (email, step) WHERE status IN ('claimed', 'sent', 'failed')`);
+  // PROSPECT vs CLIENT (défaut n°2 du test de bout en bout du 28/08). Le garde
+  // « une étape par adresse, à vie » est voulu contre le spam PROSPECT ; mais un
+  // CLIENT abonné qui relance un audit doit recevoir chacun de ses rapports.
+  // L'audience est écrite par `claimEmailDelivery` (audit-engine.ts, via la
+  // table `subscriptions`), et l'index à vie ne porte plus que sur les lignes
+  // `audience = 'prospect'`. Pattern DROP + CREATE, comme le CHECK des
+  // événements funnel plus bas : l'ancienne définition ne porte pas le prédicat
+  // et `IF NOT EXISTS` seul ne re-créerait jamais l'index avec le bon WHERE.
+  await pool.query(`ALTER TABLE audit_email_delivery_log ADD COLUMN IF NOT EXISTS audience TEXT NOT NULL DEFAULT 'prospect'`);
+  await pool.query(`DROP INDEX IF EXISTS audit_email_delivery_one_step_per_prospect_idx`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS audit_email_delivery_one_step_per_prospect_idx ON audit_email_delivery_log (email, step) WHERE status IN ('claimed', 'sent', 'failed') AND audience = 'prospect'`);
   await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS audit_email_delivery_one_day_per_prospect_idx ON audit_email_delivery_log (email, send_day) WHERE status IN ('claimed', 'sent', 'failed')`);
   await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS audit_email_delivery_one_brand_step_day_idx ON audit_email_delivery_log (brand_domain, step, send_day) WHERE brand_domain IS NOT NULL AND status IN ('claimed', 'sent', 'failed')`);
   await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS audit_email_delivery_email_created_idx ON audit_email_delivery_log (email, created_at DESC)`);

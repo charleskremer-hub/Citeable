@@ -7,6 +7,7 @@ import { isWebSearchConfigured, runWebSearch } from "./web-search";
 import { isMailConfigured, sendMail } from "./mailer";
 import { renderEmail, quoted, type EmailContent } from "./email-template";
 import { verdictCompetitors } from "./competitor-floor";
+import { entitlementForEmail } from "./subscriptions";
 import { trafficClassOrUnknown, type TrafficClass } from "./traffic-filter";
 
 const USER_AGENT = "Mozilla/5.0 (compatible; CiteeableBot/1.0)";
@@ -3106,7 +3107,26 @@ async function shouldSuppressEmail(email: string, websiteUrl: string) {
   return null;
 }
 
-async function claimEmailDelivery(args: { auditId?: string; email: string; websiteUrl: string; step: EmailDeliveryStep; subject: string }) {
+/**
+ * PROSPECT ou CLIENT ? Le garde anti-spam « un email par étape, à vie » ne vaut
+ * que pour les PROSPECTS : un client abonné qui relance un audit doit recevoir
+ * chacun de ses rapports (défaut n°2 du test de bout en bout du 28/08 —
+ * l'index `(email, step)` sans date bloquait son second rapport, pour
+ * toujours). « Client » = un abonnement Stripe qui donne droit
+ * (`entitlementForEmail`, table `subscriptions`) — la même source de vérité
+ * que la porte du rapport. FAIL-SAFE : indécidable (base en panne) = prospect,
+ * l'anti-spam prime sur la relance.
+ */
+async function emailDeliveryAudience(email: string): Promise<"prospect" | "client"> {
+  try {
+    return (await entitlementForEmail(email)) !== null ? "client" : "prospect";
+  } catch {
+    return "prospect";
+  }
+}
+
+/** Exporté pour les tests (scripts/email-delivery-guard.test.ts) : la décision d'envoi, sans envoyer. */
+export async function claimEmailDelivery(args: { auditId?: string; email: string; websiteUrl: string; step: EmailDeliveryStep; subject: string }) {
   const normalizedEmail = normalizedEmailAddress(args.email);
   const brandDomain = brandDedupeDomain(args.websiteUrl);
   const suppressedReason = await shouldSuppressEmail(normalizedEmail, args.websiteUrl);
@@ -3120,12 +3140,17 @@ async function claimEmailDelivery(args: { auditId?: string; email: string; websi
     return { allowed: false as const, reason: suppressedReason };
   }
 
+  // L'audience est ÉCRITE dans la ligne : l'index partiel
+  // `audit_email_delivery_one_step_per_prospect_idx` (src/lib/db.ts) ne
+  // s'applique qu'aux lignes `audience = 'prospect'`. Un client garde les
+  // dédups du jour (une ligne par adresse et par jour), jamais celle à vie.
+  const audience = await emailDeliveryAudience(normalizedEmail);
   const claim = await pool.query<{ id: string }>(
-    `INSERT INTO audit_email_delivery_log (audit_id, email, brand_domain, step, subject, status)
-     VALUES ($1, $2, $3, $4, $5, 'claimed')
+    `INSERT INTO audit_email_delivery_log (audit_id, email, brand_domain, step, subject, status, audience)
+     VALUES ($1, $2, $3, $4, $5, 'claimed', $6)
      ON CONFLICT DO NOTHING
      RETURNING id`,
-    [args.auditId ?? null, normalizedEmail, brandDomain || null, args.step, args.subject]
+    [args.auditId ?? null, normalizedEmail, brandDomain || null, args.step, args.subject, audience]
   );
 
   if ((claim.rowCount ?? 0) === 0) {
