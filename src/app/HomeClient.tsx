@@ -272,27 +272,6 @@ export default function HomeClient({ locale }: HomeClientProps) {
           </div>
         </section>
 
-        {/* 4. PREUVE — L'ÉTUDE */}
-        <section className="mx-auto max-w-5xl border-t border-white/[0.06] px-5 py-14 sm:px-6 sm:py-20">
-          <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.studyEyebrow}</p>
-          <h2 className="max-w-2xl text-[clamp(2rem,5vw,3rem)] leading-[1.02] tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-            {copy.studyTitle}
-          </h2>
-
-          <div className="mt-8 grid gap-3 sm:grid-cols-2">
-            {copy.studyStats.map((stat) => (
-              <div key={stat.value} className="rounded-2xl border border-white/[0.08] bg-[#111116] p-5">
-                <p className="m-0 text-4xl tracking-[-0.04em] text-[#CAFF3C]" style={{ fontFamily: "var(--font-display)" }}>{stat.value}</p>
-                <p className="mt-2 text-sm leading-6 text-[#A7A7B4]">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-
-          <Link href="/study" className="mt-6 inline-flex rounded-xl border border-[#CAFF3C]/30 bg-[#CAFF3C]/[0.07] px-5 py-3 text-sm font-black text-[#CAFF3C] no-underline transition hover:bg-[#CAFF3C]/[0.12]">
-            {copy.studyCta}
-          </Link>
-        </section>
-
         {/* 5. LE LIVRABLE — extrait de rapport stylisé */}
         <section className="mx-auto max-w-5xl border-t border-white/[0.06] px-5 py-14 sm:px-6 sm:py-20">
           <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
@@ -476,6 +455,9 @@ export default function HomeClient({ locale }: HomeClientProps) {
           <p className="m-0 text-sm text-[#686879]">{copy.footerTagline}</p>
         </div>
         <div className="flex flex-wrap items-center gap-4">
+          <Link href="/study" className="m-0 text-sm text-[#686879] no-underline hover:text-[#F0F0EC]">
+            {copy.footerStudy}
+          </Link>
           <Link href="/prospection" className="m-0 text-sm text-[#686879] no-underline hover:text-[#F0F0EC]">
             {copy.footerProspection}
           </Link>

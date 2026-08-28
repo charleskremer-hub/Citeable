@@ -2,7 +2,7 @@ import { test, expect, type APIRequestContext, type Page } from "@playwright/tes
 
 // Imports relatifs volontaires : Playwright ne garantit pas le mapping de l'alias `@/`.
 import { STUDY_DATA_STATUS, STUDY_RETRACTION_REASON } from "../src/lib/study-status";
-import { homeCopy, type Locale } from "../src/lib/i18n";
+import type { Locale } from "../src/lib/i18n";
 
 // E2E — story « Retirer des surfaces publiées les chiffres produits par l'instrument
 // contaminé — et le dire, daté ».
@@ -169,13 +169,16 @@ async function readOriginalResearch(request: APIRequestContext): Promise<string>
   return (end === -1 ? rest : rest.slice(0, end)).replace(/\s+/g, " ").trim();
 }
 
-/** Le bloc « preuve » de la landing, celui qui portait les 4 studyStats. */
-function studySection(page: Page, locale: Locale) {
-  return page
-    .locator("section")
-    .filter({ has: page.getByRole("heading", { name: homeCopy[locale].studyTitle }) })
-    .last();
-}
+/**
+ * Le bloc « preuve » a quitté la landing le 28/08/2026 (décision de Charles).
+ * Les trois tests qui l'inspectaient dans le DOM sont retirés AVEC la surface :
+ * un test e2e sur une section qui n'est plus rendue échouerait pour la mauvaise
+ * raison, ou pire, serait « réparé » en assouplissant son sélecteur.
+ *
+ * Le AC3 sur /llms.txt, tout le AC4 sur /study et tout le AC5 restent en place :
+ * la rétractation, ses dates et son motif sont toujours publiés là où ils l'ont
+ * toujours été, et un lien vers /study subsiste en pied de la home.
+ */
 
 // =============================================================================
 // AC1 — Source de vérité unique, lue depuis le module réel
@@ -231,49 +234,6 @@ test(`AC2 — Given status = ${STUDY_DATA_STATUS.status}, When on inspecte les 4
 // AC3 — Landing FR/EN et llms.txt nettoyés, à parité
 // =============================================================================
 
-for (const { locale, path } of [
-  { locale: "en" as const, path: "/" },
-  { locale: "fr" as const, path: "/fr" },
-]) {
-  test(`AC3 (${locale.toUpperCase()}) — Given ${path} servie, Then le bloc preuve ne porte plus aucun chiffre de l'ancien instrument`, async ({
-    page,
-  }) => {
-    const response = await page.goto(path);
-    expect(response?.status(), `${path} doit répondre 200`).toBe(200);
-
-    const section = studySection(page, locale);
-    await expect(section, "le bloc preuve doit être rendu").toBeVisible();
-    const sectionText = await section.innerText();
-
-    test.skip(!withdrawn, "jeu de données republié : les bans de l'AC3 ne s'appliquent plus");
-
-    const violations = findBanned(sectionText);
-    expect(violations, `bloc preuve ${path} :\n${violations.join("\n")}`).toEqual([]);
-
-    // Aucun `studyStats` restant ne porte de valeur numérique issue de l'étude.
-    for (const stat of homeCopy[locale].studyStats) {
-      expect(await section.getByText(stat.value, { exact: true }).count()).toBeGreaterThan(0);
-      expect(/\d/.test(stat.value), `studyStats.value « ${stat.value} » ne doit porter aucun chiffre`).toBe(false);
-    }
-  });
-}
-
-test("AC3 (parité) — Given les deux landings servies, Then FR et EN portent le même nombre d'affirmations", async ({
-  page,
-}) => {
-  const counts: Record<Locale, number> = { en: 0, fr: 0 };
-  for (const { locale, path } of [
-    { locale: "en" as const, path: "/" },
-    { locale: "fr" as const, path: "/fr" },
-  ]) {
-    await page.goto(path);
-    counts[locale] = await studySection(page, locale).locator("> div > div").count();
-  }
-  expect(counts.fr, "parité FR/EN sur le nombre de studyStats rendus").toBe(counts.en);
-  expect(counts.en, "le bloc preuve doit rendre au moins une affirmation").toBeGreaterThan(0);
-  expect(homeCopy.fr.studyStats.length, "parité FR/EN dans la copy source").toBe(homeCopy.en.studyStats.length);
-});
-
 test("AC3 (llms.txt) — Given /llms.txt servi, Then la section Original research ne porte aucune valeur bannie", async ({
   request,
 }) => {
@@ -318,21 +278,6 @@ test("AC4 (llms.txt) — Given le fichier servi, Then il porte l'équivalent dat
   const missing = missingFromNote(section, "en");
   expect(missing, `llms.txt § Original research : ${missing.join(", ")}`).toEqual([]);
   expect(section.length, "la section ne doit pas être vidée (aveu, pas effacement)").toBeGreaterThan(200);
-});
-
-test("AC4 (landings) — Given les landings servies, Then la note datée existe en FR comme en EN", async ({
-  page,
-}) => {
-  test.skip(!withdrawn, "jeu de données republié : la note de retrait n'est plus exigée");
-  for (const { locale, path } of [
-    { locale: "en" as const, path: "/" },
-    { locale: "fr" as const, path: "/fr" },
-  ]) {
-    await page.goto(path);
-    const sectionText = await studySection(page, locale).innerText();
-    const missing = missingFromNote(sectionText, locale);
-    expect(missing, `landing ${path} : note incomplète (${missing.join(", ")})`).toEqual([]);
-  }
 });
 
 // =============================================================================

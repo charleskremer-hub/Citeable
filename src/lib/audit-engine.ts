@@ -1,10 +1,12 @@
 import { createHash, timingSafeEqual } from "crypto";
 import { pool } from "./db";
 import { recordFunnelEvent } from "./funnel";
-import { localizeCategoryLabel, localizePlainAction, type Locale } from "./i18n";
+import { localizePlainAction, type Locale } from "./i18n";
 import { RECHECK_CADENCE, RECHECK_INTERVAL_DAYS } from "./plan-promises";
 import { isWebSearchConfigured, runWebSearch } from "./web-search";
 import { isMailConfigured, sendMail } from "./mailer";
+import { renderEmail, quoted, type EmailContent } from "./email-template";
+import { verdictCompetitors } from "./competitor-floor";
 import { trafficClassOrUnknown, type TrafficClass } from "./traffic-filter";
 
 const USER_AGENT = "Mozilla/5.0 (compatible; CiteeableBot/1.0)";
@@ -3848,9 +3850,9 @@ function buildFixes(checks: AuditCheckResult[], segment: IcpSegmentMetadata = IC
  * clé n'est posée. Sans aucune des deux, on renvoie `sent: false` — le log de
  * délivrabilité enregistre l'échec, rien n'est perdu silencieusement.
  */
-async function sendNativeEmail(to: string, subject: string, body: string): Promise<NativeEmailSendResult> {
+async function sendNativeEmail(to: string, subject: string, body: string, html?: string): Promise<NativeEmailSendResult> {
   if (isMailConfigured()) {
-    const result = await sendMail({ to, subject, text: body }, { timeoutMs: ANSWER_TIMEOUT_MS });
+    const result = await sendMail({ to, subject, text: body, html }, { timeoutMs: ANSWER_TIMEOUT_MS });
 
     return result.sent
       ? { sent: true, id: result.id, status: result.status, providerStatus: result.provider }
@@ -3875,14 +3877,14 @@ async function sendNanoCorpEmail(to: string, subject: string, body: string): Pro
   }
 }
 
-async function sendGuardedEmail(args: { auditId?: string; email: string; websiteUrl: string; step: EmailDeliveryStep; subject: string; body: string }): Promise<NativeEmailSendResult> {
+async function sendGuardedEmail(args: { auditId?: string; email: string; websiteUrl: string; step: EmailDeliveryStep; subject: string; body: string; html?: string }): Promise<NativeEmailSendResult> {
   const claim = await claimEmailDelivery(args);
 
   if (!claim.allowed) {
     return { sent: false, error: claim.reason };
   }
 
-  const result = await sendNativeEmail(args.email, args.subject, args.body);
+  const result = await sendNativeEmail(args.email, args.subject, args.body, args.html);
   await updateEmailDelivery(claim.deliveryLogId, result.sent ? "sent" : "failed", result);
   return result;
 }
@@ -3891,71 +3893,82 @@ function compactText(value: string, fallback: string) {
   return value.replace(/\s+/g, " ").trim().slice(0, 220) || fallback;
 }
 
-function scoreExplanationLine(score: number, brandMentions: number, totalPrompts: number, locale: Locale) {
-  return locale === "fr"
-    ? `Score expliqué : ${score}/100 combine ${brandMentions}/${totalPrompts} recommandations, le sentiment IA, les concurrents cités et les bases techniques vérifiées.`
-    : `Score explained: ${score}/100 combines ${brandMentions}/${totalPrompts} recommendations, AI sentiment, cited competitors, and verified technical basics.`;
-}
 
-function buildAuditResultEmail(email: string, brandName: string, report: AuditReport, locale: Locale) {
-  const answerEngineName = answerEngineNameForReport(report);
+export function buildAuditResultEmail(email: string, brandName: string, report: AuditReport, locale: Locale) {
+  const answerEngineName = answerEngineNameForReport(report, locale);
   const competitorSignal = competitorSignalForReport(report);
   const actionLines = postAuditActionLines(report, locale);
   const unsubscribeUrl = unsubscribeUrlForEmail(email);
   const reportUrl = `${siteBaseUrl()}/audit/${report.audit_id}`;
   const totalPrompts = report.buyerIntentPrompts.length || 1;
   const brandMentions = report.buyerIntentPrompts.filter((prompt) => prompt.brandMentioned).length;
-  const scoreLine = scoreExplanationLine(report.score, brandMentions, totalPrompts, locale);
-  const localizedCategory = localizeCategoryLabel(report.category, locale);
-  const subject = locale === "fr" ? `${brandName}: score ${report.score}/100` : `${brandName}: ${report.score}/100 score`;
+  const fr = locale === "fr";
 
-  const body = locale === "fr"
-    ? [
-        `${brandName}: score IA`,
-        "",
-        `# ${report.score}/100`,
-        `Catégorie détectée : ${localizedCategory}`,
-        scoreLine,
-        "",
-        competitorSignal
-          ? competitorSignal.replacement
-            ? `${answerEngineName} choisit ${competitorSignal.competitor} à ta place pour: “${compactText(competitorSignal.prompt, "une question d'achat réelle")}".`
-            : `${answerEngineName} cite aussi ${competitorSignal.competitor} pour: “${compactText(competitorSignal.prompt, "une question d'achat réelle")}".`
-          : `${answerEngineName} t'a cité ${brandMentions}/${totalPrompts} fois; aucun concurrent n'a été ajouté artificiellement.`,
-        "",
-        `Correctif échantillon: ${actionLines[0]}`,
-        actionLines[1] ? compactText(actionLines[1], "") : "",
-        "",
-        "CTA unique:",
-        `Voir le rapport: ${reportUrl}`,
-        "",
-        "Réassurance: audit basé sur des questions stables et des données réelles; GetPick n'invente pas de résultat. Agent 19 €/mois peut préparer les correctifs si tu veux déléguer.",
-        `Désinscription: ${unsubscribeUrl}`,
-      ].filter(Boolean).join("\n")
-    : [
-        `${brandName}: AI score`,
-        "",
-        `# ${report.score}/100`,
-        `Detected category: ${localizedCategory}`,
-        scoreLine,
-        "",
-        competitorSignal
-          ? competitorSignal.replacement
-            ? `${answerEngineName} chooses ${competitorSignal.competitor} instead of you for: “${compactText(competitorSignal.prompt, "a real buyer question")}".`
-            : `${answerEngineName} also cites ${competitorSignal.competitor} for: “${compactText(competitorSignal.prompt, "a real buyer question")}".`
-          : `${answerEngineName} cited you ${brandMentions}/${totalPrompts} times; no competitor was added artificially.`,
-        "",
-        `Sample fix: ${actionLines[0]}`,
-        actionLines[1] ? compactText(actionLines[1], "") : "",
-        "",
-        "One CTA:",
-        `View the report: ${reportUrl}`,
-        "",
-        "Reassurance: this audit uses stable questions and real data; GetPick does not invent results. Agent €19/month can prepare the fixes if you want to delegate.",
-        `Unsubscribe: ${unsubscribeUrl}`,
-      ].filter(Boolean).join("\n");
+  // L'objet porte le fait, pas le score : « X est recommandé à ta place » se lit
+  // dans une liste de boîte de réception, « score 47/100 » n'y veut rien dire.
+  const subject = competitorSignal?.replacement
+    ? fr
+      ? `${answerEngineName} recommande ${competitorSignal.competitor} à la place de ${brandName}`
+      : `${answerEngineName} recommends ${competitorSignal.competitor} instead of ${brandName}`
+    : fr
+      ? `${brandName} : ${report.score}/100 sur les questions d'achat`
+      : `${brandName}: ${report.score}/100 on buyer questions`;
 
-  return { subject, body };
+  const paragraphs: string[] = [];
+
+  if (competitorSignal) {
+    const question = quoted(compactText(competitorSignal.prompt, fr ? "une question d'achat réelle" : "a real buyer question"), locale);
+    paragraphs.push(
+      competitorSignal.replacement
+        ? fr
+          ? `Sur ${question}, ${answerEngineName} recommande ${competitorSignal.competitor}. Pas toi.`
+          : `On ${question}, ${answerEngineName} recommends ${competitorSignal.competitor}. Not you.`
+        : fr
+          ? `Sur ${question}, ${answerEngineName} te cite — et cite aussi ${competitorSignal.competitor}.`
+          : `On ${question}, ${answerEngineName} cites you — and also cites ${competitorSignal.competitor}.`
+    );
+  } else {
+    paragraphs.push(
+      fr
+        ? `${answerEngineName} t'a cité sur ${brandMentions} des ${totalPrompts} questions. Aucun concurrent n'a été ajouté : on ne nomme un rival que s'il apparaît vraiment.`
+        : `${answerEngineName} cited you on ${brandMentions} of ${totalPrompts} questions. No competitor was added: we only name a rival when one actually shows up.`
+    );
+  }
+
+  paragraphs.push(
+    fr
+      ? `Les questions sont posées en direct à ${answerEngineName} au moment de l'audit, jamais simulées.`
+      : `The questions are sent live to ${answerEngineName} at audit time, never simulated.`
+  );
+
+  const content: EmailContent = {
+    lead: fr
+      ? `Ton audit ${brandName} est prêt.`
+      : `Your ${brandName} audit is ready.`,
+    figure: {
+      value: `${report.score}/100`,
+      caption: fr
+        ? `${brandMentions} citation${brandMentions > 1 ? "s" : ""} sur ${totalPrompts} questions d'achat posées à ${answerEngineName}`
+        : `${brandMentions} mention${brandMentions > 1 ? "s" : ""} across ${totalPrompts} buyer questions asked to ${answerEngineName}`,
+    },
+    paragraphs,
+    quote: actionWithoutLabel(actionLines[0])
+      ? {
+          title: fr ? "À publier en premier" : "Publish this first",
+          body: String(actionWithoutLabel(actionLines[0])),
+        }
+      : undefined,
+    button: { label: fr ? "Voir le rapport" : "View the report", url: reportUrl },
+    footnote: fr
+      ? "Tu peux tout appliquer toi-même. GetPick Agent (19 €/mois) le fait à ta place, sans engagement."
+      : "You can do all of it yourself. GetPick Agent (€19/month) does it for you, no commitment.",
+    unsubscribe: { label: fr ? "Se désinscrire" : "Unsubscribe", url: unsubscribeUrl },
+    locale,
+  };
+
+  const { text, html } = renderEmail(content, subject);
+
+  return { subject, body: text, html };
 }
 
 export async function sendAuditEmail(email: string, brandName: string, websiteUrl: string, report: AuditReport, locale: Locale = "en") {
@@ -3984,7 +3997,7 @@ export async function sendAuditEmail(email: string, brandName: string, websiteUr
   }
 
   const message = buildAuditResultEmail(email, brandName, report, locale);
-  return sendGuardedEmail({ auditId: report.audit_id, email, websiteUrl, step: "audit_result", subject: message.subject, body: message.body });
+  return sendGuardedEmail({ auditId: report.audit_id, email, websiteUrl, step: "audit_result", subject: message.subject, body: message.body, html: message.html });
 }
 
 function siteBaseUrl() {
@@ -4201,18 +4214,60 @@ export async function createCachedFreeAuditForLead(args: {
   };
 }
 
-function answerEngineNameForReport(report: Pick<AuditReport, "answerEngine" | "buyerIntentPrompts">) {
-  return report.answerEngine?.engine ?? report.buyerIntentPrompts.flatMap((prompt) => prompt.surfaces).find((surface) => surface.kind === "ai_engine")?.engine ?? "AI";
+/**
+ * Le nom du moteur, tel qu'un humain le lit.
+ *
+ * Le repli valait `"AI"`, ce qui produisait dans un email « AI recommande
+ * Loomera à ta place » — une phrase que personne n'écrirait. Le repli nomme
+ * maintenant la catégorie au lieu d'un faux nom propre.
+ */
+function answerEngineNameForReport(report: Pick<AuditReport, "answerEngine" | "buyerIntentPrompts">, locale: Locale = "en") {
+  const named =
+    report.answerEngine?.engine ??
+    report.buyerIntentPrompts.flatMap((prompt) => prompt.surfaces).find((surface) => surface.kind === "ai_engine")?.engine;
+
+  return named ?? (locale === "fr" ? "L'IA" : "The AI");
 }
 
+/**
+ * Le rival qu'un EMAIL a le droit de nommer.
+ *
+ * Avant le 28/08/2026, cette fonction prenait `competitors[0]` de la première
+ * question perdue venue : aucun seuil, donc l'email nommait un rival que le
+ * rapport — qui applique le plancher de stabilité depuis le 14/08 — refusait de
+ * nommer. Le prospect lisait « X est recommandé à ta place », cliquait, et ne
+ * trouvait aucun nom. Les deux surfaces appliquent maintenant le MÊME plancher,
+ * depuis le même module.
+ *
+ * Quand personne ne le franchit, on ne nomme personne, et l'email retombe sur
+ * ce qui reste exact : le compte de citations.
+ */
 function competitorSignalForReport(report: AuditReport) {
-  const replacementPrompt = report.buyerIntentPrompts.find((prompt) => !prompt.brandMentioned && prompt.competitors.length > 0);
-  const competitorPrompt = replacementPrompt ?? report.buyerIntentPrompts.find((prompt) => prompt.competitors.length > 0);
-  const competitor = competitorPrompt?.competitors[0] ?? report.competitors[0];
+  const nameable = new Set(verdictCompetitors(report.buyerIntentPrompts).map((name) => name.toLowerCase()));
+  if (nameable.size === 0) return null;
+
+  const pick = (prompt: BuyerIntentPromptResult) =>
+    prompt.competitors.find((candidate) => nameable.has(candidate.trim().toLowerCase()));
+
+  const replacementPrompt = report.buyerIntentPrompts.find((prompt) => prompt.available && !prompt.brandMentioned && pick(prompt));
+  const competitorPrompt = replacementPrompt ?? report.buyerIntentPrompts.find((prompt) => prompt.available && pick(prompt));
+  const competitor = competitorPrompt ? pick(competitorPrompt) : undefined;
 
   return competitor && competitorPrompt
     ? { competitor, prompt: competitorPrompt.prompt, replacement: competitorPrompt === replacementPrompt }
     : null;
+}
+
+/**
+ * `postAuditActionLines` préfixe chaque ligne d'une étiquette (« Action gratuite
+ * à faire aujourd'hui : ») utile dans un corps en texte plat, redondante dans un
+ * encadré qui porte déjà son titre. L'encadré affichait « À publier en premier :
+ * Action gratuite à faire aujourd'hui : … » — deux étiquettes pour une action.
+ */
+function actionWithoutLabel(line: string | undefined) {
+  if (!line) return undefined;
+  const stripped = line.replace(/^(Action gratuite à faire aujourd'hui|Free action to do today|À faire|What to do)\s*:\s*/i, "");
+  return compactText(stripped, "") || undefined;
 }
 
 function postAuditActionLines(report: AuditReport, locale: Locale) {
@@ -4236,104 +4291,78 @@ function postAuditActionLines(report: AuditReport, locale: Locale) {
     : ["Free action to do today: review the report's buyer questions and add one clear answer on your site."];
 }
 
-function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName: string, report: AuditReport, locale: Locale) {
-  const answerEngineName = answerEngineNameForReport(report);
+export function buildPostAuditEmail(step: PostAuditEmailStep, email: string, brandName: string, report: AuditReport, locale: Locale) {
+  const answerEngineName = answerEngineNameForReport(report, locale);
   const competitorSignal = competitorSignalForReport(report);
   const actionLines = postAuditActionLines(report, locale);
-  const totalPrompts = report.buyerIntentPrompts.length;
+  const totalPrompts = report.buyerIntentPrompts.length || 1;
   const brandMentions = report.buyerIntentPrompts.filter((prompt) => prompt.brandMentioned).length;
-  const localizedCategory = localizeCategoryLabel(report.category, locale);
   const reportUrl = followupClickUrl(report.audit_id, step, "report");
   const agentCheckoutUrl = followupClickUrl(report.audit_id, step, "agent_checkout");
   const unsubscribeUrl = unsubscribeUrlForEmail(email);
+  const fr = locale === "fr";
+
+  const rivalSentence = competitorSignal
+    ? competitorSignal.replacement
+      ? fr
+        ? `${answerEngineName} recommande ${competitorSignal.competitor} à ta place sur ${quoted(compactText(competitorSignal.prompt, "une question d'achat réelle"), locale)}.`
+        : `${answerEngineName} recommends ${competitorSignal.competitor} instead of you on ${quoted(compactText(competitorSignal.prompt, "a real buyer question"), locale)}.`
+      : fr
+        ? `${answerEngineName} cite aussi ${competitorSignal.competitor} sur ${quoted(compactText(competitorSignal.prompt, "une question d'achat réelle"), locale)}.`
+        : `${answerEngineName} also cites ${competitorSignal.competitor} on ${quoted(compactText(competitorSignal.prompt, "a real buyer question"), locale)}.`
+    : fr
+      ? `${answerEngineName} t'a cité sur ${brandMentions} des ${totalPrompts} questions, sans nommer de concurrent.`
+      : `${answerEngineName} cited you on ${brandMentions} of ${totalPrompts} questions, without naming a competitor.`;
 
   if (step === "j3_offer") {
-    const subject = locale === "fr"
-      ? `${brandName}: on corrige tout pour toi`
-      : `${brandName}: we can fix it for you`;
-    const body = locale === "fr"
-      ? [
-          `Dernière relance sur ton audit GetPick pour ${brandName}.`,
-          "",
-          `Score réel de l'audit : ${report.score}/100`,
-          `Catégorie détectée : ${localizedCategory}`,
-          scoreExplanationLine(report.score, brandMentions, totalPrompts, locale),
-          competitorSignal
-            ? competitorSignal.replacement
-              ? `${answerEngineName} a cité ${competitorSignal.competitor} à ta place sur : “${competitorSignal.prompt}”.`
-              : `${answerEngineName} a aussi cité ${competitorSignal.competitor} sur : “${competitorSignal.prompt}”.`
-            : `${answerEngineName} n'a cité aucun concurrent dans cet audit ; il t'a cité ${brandMentions}/${totalPrompts} fois.`,
-          "",
-          "Si tu veux éviter de tout faire toi-même : GetPick Agent 19 €/mois prépare les correctifs copy-paste, le plan de mentions et le chat à partir de ces signaux réels. Sans engagement, résiliable à tout moment.",
-          `Démarrer Agent : ${agentCheckoutUrl}`,
-          "Réassurance : tu gardes la main, et on ne part que des données réelles de ton audit — rien n'est inventé.",
-          "",
-          `Se désinscrire : ${unsubscribeUrl}`,
-        ].join("\n")
-      : [
-          `Final follow-up on your GetPick audit for ${brandName}.`,
-          "",
-          `Real audit score: ${report.score}/100`,
-          `Detected category: ${localizedCategory}`,
-          scoreExplanationLine(report.score, brandMentions, totalPrompts, locale),
-          competitorSignal
-            ? competitorSignal.replacement
-              ? `${answerEngineName} cited ${competitorSignal.competitor} instead of you for: “${competitorSignal.prompt}”.`
-              : `${answerEngineName} also cited ${competitorSignal.competitor} for: “${competitorSignal.prompt}”.`
-            : `${answerEngineName} did not cite a competitor in this audit; it cited you ${brandMentions}/${totalPrompts} times.`,
-          "",
-          "If you do not want to fix everything yourself: GetPick Agent €19/month prepares copy-paste fixes, a mention plan, and chat from these real signals. No commitment, cancel anytime.",
-          `Start Agent: ${agentCheckoutUrl}`,
-          "Reassurance: you stay in control, and we only use the real data from your audit — nothing is invented.",
-          "",
-          `Unsubscribe: ${unsubscribeUrl}`,
-        ].join("\n");
+    const subject = fr
+      ? `${brandName} : on écrit les correctifs à ta place`
+      : `${brandName}: we write the fixes for you`;
 
-    return { subject, body };
+    const content: EmailContent = {
+      lead: fr
+        ? `Dernier message sur l'audit de ${brandName}.`
+        : `Last message about the ${brandName} audit.`,
+      paragraphs: [
+        rivalSentence,
+        fr
+          ? "Reprendre cette réponse demande d'écrire les pages, les FAQ et les mentions qui manquent — c'est du travail, et il se refait à chaque fois que les moteurs bougent."
+          : "Winning that answer back means writing the pages, FAQs and mentions you are missing — that is real work, and it starts over every time the engines move.",
+        fr
+          ? "GetPick Agent (19 €/mois) les écrit à partir de ton audit, prêts à copier-coller. Sans engagement, résiliable en un clic."
+          : "GetPick Agent (€19/month) writes them from your own audit, ready to paste. No commitment, cancel in one click.",
+      ],
+      button: { label: fr ? "Démarrer Agent — 19 €/mois" : "Start Agent — €19/month", url: agentCheckoutUrl },
+      footnote: fr
+        ? "Tout part des données réelles de ton audit. Rien n'est inventé."
+        : "Everything comes from the real data in your audit. Nothing is invented.",
+      unsubscribe: { label: fr ? "Se désinscrire" : "Unsubscribe", url: unsubscribeUrl },
+      locale,
+    };
+
+    const { text, html } = renderEmail(content, subject);
+    return { subject, body: text, html };
   }
 
-  const subject = locale === "fr"
-    ? `${brandName}: ton score ${report.score}/100 et l'action gratuite`
-    : `${brandName}: your ${report.score}/100 score and one free action`;
-  const body = locale === "fr"
-    ? [
-        `Hier, ton audit GetPick a donné ${report.score}/100 à ${brandName}.`,
-        `Catégorie détectée : ${localizedCategory}`,
-        scoreExplanationLine(report.score, brandMentions, totalPrompts, locale),
-        `Sur ${totalPrompts} questions posées à ${answerEngineName}, ta marque a été citée ${brandMentions} fois.`,
-        competitorSignal
-          ? competitorSignal.replacement
-            ? `${answerEngineName} a cité ${competitorSignal.competitor} à ta place sur cette vraie question : “${competitorSignal.prompt}”.`
-            : `${answerEngineName} a aussi cité ${competitorSignal.competitor} sur cette vraie question : “${competitorSignal.prompt}”.`
-          : `${answerEngineName} n'a cité aucun concurrent dans cet audit ; aucun nom n'est ajouté artificiellement.`,
-        "",
-        ...actionLines,
-        "",
-        "Reviens au rapport pour voir le détail et appliquer l'action avec le contexte réel de l'audit.",
-        "",
-        `Voir le rapport : ${reportUrl}`,
-        `Se désinscrire : ${unsubscribeUrl}`,
-      ].join("\n")
-    : [
-        `Yesterday, your GetPick audit gave ${brandName} ${report.score}/100.`,
-        `Detected category: ${localizedCategory}`,
-        scoreExplanationLine(report.score, brandMentions, totalPrompts, locale),
-        `Across ${totalPrompts} questions asked to ${answerEngineName}, your brand was cited ${brandMentions} times.`,
-        competitorSignal
-          ? competitorSignal.replacement
-            ? `${answerEngineName} cited ${competitorSignal.competitor} instead of you for this real question: “${competitorSignal.prompt}”.`
-            : `${answerEngineName} also cited ${competitorSignal.competitor} for this real question: “${competitorSignal.prompt}”.`
-          : `${answerEngineName} did not cite a competitor in this audit; no name is added artificially.`,
-        "",
-        ...actionLines,
-        "",
-        "Return to the report to see the detail and apply the action with the real audit context.",
-        "",
-        `View the report: ${reportUrl}`,
-        `Unsubscribe: ${unsubscribeUrl}`,
-      ].join("\n");
+  const subject = fr
+    ? `${brandName} : une chose à publier aujourd'hui`
+    : `${brandName}: one thing to publish today`;
 
-  return { subject, body };
+  const content: EmailContent = {
+    lead: fr
+      ? `Hier, ton audit a donné ${report.score}/100 à ${brandName}. Voici la première chose à corriger.`
+      : `Yesterday your audit gave ${brandName} ${report.score}/100. Here is the first thing to fix.`,
+    paragraphs: [rivalSentence].concat(actionWithoutLabel(actionLines[1]) ? [String(actionWithoutLabel(actionLines[1]))] : []),
+    quote: actionWithoutLabel(actionLines[0])
+      ? { title: fr ? "À publier en premier" : "Publish this first", body: String(actionWithoutLabel(actionLines[0])) }
+      : undefined,
+    button: { label: fr ? "Voir le rapport" : "View the report", url: reportUrl },
+    unsubscribe: { label: fr ? "Se désinscrire" : "Unsubscribe", url: unsubscribeUrl },
+    locale,
+  };
+
+  const { text, html } = renderEmail(content, subject);
+  return { subject, body: text, html };
 }
 
 function postAuditOutboundPaused() {
@@ -4395,7 +4424,7 @@ export async function runDuePostAuditEmails(limit = 10): Promise<PostAuditEmailS
     const report = reportFromRow(audit);
     const locale = audit.raw_results?.locale ?? "en";
     const message = buildPostAuditEmail(job.step, job.email, audit.brand_name, report, locale);
-    const sendResult = await sendGuardedEmail({ auditId: job.audit_id, email: job.email, websiteUrl: audit.website_url, step: job.step, subject: message.subject, body: message.body });
+    const sendResult = await sendGuardedEmail({ auditId: job.audit_id, email: job.email, websiteUrl: audit.website_url, step: job.step, subject: message.subject, body: message.body, html: message.html });
     const preview = message.body.split("\n").slice(0, 10).join("\n");
 
     if (sendResult.sent) {

@@ -341,34 +341,19 @@ test("AC2 — /study ne déclare aucune chaîne : toute sa copy vient de study-s
 
 // --- AC3 : landing FR/EN et llms.txt, à parité ------------------------------
 
-const localeSurfaces = (locale: Locale): readonly (readonly [string, string])[] => {
-  const copy = homeCopy[locale];
-  return [
-    [`homeCopy.${locale}.studyTitle`, copy.studyTitle],
-    [`homeCopy.${locale}.studyCta`, copy.studyCta],
-    ...copy.studyStats.map(
-      (stat, index) => [`homeCopy.${locale}.studyStats[${index}]`, `${stat.value} ${stat.label}`] as const
-    ),
-  ];
-};
-
-for (const locale of LOCALES) {
-  for (const [surface, text] of localeSurfaces(locale)) {
-    test(`AC3 — ${surface} ne porte aucune valeur de l'ancien instrument`, { skip: skipUnlessWithdrawn }, () => {
-      assertNoBannedValue(surface, text);
-    });
-  }
-
-  test(`AC3 — ${locale}: aucun studyStats ne porte de valeur chiffrée`, { skip: skipUnlessWithdrawn }, () => {
-    for (const [index, stat] of homeCopy[locale].studyStats.entries()) {
-      assert.doesNotMatch(
-        mask(stat.value),
-        /\d/,
-        `homeCopy.${locale}.studyStats[${index}].value = « ${stat.value} » : plus aucun chiffre de l'étude n'est publiable`
-      );
-    }
-  });
-}
+// --- Le bloc « étude » a quitté la landing le 28/08/2026 --------------------
+//
+// Décision de Charles : la home ne porte plus le bloc de rétractation. Les
+// assertions qui le surveillaient sont retirées AVEC LA SURFACE, et non pour
+// devenir vertes — une assertion sur une surface qui n'est plus publiée
+// n'échoue jamais et n'atteste plus rien : elle ment en silence.
+//
+// Ce que le retrait NE fait pas disparaître, et qui reste couvert ci-dessous :
+// la rétractation, ses deux dates et son motif restent publiés sur /study, dans
+// ses métadonnées, dans le JSON-LD, dans `public/llms.txt` et sur /vs ; la
+// landing ENTIÈRE reste interdite de valeur bannie et de nom de marque de
+// l'étude (test `collectStrings(homeCopy)` conservé juste en dessous) ; et la
+// home garde un lien vers /study en pied de page — la page n'est pas orpheline.
 
 // Le ban chiffré ci-dessus ne couvre que le bloc « étude ». Une marque de
 // l'étude est bannie de la landing ENTIÈRE : le hero, la FAQ ou un témoignage
@@ -380,24 +365,6 @@ for (const locale of LOCALES) {
     }
   });
 }
-
-test("AC3 — parité FR/EN : même nombre de studyStats", () => {
-  const [en, fr] = LOCALES.map((locale) => homeCopy[locale].studyStats.length);
-  assert.equal(en, fr, `parité rompue : en=${en} stat(s), fr=${fr} stat(s)`);
-});
-
-// Découpage en phrases, comme pour la parité du TL;DR de la story du 28/07.
-const splitSentences = (text: string) => text.split(/(?<=[.!?])\s+/).filter((part) => part.trim().length > 0);
-
-const studyAssertions = (locale: Locale) =>
-  [homeCopy[locale].studyTitle, ...homeCopy[locale].studyStats.map((stat) => stat.label), homeCopy[locale].studyCta]
-    .flatMap(splitSentences)
-    .length;
-
-test("AC3 — parité FR/EN : même nombre d'affirmations dans le bloc étude", () => {
-  const [en, fr] = LOCALES.map(studyAssertions);
-  assert.equal(en, fr, `parité rompue : en=${en} affirmation(s), fr=${fr} affirmation(s)`);
-});
 
 // `llms.txt` n'est pas dérivé de la constante : c'est un fichier statique
 // expédié tel quel. C'est ce test qui le raccroche à `study-status.ts` — d'où
@@ -437,38 +404,7 @@ test("AC3 — public/llms.txt ne nomme aucune marque de l'étude, section par se
 // passer les bans de l'AC2/AC3 — c'est le « ban vert par suppression » trouvé en
 // review le 28/07.
 
-// Le bloc « étude » de la landing, tel qu'il est rendu : titre, statistiques
-// (valeur ET libellé), CTA. C'est la surface où le ban vert par suppression
-// serait le plus tentant — deux `value` neutres et un CTA muet suffiraient à
-// faire passer l'AC3 sans que la landing dise jamais que les chiffres sont
-// retirés, ni quand, ni pourquoi.
-// `studyEyebrow` en fait partie : c'est la première ligne lue du bloc. Elle
-// disait « The proof » / « La preuve » juste au-dessus d'un titre annonçant le
-// retrait des chiffres — l'accroche démentait le bloc qu'elle introduisait, et
-// aucune assertion ne la regardait.
-const homeStudyBlock = (locale: Locale) =>
-  [
-    homeCopy[locale].studyEyebrow,
-    homeCopy[locale].studyTitle,
-    ...homeCopy[locale].studyStats.map((stat) => `${stat.value} ${stat.label}`),
-    homeCopy[locale].studyCta,
-  ].join(" ");
-
-// L'accroche ne peut pas promettre une preuve tant que les chiffres sont
-// retirés : c'est la promesse que le titre juste en dessous dément.
-for (const locale of LOCALES) {
-  test(`AC4 — homeCopy.${locale}.studyEyebrow ne promet pas une preuve retirée`, { skip: skipUnlessWithdrawn }, () => {
-    assert.doesNotMatch(
-      homeCopy[locale].studyEyebrow,
-      /\bthe proof\b|\bla preuve\b/i,
-      `homeCopy.${locale}.studyEyebrow = « ${homeCopy[locale].studyEyebrow} » annonce une preuve, au-dessus d'un bloc qui dit que les chiffres sont retirés`
-    );
-  });
-}
-
 const DATED_SURFACES = (): readonly (readonly [string, string, string])[] => [
-  ["homeCopy.en (bloc étude)", homeStudyBlock("en"), STUDY_RETRACTION_REASON.gist.en],
-  ["homeCopy.fr (bloc étude)", homeStudyBlock("fr"), STUDY_RETRACTION_REASON.gist.fr],
   ["metadata.description", studyPageCopy.metaDescription, STUDY_RETRACTION_REASON.gist.en],
   ["openGraph.description", studyPageCopy.ogDescription, STUDY_RETRACTION_REASON.gist.en],
   ["JSON-LD Article", JSON.stringify(studyArticleSchema), STUDY_RETRACTION_REASON.gist.en],
@@ -706,7 +642,6 @@ const IDENTITY_SURFACES = (): readonly (readonly [string, string])[] => [
       [
         [`studyPageCopy.eyebrow.${locale}`, studyPageCopy.eyebrow[locale]],
         [`studyPageCopy.headline.${locale}`, studyPageCopy.headline[locale]],
-        [`homeCopy.${locale} (bloc étude)`, homeStudyBlock(locale)],
         [`vsCopy.${locale}.studyIntro`, vsCopy[locale].studyIntro],
         [`vsCopy.${locale}.studyCta`, vsCopy[locale].studyCta],
       ] as const

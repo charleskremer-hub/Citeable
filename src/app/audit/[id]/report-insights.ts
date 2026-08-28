@@ -10,6 +10,30 @@
 import { UNKNOWN_CATEGORY } from "@/lib/audit-engine";
 import type { BuyerIntentPromptResult, IcpSegmentMetadata, PlainAction } from "@/lib/audit-engine";
 import type { Locale } from "@/lib/i18n";
+import {
+  VERDICT_COMPETITOR_MIN_QUESTIONS,
+  VERDICT_COMPETITOR_MIN_SHARE,
+  competitorCounts,
+  lostBuyerQuestions,
+  uniqueNames,
+  verdictCompetitorThreshold,
+  verdictCompetitors,
+} from "@/lib/competitor-floor";
+
+// Le plancher a déménagé dans `@/lib/competitor-floor` le 28/08/2026 : l'email
+// devait l'appliquer aussi, et un module de page ne peut pas être importé par
+// `audit-engine` sans créer un cycle. Ces ré-exports gardent les appelants
+// existants (`page.tsx`, `scripts/report-verdict.test.ts`) intacts.
+export {
+  VERDICT_COMPETITOR_MIN_QUESTIONS,
+  VERDICT_COMPETITOR_MIN_SHARE,
+  competitorCounts,
+  lostBuyerQuestions,
+  uniqueNames,
+  verdictCompetitorThreshold,
+  verdictCompetitors,
+};
+
 
 export function extractPasteable(text: string) {
   const match = text.match(/[«"“]([\s\S]+?)[»"”]/);
@@ -22,40 +46,7 @@ export function scoreColor(score: number) {
   return "#CAFF3C";
 }
 
-export function uniqueNames(names: string[]) {
-  const seen = new Set<string>();
 
-  return names.filter((name) => {
-    const cleaned = name.trim();
-    const key = cleaned.toLowerCase();
-
-    if (!cleaned || seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-export function competitorCounts(names: string[]) {
-  const counts = new Map<string, { name: string; count: number; firstIndex: number }>();
-
-  names.forEach((name, index) => {
-    const cleaned = name.trim().replace(/\s+/g, " ");
-    const key = cleaned.toLowerCase();
-
-    if (!cleaned) return;
-
-    const current = counts.get(key);
-    if (current) {
-      current.count += 1;
-    } else {
-      counts.set(key, { name: cleaned, count: 1, firstIndex: index });
-    }
-  });
-
-  return Array.from(counts.values())
-    .sort((left, right) => right.count - left.count || left.firstIndex - right.firstIndex || left.name.localeCompare(right.name))
-    .slice(0, 12);
-}
 
 export function localizedUnavailableReason(reason: string | undefined, locale: Locale, engine = "Gemini") {
   if (!reason) return locale === "fr" ? `${engine} est indisponible ; réessaie.` : `${engine} unavailable; try again.`;
@@ -217,9 +208,6 @@ export function treatmentProof(brandName: string, category: string | undefined, 
 // données ne nomment aucun concurrent, la phrase de repli n'en nomme aucun.
 
 /** Les questions d'achat vérifiées où la marque n'est PAS citée. */
-export function lostBuyerQuestions(questions: BuyerIntentPromptResult[]) {
-  return questions.filter((question) => question.available && !question.brandMentioned);
-}
 
 /**
  * PLANCHER DE STABILITÉ AVANT DE NOMMER UN RIVAL — et pourquoi il existe.
@@ -249,13 +237,8 @@ export function lostBuyerQuestions(questions: BuyerIntentPromptResult[]) {
  * « Gemini ne recommande jamais {marque} » — exact — que « Gemini recommande
  * Loomera » quand Loomera sortait d'un tirage.
  */
-export const VERDICT_COMPETITOR_MIN_SHARE = 1 / 3;
-export const VERDICT_COMPETITOR_MIN_QUESTIONS = 2;
 
 /** Le nombre de questions distinctes qu'un rival doit occuper pour être nommable. */
-export function verdictCompetitorThreshold(availableQuestionCount: number) {
-  return Math.max(VERDICT_COMPETITOR_MIN_QUESTIONS, Math.ceil(availableQuestionCount * VERDICT_COMPETITOR_MIN_SHARE));
-}
 
 /**
  * Les concurrents du verdict : ceux cités sur les questions PERDUES (c'est eux
@@ -265,18 +248,6 @@ export function verdictCompetitorThreshold(availableQuestionCount: number) {
  * Le comptage se fait en QUESTIONS DISTINCTES, pas en occurrences : un rival
  * nommé deux fois dans la même réponse reste un seul signal.
  */
-export function verdictCompetitors(questions: BuyerIntentPromptResult[]) {
-  const availableCount = questions.filter((question) => question.available).length;
-  const threshold = verdictCompetitorThreshold(availableCount);
-
-  // uniqueNames par question : une question compte au plus une fois par rival.
-  const perQuestion = lostBuyerQuestions(questions).flatMap((question) => uniqueNames(question.competitors));
-
-  return competitorCounts(perQuestion)
-    .filter((item) => item.count >= threshold)
-    .slice(0, 3)
-    .map((item) => item.name);
-}
 
 function joinNames(names: string[], locale: Locale) {
   if (names.length <= 1) return names.join("");

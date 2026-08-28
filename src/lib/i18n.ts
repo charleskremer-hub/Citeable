@@ -1,4 +1,3 @@
-import { STUDY_DATA_STATUS, STUDY_RETRACTION_REASON } from "./study-status";
 import { PLAN_PROMISES, RECHECK_CADENCE } from "./plan-promises";
 
 export type Locale = "en" | "fr";
@@ -87,23 +86,6 @@ export const homeCopy = {
       { num: "2", time: "2 min", title: "The agent asks the AIs", body: `Real buying questions, sent live at audit time to the engine your plan checks — ${PLAN_PROMISES.free.engineLabel.en} on the free audit, ${PLAN_PROMISES.agent_19eur.engineLabel.en} on the Agent plan. Never simulated.` },
       { num: "3", time: "Same day", title: "See the rival, publish the fixes", body: "The agent names who gets recommended in your place — and writes the copy-paste content that wins the answer back." },
     ],
-    // 4. Proof — the study
-    // « The proof » annonçait une preuve juste au-dessus d'un bloc qui dit que
-    // les chiffres sont retirés — l'accroche démentait le bloc qu'elle
-    // introduisait. Ce qu'on met en avant maintenant, c'est le fait de l'avoir
-    // dit : c'est ce qui reste vrai tant que le rerun n'a pas rendu.
-    studyEyebrow: "We publish our own mistakes",
-    studyTitle: "We withdrew the figures of our 21-brand study. Here is what broke.",
-    // Aucune valeur chiffrée de l'ancien instrument ici : les dates viennent de
-    // STUDY_DATA_STATUS, et rien d'autre n'est numérique. Les deux `value` sont
-    // distinctes — HomeClient les utilise comme clé React.
-    // Le MOTIF est énoncé, pas seulement le fait : sans lui, effacer les chiffres
-    // de la landing suffirait à passer les bans de l'AC3 sans rien avouer (AC4).
-    studyStats: [
-      { value: "Withdrawn", label: `figures withdrawn on ${STUDY_DATA_STATUS.withdrawnOn} — ${STUDY_RETRACTION_REASON.gist.en}` },
-      { value: "Fixed", label: `instrument fixed on ${STUDY_DATA_STATUS.instrumentFixedOn} — the rerun on the blind measurement is under way` },
-    ],
-    studyCta: "Read why we withdrew them →",
     // 5. The deliverable
     deliverableEyebrow: "What you get",
     deliverableTitle: "Not a dashboard. A verdict, a name, and the fix.",
@@ -209,6 +191,7 @@ export const homeCopy = {
     footerTagline: "The GEO agent for DTC brands. It gets you recommended by ChatGPT and Gemini.",
     rights: "All rights reserved.",
     footerProspection: "Outbound policy",
+    footerStudy: "Our 21-brand study: why we withdrew the numbers",
   },
   fr: {
     navAudit: "Audit gratuit",
@@ -255,16 +238,6 @@ export const homeCopy = {
       { num: "2", time: "2 min", title: "L'agent interroge les IA", body: `De vraies questions d'achat, envoyées en direct au moment de l'audit au moteur que ton offre interroge — ${PLAN_PROMISES.free.engineLabel.fr} sur l'audit gratuit, ${PLAN_PROMISES.agent_19eur.engineLabel.fr} sur l'offre Agent. Jamais simulées.` },
       { num: "3", time: "Le jour même", title: "Tu vois le rival, tu publies les correctifs", body: "L'agent nomme qui est recommandé à ta place — et écrit le contenu à copier-coller pour reprendre la réponse." },
     ],
-    // 4. Preuve — l'étude
-    studyEyebrow: "On publie nos propres erreurs",
-    studyTitle: "On a retiré les chiffres de notre étude 21 marques. Voici ce qui a cassé.",
-    // Parité stricte avec l'EN : même nombre d'affirmations, mêmes dates ISO,
-    // même motif énoncé.
-    studyStats: [
-      { value: "Retiré", label: `chiffres retirés le ${STUDY_DATA_STATUS.withdrawnOn} — ${STUDY_RETRACTION_REASON.gist.fr}` },
-      { value: "Corrigé", label: `instrument corrigé le ${STUDY_DATA_STATUS.instrumentFixedOn} — le rerun sur la mesure aveugle est en cours` },
-    ],
-    studyCta: "Lire pourquoi on les a retirés →",
     // 5. Le livrable
     deliverableEyebrow: "Le livrable",
     deliverableTitle: "Pas un dashboard. Un verdict, un nom, le correctif.",
@@ -370,6 +343,7 @@ export const homeCopy = {
     footerTagline: "L'agent GEO des marques DTC. Il te fait recommander par ChatGPT et Gemini.",
     rights: "Tous droits réservés.",
     footerProspection: "Politique de prospection",
+    footerStudy: "Notre étude 21 marques : pourquoi on a retiré les chiffres",
   },
 } as const;
 
