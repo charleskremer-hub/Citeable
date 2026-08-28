@@ -4786,6 +4786,38 @@ export async function sendWeeklyMonitoringEmail(email: string, brandName: string
   return sendGuardedEmail({ auditId: report.audit_id, email, websiteUrl, step: "weekly_monitoring", subject, body });
 }
 
+/**
+ * État de la file de rescan, tel qu'il est À L'INSTANT de l'appel.
+ *
+ * Pourquoi. Le cron rendait `{"rescans": []}` : rien ne distinguait « rien à
+ * faire » (cadence mensuelle, file consommée) de « en panne ». Un agent en a
+ * conclu à tort que le moteur était arrêté. Deux nombres suffisent à rendre le
+ * silence auto-explicatif : combien de marques sont dues MAINTENANT, et quand
+ * tombe la prochaine échéance.
+ *
+ * Aucune donnée de marque (ni nom, ni URL) ne sort d'ici : un compte et une
+ * date, c'est tout. La fuite fermée sur `/api/funnel` ne se rouvre pas par
+ * cette porte.
+ *
+ * Registre vide : l'agrégat rend toujours une ligne (`count` = 0, `min` =
+ * NULL) → `due_count` 0 et `next_due_at` null, sans exception.
+ */
+export async function getRescanQueueStatus(): Promise<{ due_count: number; next_due_at: string | null }> {
+  const status = await pool.query<{ due_count: number | string | null; next_due_at: Date | string | null }>(
+    `SELECT (count(*) FILTER (WHERE next_run_at <= now()))::int AS due_count,
+            min(next_run_at) AS next_due_at
+     FROM monitored_brands
+     WHERE active = true`
+  );
+  const row = status.rows[0];
+  const nextDueAt = row?.next_due_at ?? null;
+
+  return {
+    due_count: Number(row?.due_count ?? 0),
+    next_due_at: nextDueAt === null ? null : new Date(nextDueAt).toISOString(),
+  };
+}
+
 export async function runDueWeeklyRescans(limit = 3) {
   const due = await pool.query<MonitoredBrandRow>(
     `SELECT id, email, brand_name, website_url, last_audit_id
