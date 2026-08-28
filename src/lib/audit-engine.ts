@@ -4279,13 +4279,12 @@ function postAuditActionLines(report: AuditReport, locale: Locale) {
       : [`Free action to do today: ${action.title}`, `What to do: ${action.doThis}`, `Where: ${action.where}`];
   }
 
-  const fix = report.fixes[0];
-  if (fix) {
-    return locale === "fr"
-      ? [`Action gratuite à faire aujourd'hui : ${fix}`]
-      : [`Free action to do today: ${fix}`];
-  }
-
+  // PLUS DE REPLI SUR `report.fixes[0]` : ces chaînes sortent du moteur en
+  // anglais et en jargon (« Wikidata-style entity consistency ») quelle que
+  // soit la locale du destinataire — mesuré par le test de bout en bout du
+  // 28/08 : sur un audit gratuit, `monitoring.actions` est vide et un prospect
+  // français recevait un email soigné terminé par une phrase incompréhensible.
+  // Le repli est la ligne ci-dessous : rédigée en langue claire, localisée.
   return locale === "fr"
     ? ["Action gratuite à faire aujourd'hui : relis les questions d'achat du rapport et ajoute une réponse claire sur ton site."]
     : ["Free action to do today: review the report's buyer questions and add one clear answer on your site."];
