@@ -99,7 +99,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ audit_id: auditId, status: "running" }, { status: 202 });
     }
 
-    const { email, brandName, websiteUrl } = validateAuditInput(payload);
+    // La porte du champ << site >> vit DANS la validation : email deguise en
+    // site, URL a identifiants ou hote injoignable sont refuses ici, avant la
+    // moindre lecture/ecriture `audits` et avant tout appel payant.
+    const { email, brandName, websiteUrl } = await validateAuditInput(payload);
     const locale = requestedLocale ?? recipientLocaleFromSignals(email, websiteUrl);
     const dedupeDomain = brandDedupeDomain(websiteUrl);
 
@@ -166,6 +169,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ audit_id: createdAuditId, status: "running", audit_tier: auditTier, locale }, { status: 202 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Audit failed";
+    // Refus du gate d'entree : 4xx + code stable, que le front mappe vers un
+    // message localise. Reconnu par propriete (`gateCode`) et non par import :
+    // les tests de route mockent `audit-engine` avec une liste fermee d'exports.
+    const maybeGateCode = error instanceof Error ? (error as Error & { gateCode?: unknown }).gateCode : undefined;
+    const gateCode = typeof maybeGateCode === "string" ? maybeGateCode : null;
+
+    if (gateCode) {
+      return NextResponse.json({ error: message, error_code: gateCode }, { status: 422 });
+    }
+
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

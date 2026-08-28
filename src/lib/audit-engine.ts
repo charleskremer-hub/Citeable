@@ -360,6 +360,114 @@ export function normalizeWebsiteUrl(input: string) {
   return url.toString();
 }
 
+/**
+ * Porte d'entree du champ << site >> : refuser ce qu'on ne sait pas auditer,
+ * AVANT le premier appel payant (Gemini, Serper) et AVANT la premiere ecriture
+ * en base. Le 27/08, `joliusliu@gmail.com` saisi dans le champ site a passe
+ * `normalizeWebsiteUrl` (qui en a fait `https://joliusliu@gmail.com/`, une URL
+ * a identifiants), coute 5 questions Gemini + 1 appel Serper, cree une ligne
+ * `audits` et servi un rapport 0/100 sur une categorie inventee au seul
+ * visiteur spontane du produit (audit bbab1971-a5ff-4f3a-84bb-072468a4580a).
+ *
+ * Trois refus, chacun porte un code STABLE que le front mappe vers un message
+ * localise (FR/EN) :
+ *   - `website_looks_like_email`  : `quelquechose@domaine.tld`, sans schema ni chemin ;
+ *   - `website_credentials`       : une URL portant des identifiants (`user@host`) ;
+ *   - `website_unreachable`       : hote sans reponse DNS/HTTP sur l'apex ET sur `www`.
+ *
+ * Le refus est un `WebsiteInputRejectedError` : les routes le reconnaissent par
+ * `gateCode` (propriete, pas import — les tests existants mockent ce module
+ * avec une liste FERMEE de namedExports, un import nouveau les casserait) et
+ * repondent 422 sans rien ecrire ni emettre.
+ */
+export type WebsiteGateCode = "website_looks_like_email" | "website_credentials" | "website_unreachable";
+
+export class WebsiteInputRejectedError extends Error {
+  readonly gateCode: WebsiteGateCode;
+
+  constructor(gateCode: WebsiteGateCode, message: string) {
+    super(message);
+    this.name = "WebsiteInputRejectedError";
+    this.gateCode = gateCode;
+  }
+}
+
+// (a) du gate : local@domaine.tld, sans schema, sans chemin, sans port.
+const EMAIL_LIKE_WEBSITE_INPUT = /^[^\s@/:?#]+@[^\s@/:?#]+\.[a-z]{2,63}$/i;
+
+export function websiteInputRejection(rawWebsiteUrl: string): WebsiteInputRejectedError | null {
+  const raw = rawWebsiteUrl.trim();
+  const hasScheme = /^https?:\/\//i.test(raw);
+
+  if (!hasScheme && EMAIL_LIKE_WEBSITE_INPUT.test(raw)) {
+    return new WebsiteInputRejectedError(
+      "website_looks_like_email",
+      "That looks like an email address. Enter your website address instead, e.g. yourbrand.com."
+    );
+  }
+
+  let url: URL;
+  try {
+    url = new URL(hasScheme ? raw : `https://${raw}`);
+  } catch {
+    // Forme invalide : `normalizeWebsiteUrl` portera son propre message.
+    return null;
+  }
+
+  if (url.username || url.password) {
+    return new WebsiteInputRejectedError(
+      "website_credentials",
+      "A website address can't contain a login or password. Enter just your domain, e.g. yourbrand.com."
+    );
+  }
+
+  return null;
+}
+
+/**
+ * (c) du gate : l'hote repond-il, sur l'apex PUIS sur `www` (ou l'inverse) ?
+ *
+ * Mecanisme serverless-compatible : un HEAD https avec timeout court via
+ * `AbortSignal.timeout` — pas de resolveur DNS dedie, la resolution echouee se
+ * manifeste en `fetch` rejete. TOUTE reponse HTTP (meme 4xx/5xx) prouve que
+ * l'hote existe et sert : seul le rejet du fetch (NXDOMAIN, connexion refusee,
+ * timeout) compte comme injoignable. 2 sondes x 3,5 s = 7 s au pire, sous la
+ * `maxDuration = 60` des deux routes d'entree.
+ *
+ * `fetch` est resolu sur `globalThis` A CHAQUE appel : les tests le remplacent
+ * (meme pattern de substitution globale que `mock.module` pour les modules) et
+ * comptent chaque sonde.
+ */
+export const WEBSITE_PROBE_TIMEOUT_MS = 3_500;
+
+export async function assertWebsiteReachable(websiteUrl: string): Promise<void> {
+  const hostname = new URL(websiteUrl).hostname;
+
+  // Outillage local uniquement : rien a sonder.
+  if (hostname === "localhost") return;
+
+  const candidates = hostname.startsWith("www.") ? [hostname, hostname.slice(4)] : [hostname, `www.${hostname}`];
+
+  for (const host of candidates) {
+    try {
+      await fetch(`https://${host}/`, {
+        method: "HEAD",
+        redirect: "follow",
+        headers: { "user-agent": USER_AGENT },
+        signal: AbortSignal.timeout(WEBSITE_PROBE_TIMEOUT_MS),
+      });
+      return;
+    } catch {
+      // Injoignable sur cet hote : on tente l'autre avant de refuser.
+    }
+  }
+
+  throw new WebsiteInputRejectedError(
+    "website_unreachable",
+    `We couldn't reach ${hostname} — check your website address, e.g. yourbrand.com.`
+  );
+}
+
 export function auditTierFromPayload(input: Record<string, unknown>): AuditTier {
   if (input.audit_tier === "agent_19eur" || input.tier === "agent_19eur" || input.paid_tier === "agent_19eur" || input.agent_19eur === true) {
     return "agent_19eur";
@@ -495,7 +603,7 @@ export async function checkFreeAuditQuota(email: string, websiteUrl: string): Pr
   return { allowed: true };
 }
 
-export function validateAuditInput(input: Record<string, unknown>) {
+export async function validateAuditInput(input: Record<string, unknown>) {
   const email = String(input.email ?? "").trim().toLowerCase();
   const brandName = String(input.brand_name ?? "").trim();
   const rawWebsiteUrl = String(input.website_url ?? "").trim();
@@ -512,7 +620,13 @@ export function validateAuditInput(input: Record<string, unknown>) {
     throw new Error("Website URL is required.");
   }
 
-  return { email, brandName, websiteUrl: normalizeWebsiteUrl(rawWebsiteUrl) };
+  const rejection = websiteInputRejection(rawWebsiteUrl);
+  if (rejection) throw rejection;
+
+  const websiteUrl = normalizeWebsiteUrl(rawWebsiteUrl);
+  await assertWebsiteReachable(websiteUrl);
+
+  return { email, brandName, websiteUrl };
 }
 
 /**
@@ -533,7 +647,7 @@ export function isAnonymousEmail(email: string) {
   return email.trim().toLowerCase().endsWith(`@${ANONYMOUS_EMAIL_DOMAIN}`);
 }
 
-export function validateAuditInputAllowAnonymous(input: Record<string, unknown>) {
+export async function validateAuditInputAllowAnonymous(input: Record<string, unknown>) {
   const rawEmail = String(input.email ?? "").trim().toLowerCase();
   const brandName = String(input.brand_name ?? "").trim();
   const rawWebsiteUrl = String(input.website_url ?? "").trim();
@@ -542,10 +656,16 @@ export function validateAuditInputAllowAnonymous(input: Record<string, unknown>)
   if (!rawWebsiteUrl) throw new Error("Website URL is required.");
   if (rawEmail && !rawEmail.includes("@")) throw new Error("A valid email is required.");
 
+  const rejection = websiteInputRejection(rawWebsiteUrl);
+  if (rejection) throw rejection;
+
+  const websiteUrl = normalizeWebsiteUrl(rawWebsiteUrl);
+  await assertWebsiteReachable(websiteUrl);
+
   const anonymous = !rawEmail;
   const email = anonymous ? `anon-${crypto.randomUUID()}@${ANONYMOUS_EMAIL_DOMAIN}` : rawEmail;
 
-  return { email, brandName, websiteUrl: normalizeWebsiteUrl(rawWebsiteUrl), anonymous };
+  return { email, brandName, websiteUrl, anonymous };
 }
 
 function reportFromRow(row: AuditRow): AuditReport {

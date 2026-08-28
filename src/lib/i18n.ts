@@ -64,6 +64,11 @@ export const homeCopy = {
     loadingCta: "Running…",
     submitCta: "Run my free audit",
     error: "Something went wrong. Please try again.",
+    // Refus du gate du champ << site >> : un message par code stable de l'API
+    // (`error_code`), toujours avec la correction proposee.
+    errorWebsiteLooksLikeEmail: "That looks like an email address — enter your website address instead, e.g. yourbrand.com.",
+    errorWebsiteCredentials: "A website address can't contain a login or password — enter just your domain, e.g. yourbrand.com.",
+    errorWebsiteUnreachable: "We couldn't reach that website — check the address, e.g. yourbrand.com.",
     formFootnote: "Real buying questions sent live to Gemini — never simulated. No card, no signup.",
     formBuyerIntentNote: "We only test questions a shopper asks before buying — never “reviews of your brand”.",
     // 2. AI conversation demo
@@ -227,6 +232,11 @@ export const homeCopy = {
     loadingCta: "Audit en cours…",
     submitCta: "Lancer mon audit gratuit",
     error: "Un problème est survenu. Réessaie dans un instant.",
+    // Refus du gate du champ « site » : un message par code stable de l'API
+    // (`error_code`), toujours avec la correction proposée.
+    errorWebsiteLooksLikeEmail: "On dirait une adresse email — indique plutôt l'adresse de ton site, par exemple marque.com.",
+    errorWebsiteCredentials: "Une adresse de site ne contient pas d'identifiants — indique juste ton domaine, par exemple marque.com.",
+    errorWebsiteUnreachable: "Ce site ne répond pas — vérifie l'adresse, par exemple marque.com.",
     formFootnote: "De vraies questions d'achat envoyées en direct à Gemini — jamais simulées. Sans carte, sans inscription.",
     formBuyerIntentNote: "On ne teste que les questions qu'un acheteur pose avant d'acheter — jamais « avis sur ta marque ».",
     // 2. Démo conversation IA

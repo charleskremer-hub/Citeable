@@ -17,7 +17,11 @@ export async function POST(req: NextRequest) {
     const { trafficClass } = requestTrafficClass(req.headers);
 
     const payload = await req.json();
-    const { email, brandName, websiteUrl, anonymous } = validateAuditInputAllowAnonymous(payload);
+    // La porte du champ << site >> vit DANS la validation : email deguise en
+    // site, URL a identifiants ou hote injoignable sont refuses ici — zero
+    // ligne `email_captures`, zero ligne `audits`, zero evenement funnel,
+    // zero appel Gemini/Serper.
+    const { email, brandName, websiteUrl, anonymous } = await validateAuditInputAllowAnonymous(payload);
     // Le droit est resolu APRES la validation, parce qu'il a besoin de l'email :
     // c'est la cle de la table des abonnements. Cle interne -> abonnement actif ->
     // sinon `free`. Toute panne de base retombe sur `free` (voir entitlement.ts) :
@@ -130,6 +134,16 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Invalid request";
+    // Refus du gate d'entree : 4xx + code stable, que le front mappe vers un
+    // message localise. Reconnu par propriete (`gateCode`) et non par import :
+    // les tests de route mockent `audit-engine` avec une liste fermee d'exports.
+    const maybeGateCode = error instanceof Error ? (error as Error & { gateCode?: unknown }).gateCode : undefined;
+    const gateCode = typeof maybeGateCode === "string" ? maybeGateCode : null;
+
+    if (gateCode) {
+      return NextResponse.json({ error: message, error_code: gateCode }, { status: 422 });
+    }
+
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }

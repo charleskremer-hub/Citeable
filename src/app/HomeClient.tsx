@@ -70,7 +70,22 @@ export default function HomeClient({ locale }: HomeClientProps) {
       const data = await res.json();
       const redirectUrl = typeof data.redirect_url === "string" ? data.redirect_url : data.audit_id ? `/audit/${data.audit_id}` : "";
 
-      if (!res.ok || !redirectUrl) throw new Error(data.error ?? "Failed");
+      if (!res.ok || !redirectUrl) {
+        // Refus du gate du champ « site » : l'API repond 4xx avec un
+        // `error_code` stable, mappe ici vers le message localise qui propose
+        // la correction. Tout autre echec garde le message generique.
+        const gateMessages: Record<string, string> = {
+          website_looks_like_email: copy.errorWebsiteLooksLikeEmail,
+          website_credentials: copy.errorWebsiteCredentials,
+          website_unreachable: copy.errorWebsiteUnreachable,
+        };
+        const errorCode = typeof data.error_code === "string" ? data.error_code : "";
+
+        window.posthog?.capture("audit_submit_failed", { source: "hero_cta", locale });
+        setStatus("error");
+        setErrorMsg(gateMessages[errorCode] ?? copy.error);
+        return;
+      }
 
       window.posthog?.capture("audit_requested", { source: "hero_cta", brand_name: brandName, audit_id: data.audit_id, locale });
       window.location.assign(redirectUrl);
