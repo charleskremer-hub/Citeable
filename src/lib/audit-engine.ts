@@ -1,4 +1,6 @@
 import { createHash, timingSafeEqual } from "crypto";
+import { detectPlatform, type DetectedPlatform } from "./platform-detect";
+export type { DetectedPlatform } from "./platform-detect";
 import { pool } from "./db";
 import { recordFunnelEvent } from "./funnel";
 import { localizePlainAction, type Locale } from "./i18n";
@@ -185,6 +187,7 @@ export type AuditReport = {
   formula: string;
   structuredDataFound: boolean;
   category: string;
+  platform: DetectedPlatform;
   icpSegment: IcpSegmentMetadata;
   buyerIntentPrompts: BuyerIntentPromptResult[];
   promptDebug?: string;
@@ -213,6 +216,13 @@ type AuditRawResults = {
   error?: string;
   formula?: string;
   category?: string;
+  /**
+   * Plateforme e-commerce détectée depuis le HTML crawlé au moment de l'audit
+   * (LOT 2a, 29/08/2026). Persistée ici car le HTML n'est PAS conservé :
+   * le rendu du rapport ne re-crawle jamais. Audits antérieurs : absent => le
+   * rapport affiche le guide générique, jamais une plateforme devinée.
+   */
+  platform?: DetectedPlatform;
   icpSegment?: IcpSegmentMetadata;
   buyerIntentPrompts?: BuyerIntentPromptResult[];
   structuredDataFound?: boolean;
@@ -687,6 +697,7 @@ function reportFromRow(row: AuditRow): AuditReport {
     formula: row.raw_results?.formula ?? formulaTextForTier(auditTier),
     structuredDataFound: Boolean(row.raw_results?.structuredDataFound),
     category,
+    platform: row.raw_results?.platform ?? "inconnu",
     icpSegment,
     buyerIntentPrompts,
     emailSent: Boolean(row.raw_results?.emailSent),
@@ -2439,20 +2450,24 @@ async function inferCategory(brandName: string, websiteUrl: string, fallbackChec
   const domain = domainFromWebsite(websiteUrl);
   const fallbackText = `${fallbackCheck.detail} ${fallbackCheck.evidence ?? ""}`;
   let signals = "";
+  // LOT 2a : détection depuis le HTML déjà téléchargé ici — AUCUNE requête en
+  // plus. Site injoignable ou signal ambigu => "inconnu" (guide générique).
+  let platform: DetectedPlatform = "inconnu";
 
   try {
     const response = await withTimeout(normalizeWebsiteUrl(websiteUrl));
 
     if (response.ok) {
       const html = await response.text();
+      platform = detectPlatform(html);
       signals = extractHomepageSignals(html);
       const fallbackCategory = categoryFromHomepageText(`${brandName} ${domain} ${signals}`, domain);
       const category = categoryLooksLikeTechStack(fallbackCategory, signals) ? "DTC footwear brand" : fallbackCategory;
 
-      if (!isGenericCategory(category)) return { category, homepageText: signals };
+      if (!isGenericCategory(category)) return { category, homepageText: signals, platform };
 
       const secondPassCategory = categoryFromHomepageText(`${brandName} ${domain} ${signals} ${fallbackText}`, domain);
-      if (!isGenericCategory(secondPassCategory)) return { category: secondPassCategory, homepageText: signals };
+      if (!isGenericCategory(secondPassCategory)) return { category: secondPassCategory, homepageText: signals, platform };
     }
   } catch (error) {
     console.log(`[getpick] category homepage fetch failed: ${error instanceof Error ? error.message : "Unknown error"}`);
@@ -2461,12 +2476,13 @@ async function inferCategory(brandName: string, websiteUrl: string, fallbackChec
   // Phrase rules could not determine a category (e.g. Shopify/anti-bot sites returning little text).
   // Ask the LLM — it usually recognises the brand from its name + domain.
   const aiCategory = await inferCategoryAI(brandName, domain, signals);
-  if (aiCategory) return { category: aiCategory, homepageText: signals || fallbackText };
+  if (aiCategory) return { category: aiCategory, homepageText: signals || fallbackText, platform };
 
   const fallbackCategory = categoryFromHomepageText(`${brandName} ${domain} ${fallbackText}`, domain);
   return {
     category: isGenericCategory(fallbackCategory) ? UNKNOWN_CATEGORY : fallbackCategory,
     homepageText: signals || fallbackText,
+    platform,
   };
 }
 
@@ -4966,6 +4982,7 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
     formula: formulaTextForTier(auditTier),
     structuredDataFound,
     category: inferred.category,
+    platform: inferred.platform,
     icpSegment,
     buyerIntentPrompts,
     emailSent: false,
@@ -5046,6 +5063,7 @@ export async function completeQueuedAudit(auditId: string): Promise<QueuedAuditR
           status: "completed",
           formula: report.formula,
           category: report.category,
+          platform: report.platform,
           icpSegment: report.icpSegment,
           buyerIntentPrompts: report.buyerIntentPrompts,
           promptDebug: report.promptDebug,

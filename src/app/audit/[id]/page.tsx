@@ -6,7 +6,7 @@ import { ensureAuditSchema, pool } from "@/lib/db";
 import { recordReportLinkOpened } from "@/lib/funnel";
 import { auditCopy, brandSentimentView, localeFromHeaders, localeFromUnknown, localizeCategoryLabel, localizePlainAction, type Locale } from "@/lib/i18n";
 import { categoryPerceptionFromPrompts, extractSourceCitationReports, generateGeoAgentAssetsFromAudit, isAnonymousEmail, isAuditedBrandName, robotsTxtFixForBlockedCrawlers, youtubeContentTipIsRelevant } from "@/lib/audit-engine";
-import type { BrandSentiment, BuyerIntentPromptResult, CategoryPerception, IcpSegmentMetadata, PlainAction, SourceCitationReport } from "@/lib/audit-engine";
+import type { BrandSentiment, BuyerIntentPromptResult, CategoryPerception, DetectedPlatform, IcpSegmentMetadata, PlainAction, SourceCitationReport } from "@/lib/audit-engine";
 import { AUDIT_SHARE_TOKEN_PARAM, verifyAuditShareToken } from "@/lib/audit-share-token";
 import { resolveReportAccess } from "@/lib/report-access";
 import { entitlementForEmail } from "@/lib/subscriptions";
@@ -73,7 +73,7 @@ type AuditRow = {
     brandSentiment?: BrandSentiment;
     categoryPerception?: CategoryPerception;
     structuredDataFound?: boolean;
-    locale?: string;
+    locale?: string; platform?: DetectedPlatform;
     buyerIntentPrompts?: BuyerIntentPromptResult[];
     monitoring?: { actions?: PlainAction[]; sources?: SourceCitationReport[]; trend?: { score: number; createdAt: string }[]; scoreDelta?: number | null };
   } | null;
@@ -564,7 +564,7 @@ export default async function AuditPage({
                   jsonLdSnippet={jsonLdSnippet}
                   llmsTxt={technicalAssets?.llmsTxt ?? null}
                   robotsFix={robotsFix}
-                  blockedBots={aiCrawl?.state === "blocked" ? aiCrawl.blocked : []}
+                  blockedBots={aiCrawl?.state === "blocked" ? aiCrawl.blocked : []} platform={audit.raw_results?.platform ?? "inconnu"}
                 />
               )}
             </section>

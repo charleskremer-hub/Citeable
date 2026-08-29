@@ -1,4 +1,6 @@
 import { auditCopy, type Locale } from "@/lib/i18n";
+import { installGuide, type GuideFile } from "@/lib/install-guides";
+import type { DetectedPlatform } from "@/lib/platform-detect";
 import CopyBlock from "./CopyBlock";
 import { extractPasteable, type ActionImpact, type RankedAction } from "./report-insights";
 
@@ -14,6 +16,7 @@ type Props = {
   llmsTxt: string | null;
   robotsFix: string | null;
   blockedBots: string[];
+  platform: DetectedPlatform;
 };
 
 /**
@@ -23,7 +26,7 @@ type Props = {
  * coller, fichiers machine) que si le tier y donne droit — le tier gratuit ne
  * le rend jamais (voir page.tsx, bloc `data-testid="publish-block"`).
  */
-export default function PublishContent({ locale, actions, contentBlocks, proof, youtubeTipRelevant, jsonLdSnippet, llmsTxt, robotsFix, blockedBots }: Props) {
+export default function PublishContent({ locale, actions, contentBlocks, proof, youtubeTipRelevant, jsonLdSnippet, llmsTxt, robotsFix, blockedBots, platform }: Props) {
   const copy = auditCopy[locale];
   const fr = locale === "fr";
   const copyLabel = fr ? "Copier" : "Copy";
@@ -31,6 +34,21 @@ export default function PublishContent({ locale, actions, contentBlocks, proof, 
   const actionImpactLabel = (impact: ActionImpact) =>
     impact.measured ? copy.actionImpactMeasured(impact.addressedLostCount, impact.lostCount) : copy.actionImpactUnmeasured;
   const hasFiles = Boolean(llmsTxt);
+  // LOT 2b : le mode d'emploi par fichier — où aller, quoi coller, comment
+  // vérifier. Plateforme "inconnu" => guide générique, jamais un guide deviné.
+  const guideLabels = fr
+    ? { where: "Où", paste: "Le geste", verify: "Vérifie" }
+    : { where: "Where", paste: "The move", verify: "Check" };
+  const renderGuide = (file: GuideFile) => {
+    const guide = installGuide(file, platform, locale);
+    return (
+      <dl className="m-0 mt-2 grid gap-1.5 text-xs font-bold leading-5 text-[#8E8E9A]" data-testid={`install-guide-${file}`} data-generic={guide.generic ? "true" : "false"}>
+        <div><dt className="inline text-[#CAFF3C]">{guideLabels.where} · </dt><dd className="inline">{guide.where}</dd></div>
+        <div><dt className="inline text-[#CAFF3C]">{guideLabels.paste} · </dt><dd className="inline">{guide.paste}</dd></div>
+        <div><dt className="inline text-[#CAFF3C]">{guideLabels.verify} · </dt><dd className="inline">{guide.verify}</dd></div>
+      </dl>
+    );
+  };
 
   return (
     <>
@@ -123,6 +141,7 @@ export default function PublishContent({ locale, actions, contentBlocks, proof, 
             <div className="mt-4 rounded-2xl border border-[#FF8F6B]/25 bg-[#FF8F6B]/[0.06] p-4">
               <p className="m-0 mb-3 text-sm font-bold leading-6 text-[#F3C7B7]">{copy.techRobotsIntro(blockedBots.join(", "))}</p>
               <CopyBlock label={copy.techRobotsLabel} text={robotsFix} copyLabel={copyLabel} copiedLabel={copiedLabel} />
+              {renderGuide("robots")}
             </div>
           ) : null}
 
@@ -130,10 +149,12 @@ export default function PublishContent({ locale, actions, contentBlocks, proof, 
             <div>
               <CopyBlock label={copy.techJsonLdLabel} text={jsonLdSnippet} copyLabel={copyLabel} copiedLabel={copiedLabel} />
               <p className="m-0 mt-1.5 text-xs font-bold leading-5 text-[#8E8E9A]">{copy.techJsonLdHint}</p>
+              {renderGuide("jsonld")}
             </div>
             <div>
               <CopyBlock label={copy.techLlmsLabel} text={llmsTxt ?? ""} copyLabel={copyLabel} copiedLabel={copiedLabel} />
               <p className="m-0 mt-1.5 text-xs font-bold leading-5 text-[#8E8E9A]">{copy.techLlmsHint}</p>
+              {renderGuide("llms")}
             </div>
           </div>
 
