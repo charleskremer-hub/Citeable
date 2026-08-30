@@ -124,7 +124,11 @@ test("AC1 — un crawler obtient le 201 habituel, avec audit_started marqué bot
   assert.equal(typeof body.audit_id, "string");
   assert.equal(afterCallbacks.length, 1);
 
-  assert.equal(events.length, 1);
+  // 2 depuis la commande CEO du 30/08 : le chemin nominatif émet aussi
+  // `email_captured` (voir capture-email-email-captured.test.ts). Seul ce
+  // COMPTE change ; les garanties de classe et d'absence de données
+  // personnelles ci-dessous ne bougent pas.
+  assert.equal(events.length, 2);
   assert.equal(events[0].eventName, "audit_started");
   assert.equal(events[0].metadata?.trafficClass, "bot");
   assertNoPersonalData(events[0].metadata);

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse, after } from "next/server";
+import { createHash } from "node:crypto";
 import { ensureAuditSchema, pool } from "@/lib/db";
 import { checkFreeAuditQuota, findFreshFreeGeminiAudit, brandDedupeDomain, createCachedFreeAuditForLead, recipientLocaleFromSignals, runQueuedAudit, validateAuditInputAllowAnonymous } from "@/lib/audit-engine";
 import { recordFunnelEvent } from "@/lib/funnel";
@@ -7,6 +8,29 @@ import { requestTrafficClass } from "@/lib/traffic-filter";
 import { resolveAuditTierWithEntitlement } from "@/lib/entitlement";
 
 export const maxDuration = 60;
+
+/**
+ * Clé de dédup du `email_captured` de la porte d'entrée.
+ *
+ * Pourquoi PAS `email_captured:<auditId>` comme dans /api/claim-audit : chaque
+ * soumission du formulaire crée une NOUVELLE ligne `audits` — y compris le
+ * chemin caché, qui clone l'audit source pour le lead (voir
+ * `createCachedFreeAuditForLead`). Une double soumission produirait deux
+ * auditId distincts, donc deux lignes : le compteur mesurerait des clics, pas
+ * des adresses données. La clé porte donc l'adresse (hachée : la table funnel
+ * ne stocke aucune donnée personnelle, l'adresse en clair vit dans
+ * `email_captures`) et le jour UTC — une adresse donnée deux fois le même jour
+ * compte une fois, la même adresse revenue plus tard compte à nouveau.
+ * Aucune collision avec les clés `email_captured:<uuid>` de /api/claim-audit :
+ * le segment `capture:` n'est pas un uuid. Aucun client ne peut viser cette
+ * clé : `email_captured` est dans `SERVER_ONLY_FUNNEL_EVENTS`, les clés client
+ * qui empiètent sont re-préfixées (voir `namespacedDedupeKey`).
+ */
+function emailCapturedDedupeKey(email: string): string {
+  const day = new Date().toISOString().slice(0, 10);
+  const emailHash = createHash("sha256").update(email.trim().toLowerCase()).digest("hex").slice(0, 32);
+  return `email_captured:capture:${emailHash}:${day}`;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -66,6 +90,18 @@ export async function POST(req: NextRequest) {
           metadata: { brandName, websiteUrl, auditTier, tierDowngradedFrom, cachedFromAuditId: cachedAudit.id, locale, trafficClass },
           dedupeKey: `audit_completed:${auditId}`,
         });
+        // Le visiteur vient de donner son adresse à la porte : c'est une
+        // capture, même servie depuis le cache. Jamais sur le chemin anonyme —
+        // là, l'adresse n'existe pas encore, /api/claim-audit la capturera.
+        if (!anonymous) {
+          await recordFunnelEvent({
+            eventName: "email_captured",
+            auditId,
+            source: "capture_email_cached",
+            metadata: { brandName, websiteUrl, auditTier, tierDowngradedFrom, cachedFromAuditId: cachedAudit.id, locale, trafficClass },
+            dedupeKey: emailCapturedDedupeKey(email),
+          });
+        }
 
         return NextResponse.json(
           {
@@ -109,6 +145,18 @@ export async function POST(req: NextRequest) {
       metadata: { brandName, websiteUrl, auditTier, tierDowngradedFrom, locale, trafficClass },
       dedupeKey: `audit_started:${auditId}`,
     });
+
+    // Même règle que le chemin caché : un email réel = une capture comptée,
+    // rattachée à l'audit pour l'attribution nominative.
+    if (!anonymous) {
+      await recordFunnelEvent({
+        eventName: "email_captured",
+        auditId,
+        source: "capture_email",
+        metadata: { brandName, websiteUrl, auditTier, tierDowngradedFrom, locale, trafficClass },
+        dedupeKey: emailCapturedDedupeKey(email),
+      });
+    }
 
     after(async () => {
       const result = await runQueuedAudit(auditId);
