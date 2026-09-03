@@ -4834,6 +4834,77 @@ export async function getRescanQueueStatus(): Promise<{ due_count: number; next_
   };
 }
 
+/**
+ * GARDE-FOU DE LA FILE DE RESCAN — « n'engager aucun appel d'API payant sur une
+ * cible qui ne peut pas repondre ».
+ *
+ * Fait mesure le 01/09 : la file de PRODUCTION porte une fixture de test
+ * end-to-end (marque « E2E Check 1784708916 », site
+ * `https://e2e-check-1784708916.com/`, domaine sans resolution DNS). Le cron
+ * quotidien l'a traitee : ligne `audits` creee, `audit_started` + `audit_completed`
+ * emis, et surtout des appels payants (Gemini, Serper) engages sur un hote qui ne
+ * repond pas — pour un score de 0. L'entree n'est pas retirable a la main
+ * (`DATABASE_URL` est `sensitive` chez Vercel et sa valeur est rendue vide meme au
+ * proprietaire du jeton), donc elle est neutralisee PAR LE CODE.
+ *
+ * Deux motifs de saut, et deux seulement.
+ */
+export type RescanSkipReason = "e2e_fixture" | "unreachable_host";
+
+/**
+ * Motif 1 — fixture de test end-to-end. PURE et SYNCHRONE : aucune sonde reseau,
+ * donc cout zero, y compris en sondes gratuites.
+ *
+ * CONSERVATEUR PAR CONSTRUCTION : un faux positif ici couperait le rescan d'un
+ * client payant. On n'accepte donc qu'un motif non ambigu :
+ *   - le PREMIER label d'hote (apres `www.`) commence par `e2e-` — ce qui couvre
+ *     `e2e-check-<timestamp>.com` ;
+ *   - ou le nom de marque commence par `e2e` suivi d'une frontiere (espace, tiret,
+ *     underscore, ou fin) — ce qui couvre « E2E Check <timestamp> ».
+ * Un domaine client legitime qui contient « e2e » AILLEURS (`reference2e2.com`,
+ * `acme-e2etools.com`) ne matche pas : le prefixe est exige sur le label, pas
+ * cherche dans la chaine.
+ */
+const E2E_FIXTURE_HOST_LABEL = /^e2e-/;
+const E2E_FIXTURE_BRAND = /^e2e(?:[\s_-]|$)/i;
+
+export function e2eFixtureRescanSkip(brandName: string, websiteUrl: string): boolean {
+  if (E2E_FIXTURE_BRAND.test((brandName ?? "").trim())) return true;
+
+  let hostname: string;
+  try {
+    hostname = new URL(websiteUrl).hostname.toLowerCase();
+  } catch {
+    // URL illisible : ce n'est pas une preuve de fixture, on ne saute pas ici.
+    return false;
+  }
+
+  const label = (hostname.startsWith("www.") ? hostname.slice(4) : hostname).split(".")[0];
+  return E2E_FIXTURE_HOST_LABEL.test(label);
+}
+
+/**
+ * La raison de sauter, ou `null` s'il n'y en a pas.
+ *
+ * ORDRE VOLONTAIRE : la fixture d'abord (synchrone, gratuite, aucune sonde), et
+ * seulement si ce n'est pas une fixture, la joignabilite. `assertWebsiteReachable`
+ * est REUTILISEE telle quelle (le gate du champ « site ») : 2 sondes HEAD https au
+ * plus, apex puis `www`, 3,5 s chacune. Une sonde HEAD n'est PAS un appel payant —
+ * ni Gemini ni Serper — et 2 x 3,5 s tiennent sous la `maxDuration = 60` de la route
+ * de cron.
+ */
+export async function rescanSkipReason(brandName: string, websiteUrl: string): Promise<RescanSkipReason | null> {
+  if (e2eFixtureRescanSkip(brandName, websiteUrl)) return "e2e_fixture";
+
+  try {
+    await assertWebsiteReachable(websiteUrl);
+  } catch {
+    return "unreachable_host";
+  }
+
+  return null;
+}
+
 export async function runDueWeeklyRescans(limit = 3) {
   const due = await pool.query<MonitoredBrandRow>(
     `SELECT id, email, brand_name, website_url, last_audit_id
@@ -4844,9 +4915,31 @@ export async function runDueWeeklyRescans(limit = 3) {
      LIMIT $1`,
     [limit]
   );
-  const results: Array<{ monitored_brand_id: string; audit_id?: string; status: string; score?: number; error?: string; email_sent?: boolean }> = [];
+  const results: Array<{ monitored_brand_id: string; audit_id?: string; status: string; score?: number; error?: string; email_sent?: boolean; skip_reason?: RescanSkipReason }> = [];
 
   for (const brand of due.rows) {
+    // LE SAUT SE PLACE ICI, AVANT L'INSERT : avant toute ecriture, avant tout
+    // evenement funnel, avant `runQueuedAudit` — donc avant le premier appel
+    // payant. C'est le seul endroit ou le garde-fou coute reellement zero.
+    const skipReason = await rescanSkipReason(brand.brand_name, brand.website_url);
+
+    if (skipReason) {
+      // MARQUEE IGNOREE, JAMAIS SUPPRIMEE. `active = false` est REVERSIBLE d'un
+      // simple `UPDATE monitored_brands SET active = true WHERE id = ...` :
+      // aucune ligne n'est effacee, aucune colonne n'est ajoutee au schema,
+      // aucune donnee n'est perdue. La marque sort de la file, elle ne sort pas
+      // de la base.
+      await pool.query(
+        `UPDATE monitored_brands
+         SET active = false,
+             updated_at = now()
+         WHERE id = $1`,
+        [brand.id]
+      );
+      results.push({ monitored_brand_id: brand.id, status: "skipped", skip_reason: skipReason });
+      continue;
+    }
+
     const auditResult = await pool.query<{ id: string }>(
       `INSERT INTO audits (email, brand_name, website_url, dedupe_domain, monitored_brand_id, run_type, previous_audit_id, raw_results)
        VALUES ($1, $2, $3, $4, $5, 'weekly_rescan', $6, $7)
