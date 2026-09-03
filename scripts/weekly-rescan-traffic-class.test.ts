@@ -69,6 +69,25 @@ mock.module(funnelUrl, {
   },
 });
 
+/**
+ * NEUTRALISATION DE SONDE — ajoutee le 03/09 avec le garde-fou de la file de
+ * rescan, et RIEN D'AUTRE n'est touche dans ce fichier : aucune assertion, aucun
+ * mock existant, aucun cas de test.
+ *
+ * Depuis le garde-fou, `runDueWeeklyRescans` appelle `assertWebsiteReachable`
+ * avant l'INSERT, ce qui lancait ici une VRAIE requete HEAD vers `acme.com`
+ * (mesuree : ~900 ms au lieu de ~1 ms, et verte uniquement parce que le bac a
+ * sable a du reseau et qu'acme.com repond 200). Un test unitaire qui depend du
+ * reseau et d'un domaine tiers n'est pas un test unitaire : il devient rouge sans
+ * sortie reseau, ou le jour ou le domaine tombe.
+ *
+ * `assertWebsiteReachable` resout `fetch` sur `globalThis` a chaque appel : lui
+ * substituer une reponse immediate rend la sonde deterministe et gratuite. La
+ * cible reste joignable, donc le chemin teste ci-dessous est exactement celui
+ * d'avant le garde-fou.
+ */
+globalThis.fetch = (async () => new Response(null, { status: 200 })) as typeof fetch;
+
 const { runDueWeeklyRescans } = await import("@/lib/audit-engine");
 
 test("AC3 — le rescan hebdo écrit sa classe dans raw_results, jamais unknown", async () => {
