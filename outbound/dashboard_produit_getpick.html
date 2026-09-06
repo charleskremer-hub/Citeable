@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GetPick — Cockpit Produit · 06/09/2026</title>
+<style>
+:root{color-scheme:light;--bg:#f6f7f9;--card:#fff;--ink:#14161a;--mut:#5d6673;--line:#e3e6ea;--ok:#1a7f4b;--warn:#b06d00;--bad:#b42318;--acc:#2f5bd7}
+*{box-sizing:border-box}
+body{margin:0;padding:22px;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1120px;margin:0 auto}
+h1{font-size:23px;margin:0 0 3px}
+h2{font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:28px 0 10px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.sub{color:var(--mut);font-size:13px;margin:0 0 6px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:16px;margin-bottom:14px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:15px}
+.tile .k{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+.tile .v{font-size:30px;font-weight:650;margin:5px 0 3px;line-height:1.1}
+.tile .n{font-size:12.5px;color:var(--mut)}
+.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);font-weight:600}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+.badge{display:inline-block;font-size:11px;font-weight:650;padding:2px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.04em}
+.b-ok{background:#e7f5ee;color:var(--ok)}.b-warn{background:#fdf3e3;color:var(--warn)}.b-bad{background:#fdeceb;color:var(--bad)}.b-neu{background:#eef0f3;color:var(--mut)}
+.src{font-size:11.5px;color:var(--mut);font-style:italic;margin-top:8px}
+code{background:#eef0f3;padding:1px 5px;border-radius:4px;font-size:12px}
+ul{margin:7px 0;padding-left:19px}li{margin:4px 0}
+.case{display:grid;grid-template-columns:118px 1fr;gap:11px;padding:10px 0;border-bottom:1px solid var(--line)}.case:last-child{border-bottom:none}
+.q{background:#fff8e6;border:1px solid #f0dca8;border-radius:9px;padding:14px;margin-bottom:12px}
+footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;color:var(--mut)}
+</style>
+</head>
+<body><div class="wrap">
+
+<h1>GetPick — Cockpit Produit</h1>
+<p class="sub">Run produit du <strong>dimanche 6 septembre 2026</strong> · funnel relevé <strong>08:31 UTC</strong> · contrôles 08:29–08:30 UTC · veille 08:33–08:36 UTC</p>
+
+<h2>a · Les 5 KPI</h2>
+<div class="tiles">
+  <div class="tile"><div class="k">1 · Ventes (cumul, 14 j)</div><div class="v bad">0</div><div class="n">Δ 0 · Stripe non relevé ; <code>checkout_opened = 0</code> toutes classes · 08:31 UTC</div></div>
+  <div class="tile"><div class="k">2 · Rapports vus par un vrai prospect (14 j)</div><div class="v warn">1</div><div class="n">Δ 0 · <code>report_viewed.human</code>, non attribué, daté 27/08 · <strong>sort de la fenêtre le 10/09 → doit valoir 0 au run du 11/09</strong></div></div>
+  <div class="tile"><div class="k">3 · Emails capturés (human, 14 j)</div><div class="v bad">0</div><div class="n">Δ 0 · <code>email_captured.human</code> · 08:31 UTC</div></div>
+  <div class="tile"><div class="k">4 · Prod</div><div class="v ok">VERT</div><div class="n"><code>d50f77a</code> = <code>origin/main</code> depuis le 03/09 · 524 tests / 0 lint / 0 tsc · <code>/api/funnel</code> 200 · <strong>SHA servi déduit, non mesuré</strong> (pas de <code>VERCEL_TOKEN</code>)</div></div>
+  <div class="tile"><div class="k">5 · Dépense en attente</div><div class="v ok">0 €</div><div class="n">Rien à engager</div></div>
+</div>
+
+<h2>b · À valider par Charles</h2>
+<div class="q"><p style="margin:0"><strong>Rien.</strong> Aucune orientation stratégique ni dépense ce run. La question « pause du 14/08 levée ? » est portée par le cockpit CEO (propriétaire unique).</p></div>
+
+<h2>c · Commande CEO (05/09) et livraison</h2>
+<div class="card">
+<table>
+<thead><tr><th>Commande</th><th>État</th><th>Preuve</th></tr></thead>
+<tbody>
+<tr><td>1 · Rendre le lot du 14/08 livrable (push, merge, tsc, tests)</td><td><span class="badge b-ok">déjà livré (21/08)</span></td><td><code>643e7e9</code> fusionné par <code>21722c7</code> ; <code>ls-remote main = d50f77a</code> ; 4 contrôles verts ce jour (524/510/0 fail · 0 lint · 0 tsc · préflight NO-GO uniquement par <code>AUDIT_SHARE_SECRET</code> absent)</td></tr>
+<tr><td>2 · Identifier qui lance les audits internes (+2 le 05/09 07:35–07:42Z)</td><td><span class="badge b-ok">identifié</span></td><td>Cron <code>weekly-rescan</code> (<code>0 7 * * *</code>, exécutions 07:22–07:55) — <code>audit-engine.ts</code> l.4950–4983 : classe <code>internal</code>, source <code>weekly_rescan</code>. Aujourd'hui 0 rescan (aucune marque due). Couper = fermer le backfill = décision CEO.</td></tr>
+<tr><td>Hors périmètre : déploiement</td><td><span class="badge b-neu">respecté</span></td><td>0 squad, 0 merge, 0 déploiement</td></tr>
+</tbody></table>
+</div>
+
+<h2>d · Funnel 14 j (08:31 UTC, sans clé, cookie interne posé avant)</h2>
+<div class="card">
+<table>
+<thead><tr><th>Événement</th><th class="n">Total</th><th class="n">human</th><th class="n">internal</th><th class="n">Δ vs 05/09</th></tr></thead>
+<tbody>
+<tr><td>audit_started</td><td class="n">24</td><td class="n">1</td><td class="n">23</td><td class="n">−1</td></tr>
+<tr><td>audit_completed</td><td class="n">24</td><td class="n">1</td><td class="n">23</td><td class="n">−1</td></tr>
+<tr><td>report_viewed</td><td class="n">3</td><td class="n"><strong>1</strong></td><td class="n">2</td><td class="n">0</td></tr>
+<tr><td>report_link_opened</td><td class="n">7</td><td class="n"><strong>0</strong></td><td class="n">7</td><td class="n">0</td></tr>
+<tr><td>email_captured · teaser_cta_click · checkout_opened</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td></tr>
+<tr><td>followup_1_sent · followup_2_sent · followup_click</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td></tr>
+</tbody></table>
+<p class="src"><code>GET https://www.getpick.ai/api/funnel</code>, <code>traffic_class_since</code> 2026-07-30 ⇒ zéros humains = verdicts. 72 h après l'envoi des 6 liens (03/09) : 0 ouverture humaine. Prévision « −2/jour » du 04/09 : retirée, confirmée fausse (−1 en 25 h).</p>
+</div>
+
+<h2>e · Veille (navigateur réel · JS · toggles énumérés · JSON-LD · aria-label)</h2>
+<div class="card">
+<table>
+<thead><tr><th>Acteur</th><th>Gating / pricing rendu</th><th>Machines</th><th>Écart</th><th>Décision</th></tr></thead>
+<tbody>
+<tr><td><strong>AthenaHQ</strong><br><span class="src">06/09 08:34 UTC</span></td><td>Essential gratuit 300 crédits · Starter <strong>$295/mo</strong> (mensuel ; annuel −17 %) · Enterprise custom · API et crédits = add-ons payants</td><td>0 JSON-LD</td><td>aucun</td><td>inchangé vs 04/09 — aucune action</td></tr>
+<tr><td><strong>Scrunch</strong><br><span class="src">06/09 08:36 UTC</span></td><td>Core <strong>$250/mo</strong> · essai 7 j · audit « No credit card required » · Enterprise 9 LLM</td><td>meta « starting at $250 a month » — concordant</td><td>domaine migré <code>scrunchai.com → scrunch.com</code>, date non établie</td><td>aucune action ; module « Shopping — product level » constaté, refus SKU-level maintenu</td></tr>
+<tr><td colspan="5"><span class="src">Non re-mesurés ce run (dernier relevé) : Peec €70 · Visiblie $71, CB requise · Profound $99 · Otterly €29 · Promptwatch €85 (05/09) · Semrush $99 (01/09) · Ahrefs $50 (10/08) · Evertune $800 (04/09). Plancher self-serve €29 ; GetPick 9 €/19 € seul en dessous.</span></td></tr>
+</tbody></table>
+</div>
+
+<h2>f · Backlog</h2>
+<div class="card">
+<p><strong>0 ajout · 0 coupe.</strong> Aucune entrée ne déplace un compteur tant que la prospection est fermée et que <code>report_viewed.human</code> attribuable ≈ 0.</p>
+<ul>
+<li><strong>Must (au CEO)</strong> : FAQ mensuelle (Lot 2c).</li>
+<li><strong>Refus re-motivés</strong> : SKU-level shopping · pubs-dans-réponses · corpus rescan (9ᵉ) · « score 0 vs injoignable » client · fermer le backfill (au CEO, reformulé avec coût) · instrumenter les sauts du garde-fou (non mesurable avant ~01/10).</li>
+<li><strong>Refusé neuf</strong> : <code>/api/version</code> exposant le SHA servi — aucun compteur de funnel, et impossible à pousser sans credential. À rouvrir avec <code>keys.env</code> (S, réversible).</li>
+</ul>
+</div>
+
+<h2>g · Cases</h2>
+<div class="card">
+<div class="case"><div><span class="badge b-neu">dépense</span></div><div><strong>0 €.</strong></div></div>
+<div class="case"><div><span class="badge b-bad">incapacité</span></div><div><strong><code>outbound/keys.env</code> absent</strong> (perdu avec l'ancienne machine). Bloque préflight GO, mode détaillé, SHA servi, <code>due_count</code>. Geste : <code>npm i -g vercel && vercel login && vercel link && vercel env pull outbound/keys.env --environment=production</code> + <code>VERCEL_TOKEN</code>, <code>GITHUB_TOKEN</code> régénérés.</div></div>
+<div class="case"><div><span class="badge b-bad">incapacité</span></div><div><strong><code>git push</code> refusé</strong> (aucun credential GitHub dans le bac à sable). Fichiers de run du 05/09 et 06/09 + <code>AGENT_RUNS.md</code> <strong>commités localement sur <code>main</code></strong> ; Charles pousse avec <code>git push origin main</code>.</div></div>
+<div class="case"><div><span class="badge b-bad">incapacité</span></div><div><strong>Playwright</strong> — serveur Next + Postgres absents. Couvert par la prévisualisation Vercel au prochain lot.</div></div>
+<div class="case"><div><span class="badge b-warn">choix</span></div><div>Gate 422 non re-testé (écriture payante possible) · cron non appelé (il exécute) · 5 acteurs du 05/09 non re-mesurés (&lt; 24 h) · 0 squad (commande déjà livrée, rien à déplacer).</div></div>
+</div>
+
+<h2>h · Pour le CEO</h2>
+<div class="card">
+<ul>
+<li><strong>Sa « dette de livraison 22 j / 7 commits au sol » n'existe plus depuis le 21/08.</strong> Le cockpit CEO se fonde sur l'état du 15/08 ; <code>main</code> a intégré 13 branches squad depuis. Dette mesurée : zéro (04/09, 05/09, 06/09).</li>
+<li><strong>Les +2 audits internes du 05/09 sont le cron de rescan</strong>, par code et par horaire. « Les couper » = restreindre le backfill de <code>ensureAuditSchema</code> aux audits réclamés ou payés : décision produit, coût actuel = 1 rescan Gemini+Serper par audit gratuit tous les 30 j sans compteur en face. Reco : restreindre. Propriétaire : CEO.</li>
+<li>72 h après l'envoi des 6 liens : 0 ouverture humaine (verdict).</li>
+<li>Échéances : 10/09 sortie du <code>report_viewed.human</code> du 27/08 · ~16/09 rescan des 8 audits du 17/08 (+8 <code>audit_started.internal</code> attendus).</li>
+</ul>
+</div>
+
+<footer><p>Cockpit réécrit à chaque run produit. Chiffres figés au relevé du <strong>2026-09-06 08:31 UTC</strong> (horloge navigateur). Aucun chiffre estimé ; ce qui n'a pas été mesuré porte « non mesuré ». Détail : <code>outbound/PRODUIT_RUN_2026-09-06.md</code>.</p></footer>
+</div></body></html>
