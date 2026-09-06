@@ -66,13 +66,68 @@ test("AC4 — jeton de partage valide : ouvert, quel que soit le tier et sans pa
   assert.equal(access({ auditTier: "monitor_9eur", emailIsAnonymous: true, shareTokenValid: true }).locked, false);
 });
 
-test("AC5/AC6 — jeton absent, expiré ou falsifié : l'appelant passe `false`, et la porte se referme", () => {
-  // `verifyAuditShareToken` rend `false` pour un jeton expiré comme pour un jeton
+test("AC5/AC6 — jeton absent ou falsifié : l'appelant passe `false`, et la porte se referme", () => {
+  // `verifyAuditShareToken` rend `false` pour un jeton absent comme pour un jeton
   // falsifié (voir scripts/audit-share-token.test.ts). Ici on prouve que ce
   // `false` suffit à re-gater, sans message d'erreur ni cas particulier.
+  // Le jeton EXPIRÉ a désormais son propre chemin (`shareTokenExpired`) et son
+  // propre test plus bas : il ne retombe plus sur le paywall.
   const verdict = access({ auditTier: "monitor_9eur", shareTokenValid: false });
   assert.equal(verdict.locked, true);
   assert.equal(verdict.reason, "paywall");
+});
+
+// --- Le lien de prospection ne meurt pas en caisse ---------------------------
+// Les six liens envoyés le 03/09/2026 expirent le 29/09 à 08:41:49 UTC sur des
+// audits en tier `monitor_9eur`. Avant ce lot, une prospecte qui cliquait après
+// cette date se voyait demander 9 € pour un rapport qu'on lui avait promis.
+
+test("RECETTE 1/3 — jeton VALIDE sur un tier payant : ouvert", () => {
+  const verdict = access({ auditTier: "monitor_9eur", shareTokenValid: true, shareTokenExpired: false });
+  assert.equal(verdict.locked, false);
+  assert.equal(verdict.reason, "open");
+});
+
+test("RECETTE 2/3 — jeton EXPIRÉ sur un tier payant : porte de CAPTURE, jamais le paywall", () => {
+  for (const tier of PAID_AUDIT_TIERS) {
+    const verdict = access({ auditTier: tier, shareTokenValid: false, shareTokenExpired: true });
+    assert.equal(verdict.locked, true, tier);
+    assert.equal(verdict.reason, "claim", tier);
+  }
+  // Y compris sur un audit de prospection jamais réclamé, qui est le cas réel.
+  const reel = access({
+    auditTier: "monitor_9eur",
+    emailIsAnonymous: true,
+    shareTokenValid: false,
+    shareTokenExpired: true,
+  });
+  assert.equal(reel.reason, "claim");
+});
+
+test("RECETTE 3/3 — jeton FALSIFIÉ sur un tier payant : le paywall tient", () => {
+  // L'expiration s'ouvre, la falsification ne s'ouvre pas. C'est exactement le
+  // piège de ce lot : confondre les deux dans le même `false` rouvrirait le
+  // produit payant à qui bricole un jeton daté d'hier.
+  const verdict = access({ auditTier: "monitor_9eur", shareTokenValid: false, shareTokenExpired: false });
+  assert.equal(verdict.locked, true);
+  assert.equal(verdict.reason, "paywall");
+});
+
+test("`shareTokenExpired` absent = comportement d'avant (fail-safe fermé)", () => {
+  // Un appelant qui n'a pas été mis à jour ne doit rien ouvrir par inadvertance.
+  assert.equal(access({ auditTier: "agent_19eur", shareTokenValid: false }).reason, "paywall");
+  // Et il ne suffit pas d'être « expiré » pour ouvrir un tier gratuit déjà réclamé.
+  assert.equal(access({ auditTier: "free", emailIsAnonymous: false, shareTokenExpired: true }).reason, "claim");
+});
+
+test("un jeton expiré ne prime PAS sur un abonnement actif", () => {
+  // Ordre des règles : un client qui paie voit son rapport, pas une porte.
+  const verdict = access({
+    auditTier: "monitor_9eur",
+    hasActiveSubscription: true,
+    shareTokenExpired: true,
+  });
+  assert.equal(verdict.locked, false);
 });
 
 test("FAIL-SAFE : abonnement indécidable (base en panne) = pas d'abonnement", () => {
@@ -114,6 +169,19 @@ test("la page décide par resolveReportAccess, et plus par isAnonymousEmail seul
     "l'ancienne règle `reportLocked = isAnonymousEmail(...)` ne doit plus exister"
   );
   assert.ok(pageSource.includes("verifyAuditShareToken(audit.id"), "le jeton est vérifié contre l'id de CET audit");
+});
+
+test("la page distingue un jeton expiré d'un jeton falsifié, et le passe à la décision", () => {
+  assert.ok(
+    /shareTokenExpired: !shareTokenValid && auditShareTokenState\(audit\.id, shareToken\) === "expired",/.test(
+      pageSource
+    ),
+    "l'état du jeton est calculé contre l'id de CET audit, et seulement sur le chemin fermé"
+  );
+  assert.ok(
+    /shareTokenExpired: [^\n]+\n\s*shareTokenValid,/.test(pageSource),
+    "resolveReportAccess reçoit le drapeau d'expiration"
+  );
 });
 
 test("chaque section de détail reste derrière la porte", () => {

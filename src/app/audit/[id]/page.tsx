@@ -7,7 +7,7 @@ import { recordReportLinkOpened } from "@/lib/funnel";
 import { auditCopy, brandSentimentView, localeFromHeaders, localeFromUnknown, localizeCategoryLabel, localizePlainAction, type Locale } from "@/lib/i18n";
 import { categoryPerceptionFromPrompts, extractSourceCitationReports, generateGeoAgentAssetsFromAudit, isAnonymousEmail, isAuditedBrandName, robotsTxtFixForBlockedCrawlers, youtubeContentTipIsRelevant } from "@/lib/audit-engine";
 import type { BrandSentiment, BuyerIntentPromptResult, CategoryPerception, DetectedPlatform, IcpSegmentMetadata, PlainAction, SourceCitationReport } from "@/lib/audit-engine";
-import { AUDIT_SHARE_TOKEN_PARAM, verifyAuditShareToken } from "@/lib/audit-share-token";
+import { AUDIT_SHARE_TOKEN_PARAM, auditShareTokenState, verifyAuditShareToken } from "@/lib/audit-share-token";
 import { resolveReportAccess } from "@/lib/report-access";
 import { entitlementForEmail } from "@/lib/subscriptions";
 import LocaleLang from "@/app/LocaleLang";
@@ -162,8 +162,7 @@ export default async function AuditPage({
   // filtré : voir ReportViewBeacon et src/lib/traffic-filter.ts.
   const shareTokenParam = query?.[AUDIT_SHARE_TOKEN_PARAM];
   const shareToken = Array.isArray(shareTokenParam) ? shareTokenParam[0] : shareTokenParam;
-  // UN SEUL appel à `verifyAuditShareToken` par requête : deux vérifications,
-  // c'est un HMAC inutile et deux vérités possibles pour la même requête.
+  // UN SEUL appel à `verifyAuditShareToken` par requête ; le second HMAC ne part que sur le chemin DÉJÀ fermé, pour distinguer un lien que NOUS avons signé et qui a vécu trop longtemps d'un jeton bricolé (voir `auditShareTokenState`).
   const shareTokenValid = verifyAuditShareToken(audit.id, shareToken);
   const reportAccess = resolveReportAccess({
     auditTier: audit.raw_results?.auditTier,
@@ -171,6 +170,7 @@ export default async function AuditPage({
     complete,
     failed,
     hasActiveSubscription: await hasActiveSubscriptionForAudit(audit.email),
+    shareTokenExpired: !shareTokenValid && auditShareTokenState(audit.id, shareToken) === "expired",
     shareTokenValid,
   });
 

@@ -17,6 +17,8 @@
  *
  *   1. jeton de partage valide  -> ouvert  (le lien nommé de la prospection) ;
  *   2. abonnement actif          -> ouvert ;
+ *   2bis. jeton signé par nous mais EXPIRÉ -> gaté sur la porte de CAPTURE,
+ *         même en tier payant (le lien de prospection ne meurt pas en caisse) ;
  *   3. tier payant sans abonnement vérifiable -> gaté (le cas qui fuyait) ;
  *   4. tier gratuit non réclamé  -> gaté (inchangé, porte de capture d'email) ;
  *   5. tier gratuit réclamé      -> ouvert (inchangé).
@@ -56,6 +58,15 @@ export type ReportAccessInput = {
   hasActiveSubscription: boolean;
   /** L'URL portait-elle un jeton de partage valide pour CET audit ? */
   shareTokenValid: boolean;
+  /**
+   * L'URL portait-elle un jeton VRAIMENT SIGNÉ PAR NOUS pour cet audit, mais
+   * dont le TTL est écoulé ? (`auditShareTokenState(...) === "expired"`.)
+   *
+   * OPTIONNEL, ET C'EST VOULU : un appelant qui ne sait pas répondre laisse le
+   * champ absent et retombe sur le comportement d'avant, plus FERMÉ. Le
+   * fail-safe de ce module ne va que dans ce sens.
+   */
+  shareTokenExpired?: boolean;
 };
 
 /**
@@ -75,6 +86,20 @@ export function resolveReportAccess(input: ReportAccessInput): ReportAccess {
 
   if (input.shareTokenValid) return { locked: false, reason: "open" };
   if (input.hasActiveSubscription) return { locked: false, reason: "open" };
+
+  // JETON EXPIRÉ : la porte de CAPTURE, jamais celle du PAIEMENT — y compris sur
+  // un tier vendu.
+  //
+  // Un tier payant porté par un audit de PROSPECTION n'a jamais été payé par
+  // personne : le paywall y protège un droit qui n'existe pas. La personne au
+  // bout du lien a reçu de nous un email qui lui décrivait son rapport ; lui
+  // présenter une caisse parce que notre propre TTL a expiré transforme une
+  // marche du funnel en sortie. La porte `claim` est plus fermée que l'accès par
+  // jeton et plus utile que le paywall : elle demande une adresse.
+  //
+  // Ne s'applique QU'À un jeton dont la signature a été prouvée (voir
+  // `auditShareTokenState`) : une signature falsifiée reste `paywall`.
+  if (input.shareTokenExpired === true) return { locked: true, reason: "claim" };
 
   if (isPaidAuditTier(input.auditTier)) return { locked: true, reason: "paywall" };
 

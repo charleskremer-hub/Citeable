@@ -66,39 +66,75 @@ export function signAuditShareToken(
   return `${expirySeconds}.${signature(id, expirySeconds, secret)}`;
 }
 
-/** `true` si `token` a bien été signé pour `auditId` et n'est pas expiré. */
-export function verifyAuditShareToken(
+/**
+ * L'état d'un jeton, en QUATRE valeurs et non plus en un booléen.
+ *
+ * POURQUOI CETTE FONCTION EXISTE, ALORS QU'UN BOOLÉEN SUFFISAIT. Le booléen
+ * confond deux situations qui n'ont RIEN à voir pour la personne au bout du
+ * lien :
+ *
+ *   - `expired`  : la signature est bonne, c'est bien NOUS qui avons envoyé ce
+ *     lien à cette personne, il a simplement vécu plus que son TTL ;
+ *   - `invalid`  : la signature ne tient pas — jeton bricolé, recopié d'un autre
+ *     audit, tronqué. Personne ne lui a jamais rien promis.
+ *
+ * Les traiter pareil coûte cher : les six liens de prospection envoyés le
+ * 03/09/2026 expirent le 29/09 à 08:41:49 UTC, et leurs audits sont en tier
+ * `monitor_9eur`. Sans cette distinction, une prospecte qui clique le 30/09 se
+ * voit demander 9 € — un paywall qui protège un droit que personne n'a payé.
+ *
+ * NOTE DE SÉCURITÉ. `expired` est rendu APRÈS vérification de la signature, et
+ * jamais avant : sinon n'importe qui obtiendrait l'état « expiré » — et donc la
+ * porte ouverte par `report-access` — en fabriquant un jeton daté d'hier.
+ * L'expiration est DANS la charge signée, elle ne se falsifie pas.
+ */
+export type AuditShareTokenState = "absent" | "malformed" | "invalid" | "expired" | "valid";
+
+export function auditShareTokenState(
   auditId: string,
   token: string | null | undefined,
   now: number = Date.now()
-): boolean {
+): AuditShareTokenState {
   const secret = shareSecret();
-  if (!secret) return false;
-  if (typeof token !== "string") return false;
+  // Sans secret on ne vérifie rien : tout jeton est traité comme non signé par
+  // nous. Une variable absente ne vaut jamais « pas de contrôle ».
+  if (!secret) return "invalid";
+  if (typeof token !== "string" || token === "") return "absent";
 
   const id = String(auditId ?? "").trim();
-  if (!id) return false;
+  if (!id) return "invalid";
 
   // Le HMAC est en base64url : son alphabet ne contient pas de point, donc le
   // PREMIER point sépare sans ambiguïté l'expiration de la signature.
   const separator = token.indexOf(".");
-  if (separator <= 0) return false;
+  if (separator <= 0) return "malformed";
 
   const rawExpiry = token.slice(0, separator);
   const provided = token.slice(separator + 1);
-  if (!/^\d+$/.test(rawExpiry) || !provided) return false;
+  if (!/^\d+$/.test(rawExpiry) || !provided) return "malformed";
 
   const expirySeconds = Number.parseInt(rawExpiry, 10);
-  if (!Number.isSafeInteger(expirySeconds)) return false;
-  if (expirySeconds * 1000 <= now) return false;
+  if (!Number.isSafeInteger(expirySeconds)) return "malformed";
 
   const expected = signature(id, expirySeconds, secret);
   const providedBytes = Buffer.from(provided, "utf8");
   const expectedBytes = Buffer.from(expected, "utf8");
   // `timingSafeEqual` lève sur des longueurs différentes : on écarte ce cas
   // avant, ce qui ne fuit que la longueur — publique par construction.
-  if (providedBytes.length !== expectedBytes.length) return false;
-  return timingSafeEqual(providedBytes, expectedBytes);
+  if (providedBytes.length !== expectedBytes.length) return "invalid";
+  if (!timingSafeEqual(providedBytes, expectedBytes)) return "invalid";
+
+  // Signature prouvée. C'est SEULEMENT ici que la date peut parler.
+  return expirySeconds * 1000 <= now ? "expired" : "valid";
+}
+
+/** `true` si `token` a bien été signé pour `auditId` et n'est pas expiré. */
+export function verifyAuditShareToken(
+  auditId: string,
+  token: string | null | undefined,
+  now: number = Date.now()
+): boolean {
+  return auditShareTokenState(auditId, token, now) === "valid";
 }
 
 /** L'URL complète à envoyer à un prospect. */

@@ -15,6 +15,7 @@ import { dirname, resolve } from "node:path";
 import {
   AUDIT_SHARE_TOKEN_PARAM,
   AUDIT_SHARE_TOKEN_TTL_DAYS,
+  auditShareTokenState,
   auditShareUrl,
   signAuditShareToken,
   verifyAuditShareToken,
@@ -166,4 +167,53 @@ test("PARITÉ : le lien produit par scripts/audit-share-url.mjs est reconnu par 
     assert.equal(verifyAuditShareToken(AUDIT_A, url.searchParams.get(AUDIT_SHARE_TOKEN_PARAM)), true);
     assert.equal(verifyAuditShareToken(AUDIT_B, url.searchParams.get(AUDIT_SHARE_TOKEN_PARAM)), false);
   });
+});
+
+// --- États du jeton : « expiré » n'est pas « falsifié » ----------------------
+// Le booléen les confondait. La distinction porte une décision produit (un lien
+// de prospection expiré ouvre la porte de capture, un jeton bricolé non), donc
+// elle se prouve ici, à la source, et pas seulement chez son appelant.
+
+test("auditShareTokenState : un jeton frais est `valid`, le même est `expired` passé son TTL", () => {
+  withSecret(SECRET, () => {
+    const now = Date.UTC(2026, 8, 6, 10, 0, 0);
+    const token = signAuditShareToken(AUDIT_A, 30, now);
+    assert.equal(auditShareTokenState(AUDIT_A, token, now), "valid");
+    assert.equal(auditShareTokenState(AUDIT_A, token, now + 29 * DAY_MS), "valid", "encore valide à J+29");
+    assert.equal(auditShareTokenState(AUDIT_A, token, now + 31 * DAY_MS), "expired", "expiré à J+31");
+    // Et le booléen historique dit toujours la même chose que l'état.
+    assert.equal(verifyAuditShareToken(AUDIT_A, token, now + 31 * DAY_MS), false);
+  });
+});
+
+test("auditShareTokenState : une signature falsifiée est `invalid`, JAMAIS `expired`", () => {
+  withSecret(SECRET, () => {
+    const now = Date.UTC(2026, 8, 6, 10, 0, 0);
+    // Le piège exact du lot : un jeton daté d'HIER et signé n'importe comment.
+    // S'il ressortait « expiré », il ouvrirait la porte de capture d'un rapport
+    // payant à qui sait écrire un timestamp.
+    const perime = signAuditShareToken(AUDIT_A, 30, now - 40 * DAY_MS);
+    assert.equal(auditShareTokenState(AUDIT_A, perime, now), "expired", "témoin : celui-là est vraiment expiré");
+    assert.equal(auditShareTokenState(AUDIT_A, tamperSignature(perime), now), "invalid");
+    // Signé pour un AUTRE audit : invalide, pas expiré, même si la date est bonne.
+    const pourB = signAuditShareToken(AUDIT_B, 30, now);
+    assert.equal(auditShareTokenState(AUDIT_A, pourB, now), "invalid");
+  });
+});
+
+test("auditShareTokenState : absence, forme cassée et secret manquant ont chacun leur état", () => {
+  withSecret(SECRET, () => {
+    assert.equal(auditShareTokenState(AUDIT_A, undefined), "absent");
+    assert.equal(auditShareTokenState(AUDIT_A, null), "absent");
+    assert.equal(auditShareTokenState(AUDIT_A, ""), "absent");
+    assert.equal(auditShareTokenState(AUDIT_A, "sans-point"), "malformed");
+    assert.equal(auditShareTokenState(AUDIT_A, ".signature-sans-date"), "malformed");
+    assert.equal(auditShareTokenState(AUDIT_A, "1790671309."), "malformed");
+    assert.equal(auditShareTokenState(AUDIT_A, "pas-un-nombre.abc"), "malformed");
+    assert.equal(auditShareTokenState("", "1790671309.abc"), "invalid");
+  });
+  // Sans secret on ne reconnaît rien comme nôtre : surtout pas « expiré ».
+  const token = withSecret(SECRET, () => signAuditShareToken(AUDIT_A));
+  withSecret(undefined, () => assert.equal(auditShareTokenState(AUDIT_A, token), "invalid"));
+  withSecret("", () => assert.equal(auditShareTokenState(AUDIT_A, token), "invalid"));
 });
