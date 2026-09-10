@@ -23,6 +23,28 @@ type HomeClientProps = {
   locale: Locale;
 };
 
+/**
+ * Compteur de caisse (10/09/2026). Les deux boutons de prix de la home etaient des
+ * `<a href>` nus : quatre sessions Stripe reelles (31/07, 27/08 x3) existent alors
+ * que `checkout_opened` affichait 0 sur la meme periode — le compteur ne pouvait
+ * STRUCTURELLEMENT jamais bouger. Meme discipline que `FunnelCheckoutLink` : la
+ * navigation reste native, l'evenement part en sendBeacon et ne se met jamais
+ * entre l'acheteur et Stripe. La classe de trafic est constatee cote serveur.
+ */
+function trackCheckoutOpened(plan: "monitor_9eur" | "agent_19eur", href: string, locale: Locale) {
+  const body = JSON.stringify({
+    events: [{ event_name: "checkout_opened", source: "pricing_card", metadata: { checkout_url: href, plan, locale } }],
+  });
+  try {
+    if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
+      if (navigator.sendBeacon("/api/funnel", new Blob([body], { type: "application/json" }))) return;
+    }
+    void fetch("/api/funnel", { method: "POST", headers: { "Content-Type": "application/json" }, body, keepalive: true }).catch(() => undefined);
+  } catch {
+    // La mesure ne bloque jamais la caisse.
+  }
+}
+
 export default function HomeClient({ locale }: HomeClientProps) {
   const copy = homeCopy[locale];
   const resourcePages = answerPages.filter((page) => page.locale === locale).slice(0, 5);
@@ -342,7 +364,11 @@ export default function HomeClient({ locale }: HomeClientProps) {
                   </ul>
                   <a
                     href={href}
-                    onClick={() => window.posthog?.capture(tier.plan === "free" ? "audit_cta_clicked" : "purchase_started", { plan: tier.plan, source: "pricing_card", locale })}
+                    onClick={() => {
+                      window.posthog?.capture(tier.plan === "free" ? "audit_cta_clicked" : "purchase_started", { plan: tier.plan, source: "pricing_card", locale });
+                      if (tier.href === "monitor") trackCheckoutOpened("monitor_9eur", href, locale);
+                      else if (tier.href === "agent") trackCheckoutOpened("agent_19eur", href, locale);
+                    }}
                     className={`block rounded-xl px-5 py-3 text-center text-sm font-black no-underline transition hover:brightness-110 ${tier.highlight ? "bg-[#CAFF3C] text-[#09090B]" : "bg-white/[0.08] text-[#F0F0EC]"}`}
                   >
                     {tier.cta}
