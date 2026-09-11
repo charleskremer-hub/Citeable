@@ -28,11 +28,27 @@ test("la home émet checkout_opened pour chacun des deux plans payants", () => {
   assert.match(source, /source: "pricing_card"/);
 });
 
+// Le formulaire d'audit de la home utilise légitimement `e.preventDefault()` et
+// `window.location.assign` (soumission puis redirection vers /audit/<id>) : la
+// garantie « navigation native » se lit sur le CHEMIN DE CAISSE seul — la fonction
+// `trackCheckoutOpened` et le `onClick` des boutons de prix — pas sur le fichier
+// entier (11/09/2026 : l'assertion globale rendait le test rouge sur un composant
+// correct).
+function checkoutPath(): string {
+  const fn = source.match(/function trackCheckoutOpened[\s\S]*?\n}\n/);
+  assert.ok(fn, "trackCheckoutOpened introuvable dans HomeClient.tsx");
+  const onClick = source.match(/onClick=\{\(\) => \{[\s\S]*?trackCheckoutOpened\("agent_19eur"[\s\S]*?\}\}/);
+  assert.ok(onClick, "onClick des boutons de prix introuvable dans HomeClient.tsx");
+  return fn[0] + onClick[0];
+}
+
 test("la mesure ne se met jamais entre l'acheteur et Stripe", () => {
-  assert.doesNotMatch(source, /preventDefault/);
-  assert.doesNotMatch(source, /window\.location\.assign/);
-  assert.match(source, /navigator\.sendBeacon\("\/api\/funnel"/);
-  assert.match(source, /keepalive: true/);
+  const path = checkoutPath();
+  assert.doesNotMatch(path, /preventDefault/);
+  assert.doesNotMatch(path, /window\.location\.assign/);
+  assert.doesNotMatch(path, /await /);
+  assert.match(path, /navigator\.sendBeacon\("\/api\/funnel"/);
+  assert.match(path, /keepalive: true/);
 });
 
 test("les deux plans payants de la copy ont un bouton de prix qui pointe vers la caisse", () => {
