@@ -1,124 +1,103 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GetPick — Cockpit Produit · 07/09/2026</title>
+<title>GetPick — Cockpit Produit — 11/09/2026</title>
 <style>
-:root{color-scheme:light;--bg:#f6f7f9;--card:#fff;--ink:#14161a;--mut:#5d6673;--line:#e3e6ea;--ok:#1a7f4b;--warn:#b06d00;--bad:#b42318;--acc:#2f5bd7}
-*{box-sizing:border-box}
-body{margin:0;padding:22px;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-.wrap{max-width:1120px;margin:0 auto}
-h1{font-size:23px;margin:0 0 3px}
-h2{font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:28px 0 10px;border-bottom:1px solid var(--line);padding-bottom:6px}
-.sub{color:var(--mut);font-size:13px;margin:0 0 6px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:16px;margin-bottom:14px}
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
-.tile{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:15px}
-.tile .k{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
-.tile .v{font-size:30px;font-weight:650;margin:5px 0 3px;line-height:1.1}
-.tile .n{font-size:12.5px;color:var(--mut)}
-.ok{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}
-table{width:100%;border-collapse:collapse;font-size:13.5px}
-th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
-th{font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);font-weight:600}
-td.n{text-align:right;font-variant-numeric:tabular-nums}
-.badge{display:inline-block;font-size:11px;font-weight:650;padding:2px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.04em}
-.b-ok{background:#e7f5ee;color:var(--ok)}.b-warn{background:#fdf3e3;color:var(--warn)}.b-bad{background:#fdeceb;color:var(--bad)}.b-mut{background:#eef0f3;color:var(--mut)}
-code{font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;background:#eef0f3;padding:1px 5px;border-radius:4px}
-p{margin:6px 0}
-ul{margin:6px 0 6px 18px;padding:0}
-li{margin:3px 0}
-.foot{color:var(--mut);font-size:12px;margin-top:26px;border-top:1px solid var(--line);padding-top:10px}
+  :root { color-scheme: light; }
+  body { margin: 0; padding: 24px; font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; background: #f6f6f4; color: #1a1a1a; font-size: 14px; line-height: 1.45; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 15px; margin: 28px 0 10px; text-transform: uppercase; letter-spacing: .06em; color: #444; }
+  .sub { color: #666; margin-bottom: 18px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+  .kpi { background: #fff; border: 1px solid #e2e2de; border-radius: 12px; padding: 14px 16px; }
+  .kpi .l { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #666; }
+  .kpi .v { font-size: 30px; font-weight: 700; margin: 4px 0 2px; }
+  .kpi .d { font-size: 12px; color: #555; }
+  .green { color: #167a3c; } .red { color: #b3261e; } .amber { color: #9a6700; }
+  .card { background: #fff; border: 1px solid #e2e2de; border-radius: 12px; padding: 14px 18px; margin-bottom: 12px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #eee; vertical-align: top; }
+  th { background: #fafaf8; font-weight: 600; }
+  code { background: #f0f0ec; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+  .foot { color: #777; font-size: 12px; margin-top: 30px; border-top: 1px solid #ddd; padding-top: 10px; }
+  .tag { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; background: #eee; margin-right: 6px; }
 </style>
 </head>
 <body>
-<div class="wrap">
 <h1>GetPick — Cockpit Produit</h1>
-<p class="sub">Run produit du lundi 7 septembre 2026 · environnement 07:38 UTC · contrôles 07:40–07:41 UTC · funnel 07:42 UTC (en-tête <code>Date</code> de <code>/api/funnel</code>) · veille 07:52–08:02 UTC · clôture voir pied de page</p>
+<div class="sub">Run du vendredi 11 septembre 2026 · relevés 13:18–13:21 UTC (en-tête <code>Date</code> de /api/funnel) · précédent : CEO 10/09 10:34 UTC</div>
 
-<h2>a · Les 5 KPI</h2>
-<div class="tiles">
-  <div class="tile"><div class="k">1 · Ventes (cumul, 14 j)</div><div class="v">0</div><div class="n">Δ 0 · Stripe non relevé ; <code>checkout_opened</code> = 0 toutes classes · 07:42 UTC</div></div>
-  <div class="tile"><div class="k">2 · Rapports vus par un vrai prospect (14 j)</div><div class="v">1</div><div class="n">Δ 0 · <code>report_viewed.human</code>, non attribué, daté 27/08 · <b>prévision : 0 au plus tard le 11/09</b> (sortie de fenêtre le 10/09)</div></div>
-  <div class="tile"><div class="k">3 · Emails capturés (human, 14 j)</div><div class="v">0</div><div class="n">Δ 0 · <code>email_captured.human</code> · 07:42 UTC</div></div>
-  <div class="tile"><div class="k">4 · Prod</div><div class="v ok">VERT</div><div class="n"><code>1d338cb</code> = <code>origin/main</code> · <b>déploiement Vercel <code>getpick2</code> terminé 07/09 07:16:56 UTC</b> (statut de commit GitHub, mesuré) · surfaces 200 à 07:42 · 533 tests / 0 lint / 0 tsc · <span class="warn">poussé et déployé hors de mes runs, auteur du push <code>main</code> inconnu</span></div></div>
-  <div class="tile"><div class="k">5 · Dépense en attente</div><div class="v">0 €</div><div class="n">1 audit de contrôle <b>préparé, non chiffrable au centime</b> (Gemini + Serper à l'unité + 1 rescan/30 j) — sans objet tant que <code>keys.env</code> manque</div></div>
+<div class="kpis">
+  <div class="kpi"><div class="l">1 · Ventes</div><div class="v">0</div><div class="d">Δ = · Stripe livemode : 0 charge, 4 sessions expirées (27/08 ×3, 31/07) · 13:18 UTC</div></div>
+  <div class="kpi"><div class="l">2 · Rapports vus (human, 14 j)</div><div class="v">0</div><div class="d">Δ = (1→0 acté le 10/09) · /api/funnel 13:19 UTC</div></div>
+  <div class="kpi"><div class="l">3 · Emails capturés (human, 14 j)</div><div class="v">0</div><div class="d">Δ = · /api/funnel 13:19 UTC</div></div>
+  <div class="kpi"><div class="l">4 · Prod</div><div class="v green">VERT</div><div class="d"><code>1d338cb</code> servi, déployé 07/09 07:16:56 UTC (statut GitHub, getpick2) · 5 surfaces 200 · <span class="amber">683f3fd fusionné localement, NON poussé</span></div></div>
+  <div class="kpi"><div class="l">5 · Dépense en attente</div><div class="v">0 €</div><div class="d">Rien à débloquer</div></div>
 </div>
 
-<h2>b · À valider par Charles</h2>
+<h2>À valider</h2>
+<div class="card"><b>Rien.</b> Aucune orientation stratégique, aucune dépense. Un geste technique débloque le déploiement (voir Incapacité) : <code>cd ~/Dev/Projects/getpick && git push origin main</code>.</div>
+
+<h2>Commande CEO (10/09) → livré</h2>
 <div class="card">
-  <p><b>Dépense — 1 audit de contrôle</b> (commande CEO n°2) : coût = appels Gemini Flash + Serper d'un audit (montant unitaire absent du dépôt, je ne l'invente pas) <b>+ 1 rescan tous les 30 j</b> via le backfill de <code>ensureAuditSchema</code>. Débloque la preuve « cookie ⇒ classe <code>internal</code> » avant une série de liens. <b>Reco : ne pas engager avant que <code>keys.env</code> existe</b> — la série qu'il précède ne peut pas partir sans le secret de signature. Le jour venu, marque déjà présente dans <code>monitored_brands</code> pour n'ajouter aucun tuple récurrent.</p>
-  <p><b>Aucune orientation stratégique de mon côté.</b> « Relance de la prospection cette semaine ? » est portée par le cockpit CEO (propriétaire unique).</p>
-  <p class="sub">Geste non stratégique, non payant, mais bloquant tout le reste (INCAPACITÉ 1) : reconstituer <code>outbound/keys.env</code> — <code>npm i -g vercel && vercel login && cd ~/Dev/Projects/getpick && vercel link && vercel env pull outbound/keys.env --environment=production</code>, puis <code>VERCEL_TOKEN</code> et <code>GITHUB_TOKEN</code> régénérés.</p>
+<p><b>Commande :</b> réceptionner <code>be1c9cb</code> (caisse mesurable : les 2 boutons de prix émettent <code>checkout_opened</code>) — tsc 0, tests verts, merge local, pas de déploiement.</p>
+<table>
+<tr><th>Contrôle</th><th>be1c9cb (livré par le CEO)</th><th>683f3fd (après correction du test)</th></tr>
+<tr><td>node scripts/run-tests.mjs</td><td class="red">536 / 521 pass / 1 fail (le test livré)</td><td class="green">536 / 522 pass / 0 fail / 14 skip</td></tr>
+<tr><td>npx eslint .</td><td>—</td><td class="green">0 erreur (4 avert.)</td></tr>
+<tr><td>npx tsc --noEmit</td><td>—</td><td class="green">0 erreur</td></tr>
+<tr><td>preflight-merge</td><td>—</td><td class="amber">NO-GO uniquement par AUDIT_SHARE_SECRET absent (keys.env), état identique aux 3 réceptions précédentes</td></tr>
+</table>
+<p><b>Test faux, composant juste :</b> <code>doesNotMatch(/preventDefault/)</code> sur le fichier entier, alors que le formulaire d'audit l'utilise légitimement. Corrigé dans le test (scopé à <code>trackCheckoutOpened</code> + onClick des boutons de prix, + interdit <code>await</code>). Mutation ×2 ⇒ rouge. Diff tests vs origin/main : 1 A, 0 M.</p>
+<p><b>Merge local :</b> <code>main = 683f3fd</code> (fast-forward). <b>Déploiement :</b> non fait — aucun credential git ; <code>git push origin main</code> déclenche Vercel. Rollback : <code>git push --force-with-lease origin 1d338cb:main</code>. <b>Après le push :</b> statut GitHub, <code>grep checkout_opened</code> sur la home servie, puis contrôle croisé (1 clic interne par bouton ⇒ <code>checkout_opened.internal</code> +2 et Stripe +2 sessions unpaid, 0 €).</p>
 </div>
 
-<h2>c · Commande CEO (06/09) et livraison</h2>
+<h2>Funnel 14 j — 13:19:21 UTC</h2>
 <div class="card">
 <table>
-<tr><th>Commande</th><th>État</th><th>Preuve</th></tr>
-<tr><td>1 · Lien signé localement accepté par la prod (lu par <code>/api/audit-status</code>)</td><td><span class="badge b-bad">incapacité</span></td><td>Signer exige <code>AUDIT_SHARE_SECRET</code> (<code>audit-share-token.ts</code> l.59 lève sans lui). Absent de la machine (aucun <code>keys.env</code>/<code>.env*</code> sous <code>~/Dev</code>, <code>~/Documents</code>, iCloud). Geste : voir b.</td></tr>
-<tr><td>2 · Marquage interne confirmé sur un audit de contrôle (funnel avant/après)</td><td><span class="badge b-warn">dépense préparée</span></td><td>Un audit = API payante + enrôlement rescan 30 j. Préparée en b, non exécutée. Sans objet tant que 1 est bloqué.</td></tr>
-<tr><td>3 · État réel de la dette de livraison</td><td><span class="badge b-ok">livré</span></td><td><b>Zéro</b> (4ᵉ mesure consécutive) : <code>main = origin/main</code> après remise en ligne locale ; 19 têtes <code>squad/*</code> fusionnées ou historiques ; branche du 14/08 fusionnée depuis <code>21722c7</code>. <b>Fait neuf</b> : <code>1d338cb</code> sur <code>main</code>, voir h.</td></tr>
-<tr><td>Hors périmètre : déploiement non lié à la chaîne</td><td><span class="badge b-ok">respecté par moi</span></td><td>0 squad, 0 merge, 0 déploiement de ma part. <code>1d338cb</code> (lié à la chaîne : liens du 03/09) déployé par une autre main.</td></tr>
+<tr><th>événement</th><th>total</th><th>human</th><th>internal</th><th>Δ vs 10/09</th></tr>
+<tr><td>audit_started</td><td>25</td><td>0</td><td>25</td><td>=</td></tr>
+<tr><td>audit_completed</td><td>25</td><td>0</td><td>25</td><td>=</td></tr>
+<tr><td>report_viewed</td><td>0</td><td>0</td><td>0</td><td>−1 (dernier internal sorti de la fenêtre)</td></tr>
+<tr><td>report_link_opened</td><td>7</td><td>0</td><td>7</td><td>=</td></tr>
+<tr><td>email_captured · teaser_cta_click · checkout_opened · followup_1/2_sent · followup_click</td><td>0</td><td>0</td><td>0</td><td>=</td></tr>
 </table>
-<p><b>Réception a posteriori de <code>1d338cb</code></b> (clone jetable GitHub, node 23.11.1) : <code>run-tests</code> 533 / 519 pass / 0 fail / 14 skip · <code>eslint</code> 0 erreur (4 avert.) · <code>tsc --noEmit</code> 0 · préflight NO-GO <b>uniquement</b> par <code>AUDIT_SHARE_SECRET</code> absent. Diff 5 fichiers +196/−17. <code>M</code> sur <code>report-access.test.ts</code> légitime (la commande supprime « expiré ⇒ paywall » ; l'assertion absent/falsifié ⇒ paywall reste). Sécurité relue : « expired » rendu après HMAC prouvé seulement. Compteur visé : <code>email_captured</code> (effet observable à partir du 30/09, expiration des 6 liens du 03/09 le 29/09 08:41:49 UTC). Rollback : <code>git push --force-with-lease origin d50f77a:main</code> (Charles).</p>
+<p><code>traffic_class_since</code> 30/07 ⇒ fenêtre classée 43 j, unknown = 0 ⇒ zéros mesurés. <b>15ᵉ jour sans événement humain.</b> Liens du 03/09 : 8 j, 0 ouverture humaine.</p>
+<p><b>Prévisions vérifiées et retirées :</b> report_viewed.human 1→0 (06/09 : « le 10/09 » ; 07/09 : « ≤ 11/09 ») — constaté 0 le 10/09. <b>Prévision ouverte :</b> audit_started.internal +8 vers le <b>16/09</b> (rescan 30 j des 8 audits du 17/08, cron 07:22–07:55 UTC). À vérifier au run du 16 ou 17/09.</p>
 </div>
 
-<h2>d · Funnel 14 j (07:42 UTC, sans clé, cookie interne posé avant le premier accès)</h2>
+<h2>Veille — 2 acteurs re-mesurés (navigateur réel, JS, JSON-LD), 0 action</h2>
 <div class="card">
 <table>
-<tr><th>Événement</th><th class="n">Total</th><th class="n">human</th><th class="n">internal</th><th class="n">Δ vs 06/09 08:31</th></tr>
-<tr><td>audit_started</td><td class="n">24</td><td class="n">1</td><td class="n">23</td><td class="n">0</td></tr>
-<tr><td>audit_completed</td><td class="n">24</td><td class="n">1</td><td class="n">23</td><td class="n">0</td></tr>
-<tr><td>report_viewed</td><td class="n">3</td><td class="n"><b>1</b></td><td class="n">2</td><td class="n">0</td></tr>
-<tr><td>report_link_opened</td><td class="n">7</td><td class="n">0</td><td class="n">7</td><td class="n">0</td></tr>
-<tr><td>email_captured · teaser_cta_click · checkout_opened</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td></tr>
-<tr><td>followup_1_sent · followup_2_sent · followup_click</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td></tr>
+<tr><th>Acteur</th><th>Mesure</th><th>Source / date</th><th>Décision</th></tr>
+<tr><td>Evertune</td><td>Pro <b>$800 / month</b> « Request a demo », Enterprise Custom ; aucun achat en ligne, aucun essai ; 0 JSON-LD ; meta concordante. Inchangé vs 04/09.</td><td>evertune.ai/pricing · 11/09 13:20 UTC</td><td>Aucune</td></tr>
+<tr><td>Semrush</td><td>KB : AI Visibility Toolkit <b>$99 / mois</b>, <b>sans essai gratuit</b>, add-on prorata sur l'abonnement annuel existant ; sous-utilisateur $99 ; domaine suppl. $99/mois ; +50 prompts $60/mois. <b>Résout l'écart du 07/09</b> : /pricing vend des bundles ($199/$299/$549), la KB l'add-on ($99) — deux objets, pas de contradiction. Date de la page KB non exposée.</td><td>semrush.com/kb/1493-ai-visibility-toolkit · 11/09 13:21 UTC</td><td>Aucune</td></tr>
 </table>
-<p class="sub"><code>GET https://www.getpick.ai/api/funnel</code>, <code>traffic_class_since</code> 2026-07-30 ⇒ zéros humains = verdicts. Compteurs strictement identiques sur 23 h (rien n'entre, rien ne sort). Cron du matin : 0 rescan (aucune marque due). 96 h après l'envoi des 6 liens (03/09) : 0 ouverture humaine. Funnel avant/après déploiement de <code>1d338cb</code> : identique, attendu.</p>
+<p><b>Lecture :</b> plancher self-serve €29 (Otterly), €70 Peec, $71 Visiblie, €85 Promptwatch, $99 Profound / Semrush add-on, $250 Scrunch, $295 Athena, $800 Evertune (demo). <b>GetPick 9 €/19 € seul en dessous.</b> Autres acteurs : mesures des 05–07/09 inchangées, non refaites sans prospect.</p>
 </div>
 
-<h2>e · Veille (navigateur réel · JS · toggles énumérés · JSON-LD · texte rendu)</h2>
+<h2>Backlog — 0 ajout, 0 coupe</h2>
+<div class="card">Aucun compteur à déplacer sans prospect (arbitrage CEO 10/09 : surveillance + réception). Must connu : FAQ mensuelle (Lot 2c) — au CEO. Refus re-motivés identiques au 07/09. Nouveau refus : « contrôle croisé Stripe/funnel » n'est pas un chantier mais une mesure post-déploiement (premier run après le push).</div>
+
+<h2>Cases</h2>
 <div class="card">
-<table>
-<tr><th>Acteur</th><th>Gating / pricing rendu</th><th>Machines</th><th>Écart</th><th>Décision</th></tr>
-<tr><td><b>Ahrefs Brand Radar</b><br><span class="sub">07/09 07:52 UTC</span></td><td>Custom Prompts « Starts at <b>$50/mo</b> », « $699/mo for all models » · AI Visibility Index <b>$199/mo</b> (83 prompts/jour, +2 500 checks/mois, dépassement $0.020/check) · prompts inclus dans tout plan payant (Lite 5 / Standard 10 / Advanced 20 par jour) · « Starts at $199/mo with Lite+ plans »</td><td>0 JSON-LD · meta « 475M+ prompts » vs rendu « 462M » (écart mineur, date non établie)</td><td>vs 10/08 ($50) : plancher tient ; palier $199 AI Visibility Index = <b>écart constaté, date non établie</b></td><td>aucune action · add-on d'un abonnement Ahrefs, pas de self-serve autonome</td></tr>
-<tr><td><b>Semrush</b><br><span class="sub">07/09 08:02 UTC · <code>/pricing/</code> → <code>/pricing/seo-ai-search/</code></span></td><td>Toggle Monthly/Annually énuméré (annuel par défaut) ; mensuel lu : SEO <b>$139</b> · SEO + AI Search Starter <b>$199</b> (50 prompts/jour, 1 domaine) · Pro+ <b>$299</b> (100 prompts) · Advanced <b>$549</b> (200 prompts, API) · Free $0 « No credit card required » · « Try for free » (CB non vérifiée)</td><td>0 JSON-LD · <code>/ai-seo-toolkit/</code> 404 · <b>aucun « $99 », aucun « toolkit » sur la page de prix</b></td><td><b>Écart constaté vs 01/09 (« AI Toolkit $99/mo/domaine annuel »)</b> : offre AI présentée en bundles dès $199. Date non établie. Tiers (6 blogs) citent encore $99 — aucun montant tiers n'entre</td><td>aucune action · re-mesurer une fois <code>/kb/1493-ai-visibility-toolkit</code> avant d'inscrire la nouvelle valeur</td></tr>
-</table>
-<p><b>Lecture :</b> plancher self-serve Otterly €29 → Peec €70 → Visiblie $71 → Promptwatch €85 → Profound $99 → (Semrush $99 ? → $199 bundle) → Scrunch $250 → Athena $295 ; Ahrefs $50 mais sous abonnement ≥ $199. <b>GetPick 9 €/19 € seul en dessous — inchangé.</b> Aucune nouveauté &lt; 30 j prouvée. Non re-mesurés : Peec, Visiblie, Profound, Otterly, Promptwatch (05/09) · AthenaHQ, Scrunch (06/09) · Evertune (04/09).</p>
+<p><span class="tag">DÉPENSE / STRATÉGIE</span> Rien.</p>
+<p><span class="tag">INCAPACITÉ</span> (a) <code>git push</code> : aucun credential GitHub — geste : <code>git push origin main</code> (~10 s), Vercel déploie <code>683f3fd</code> seul. (b) <code>keys.env</code> absent — préflight NO-GO formel, lien signé, FUNNEL_ADMIN_KEY, Instantly (geste inchangé : <code>vercel env pull</code>). (c) Playwright : pas de serveur+Postgres ici, le build Vercel couvre <code>next build</code>.</p>
+<p><span class="tag">CHOIX</span> Pas de déploiement par upload de fichiers (désync prod/origin, arbre entier en paramètre, go réservé par le CEO) · gate 422 non re-testé · cron non appelé · aucune page /audit/ ouverte · veille limitée à 2 acteurs.</p>
 </div>
 
-<h2>f · Backlog — 0 ajout, 0 coupe</h2>
+<h2>Pour le CEO</h2>
 <div class="card">
-<p>Aucune entrée ne déplace un compteur tant que <code>report_viewed.human</code> attribuable ≈ 0 et que la prospection est fermée (au CEO). Must connu : FAQ mensuelle (Lot 2c), au CEO.</p>
-<p><b>Refus re-motivés :</b> SKU-level shopping · pubs-dans-réponses · corpus rescan (10ᵉ) · « score 0 vs injoignable » client · fermer le backfill (au CEO) · instrumenter les sauts du garde-fou (non mesurable avant ~01/10) · <b><code>/api/version</code> : refus renforcé</b>, le statut de commit GitHub date le déploiement gratuitement.</p>
+<ol>
+<li>Commande du 10/09 exécutée ; le test livré était faux, corrigé dans le test, composant intact.</li>
+<li>« Ne pas déployer (go Charles) » contredit le mandat du 05/09 — sans objet : le verrou réel est le <b>push</b>, pas le go.</li>
+<li><code>npm ci</code> bloqué le 10/09, 2 min 12 s le 11/09 : incapacité conjoncturelle, levée sans geste.</li>
+<li>Prévision « report_viewed.human → 0 le 10/09 » vérifiée.</li>
+</ol>
 </div>
 
-<h2>g · Cases</h2>
-<div class="card">
-<table>
-<tr><th>Case</th><th>Contenu</th></tr>
-<tr><td><span class="badge b-warn">dépense</span></td><td>1 audit de contrôle — voir b. Non chiffrable au centime, non engagé.</td></tr>
-<tr><td><span class="badge b-bad">incapacité 1</span></td><td><code>keys.env</code> absent : bloque commande CEO n°1 et n°2, préflight GO, mode détaillé, Instantly, <code>due_count</code>, push. Geste en b.</td></tr>
-<tr><td><span class="badge b-bad">incapacité 2</span></td><td><code>git push</code> : aucun credential. <code>main</code> local = <code>a3e9846</code> puis commit de ce run, à pousser par Charles (<code>git push origin main</code>).</td></tr>
-<tr><td><span class="badge b-bad">incapacité 3</span></td><td>Auteur du push <code>main</code> du 07/09 ~07:16 UTC : API d'événements publique muette après le 03/09. Charles dit s'il a fusionné lui-même.</td></tr>
-<tr><td><span class="badge b-bad">incapacité 4</span></td><td>Playwright : pas de serveur Next + Postgres ici ; <code>next build</code> couvert par le déploiement Vercel réussi.</td></tr>
-<tr><td><span class="badge b-mut">choix</span></td><td>Gate 422 non re-testé (écriture payante possible) · cron non appelé · 7 acteurs &lt; 72 h non re-mesurés · sondes <code>*.vercel.app</code> non retentées après refus de l'outil · 0 squad sur <code>1d338cb</code> (déjà sur <code>main</code>).</td></tr>
-</table>
-</div>
-
-<h2>h · Pour le CEO</h2>
-<div class="card">
-<ul>
-<li><b>Un commit produit a atterri sur <code>main</code> et en prod hors de mes runs.</b> <code>1d338cb</code>, auteur « Agent Produit GetPick », 06/09 14:51 UTC, message « Non fusionné, non déployé : consigne restrictive » — pourtant <code>main</code> = ce commit et Vercel l'a déployé le 07/09 07:16 UTC. Aucune ligne dans <code>AGENT_RUNS.md</code>, aucune session Cowork correspondante. Le lot est sain (réceptionné a posteriori, 4 contrôles) et déplace <code>email_captured</code> à partir du 30/09. <b>Reco : un seul écrivain sur <code>main</code>, chaque push journalisé.</b> Si c'est Charles qui a fusionné, rien à redire.</li>
-<li><b>Dette de livraison : zéro</b>, 4ᵉ mesure. Ton point 3 est livré.</li>
-<li><b>Tes points 1 et 2 ont un seul verrou : <code>keys.env</code>.</b> « Ouvrir le dossier GetPick » est fait depuis le 05/09 ; le geste restant est <code>vercel env pull</code> (b). Le goulot « plus aucun prospect n'entre » revient pour la 2ᵉ fois <b>avec dépôt monté et sans lot parti</b> : par ta règle du 06/09 §8, la question passe à Charles — tu en es propriétaire.</li>
-<li>Prévisions tenues au cockpit : <code>report_viewed.human</code> 1 → 0 au plus tard le 11/09 · +8 <code>audit_started.internal</code> ~16/09 (rescan des 8 audits du 17/08) · 30/09 premier jour d'effet possible de <code>1d338cb</code>.</li>
-</ul>
-</div>
-
-<p class="foot">Chiffres figés au relevé du 07/09/2026 07:42 UTC (funnel) et 07:40–07:41 UTC (contrôles) ; le bac à sable de l'artefact n'a aucun réseau vers getpick.ai — un chiffre non rafraîchi est « non mesuré », pas « inchangé ». Détail complet : <code>outbound/PRODUIT_RUN_2026-09-07.md</code>. Clôture : voir §8 du run (re-relevé funnel + <code>ls-remote</code> en fin de run).</p>
-</div>
+<div class="foot">Chiffres réécrits à la main par l'agent produit le 11/09/2026 (funnel 13:19:21 UTC, Stripe 13:18 UTC, veille 13:20–13:21 UTC). Détail : <code>outbound/PRODUIT_RUN_2026-09-11.md</code>. Aucun réseau depuis cet artefact.</div>
 </body>
 </html>
