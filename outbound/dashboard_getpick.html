@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cockpit GTM + Produit — GetPick — 13/09/2026</title>
+<title>Cockpit GTM + Produit — GetPick — 13/09/2026 (post-déploiement)</title>
 <style>
 :root{color-scheme:light;--ink:#111418;--mut:#5b6572;--line:#e3e7ec;--bg:#f7f8fa;--card:#fff;--ok:#0a7a45;--warn:#b25e00;--bad:#b3261e;--acc:#1a4fd6}
 *{box-sizing:border-box}
@@ -39,13 +39,13 @@ code{background:#eef1f5;padding:1px 5px;border-radius:4px;font-size:12.5px}
 <div class="wrap">
 
 <h1>Cockpit GTM + Produit — GetPick</h1>
-<p class="sub">Run CEO du dimanche 13 septembre 2026 · relevé 15:12 UTC (+ retour terrain de Charles ~17:00 UTC) · cockpit statique, réécrit à chaque run</p>
+<p class="sub">Run CEO du dimanche 13 septembre 2026 · relevé 15:12 UTC · <b>déploiement 20:08–20:31 UTC</b> · cockpit statique, réécrit à chaque run</p>
 
 <div class="frame">
 <b>CADRE DU JOUR</b><br>
 Goulot unique, 7<sup>e</sup> run consécutif : <b>aucun prospect n'entre</b>. La prospection est à l'arrêt par défaut de décision depuis <b>27 jours</b> et le fichier de clés est toujours absent. Stripe, funnel humain, Gmail (relus ce jour) : rien n'est entré.<br><br>
-<b>RETOUR TERRAIN — la seule nouveauté du jour.</b> Charles a ouvert une page de rapport et tranché : « incompréhensible pour un client lambda », en citant les deux lignes verrouillées « Ton schéma FAQ (JSON-LD) » et « Ton llms.txt ». Il a raison, et le défaut est plus large que ces deux lignes : <b>l'écran exact où un audit gratuit devient 9 €/mois vendait des noms de format, pas des bénéfices</b>. Corrigé et commité ce run (<code>f5a70f9</code>), FR + EN. Non déployé : il attend le même push que le reste.<br><br>
-<b>ÉTAT</b> — <code>origin/main</code> n'a pas avancé (<code>git ls-remote</code> = <code>1d338cb</code>) ; <code>main</code> local = <code>f5a70f9</code>, <b>7 commits devant</b> : la caisse mesurable, le correctif de langage du rapport, et les journaux. <b>La dette de livraison reste un seul geste : <code>git push origin main</code></b>. Les deux décisions posées le 11/09 sont toujours ouvertes.
+<b>RETOUR TERRAIN — la seule nouveauté du jour.</b> Charles a ouvert une page de rapport et tranché : « incompréhensible pour un client lambda », en citant les deux lignes verrouillées « Ton schéma FAQ (JSON-LD) » et « Ton llms.txt ». Il a raison, et le défaut est plus large que ces deux lignes : <b>l'écran exact où un audit gratuit devient 9 €/mois vendait des noms de format, pas des bénéfices</b>. Corrigé, commité (<code>f5a70f9</code>) et <b>DÉPLOYÉ ce soir</b>, FR + EN.<br><br>
+<b>ÉTAT — dette de livraison SOLDÉE</b>, première fois depuis le 05/09. Charles a donné le go, poussé depuis son Mac en SSH (HTTPS refusé : aucun identifiant mémorisé, <code>gh</code> absent). <code>origin/main</code> = <code>65dd297</code> (API GitHub, 20:08:01Z), <b>8 commits livrés</b> ; Vercel <code>getpick2</code> ✓ 20:31:18Z. <b>Une seule décision reste ouverte : la prospection.</b>
 </div>
 
 <h2>a — North star</h2>
@@ -130,11 +130,11 @@ Goulot unique, 7<sup>e</sup> run consécutif : <b>aucun prospect n'entre</b>. La
 <tr><td><code>/vs</code></td><td>200</td><td><span class="pill p-ok">debout</span></td></tr>
 <tr><td><code>/study</code></td><td>200</td><td><span class="pill p-ok">debout</span></td></tr>
 <tr><td><code>/api/funnel</code></td><td>200 · payload complet</td><td><span class="pill p-ok">vivant</span></td></tr>
-<tr><td>Home servie</td><td>sans <code>checkout_opened</code></td><td><span class="pill p-neu">attendu, correctif non déployé</span></td></tr>
+<tr><td>Boutons de prix de la home</td><td><code>pricing_card</code> présent dans <code>/_next/static/chunks/1uj6n_doqneqo.js</code></td><td><span class="pill p-ok">la caisse n'est plus aveugle</span></td></tr>
 <tr><td><code>/api/audit-status</code> sans paramètre</td><td>400</td><td><span class="pill p-ok">route vivante, refus attendu</span></td></tr>
 <tr><td>Lien caisse Monitor</td><td>non re-testé ce run</td><td><span class="pill p-warn">un GET crée une session Stripe</span></td></tr>
 <tr><td>Lien caisse Agent</td><td>non re-testé ce run</td><td><span class="pill p-warn">un GET crée une session Stripe</span></td></tr>
-<tr><td>Commit servi en production</td><td><code>1d338cb</code> — inchangé depuis le 07/09</td><td><span class="pill p-warn">7 commits de retard</span></td></tr>
+<tr><td>Commit servi en production</td><td><code>65dd297</code> — Vercel <code>getpick2</code> ✓ 20:31:18Z</td><td><span class="pill p-ok">à jour</span></td></tr>
 </tbody></table>
 </div>
 <p class="src">Tous les appels portent un User-Agent navigateur et <code>Cookie: gp_internal=1</code>. <b>Aucune page <code>/audit/</code> n'a été ouverte</b> — elle émettrait un <code>report_viewed</code> et polluerait la north star.</p>
@@ -144,9 +144,9 @@ Goulot unique, 7<sup>e</sup> run consécutif : <b>aucun prospect n'entre</b>. La
 <table>
 <thead><tr><th>Défaut</th><th>Preuve</th><th>Coût</th><th>Réparable sans clé ?</th></tr></thead>
 <tbody>
-<tr><td><b>Le compteur de caisse est aveugle</b></td><td>3 sessions Stripe le 27/08 vs <code>checkout_opened = 0</code> ; HTML servi : boutons <code>&lt;a href&gt;</code> nus</td><td>La dernière marche avant le revenu n'est pas mesurée</td><td><span class="pill p-ok">correctif vérifié vert ×2, mergé local — reste le push</span></td></tr>
+<tr><td><b>Le compteur de caisse est aveugle</b> <span class="pill p-ok">réparé, en prod</span></td><td>3 sessions Stripe le 27/08 vs <code>checkout_opened = 0</code> ; HTML servi : boutons <code>&lt;a href&gt;</code> nus</td><td>La dernière marche avant le revenu n'était pas mesurée</td><td><span class="pill p-ok">déployé le 13/09, prouvé par le bundle servi</span></td></tr>
 <tr><td>Le champ email de l'audit est marqué « optionnel »</td><td>HTML servi de la home, <code>id="email"</code>, placeholder « Email (optionnel) »</td><td><code>email_captured = 0</code> sur 14 j ; aucune reprise de contact possible</td><td><span class="pill p-ok">oui</span></td></tr>
-<tr><td><b>Le bloc verrouillé parlait machine</b> <span class="pill p-ok">corrigé f5a70f9</span></td><td>Retour de Charles le 13/09 sur une page de rapport réelle : « Ton schéma FAQ (JSON-LD) », « Ton llms.txt » — deux noms de format, aucun bénéfice</td><td>L'écran exact de la conversion 0 € → 9 € était illisible pour l'ICP (fondateur DTC, sans dev, sans agence)</td><td><span class="pill p-ok">fait — reste le push</span></td></tr>
+<tr><td><b>Le bloc verrouillé parlait machine</b> <span class="pill p-ok">corrigé, en prod</span></td><td>Retour de Charles le 13/09 sur une page de rapport réelle : « Ton schéma FAQ (JSON-LD) », « Ton llms.txt » — deux noms de format, aucun bénéfice</td><td>L'écran exact de la conversion 0 € → 9 € était illisible pour l'ICP (fondateur DTC, sans dev, sans agence)</td><td><span class="pill p-ok">fait et déployé</span></td></tr>
 <tr><td>Origine des 4 sessions Stripe non établie</td><td>27/08 19:13:52Z et 19:14:37Z — <b>45 s d'écart</b>, devises de présentation CAD puis MAD ; 27/08 06:40Z en USD ; 31/07 13:05Z</td><td>La tuile « caisse atteinte = 4 » pourrait compter nos propres contrôles de lien, pas des prospects</td><td><span class="pill p-warn">hypothèse non prouvée — plus aucun GET sur les liens de caisse</span></td></tr>
 <tr><td>Fichier de clés absent de la machine</td><td><code>find</code> sur tous les montages : aucun <code>.env*</code> ; <code>audit-share-token.ts</code> l.59 lève sans le secret</td><td>Chaîne de prospection entièrement à l'arrêt</td><td><span class="pill p-bad">non</span></td></tr>
 </tbody></table>
@@ -155,11 +155,11 @@ Goulot unique, 7<sup>e</sup> run consécutif : <b>aucun prospect n'entre</b>. La
 <h2>h — Dette de livraison</h2>
 <div class="card">
 <ul>
-<li><b><code>main</code> local = <code>f5a70f9</code>, 7 commits devant <code>origin/main</code> (<code>1d338cb</code>, servi en prod)</b> : <code>be1c9cb</code> (les deux boutons de prix émettent <code>checkout_opened</code>), <code>683f3fd</code> (test corrigé), <b><code>f5a70f9</code> (le bloc verrouillé du rapport parle client)</b>, 4 commits de journaux.</li>
-<li><b>Vérification du commit du jour</b>, dans une copie jetable du dépôt (<code>node_modules</code> ABSENT du dépôt de Charles — on n'y installe rien : un <code>npm ci</code> depuis Linux y remplacerait les binaires natifs macOS) : Node 23.11 arm64, <code>npm ci</code>, <b>tsc 0 erreur</b>, <b>536 tests / 522 pass / 0 fail</b> — exactement la ligne de base du 11/09 — et contrat de page de rapport <b>9/9</b>. <span class="pill p-ok">prêt</span></li>
-<li><b>Vérifications</b> — agent produit 11/09 : tsc 0, eslint 0 err, 536/522/0 fail, preuve de mutation ×2. CEO 11/09, clone jetable indépendant : <code>npm ci</code> 2 min, tsc 0, Node 24.8, <b>536/522/0 fail</b>, test neuf 3/3. <span class="pill p-ok">prêt</span></li>
-<li><b>Blocage</b> : <code>git push origin main</code> → <code>fatal: could not read Username for 'https://github.com'</code>. Aucun identifiant sur la machine d'exécution. <span class="pill p-warn">geste Charles</span></li>
-<li>Branche <code>squad/2026-09-10-caisse-mesurable</code> : locale, sans remote, entièrement contenue dans <code>main</code>.</li>
+<li><b>SOLDÉE le 13/09 à 20:08 UTC</b> — <code>origin/main</code> = <code>65dd297</code> (API GitHub), 8 commits livrés : <code>be1c9cb</code>+<code>683f3fd</code> (caisse mesurable), <code>f5a70f9</code> (le bloc verrouillé du rapport parle client), 5 commits de journaux. Vercel : <code>getpick</code> ✓ 20:30:55Z, <b><code>getpick2</code> ✓ 20:31:18Z (prod)</b>, <code>citeable</code> ✓ 20:31:34Z.</li>
+<li><b>Le push ne pouvait pas partir de l'agent</b> : aucun identifiant GitHub dans l'environnement d'exécution. Sur le Mac, HTTPS a échoué (aucun credential mémorisé, mot de passe non supporté depuis 2021) et <code>gh</code> n'est pas installé ⇒ bascule de la télécommande en SSH, push réussi.</li>
+<li><b>Contrôle croisé — et le mauvais instrument démasqué.</b> <code>grep checkout_opened</code> sur le HTML de la home ne pouvait <b>jamais</b> répondre : <code>HomeClient.tsx</code> est un composant client, la chaîne vit dans un chunk JS. Trois runs ont écrit « non déployé » avec un test qui aurait rendu 0 dans les deux cas. Instrument corrigé : chercher <code>pricing_card</code> dans les chunks servis ⇒ <b>trouvé</b>. <code>be1c9cb</code> n'ayant jamais été déployé, c'est la preuve que la prod sert le nouveau build.</li>
+<li><b>Ce qu'on n'a pas fait, exprès.</b> Pas de clic sur un bouton de prix pour faire +1 sur <code>checkout_opened.internal</code> : ça ouvre le lien Stripe et <b>crée une session</b> — on ne salit pas le compteur qu'on vérifie. Le nouveau libellé du rapport n'est pas vérifiable à distance (rendu serveur, hors des chunks) sans ouvrir une page <code>/audit/</code> : non vérifié en prod, couvert par le contrat de page 9/9 et la suite 536/522/0.</li>
+<li>Reste en local, pour le prochain push : le journal du jour et ce cockpit.</li>
 </ul>
 </div>
 
@@ -175,12 +175,12 @@ Goulot unique, 7<sup>e</sup> run consécutif : <b>aucun prospect n'entre</b>. La
 <h2>j — Ce qui attend Charles</h2>
 <div class="card">
 <p><b>Dépenses en attente : aucune.</b></p>
-<p><b>Décision 1 — déployer.</b> 7 commits : le correctif de caisse (deux vérifications indépendantes vertes) et le correctif de langage du rapport (vérifié ce jour). Front seul, réversible en un commit. Geste : dans <code>~/Dev/Projects/getpick</code>, <code>git push origin main</code>. Vercel déploie seul. <b>Aucun arbitrage produit caché dans ce geste.</b></p>
+<p><b>Décision 1 — déployer : FAITE le 13/09 à 20:08 UTC.</b> <span class="pill p-ok">close</span> 8 commits en production, build Vercel vert, 4 surfaces à 200, caisse instrumentée.</p>
 <p><b>Décision 2 — la prospection repart-elle : oui ou non.</b> Posée le 07/09, sans réponse ; 27<sup>e</sup> jour d'arrêt par défaut. Non reposée une troisième fois dans le vide. Si oui, un seul fichier manque : <code>outbound/keys.env</code> (signature des liens, moteurs d'audit, Instantly, attribution). Sans lui, aucun lot n'est possible.</p>
 </div>
 
 <footer>
-Relevé du <b>dimanche 13 septembre 2026, 15:12 UTC</b> (correction produit livrée vers 17:00 UTC). Cockpit <b>statique</b> : le bac à sable n'a pas d'accès réseau sortant depuis la page (seuls Chart.js, Grid.js et Mermaid sont autorisés en CDN). Il ne se rafraîchit pas seul — il est réécrit à chaque run CEO.<br>
+Relevé du <b>dimanche 13 septembre 2026, 15:12 UTC</b> ; correction produit livrée vers 17:00 UTC, <b>déploiement vérifié à 20:31 UTC</b>. Cockpit <b>statique</b> : le bac à sable n'a pas d'accès réseau sortant depuis la page (seuls Chart.js, Grid.js et Mermaid sont autorisés en CDN). Il ne se rafraîchit pas seul — il est réécrit à chaque run CEO.<br>
 <b>Règle de cloisonnement</b> : seules les données GetPick sont lues, citées et exploitées. La boîte professionnelle de Charles hors GetPick est hors périmètre ; la recherche Gmail a porté exclusivement sur les termes GetPick, sans balayage de la boîte d'envoi.<br>
 Chiffres : <code>GET https://www.getpick.ai/api/funnel</code> · API Stripe compte Kinze livemode · Gmail relu ce jour sur les seuls termes GetPick · dépôt <code>Citeable</code> monté ce run ; suite complète relancée dans une copie jetable après le commit du jour (536/522/0). <b>Aucune page <code>/audit/</code> ouverte, aucun GET sur un lien de caisse</b> — les deux polluent une mesure. Aucun chiffre n'est estimé.
 </footer>
