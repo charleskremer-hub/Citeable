@@ -434,28 +434,32 @@ export function publishTeaserItems(args: {
     });
   }
 
+  // Le nom dit le BÉNÉFICE dans la langue du client ; le terme technique vit en
+  // fin de détail, entre parenthèses, pour l'agence ou le dev qui liront après
+  // lui. Un fondateur DTC ne sait pas ce qu'est un « schéma FAQ JSON-LD » : un
+  // nom qu'il ne comprend pas ne peut pas lui donner envie de payer 9 €.
   items.push({
-    name: fr ? "Ton schéma FAQ (JSON-LD)" : "Your FAQ schema (JSON-LD)",
+    name: fr ? "Ta FAQ dans le format que les IA lisent" : "Your FAQ in the format AI reads",
     detail: fr
-      ? `Construit depuis les ${questionCount} questions d'achat auditées, à coller avant </head>`
-      : `Built from the ${questionCount} audited buyer questions, to paste before </head>`,
+      ? `Écrite depuis tes ${questionCount} questions d'achat auditées. Un bloc à coller une fois dans ton site, sans toucher au design (format technique : schéma FAQ JSON-LD).`
+      : `Written from your ${questionCount} audited buying questions. One block to paste into your site, once, without touching your design (technical name: FAQ schema, JSON-LD).`,
   });
 
   items.push({
-    name: fr ? "Ton llms.txt" : "Your llms.txt",
+    name: fr ? "Ta fiche d'identité pour les assistants IA" : "Your ID card for AI assistants",
     detail: fr
-      ? "Le résumé que les assistants IA lisent en premier pour savoir quoi recommander"
-      : "The summary AI assistants read first to know what to recommend",
+      ? "Le fichier que ChatGPT et Gemini lisent en premier pour savoir ce que tu vends, à qui, et quand te recommander (llms.txt)."
+      : "The file ChatGPT and Gemini read first to know what you sell, to whom, and when to recommend you (llms.txt).",
   });
 
   // Jamais une étape sans objet : le correctif robots.txt n'est annoncé que si
   // des crawlers IA sont réellement bloqués aujourd'hui.
   if (blockedBots.length > 0) {
     items.push({
-      name: fr ? "Ton correctif robots.txt" : "Your robots.txt fix",
+      name: fr ? "Le déblocage qui laisse les IA entrer sur ton site" : "The unblock that lets AI into your site",
       detail: fr
-        ? `${blockedBots.join(", ")} ne peuvent pas lire ton site aujourd'hui`
-        : `${blockedBots.join(", ")} cannot read your site today`,
+        ? `${blockedBots.join(", ")} ne peuvent pas lire ton site aujourd'hui. Une ligne à corriger (robots.txt).`
+        : `${blockedBots.join(", ")} cannot read your site today. One line to fix (robots.txt).`,
     });
   }
 
