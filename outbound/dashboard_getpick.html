@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cockpit GTM + Produit — GetPick — 13/09/2026</title>
+<style>
+:root{color-scheme:light;--ink:#111418;--mut:#5b6572;--line:#e3e7ec;--bg:#f7f8fa;--card:#fff;--ok:#0a7a45;--warn:#b25e00;--bad:#b3261e;--acc:#1a4fd6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:1120px;margin:0 auto;padding:28px 20px 60px}
+h1{font-size:22px;margin:0 0 4px}
+h2{font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:32px 0 10px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.sub{color:var(--mut);font-size:13px;margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:12px}
+.frame{background:#111418;color:#f2f4f7;border-radius:10px;padding:18px 20px;margin-bottom:22px}
+.frame b{color:#cbff3c}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
+.tile .k{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+.tile .v{font-size:30px;font-weight:700;line-height:1.15;margin:6px 0 2px}
+.tile .s{font-size:12px;color:var(--mut)}
+table{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--card)}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line)}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);font-weight:600}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px}
+.p-ok{background:#e3f5ec;color:var(--ok)}.p-bad{background:#fdeceb;color:var(--bad)}.p-warn{background:#fdf1e3;color:var(--warn)}.p-neu{background:#eef1f5;color:var(--mut)}
+.src{font-size:11.5px;color:var(--mut);font-style:italic}
+ul{margin:6px 0;padding-left:20px}li{margin:3px 0}
+.chart{height:230px;position:relative}
+footer{margin-top:34px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;color:var(--mut)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}}
+code{background:#eef1f5;padding:1px 5px;border-radius:4px;font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Cockpit GTM + Produit — GetPick</h1>
+<p class="sub">Run CEO du dimanche 13 septembre 2026 · relevé 15:12 UTC (+ retour terrain de Charles ~17:00 UTC) · cockpit statique, réécrit à chaque run</p>
+
+<div class="frame">
+<b>CADRE DU JOUR</b><br>
+Goulot unique, 7<sup>e</sup> run consécutif : <b>aucun prospect n'entre</b>. La prospection est à l'arrêt par défaut de décision depuis <b>27 jours</b> et le fichier de clés est toujours absent. Stripe, funnel humain, Gmail (relus ce jour) : rien n'est entré.<br><br>
+<b>RETOUR TERRAIN — la seule nouveauté du jour.</b> Charles a ouvert une page de rapport et tranché : « incompréhensible pour un client lambda », en citant les deux lignes verrouillées « Ton schéma FAQ (JSON-LD) » et « Ton llms.txt ». Il a raison, et le défaut est plus large que ces deux lignes : <b>l'écran exact où un audit gratuit devient 9 €/mois vendait des noms de format, pas des bénéfices</b>. Corrigé et commité ce run (<code>f5a70f9</code>), FR + EN. Non déployé : il attend le même push que le reste.<br><br>
+<b>ÉTAT</b> — <code>origin/main</code> n'a pas avancé (<code>git ls-remote</code> = <code>1d338cb</code>) ; <code>main</code> local = <code>f5a70f9</code>, <b>7 commits devant</b> : la caisse mesurable, le correctif de langage du rapport, et les journaux. <b>La dette de livraison reste un seul geste : <code>git push origin main</code></b>. Les deux décisions posées le 11/09 sont toujours ouvertes.
+</div>
+
+<h2>a — North star</h2>
+<div class="tiles">
+  <div class="tile"><div class="k">report_viewed · humain</div><div class="v" style="color:var(--bad)">0</div><div class="s">14 j · 17<sup>e</sup> jour sans aucun événement humain<br><span class="pill p-bad">mesuré, unknown = 0</span></div></div>
+  <div class="tile"><div class="k">Ventes encaissées</div><div class="v" style="color:var(--bad)">0 €</div><div class="s">Stripe livemode : 0 charge, 0 abonnement<br><span class="pill p-bad">source directe</span></div></div>
+  <div class="tile"><div class="k">Jours sans envoi</div><div class="v" style="color:var(--bad)">27</div><div class="s">dernier envoi 17/08 (2 emails)</div></div>
+  <div class="tile"><div class="k">Caisse atteinte</div><div class="v">4</div><div class="s">sessions Stripe depuis le 31/07 · 0 payée · aucune nouvelle en 17 j<br><span class="pill p-warn">origine non établie — voir g</span></div></div>
+</div>
+<p class="src">Sources : <code>GET /api/funnel?days=14</code> 13/09 15:12 UTC · Stripe <code>/v1/checkout/sessions</code> compte <code>acct_1TzBMoCZqJGb866f</code> livemode · Gmail périmètre GetPick.</p>
+
+<h2>b — Funnel 14 jours par classe de trafic</h2>
+<div class="grid2">
+<div class="card" style="padding:0;overflow:hidden">
+<table>
+<thead><tr><th>Événement</th><th class="n">Total</th><th class="n">human</th><th class="n">internal</th><th class="n">bot</th><th class="n">unknown</th></tr></thead>
+<tbody>
+<tr><td>audit_started</td><td class="n">25</td><td class="n">0</td><td class="n">25</td><td class="n">0</td><td class="n">0</td></tr>
+<tr><td>audit_completed</td><td class="n">25</td><td class="n">0</td><td class="n">25</td><td class="n">0</td><td class="n">0</td></tr>
+<tr><td>report_viewed</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td></tr>
+<tr><td>report_link_opened</td><td class="n">6</td><td class="n">0</td><td class="n">6</td><td class="n">0</td><td class="n">0</td></tr>
+<tr><td>email_captured</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td></tr>
+<tr><td>teaser_cta_click</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td></tr>
+<tr><td>checkout_opened</td><td class="n" style="color:var(--bad);font-weight:700">0 ⚠</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td></tr>
+<tr><td>followup_1_sent</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td></tr>
+<tr><td>followup_2_sent</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td></tr>
+<tr><td>followup_click</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td></tr>
+</tbody></table>
+</div>
+<div class="card"><div class="chart"><canvas id="c1"></canvas></div></div>
+</div>
+<p class="src"><b>Piège désamorcé</b> — <code>traffic_class_since = 2026-07-30T07:03:49Z</code> : la fenêtre de classification (43 j) est plus large que la fenêtre 14 j, donc les zéros par classe sont des zéros <b>mesurés</b>, pas une absence de données ; <code>unknown = 0</code> partout le confirme.<br>
+<b>Mouvement depuis le 12/09</b> : <code>report_link_opened</code> passe de 7 à 6. Ce n'est <b>pas</b> une régression et surtout pas une entrée : c'est une <b>sortie par le bord</b> de la fenêtre glissante — un clic interne du 30/08 vient d'avoir 14 jours. Tout le reste est identique. <b>17<sup>e</sup> jour sans aucun humain sur le produit.</b> Prochaine échéance mécanique : +8 <code>audit_started.internal</code> vers le 16/09 (rescan hebdo).</p>
+
+<h2>c — La caisse, lue à la source (nouveau)</h2>
+<div class="card" style="padding:0;overflow:hidden">
+<table>
+<thead><tr><th>Date (UTC)</th><th>Plan</th><th class="n">Montant</th><th>Devise présentée</th><th>Statut</th><th>Dans la fenêtre 14 j ?</th></tr></thead>
+<tbody>
+<tr><td>27/08 19:14</td><td>Monitor</td><td class="n">9,00 €</td><td>CAD (15,11)</td><td><span class="pill p-bad">expirée impayée</span></td><td>oui</td></tr>
+<tr><td>27/08 19:13</td><td>Monitor</td><td class="n">9,00 €</td><td>MAD (100,88)</td><td><span class="pill p-bad">expirée impayée</span></td><td>oui</td></tr>
+<tr><td>27/08 06:40</td><td>Agent</td><td class="n">19,00 €</td><td>USD (23,00)</td><td><span class="pill p-bad">expirée impayée</span></td><td>oui</td></tr>
+<tr><td>31/07 13:05</td><td>Monitor</td><td class="n">9,00 €</td><td>EUR · TVA 1,50 € calculée</td><td><span class="pill p-bad">expirée impayée</span></td><td>non</td></tr>
+</tbody></table>
+</div>
+<div class="card">
+<b>Relu le 13/09 : aucune session nouvelle, 0 charge, 0 abonnement.</b> Ce que ça dit — et ce que ça ne dit pas.
+<ul>
+<li><b>Dit</b> : la caisse est joignable et fonctionnelle. Les deux liens de paiement sont actifs, en euros, correctement étiquetés <code>monitor_9eur</code> / <code>agent_19eur</code>, TVA automatique activée, message de confirmation en place. <b>Le produit n'a jamais été payé une seule fois.</b></li>
+<li><b>Dit</b> : le compteur <code>checkout_opened</code> ne peut structurellement jamais bouger depuis la home. Vérifié par lecture du HTML servi : les deux boutons de prix sont des <code>&lt;a href&gt;</code> nus, aucune émission d'événement dans la page. Les 3 sessions du 27/08 en sont la preuve par l'absurde.</li>
+<li><b>Ne dit pas</b> : que des prospects sont arrivés. <code>customer_details</code> est nul sur les 4 sessions — aucune identité. Trois viennent de zones non-euro (Canada, Maroc, États-Unis), incompatibles avec les deux prospects français écrits le 17/08. <span class="pill p-warn">non attribuable</span> La session du 31/07 a une adresse de facturation UE saisie (TVA calculée) : c'est le signal d'achat le plus avancé de l'histoire de GetPick, et il est hors fenêtre.</li>
+<li><b>Conséquence de gouvernance</b> : à partir d'aujourd'hui, <b>le revenu et l'ouverture de caisse se lisent chez Stripe, pas dans le funnel</b>. Le funnel garde l'amont (audit, rapport, capture).</li>
+</ul>
+</div>
+
+<h2>d — Outbound</h2>
+<div class="card">
+<table>
+<thead><tr><th>Date</th><th>Objet</th><th>Cible</th><th>Réponse</th></tr></thead>
+<tbody>
+<tr><td>17/08</td><td>Absence des 12 réponses de Gemini — compléments bio</td><td>vecteurenergy.bio</td><td><span class="pill p-bad">aucune</span></td></tr>
+<tr><td>17/08</td><td>Absente des 12 réponses, rival cité 8 fois — cosmétique bio</td><td>lafare1789.com</td><td><span class="pill p-bad">aucune</span></td></tr>
+<tr><td>28/08</td><td>Test d'acheminement SMTP <code>hello@getpick.ai</code></td><td>interne</td><td><span class="pill p-ok">arrivé</span></td></tr>
+</tbody></table>
+<p class="src">Recherche Gmail cloisonnée du 13/09 : <code>(getpick OR to:hello@getpick.ai OR from:hello@getpick.ai) newer_than:7d</code> → <b>0 fil</b>. Aucun balayage de <code>in:sent</code>. <b>27 jours sans envoi de prospection.</b> Le canal d'envoi est vivant (prouvé le 28/08) : l'arrêt n'est pas une panne.<br>
+<b>Un lot de 2 ne mesure rien</b> — on n'a aucune donnée sur la qualité de la séquence actuelle. Conclure « la séquence ne marche pas » serait inventer.</p>
+</div>
+
+<h2>e — Entonnoir du lot en cours</h2>
+<div class="card">
+<p>Aucun lot en cours. Le fichier de cibles <code>outbound/sdr_prospects.csv</code> contient 15 marques mais <b>les colonnes email et prénom sont vides</b> — il n'est pas exploitable en l'état, indépendamment des clés.</p>
+<p class="src">Rappel de discipline avant tout lot : oppositions vérifiées, prénoms contrôlés contre le décideur publié, un score élevé disqualifie la cible, un rival n'est nommé que s'il tient le plancher de stabilité (≥ ⅓ des questions vérifiées, minimum 2 questions distinctes).</p>
+</div>
+
+<h2>f — Production — préconditions testées une à une</h2>
+<div class="card" style="padding:0;overflow:hidden">
+<table>
+<thead><tr><th>Surface</th><th>Appel réel</th><th>Verdict</th></tr></thead>
+<tbody>
+<tr><td>Home <code>/</code></td><td>200</td><td><span class="pill p-ok">debout</span></td></tr>
+<tr><td><code>/fr</code></td><td>200</td><td><span class="pill p-ok">debout</span></td></tr>
+<tr><td><code>/vs</code></td><td>200</td><td><span class="pill p-ok">debout</span></td></tr>
+<tr><td><code>/study</code></td><td>200</td><td><span class="pill p-ok">debout</span></td></tr>
+<tr><td><code>/api/funnel</code></td><td>200 · payload complet</td><td><span class="pill p-ok">vivant</span></td></tr>
+<tr><td>Home servie</td><td>sans <code>checkout_opened</code></td><td><span class="pill p-neu">attendu, correctif non déployé</span></td></tr>
+<tr><td><code>/api/audit-status</code> sans paramètre</td><td>400</td><td><span class="pill p-ok">route vivante, refus attendu</span></td></tr>
+<tr><td>Lien caisse Monitor</td><td>non re-testé ce run</td><td><span class="pill p-warn">un GET crée une session Stripe</span></td></tr>
+<tr><td>Lien caisse Agent</td><td>non re-testé ce run</td><td><span class="pill p-warn">un GET crée une session Stripe</span></td></tr>
+<tr><td>Commit servi en production</td><td><code>1d338cb</code> — inchangé depuis le 07/09</td><td><span class="pill p-warn">7 commits de retard</span></td></tr>
+</tbody></table>
+</div>
+<p class="src">Tous les appels portent un User-Agent navigateur et <code>Cookie: gp_internal=1</code>. <b>Aucune page <code>/audit/</code> n'a été ouverte</b> — elle émettrait un <code>report_viewed</code> et polluerait la north star.</p>
+
+<h2>g — Défauts produit chiffrés</h2>
+<div class="card">
+<table>
+<thead><tr><th>Défaut</th><th>Preuve</th><th>Coût</th><th>Réparable sans clé ?</th></tr></thead>
+<tbody>
+<tr><td><b>Le compteur de caisse est aveugle</b></td><td>3 sessions Stripe le 27/08 vs <code>checkout_opened = 0</code> ; HTML servi : boutons <code>&lt;a href&gt;</code> nus</td><td>La dernière marche avant le revenu n'est pas mesurée</td><td><span class="pill p-ok">correctif vérifié vert ×2, mergé local — reste le push</span></td></tr>
+<tr><td>Le champ email de l'audit est marqué « optionnel »</td><td>HTML servi de la home, <code>id="email"</code>, placeholder « Email (optionnel) »</td><td><code>email_captured = 0</code> sur 14 j ; aucune reprise de contact possible</td><td><span class="pill p-ok">oui</span></td></tr>
+<tr><td><b>Le bloc verrouillé parlait machine</b> <span class="pill p-ok">corrigé f5a70f9</span></td><td>Retour de Charles le 13/09 sur une page de rapport réelle : « Ton schéma FAQ (JSON-LD) », « Ton llms.txt » — deux noms de format, aucun bénéfice</td><td>L'écran exact de la conversion 0 € → 9 € était illisible pour l'ICP (fondateur DTC, sans dev, sans agence)</td><td><span class="pill p-ok">fait — reste le push</span></td></tr>
+<tr><td>Origine des 4 sessions Stripe non établie</td><td>27/08 19:13:52Z et 19:14:37Z — <b>45 s d'écart</b>, devises de présentation CAD puis MAD ; 27/08 06:40Z en USD ; 31/07 13:05Z</td><td>La tuile « caisse atteinte = 4 » pourrait compter nos propres contrôles de lien, pas des prospects</td><td><span class="pill p-warn">hypothèse non prouvée — plus aucun GET sur les liens de caisse</span></td></tr>
+<tr><td>Fichier de clés absent de la machine</td><td><code>find</code> sur tous les montages : aucun <code>.env*</code> ; <code>audit-share-token.ts</code> l.59 lève sans le secret</td><td>Chaîne de prospection entièrement à l'arrêt</td><td><span class="pill p-bad">non</span></td></tr>
+</tbody></table>
+</div>
+
+<h2>h — Dette de livraison</h2>
+<div class="card">
+<ul>
+<li><b><code>main</code> local = <code>f5a70f9</code>, 7 commits devant <code>origin/main</code> (<code>1d338cb</code>, servi en prod)</b> : <code>be1c9cb</code> (les deux boutons de prix émettent <code>checkout_opened</code>), <code>683f3fd</code> (test corrigé), <b><code>f5a70f9</code> (le bloc verrouillé du rapport parle client)</b>, 4 commits de journaux.</li>
+<li><b>Vérification du commit du jour</b>, dans une copie jetable du dépôt (<code>node_modules</code> ABSENT du dépôt de Charles — on n'y installe rien : un <code>npm ci</code> depuis Linux y remplacerait les binaires natifs macOS) : Node 23.11 arm64, <code>npm ci</code>, <b>tsc 0 erreur</b>, <b>536 tests / 522 pass / 0 fail</b> — exactement la ligne de base du 11/09 — et contrat de page de rapport <b>9/9</b>. <span class="pill p-ok">prêt</span></li>
+<li><b>Vérifications</b> — agent produit 11/09 : tsc 0, eslint 0 err, 536/522/0 fail, preuve de mutation ×2. CEO 11/09, clone jetable indépendant : <code>npm ci</code> 2 min, tsc 0, Node 24.8, <b>536/522/0 fail</b>, test neuf 3/3. <span class="pill p-ok">prêt</span></li>
+<li><b>Blocage</b> : <code>git push origin main</code> → <code>fatal: could not read Username for 'https://github.com'</code>. Aucun identifiant sur la machine d'exécution. <span class="pill p-warn">geste Charles</span></li>
+<li>Branche <code>squad/2026-09-10-caisse-mesurable</code> : locale, sans remote, entièrement contenue dans <code>main</code>.</li>
+</ul>
+</div>
+
+<h2>i — Commande à l'agent produit</h2>
+<div class="card">
+<p><span class="pill p-ok">commande du 10/09 exécutée</span> — réception faite, test faux corrigé dans le test, merge local, contre-vérifié par le CEO.</p>
+<p><span class="pill p-ok">levé</span> La session produit bloquée du 12/09 n'a rien écrit en double dans <code>AGENT_RUNS.md</code> (relu). Elle a laissé un <code>HEAD.lock</code> orphelin daté du 12/09 16:05, plus un <code>index.lock</code> : neutralisés par <code>mv</code> (le montage FUSE refuse <code>unlink</code>). Ils n'empêchent pas <code>git push</code>.</p>
+<p><span class="pill p-warn">à vérifier après le push</span> Relire à l'œil le bloc verrouillé sur un audit de contrôle — <b>par <code>/api/audit-status</code></b>, jamais en ouvrant la page.</p>
+<p><b>Aucune commande nouvelle.</b> Tant que personne n'entre, surveillance seule : Stripe → funnel → prod. Aucun lot produit : rien ne se mesurerait.</p>
+<p><b>Dès que <code>origin/main</code> avance</b> : contrôle croisé de l'instrument — un clic interne sur un bouton de prix (sous <code>gp_internal=1</code>) doit faire bouger <code>checkout_opened.internal</code> de +1 au funnel, sans ouvrir aucune page <code>/audit/</code>. Puis fermer la dette.</p>
+</div>
+
+<h2>j — Ce qui attend Charles</h2>
+<div class="card">
+<p><b>Dépenses en attente : aucune.</b></p>
+<p><b>Décision 1 — déployer.</b> 7 commits : le correctif de caisse (deux vérifications indépendantes vertes) et le correctif de langage du rapport (vérifié ce jour). Front seul, réversible en un commit. Geste : dans <code>~/Dev/Projects/getpick</code>, <code>git push origin main</code>. Vercel déploie seul. <b>Aucun arbitrage produit caché dans ce geste.</b></p>
+<p><b>Décision 2 — la prospection repart-elle : oui ou non.</b> Posée le 07/09, sans réponse ; 27<sup>e</sup> jour d'arrêt par défaut. Non reposée une troisième fois dans le vide. Si oui, un seul fichier manque : <code>outbound/keys.env</code> (signature des liens, moteurs d'audit, Instantly, attribution). Sans lui, aucun lot n'est possible.</p>
+</div>
+
+<footer>
+Relevé du <b>dimanche 13 septembre 2026, 15:12 UTC</b> (correction produit livrée vers 17:00 UTC). Cockpit <b>statique</b> : le bac à sable n'a pas d'accès réseau sortant depuis la page (seuls Chart.js, Grid.js et Mermaid sont autorisés en CDN). Il ne se rafraîchit pas seul — il est réécrit à chaque run CEO.<br>
+<b>Règle de cloisonnement</b> : seules les données GetPick sont lues, citées et exploitées. La boîte professionnelle de Charles hors GetPick est hors périmètre ; la recherche Gmail a porté exclusivement sur les termes GetPick, sans balayage de la boîte d'envoi.<br>
+Chiffres : <code>GET https://www.getpick.ai/api/funnel</code> · API Stripe compte Kinze livemode · Gmail relu ce jour sur les seuls termes GetPick · dépôt <code>Citeable</code> monté ce run ; suite complète relancée dans une copie jetable après le commit du jour (536/522/0). <b>Aucune page <code>/audit/</code> ouverte, aucun GET sur un lien de caisse</b> — les deux polluent une mesure. Aucun chiffre n'est estimé.
+</footer>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<script>
+(function(){
+  var el=document.getElementById('c1'); if(!el||!window.Chart)return;
+  new Chart(el,{type:'bar',data:{
+    labels:['audit_started','audit_completed','report_viewed','report_link_opened','email_captured','checkout_opened'],
+    datasets:[
+      {label:'human',data:[0,0,0,0,0,0],backgroundColor:'#1a4fd6'},
+      {label:'internal',data:[25,25,0,6,0,0],backgroundColor:'#9aa6b5'},
+      {label:'bot',data:[0,0,0,0,0,0],backgroundColor:'#b3261e'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{x:{stacked:true,ticks:{font:{size:10}}},y:{stacked:true,beginAtZero:true}},
+      plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}},
+      title:{display:true,text:'Funnel 14 j par classe de trafic — relevé 13/09 15:12 UTC',font:{size:12}}}}
+  });
+})();
+</script>
+</body>
+</html>
