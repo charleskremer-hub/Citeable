@@ -458,7 +458,7 @@ export function publishTeaserItems(args: {
     items.push({
       name: fr ? "Le déblocage qui laisse les IA entrer sur ton site" : "The unblock that lets AI into your site",
       detail: fr
-        ? `${blockedBots.join(", ")} ne peuvent pas lire ton site aujourd'hui. Une ligne à corriger (robots.txt).`
+        ? `${blockedBots.join(", ")} ne ${blockedBots.length > 1 ? "peuvent" : "peut"} pas lire ton site aujourd'hui. Une ligne à corriger (robots.txt).`
         : `${blockedBots.join(", ")} cannot read your site today. One line to fix (robots.txt).`,
     });
   }
