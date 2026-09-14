@@ -23,13 +23,26 @@
  * paiement est publique par construction.
  */
 
-const env = (name: string): string => (process.env[name] ?? "").trim();
+/**
+ * LECTURE STATIQUE OBLIGATOIRE (14/09/2026) — constat, pas opinion : ces constantes
+ * etaient lues par indexation dynamique `process.env[name]`. Next.js n'inline une
+ * variable `NEXT_PUBLIC_*` dans le bundle client QUE si elle est ecrite en toutes
+ * lettres. Avec l'indexation, le serveur rendait le bon `href` et le client lisait
+ * une chaine VIDE : le bouton de prix mourait des le premier rendu client (une
+ * frappe dans le formulaire d'audit suffit a re-rendre la home). Preuve mesuree :
+ * l'evenement `checkout_opened` du 14/09 06:57 UTC porte `checkout_url: ""`, et
+ * aucun chunk client servi ne contient l'URL Stripe.
+ *
+ * NE JAMAIS revenir a `process.env[variable]` ici — `checkout-links-static.test.ts`
+ * echoue si quelqu'un le refait.
+ */
+const clean = (value: string | undefined): string => (value ?? "").trim();
 
-export const MONITOR_CHECKOUT_URL = env("NEXT_PUBLIC_MONITOR_CHECKOUT_URL");
-export const AGENT_CHECKOUT_URL = env("NEXT_PUBLIC_AGENT_CHECKOUT_URL");
+export const MONITOR_CHECKOUT_URL = clean(process.env.NEXT_PUBLIC_MONITOR_CHECKOUT_URL);
+export const AGENT_CHECKOUT_URL = clean(process.env.NEXT_PUBLIC_AGENT_CHECKOUT_URL);
 
-export const MONITOR_TEST_CHECKOUT_URL = env("NEXT_PUBLIC_MONITOR_TEST_CHECKOUT_URL");
-export const AGENT_TEST_CHECKOUT_URL = env("NEXT_PUBLIC_AGENT_TEST_CHECKOUT_URL");
+export const MONITOR_TEST_CHECKOUT_URL = clean(process.env.NEXT_PUBLIC_MONITOR_TEST_CHECKOUT_URL);
+export const AGENT_TEST_CHECKOUT_URL = clean(process.env.NEXT_PUBLIC_AGENT_TEST_CHECKOUT_URL);
 
 /**
  * `true` seulement si l'URL est exploitable. Les appelants doivent masquer le CTA
