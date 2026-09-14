@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cockpit GTM + Produit — GetPick — 13/09/2026 (post-déploiement)</title>
+<title>Cockpit GTM + Produit — GetPick — 14/09/2026</title>
 <style>
 :root{color-scheme:light;--ink:#111418;--mut:#5b6572;--line:#e3e7ec;--bg:#f7f8fa;--card:#fff;--ok:#0a7a45;--warn:#b25e00;--bad:#b3261e;--acc:#1a4fd6}
 *{box-sizing:border-box}
@@ -39,66 +39,48 @@ code{background:#eef1f5;padding:1px 5px;border-radius:4px;font-size:12.5px}
 <div class="wrap">
 
 <h1>Cockpit GTM + Produit — GetPick</h1>
-<p class="sub">Run CEO du dimanche 13 septembre 2026 · relevé 15:12 UTC · <b>déploiement 20:08–20:31 UTC</b> · cockpit statique, réécrit à chaque run</p>
+<p class="sub">Run CEO du lundi 14 septembre 2026 · relevé 07:11 UTC (09:11 Paris) · cockpit statique, réécrit à chaque run</p>
 
 <div class="frame">
 <b>CADRE DU JOUR</b><br>
-Goulot unique, 7<sup>e</sup> run consécutif : <b>aucun prospect n'entre</b>. La prospection est à l'arrêt par défaut de décision depuis <b>27 jours</b> et le fichier de clés est toujours absent. Stripe, funnel humain, Gmail (relus ce jour) : rien n'est entré.<br><br>
-<b>RETOUR TERRAIN — la seule nouveauté du jour.</b> Charles a ouvert une page de rapport et tranché : « incompréhensible pour un client lambda », en citant les deux lignes verrouillées « Ton schéma FAQ (JSON-LD) » et « Ton llms.txt ». Il a raison, et le défaut est plus large que ces deux lignes : <b>l'écran exact où un audit gratuit devient 9 €/mois vendait des noms de format, pas des bénéfices</b>. Corrigé, commité (<code>f5a70f9</code>) et <b>DÉPLOYÉ ce soir</b>, FR + EN.<br><br>
-<b>ÉTAT — dette de livraison SOLDÉE</b>, première fois depuis le 05/09. Charles a donné le go, poussé depuis son Mac en SSH (HTTPS refusé : aucun identifiant mémorisé, <code>gh</code> absent). <code>origin/main</code> = <code>65dd297</code> (API GitHub, 20:08:01Z), <b>8 commits livrés</b> ; Vercel <code>getpick2</code> ✓ 20:31:18Z. <b>Une seule décision reste ouverte : la prospection.</b>
+Goulot unique, 8<sup>e</sup> run consécutif : <b>aucun prospect n'entre</b>. 28 jours sans envoi, 18<sup>e</sup> jour sans le moindre événement humain. Le produit est déployé, mesuré de bout en bout, relu en langage client — <b>il attend quelqu'un devant</b>.<br><br>
+<b>CHARLES EST DE RETOUR AU CLAVIER.</b> Ce matin entre 08:53 et 09:11 Paris : un clic sur un bouton de prix (<code>checkout_opened.internal</code> 0 → 1, <b>première incrémentation réelle de l'instrument en prod</b>) et un <code>vercel env pull</code> (fichier de clés recréé à 09:05). <b>Mais le fichier est vide de secrets</b> : Vercel masque les 18 variables sensibles (<code>[SENSITIVE]</code>) — base, moteurs, signature, attribution. Il faudra les remettre à la main, et la clé Instantly n'a jamais été dans Vercel.<br><br>
+<b>LIVRÉ CE RUN</b> : la passe « bénéfice, pas format » finie sur les deux surfaces restantes — la puce de prix de la carte Monitor et les trois blocs à copier du tier payant — plus l'accord « GPTBot ne peut pas ». Commit <code>1b2e790</code>, 540 tests / 526 pass / 0 fail, tsc 0, lint 0 erreur. <b>Un push, et la copy client est cohérente du prix au fichier livré.</b>
 </div>
 
 <h2>a — North star</h2>
 <div class="tiles">
-  <div class="tile"><div class="k">report_viewed · humain</div><div class="v" style="color:var(--bad)">0</div><div class="s">14 j · 17<sup>e</sup> jour sans aucun événement humain<br><span class="pill p-bad">mesuré, unknown = 0</span></div></div>
-  <div class="tile"><div class="k">Ventes encaissées</div><div class="v" style="color:var(--bad)">0 €</div><div class="s">Stripe livemode : 0 charge, 0 abonnement<br><span class="pill p-bad">source directe</span></div></div>
-  <div class="tile"><div class="k">Jours sans envoi</div><div class="v" style="color:var(--bad)">27</div><div class="s">dernier envoi 17/08 (2 emails)</div></div>
-  <div class="tile"><div class="k">Caisse atteinte</div><div class="v">4</div><div class="s">sessions Stripe depuis le 31/07 · 0 payée · aucune nouvelle en 17 j<br><span class="pill p-warn">origine non établie — voir g</span></div></div>
+  <div class="tile"><div class="k">report_viewed · humain</div><div class="v" style="color:var(--bad)">0</div><div class="s">14 j · 18<sup>e</sup> jour sans aucun événement humain<br><span class="pill p-bad">mesuré, unknown = 0</span></div></div>
+  <div class="tile"><div class="k">Ventes encaissées</div><div class="v" style="color:var(--bad)">0 €</div><div class="s">Stripe <b>non rafraîchi</b> (connecteur absent de cette session) · dernier relevé 13/09 15:12 : 0 charge<br><span class="pill p-warn">non rafraîchi</span></div></div>
+  <div class="tile"><div class="k">Jours sans envoi</div><div class="v" style="color:var(--bad)">28</div><div class="s">dernier envoi 17/08 (2 emails) · Gmail GetPick 7 j : 0 fil</div></div>
+  <div class="tile"><div class="k">checkout_opened · interne</div><div class="v">1</div><div class="s">0 → 1 entre 06:53 et 07:11 UTC — l'instrument de caisse vit en prod<br><span class="pill p-ok">première mesure réelle</span></div></div>
 </div>
-<p class="src">Sources : <code>GET /api/funnel?days=14</code> 13/09 15:12 UTC · Stripe <code>/v1/checkout/sessions</code> compte <code>acct_1TzBMoCZqJGb866f</code> livemode · Gmail périmètre GetPick.</p>
+<p class="src">Sources : <code>GET /api/funnel?days=14</code> 14/09 07:11:10 UTC (curl, UA navigateur, <code>gp_internal=1</code>) · Gmail périmètre GetPick strict · Stripe : aucun connecteur dans cette session, chiffre daté du 13/09.</p>
 
 <h2>b — Funnel 14 jours par classe de trafic</h2>
 <div class="grid2">
 <div class="card" style="padding:0;overflow:hidden">
 <table>
-<thead><tr><th>Événement</th><th class="n">Total</th><th class="n">human</th><th class="n">internal</th><th class="n">bot</th><th class="n">unknown</th></tr></thead>
+<thead><tr><th>Événement</th><th class="n">total</th><th class="n">human</th><th class="n">internal</th><th class="n">bot</th><th class="n">unknown</th><th>Δ vs produit 06:49</th></tr></thead>
 <tbody>
-<tr><td>audit_started</td><td class="n">25</td><td class="n">0</td><td class="n">25</td><td class="n">0</td><td class="n">0</td></tr>
-<tr><td>audit_completed</td><td class="n">25</td><td class="n">0</td><td class="n">25</td><td class="n">0</td><td class="n">0</td></tr>
-<tr><td>report_viewed</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td></tr>
-<tr><td>report_link_opened</td><td class="n">6</td><td class="n">0</td><td class="n">6</td><td class="n">0</td><td class="n">0</td></tr>
-<tr><td>email_captured</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td></tr>
-<tr><td>teaser_cta_click</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td></tr>
-<tr><td>checkout_opened</td><td class="n" style="color:var(--bad);font-weight:700">0 ⚠</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td></tr>
-<tr><td>followup_1_sent</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td></tr>
-<tr><td>followup_2_sent</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td></tr>
-<tr><td>followup_click</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td></tr>
+<tr><td>audit_started</td><td class="n">26</td><td class="n">0</td><td class="n">26</td><td class="n">0</td><td class="n">0</td><td>=</td></tr>
+<tr><td>audit_completed</td><td class="n">26</td><td class="n">0</td><td class="n">26</td><td class="n">0</td><td class="n">0</td><td>=</td></tr>
+<tr><td><b>report_viewed</b></td><td class="n">1</td><td class="n"><b>0</b></td><td class="n">1</td><td class="n">0</td><td class="n">0</td><td>=</td></tr>
+<tr><td>report_link_opened</td><td class="n">6</td><td class="n">0</td><td class="n">6</td><td class="n">0</td><td class="n">0</td><td>=</td></tr>
+<tr><td>email_captured</td><td class="n">1</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">1</td><td>= (claim-audit, classe non écrite)</td></tr>
+<tr><td>teaser_cta_click</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td>=</td></tr>
+<tr><td><b>checkout_opened</b></td><td class="n">1</td><td class="n">0</td><td class="n"><b>1</b></td><td class="n">0</td><td class="n">0</td><td><b>+1 internal</b></td></tr>
+<tr><td>followup_1 / 2 / click</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td>=</td></tr>
 </tbody></table>
 </div>
 <div class="card"><div class="chart"><canvas id="c1"></canvas></div></div>
 </div>
-<p class="src"><b>Piège désamorcé</b> — <code>traffic_class_since = 2026-07-30T07:03:49Z</code> : la fenêtre de classification (43 j) est plus large que la fenêtre 14 j, donc les zéros par classe sont des zéros <b>mesurés</b>, pas une absence de données ; <code>unknown = 0</code> partout le confirme.<br>
-<b>Mouvement depuis le 12/09</b> : <code>report_link_opened</code> passe de 7 à 6. Ce n'est <b>pas</b> une régression et surtout pas une entrée : c'est une <b>sortie par le bord</b> de la fenêtre glissante — un clic interne du 30/08 vient d'avoir 14 jours. Tout le reste est identique. <b>17<sup>e</sup> jour sans aucun humain sur le produit.</b> Prochaine échéance mécanique : +8 <code>audit_started.internal</code> vers le 16/09 (rescan hebdo).</p>
+<p class="src"><code>traffic_class_since = 2026-07-30T07:03:49Z</code> : fenêtre de classification 46 j &gt; fenêtre 14 j ⇒ les zéros humains sont <b>mesurés</b>. Le +1 <code>checkout_opened.internal</code> est un clic marqué <code>gp_internal</code> dans la fenêtre 06:53–07:11 UTC : pas le cron, pas un agent (aucun GET sur un lien de caisse ce run). Inférence : Charles. <b>Un clic sur un bouton de prix crée une session Stripe</b> — 5<sup>e</sup> session attendue au prochain relevé Stripe, non vérifiée ici. Mouvements de la nuit (+1/+1/+1 audit/report/email) déjà lus par l'agent produit à 06:49.</p>
 
-<h2>c — La caisse, lue à la source (nouveau)</h2>
-<div class="card" style="padding:0;overflow:hidden">
-<table>
-<thead><tr><th>Date (UTC)</th><th>Plan</th><th class="n">Montant</th><th>Devise présentée</th><th>Statut</th><th>Dans la fenêtre 14 j ?</th></tr></thead>
-<tbody>
-<tr><td>27/08 19:14</td><td>Monitor</td><td class="n">9,00 €</td><td>CAD (15,11)</td><td><span class="pill p-bad">expirée impayée</span></td><td>oui</td></tr>
-<tr><td>27/08 19:13</td><td>Monitor</td><td class="n">9,00 €</td><td>MAD (100,88)</td><td><span class="pill p-bad">expirée impayée</span></td><td>oui</td></tr>
-<tr><td>27/08 06:40</td><td>Agent</td><td class="n">19,00 €</td><td>USD (23,00)</td><td><span class="pill p-bad">expirée impayée</span></td><td>oui</td></tr>
-<tr><td>31/07 13:05</td><td>Monitor</td><td class="n">9,00 €</td><td>EUR · TVA 1,50 € calculée</td><td><span class="pill p-bad">expirée impayée</span></td><td>non</td></tr>
-</tbody></table>
-</div>
+<h2>c — La caisse, lue à la source</h2>
 <div class="card">
-<b>Relu le 13/09 : aucune session nouvelle, 0 charge, 0 abonnement.</b> Ce que ça dit — et ce que ça ne dit pas.
-<ul>
-<li><b>Dit</b> : la caisse est joignable et fonctionnelle. Les deux liens de paiement sont actifs, en euros, correctement étiquetés <code>monitor_9eur</code> / <code>agent_19eur</code>, TVA automatique activée, message de confirmation en place. <b>Le produit n'a jamais été payé une seule fois.</b></li>
-<li><b>Dit</b> : le compteur <code>checkout_opened</code> ne peut structurellement jamais bouger depuis la home. Vérifié par lecture du HTML servi : les deux boutons de prix sont des <code>&lt;a href&gt;</code> nus, aucune émission d'événement dans la page. Les 3 sessions du 27/08 en sont la preuve par l'absurde.</li>
-<li><b>Ne dit pas</b> : que des prospects sont arrivés. <code>customer_details</code> est nul sur les 4 sessions — aucune identité. Trois viennent de zones non-euro (Canada, Maroc, États-Unis), incompatibles avec les deux prospects français écrits le 17/08. <span class="pill p-warn">non attribuable</span> La session du 31/07 a une adresse de facturation UE saisie (TVA calculée) : c'est le signal d'achat le plus avancé de l'histoire de GetPick, et il est hors fenêtre.</li>
-<li><b>Conséquence de gouvernance</b> : à partir d'aujourd'hui, <b>le revenu et l'ouverture de caisse se lisent chez Stripe, pas dans le funnel</b>. Le funnel garde l'amont (audit, rapport, capture).</li>
-</ul>
+<p><b>Non rafraîchie ce run</b> : aucun connecteur Stripe dans cette session (idem run produit). Dernier relevé direct, 13/09 15:12 UTC : <code>/v1/charges</code> vide, 4 sessions expirées impayées (27/08 ×3, 31/07). <b>0 € depuis l'origine.</b></p>
+<p>Ce que le funnel dit à sa place : <code>checkout_opened</code> = 1, classe interne. Le chemin bouton → Stripe est donc mesuré en prod pour la première fois — et la première session « attribuée » sera la nôtre, pas celle d'un prospect. La tuile « caisse atteinte » passe de 4 à <b>4 (+1 probable, non relevé)</b>.</p>
 </div>
 
 <h2>d — Outbound</h2>
@@ -110,79 +92,73 @@ Goulot unique, 7<sup>e</sup> run consécutif : <b>aucun prospect n'entre</b>. La
 <tr><td>17/08</td><td>Absente des 12 réponses, rival cité 8 fois — cosmétique bio</td><td>lafare1789.com</td><td><span class="pill p-bad">aucune</span></td></tr>
 <tr><td>28/08</td><td>Test d'acheminement SMTP <code>hello@getpick.ai</code></td><td>interne</td><td><span class="pill p-ok">arrivé</span></td></tr>
 </tbody></table>
-<p class="src">Recherche Gmail cloisonnée du 13/09 : <code>(getpick OR to:hello@getpick.ai OR from:hello@getpick.ai) newer_than:7d</code> → <b>0 fil</b>. Aucun balayage de <code>in:sent</code>. <b>27 jours sans envoi de prospection.</b> Le canal d'envoi est vivant (prouvé le 28/08) : l'arrêt n'est pas une panne.<br>
-<b>Un lot de 2 ne mesure rien</b> — on n'a aucune donnée sur la qualité de la séquence actuelle. Conclure « la séquence ne marche pas » serait inventer.</p>
+<p class="src">Gmail cloisonné 14/09 : <code>(getpick OR to:hello@getpick.ai OR from:hello@getpick.ai) newer_than:7d -in:draft</code> → <b>0 fil</b>. Aucun balayage de <code>in:sent</code>. Instantly : <b>non rafraîchi</b> — <code>INSTANTLY_API_KEY</code> n'est pas une variable Vercel, elle n'est pas revenue avec le pull. <b>28 jours sans envoi.</b></p>
 </div>
 
 <h2>e — Entonnoir du lot en cours</h2>
 <div class="card">
-<p>Aucun lot en cours. Le fichier de cibles <code>outbound/sdr_prospects.csv</code> contient 15 marques mais <b>les colonnes email et prénom sont vides</b> — il n'est pas exploitable en l'état, indépendamment des clés.</p>
-<p class="src">Rappel de discipline avant tout lot : oppositions vérifiées, prénoms contrôlés contre le décideur publié, un score élevé disqualifie la cible, un rival n'est nommé que s'il tient le plancher de stabilité (≥ ⅓ des questions vérifiées, minimum 2 questions distinctes).</p>
+<p>Aucun lot en cours. <code>outbound/sdr_prospects.csv</code> : 15 marques, colonnes email et prénom vides — inexploitable en l'état. Rien ne peut partir tant que la décision n'est pas prise <b>et</b> que les clés ne sont pas réelles.</p>
+<p class="src">Discipline avant tout lot : oppositions vérifiées, prénoms contrôlés contre le décideur publié, score élevé = cible disqualifiée, rival nommé seulement au-dessus du plancher de stabilité (≥ ⅓ des questions vérifiées, minimum 2 distinctes).</p>
 </div>
 
 <h2>f — Production — préconditions testées une à une</h2>
 <div class="card" style="padding:0;overflow:hidden">
 <table>
-<thead><tr><th>Surface</th><th>Appel réel</th><th>Verdict</th></tr></thead>
+<thead><tr><th>Surface</th><th>Appel réel 14/09 07:11 UTC</th><th>Verdict</th></tr></thead>
 <tbody>
 <tr><td>Home <code>/</code></td><td>200</td><td><span class="pill p-ok">debout</span></td></tr>
 <tr><td><code>/fr</code></td><td>200</td><td><span class="pill p-ok">debout</span></td></tr>
 <tr><td><code>/vs</code></td><td>200</td><td><span class="pill p-ok">debout</span></td></tr>
 <tr><td><code>/study</code></td><td>200</td><td><span class="pill p-ok">debout</span></td></tr>
-<tr><td><code>/api/funnel</code></td><td>200 · payload complet</td><td><span class="pill p-ok">vivant</span></td></tr>
-<tr><td>Boutons de prix de la home</td><td><code>pricing_card</code> présent dans <code>/_next/static/chunks/1uj6n_doqneqo.js</code></td><td><span class="pill p-ok">la caisse n'est plus aveugle</span></td></tr>
-<tr><td><code>/api/audit-status</code> sans paramètre</td><td>400</td><td><span class="pill p-ok">route vivante, refus attendu</span></td></tr>
-<tr><td>Lien caisse Monitor</td><td>non re-testé ce run</td><td><span class="pill p-warn">un GET crée une session Stripe</span></td></tr>
-<tr><td>Lien caisse Agent</td><td>non re-testé ce run</td><td><span class="pill p-warn">un GET crée une session Stripe</span></td></tr>
-<tr><td>Commit servi en production</td><td><code>65dd297</code> — Vercel <code>getpick2</code> ✓ 20:31:18Z</td><td><span class="pill p-ok">à jour</span></td></tr>
+<tr><td><code>/api/funnel</code></td><td>200 · payload complet · <code>x-funnel-key</code> du fichier pullé <b>refusé</b> (valeur masquée)</td><td><span class="pill p-ok">vivant</span> <span class="pill p-warn">attribution hors d'atteinte</span></td></tr>
+<tr><td>Instrument de caisse</td><td><code>checkout_opened.internal</code> = 1 au funnel</td><td><span class="pill p-ok">prouvé par une mesure, plus seulement par le bundle</span></td></tr>
+<tr><td>Commit servi en production</td><td><code>65dd297</code> — statut GitHub : Vercel <code>getpick2</code> success 20:31:18Z, 4 projets verts</td><td><span class="pill p-ok">à jour</span></td></tr>
+<tr><td>Liens caisse Monitor / Agent</td><td>non testés (un GET crée une session Stripe)</td><td><span class="pill p-neu">choix</span></td></tr>
 </tbody></table>
 </div>
-<p class="src">Tous les appels portent un User-Agent navigateur et <code>Cookie: gp_internal=1</code>. <b>Aucune page <code>/audit/</code> n'a été ouverte</b> — elle émettrait un <code>report_viewed</code> et polluerait la north star.</p>
+<p class="src">Tous les appels portent un User-Agent navigateur et <code>Cookie: gp_internal=1</code>. <b>Aucune page <code>/audit/</code> ouverte, aucun audit lancé.</b></p>
 
 <h2>g — Défauts produit chiffrés</h2>
 <div class="card">
 <table>
-<thead><tr><th>Défaut</th><th>Preuve</th><th>Coût</th><th>Réparable sans clé ?</th></tr></thead>
+<thead><tr><th>Défaut</th><th>Preuve</th><th>Coût</th><th>État</th></tr></thead>
 <tbody>
-<tr><td><b>Le compteur de caisse est aveugle</b> <span class="pill p-ok">réparé, en prod</span></td><td>3 sessions Stripe le 27/08 vs <code>checkout_opened = 0</code> ; HTML servi : boutons <code>&lt;a href&gt;</code> nus</td><td>La dernière marche avant le revenu n'était pas mesurée</td><td><span class="pill p-ok">déployé le 13/09, prouvé par le bundle servi</span></td></tr>
-<tr><td>Le champ email de l'audit est marqué « optionnel »</td><td>HTML servi de la home, <code>id="email"</code>, placeholder « Email (optionnel) »</td><td><code>email_captured = 0</code> sur 14 j ; aucune reprise de contact possible</td><td><span class="pill p-ok">oui</span></td></tr>
-<tr><td><b>Le bloc verrouillé parlait machine</b> <span class="pill p-ok">corrigé, en prod</span></td><td>Retour de Charles le 13/09 sur une page de rapport réelle : « Ton schéma FAQ (JSON-LD) », « Ton llms.txt » — deux noms de format, aucun bénéfice</td><td>L'écran exact de la conversion 0 € → 9 € était illisible pour l'ICP (fondateur DTC, sans dev, sans agence)</td><td><span class="pill p-ok">fait et déployé</span></td></tr>
-<tr><td>Origine des 4 sessions Stripe non établie</td><td>27/08 19:13:52Z et 19:14:37Z — <b>45 s d'écart</b>, devises de présentation CAD puis MAD ; 27/08 06:40Z en USD ; 31/07 13:05Z</td><td>La tuile « caisse atteinte = 4 » pourrait compter nos propres contrôles de lien, pas des prospects</td><td><span class="pill p-warn">hypothèse non prouvée — plus aucun GET sur les liens de caisse</span></td></tr>
-<tr><td>Fichier de clés absent de la machine</td><td><code>find</code> sur tous les montages : aucun <code>.env*</code> ; <code>audit-share-token.ts</code> l.59 lève sans le secret</td><td>Chaîne de prospection entièrement à l'arrêt</td><td><span class="pill p-bad">non</span></td></tr>
+<tr><td><b>Le prix et les fichiers payants parlaient machine</b></td><td>Puce Monitor « Fichiers machine prêts à installer : schéma FAQ (JSON-LD), llms.txt, correctif robots.txt » ; libellés des blocs à copier commençant par « JSON-LD », « llms.txt », « robots.txt »</td><td>La ligne qui vend 9 € et l'écran livré après paiement ne nommaient pas ce que le client gagne — incohérent avec le teaser corrigé le 13/09</td><td><span class="pill p-ok">corrigé, commit 1b2e790 — à pousser</span></td></tr>
+<tr><td>Accord figé « GPTBot ne peuvent pas »</td><td>Audit de contrôle 2f1bccd9, un seul bot bloqué (relevé produit 14/09)</td><td>Une faute dans la ligne qui demande de payer</td><td><span class="pill p-ok">corrigé + 4 tests dédiés</span></td></tr>
+<tr><td><b>Fichier de clés vide de secrets</b></td><td><code>outbound/keys.env</code> recréé 09:05 par Vercel CLI : 18 valeurs <code>[SENSITIVE]</code>, dont <code>DATABASE_URL</code>, <code>FUNNEL_ADMIN_KEY</code>, <code>AUDIT_SHARE_SECRET</code>, <code>OPENAI_API_KEY</code>, <code>GEMINI_API_KEY</code>. <code>INSTANTLY_API_KEY</code> absent de Vercel</td><td>Attribution, base, audits par script, Instantly : toujours hors d'atteinte</td><td><span class="pill p-bad">geste Charles — valeurs à remettre à la main</span></td></tr>
+<tr><td>Le champ email de l'audit est « optionnel »</td><td>HTML servi de la home, placeholder « Email (optionnel) »</td><td><code>email_captured.human = 0</code> ; aucune reprise de contact possible</td><td><span class="pill p-neu">reporté — rien ne se mesurerait sans humain</span></td></tr>
+<tr><td>Audit anonyme de la nuit enrôlé au rescan 30 j</td><td>+1 <code>audit_started.internal</code> 13/09 15:12 → 14/09 06:49, backfill <code>monitored_brands</code></td><td>Un rescan payant (API) sur un audit de test</td><td><span class="pill p-warn">non annulable sans <code>DATABASE_URL</code></span></td></tr>
 </tbody></table>
 </div>
 
 <h2>h — Dette de livraison</h2>
 <div class="card">
 <ul>
-<li><b>SOLDÉE le 13/09 à 20:08 UTC</b> — <code>origin/main</code> = <code>65dd297</code> (API GitHub), 8 commits livrés : <code>be1c9cb</code>+<code>683f3fd</code> (caisse mesurable), <code>f5a70f9</code> (le bloc verrouillé du rapport parle client), 5 commits de journaux. Vercel : <code>getpick</code> ✓ 20:30:55Z, <b><code>getpick2</code> ✓ 20:31:18Z (prod)</b>, <code>citeable</code> ✓ 20:31:34Z.</li>
-<li><b>Le push ne pouvait pas partir de l'agent</b> : aucun identifiant GitHub dans l'environnement d'exécution. Sur le Mac, HTTPS a échoué (aucun credential mémorisé, mot de passe non supporté depuis 2021) et <code>gh</code> n'est pas installé ⇒ bascule de la télécommande en SSH, push réussi.</li>
-<li><b>Contrôle croisé — et le mauvais instrument démasqué.</b> <code>grep checkout_opened</code> sur le HTML de la home ne pouvait <b>jamais</b> répondre : <code>HomeClient.tsx</code> est un composant client, la chaîne vit dans un chunk JS. Trois runs ont écrit « non déployé » avec un test qui aurait rendu 0 dans les deux cas. Instrument corrigé : chercher <code>pricing_card</code> dans les chunks servis ⇒ <b>trouvé</b>. <code>be1c9cb</code> n'ayant jamais été déployé, c'est la preuve que la prod sert le nouveau build.</li>
-<li><b>Ce qu'on n'a pas fait, exprès.</b> Pas de clic sur un bouton de prix pour faire +1 sur <code>checkout_opened.internal</code> : ça ouvre le lien Stripe et <b>crée une session</b> — on ne salit pas le compteur qu'on vérifie. Le nouveau libellé du rapport n'est pas vérifiable à distance (rendu serveur, hors des chunks) sans ouvrir une page <code>/audit/</code> : non vérifié en prod, couvert par le contrat de page 9/9 et la suite 536/522/0.</li>
-<li>Reste en local, pour le prochain push : le journal du jour et ce cockpit.</li>
+<li><code>origin/main</code> = <code>65dd297</code> (lu par <code>ls-remote</code> HTTPS et API GitHub ce run). Local <code>main</code> = <code>1b2e790</code>, <b>3 commits devant</b> : 2 journaux (13/09 soir, produit 14/09) + <b>1 correctif de copy</b>.</li>
+<li>Le correctif est vérifié dans un clone jetable de <code>65dd297</code> (Node 23.11.1, <code>npm ci</code>) avec les mêmes fichiers que le dépôt : <b>540 tests / 526 pass / 0 fail / 14 skip</b>, <code>tsc --noEmit</code> 0, eslint 0 erreur (4 avertissements historiques). Aucun test existant ne référence les chaînes modifiées ; le contrat de page (9/9) reste vert.</li>
+<li><b>Push impossible depuis l'agent</b> (aucune clé SSH, aucun credential) — geste Charles, une commande, remote déjà en SSH.</li>
+<li>Verrous git orphelins : 3 nouveaux ce run (<code>HEAD.lock</code> 08:57, deux <code>index.lock</code>), neutralisés par <code>mv</code> ; 13 orphelins au total dans <code>.git/</code>, inoffensifs, à supprimer depuis le Mac un jour.</li>
 </ul>
 </div>
 
 <h2>i — Commande à l'agent produit</h2>
 <div class="card">
-<p><span class="pill p-ok">commande du 10/09 exécutée</span> — réception faite, test faux corrigé dans le test, merge local, contre-vérifié par le CEO.</p>
-<p><span class="pill p-ok">levé</span> La session produit bloquée du 12/09 n'a rien écrit en double dans <code>AGENT_RUNS.md</code> (relu). Elle a laissé un <code>HEAD.lock</code> orphelin daté du 12/09 16:05, plus un <code>index.lock</code> : neutralisés par <code>mv</code> (le montage FUSE refuse <code>unlink</code>). Ils n'empêchent pas <code>git push</code>.</p>
-<p><span class="pill p-warn">à vérifier après le push</span> Relire à l'œil le bloc verrouillé sur un audit de contrôle — <b>par <code>/api/audit-status</code></b>, jamais en ouvrant la page.</p>
-<p><b>Aucune commande nouvelle.</b> Tant que personne n'entre, surveillance seule : Stripe → funnel → prod. Aucun lot produit : rien ne se mesurerait.</p>
-<p><b>Dès que <code>origin/main</code> avance</b> : contrôle croisé de l'instrument — un clic interne sur un bouton de prix (sous <code>gp_internal=1</code>) doit faire bouger <code>checkout_opened.internal</code> de +1 au funnel, sans ouvrir aucune page <code>/audit/</code>. Puis fermer la dette.</p>
+<p><span class="pill p-ok">commande du 13/09 exécutée</span> Réception de <code>65dd297</code> faite à 06:49 : 4 contrôles verts, prod vérifiée, teaser relu en exécutant la fonction déployée. Bon travail, y compris le défaut d'accord relevé.</p>
+<p><b>Commande du 14/09 :</b> surveillance seule, Stripe → funnel → prod, jusqu'à ce qu'un humain entre. <b>Aucun lot.</b> Le poste §9.3 est fait ici (<code>1b2e790</code>) : le réceptionner après le prochain push (chunk + libellés via la fonction, jamais la page). Si le funnel montre un <code>checkout_opened.human</code> ou un <code>report_viewed.human</code> : le signaler immédiatement, ne pas attendre le run.</p>
 </div>
 
 <h2>j — Ce qui attend Charles</h2>
 <div class="card">
 <p><b>Dépenses en attente : aucune.</b></p>
-<p><b>Décision 1 — déployer : FAITE le 13/09 à 20:08 UTC.</b> <span class="pill p-ok">close</span> 8 commits en production, build Vercel vert, 4 surfaces à 200, caisse instrumentée.</p>
-<p><b>Décision 2 — la prospection repart-elle : oui ou non.</b> Posée le 07/09, sans réponse ; 27<sup>e</sup> jour d'arrêt par défaut. Non reposée une troisième fois dans le vide. Si oui, un seul fichier manque : <code>outbound/keys.env</code> (signature des liens, moteurs d'audit, Instantly, attribution). Sans lui, aucun lot n'est possible.</p>
+<p><b>Décision — la prospection repart-elle : oui ou non.</b> Posée le 07/09. 28<sup>e</sup> jour d'arrêt par défaut. Le produit n'a plus d'excuse ; le goulot est cette réponse.</p>
+<p><b>Geste 1 — pousser</b> : <code>cd ~/Dev/Projects/getpick &amp;&amp; git push origin main</code> (3 commits, Vercel déploie seul, front seul, réversible en un commit).</p>
+<p><b>Geste 2 — si oui à la prospection</b> : le pull Vercel a rendu un fichier masqué. Il faut les valeurs réelles dans <code>outbound/keys.env</code> : <code>DATABASE_URL</code> (console Neon), <code>OPENAI_API_KEY</code> / <code>GEMINI_API_KEY</code> / <code>SERPER_API_KEY</code> (consoles respectives), <code>INSTANTLY_API_KEY</code> + <code>INSTANTLY_CAMPAIGN_ID</code> (app.instantly.ai, jamais dans Vercel), et un <code>FUNNEL_ADMIN_KEY</code> / <code>AUDIT_SHARE_SECRET</code> : soit les valeurs d'origine si tu les as, soit de nouvelles à poser <b>aussi</b> dans Vercel (redéploiement nécessaire).</p>
 </div>
 
 <footer>
-Relevé du <b>dimanche 13 septembre 2026, 15:12 UTC</b> ; correction produit livrée vers 17:00 UTC, <b>déploiement vérifié à 20:31 UTC</b>. Cockpit <b>statique</b> : le bac à sable n'a pas d'accès réseau sortant depuis la page (seuls Chart.js, Grid.js et Mermaid sont autorisés en CDN). Il ne se rafraîchit pas seul — il est réécrit à chaque run CEO.<br>
-<b>Règle de cloisonnement</b> : seules les données GetPick sont lues, citées et exploitées. La boîte professionnelle de Charles hors GetPick est hors périmètre ; la recherche Gmail a porté exclusivement sur les termes GetPick, sans balayage de la boîte d'envoi.<br>
-Chiffres : <code>GET https://www.getpick.ai/api/funnel</code> · API Stripe compte Kinze livemode · Gmail relu ce jour sur les seuls termes GetPick · dépôt <code>Citeable</code> monté ce run ; suite complète relancée dans une copie jetable après le commit du jour (536/522/0). <b>Aucune page <code>/audit/</code> ouverte, aucun GET sur un lien de caisse</b> — les deux polluent une mesure. Aucun chiffre n'est estimé.
+Relevé du <b>lundi 14 septembre 2026, 07:11 UTC</b>. Cockpit <b>statique</b> : le bac à sable n'a pas d'accès réseau sortant depuis la page (seuls Chart.js, Grid.js et Mermaid sont autorisés en CDN). Il ne se rafraîchit pas seul — il est réécrit à chaque run CEO.<br>
+<b>Règle de cloisonnement</b> : seules les données GetPick sont lues, citées et exploitées. La boîte professionnelle de Charles hors GetPick est hors périmètre ; la recherche Gmail a porté exclusivement sur les termes GetPick, sans balayage de la boîte d'envoi. Les valeurs de <code>keys.env</code> n'ont pas été affichées, seuls les noms et la présence ont été lus.<br>
+Chiffres : <code>GET https://www.getpick.ai/api/funnel</code> · statut GitHub du commit servi · Gmail GetPick · dépôt <code>Citeable</code> monté ce run ; suite complète dans une copie jetable (540/526/0). Stripe et Instantly : <b>non rafraîchis</b>, chiffres datés. <b>Aucune page <code>/audit/</code> ouverte, aucun GET sur un lien de caisse, aucun audit lancé.</b> Aucun chiffre n'est estimé.
 </footer>
 
 </div>
@@ -194,13 +170,14 @@ Chiffres : <code>GET https://www.getpick.ai/api/funnel</code> · API Stripe comp
     labels:['audit_started','audit_completed','report_viewed','report_link_opened','email_captured','checkout_opened'],
     datasets:[
       {label:'human',data:[0,0,0,0,0,0],backgroundColor:'#1a4fd6'},
-      {label:'internal',data:[25,25,0,6,0,0],backgroundColor:'#9aa6b5'},
-      {label:'bot',data:[0,0,0,0,0,0],backgroundColor:'#b3261e'}
+      {label:'internal',data:[26,26,1,6,0,1],backgroundColor:'#9aa6b5'},
+      {label:'bot',data:[0,0,0,0,0,0],backgroundColor:'#b3261e'},
+      {label:'unknown',data:[0,0,0,0,1,0],backgroundColor:'#e0b84a'}
     ]},
     options:{responsive:true,maintainAspectRatio:false,
       scales:{x:{stacked:true,ticks:{font:{size:10}}},y:{stacked:true,beginAtZero:true}},
       plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}},
-      title:{display:true,text:'Funnel 14 j par classe de trafic — relevé 13/09 15:12 UTC',font:{size:12}}}}
+      title:{display:true,text:'Funnel 14 j par classe de trafic — relevé 14/09 07:11 UTC',font:{size:12}}}}
   });
 })();
 </script>
