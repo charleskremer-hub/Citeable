@@ -3,102 +3,121 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GetPick — Cockpit Produit — 12/09/2026</title>
+<title>Cockpit Produit GetPick — 14/09/2026</title>
 <style>
-  :root { color-scheme: light; }
-  body { margin: 0; padding: 24px; font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; background: #f6f6f4; color: #1a1a1a; font-size: 14px; line-height: 1.45; }
-  h1 { font-size: 20px; margin: 0 0 4px; }
-  h2 { font-size: 15px; margin: 28px 0 10px; text-transform: uppercase; letter-spacing: .06em; color: #444; }
-  .sub { color: #666; margin-bottom: 18px; }
-  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-  .kpi { background: #fff; border: 1px solid #e2e2de; border-radius: 12px; padding: 14px 16px; }
-  .kpi .l { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #666; }
-  .kpi .v { font-size: 30px; font-weight: 700; margin: 4px 0 2px; }
-  .kpi .d { font-size: 12px; color: #555; }
-  .green { color: #167a3c; } .red { color: #b3261e; } .amber { color: #9a6700; }
-  .card { background: #fff; border: 1px solid #e2e2de; border-radius: 12px; padding: 14px 18px; margin-bottom: 12px; }
-  table { border-collapse: collapse; width: 100%; font-size: 13px; }
-  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #eee; vertical-align: top; }
-  th { background: #fafaf8; font-weight: 600; }
-  code { background: #f0f0ec; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
-  .foot { color: #777; font-size: 12px; margin-top: 30px; border-top: 1px solid #ddd; padding-top: 10px; }
-  .tag { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; background: #eee; margin-right: 6px; }
+:root { color-scheme: light; --ink:#111; --mut:#666; --line:#e4e4e0; --ok:#0a7a3d; --okbg:#e6f6ec; --warn:#a15c00; --warnbg:#fff4e0; --bad:#b3261e; --badbg:#fde9e7; --acc:#1d4ed8; --bg:#fafaf8; }
+* { box-sizing:border-box; }
+body { margin:0; font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; color:var(--ink); background:var(--bg); }
+.wrap { max-width:1100px; margin:0 auto; padding:20px 22px 40px; }
+h1 { font-size:20px; margin:0 0 4px; }
+h2 { font-size:15px; margin:26px 0 8px; text-transform:uppercase; letter-spacing:.04em; color:#333; border-bottom:1px solid var(--line); padding-bottom:4px; }
+.sub { color:var(--mut); font-size:12px; margin-bottom:14px; }
+.kpis { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; }
+.kpi { background:#fff; border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
+.kpi .l { font-size:11px; color:var(--mut); text-transform:uppercase; letter-spacing:.04em; }
+.kpi .v { font-size:28px; font-weight:700; margin:2px 0; }
+.kpi .d { font-size:12px; color:var(--mut); }
+.kpi.ok { border-color:#bfe6cd; background:var(--okbg); }
+.kpi.ok .v { color:var(--ok); font-size:18px; }
+table { border-collapse:collapse; width:100%; background:#fff; font-size:13px; }
+th, td { border:1px solid var(--line); padding:6px 8px; text-align:left; vertical-align:top; }
+th { background:#f3f3ef; font-weight:600; }
+td.n { text-align:right; font-variant-numeric:tabular-nums; }
+.tag { display:inline-block; padding:1px 7px; border-radius:999px; font-size:11px; font-weight:600; }
+.tag.ok { background:var(--okbg); color:var(--ok); } .tag.warn { background:var(--warnbg); color:var(--warn); } .tag.bad { background:var(--badbg); color:var(--bad); } .tag.info { background:#e8eefc; color:var(--acc); }
+.box { background:#fff; border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:10px; }
+.box.v { border-left:4px solid var(--acc); }
+ul { margin:6px 0; padding-left:20px; } li { margin:3px 0; }
+.src { color:var(--mut); font-size:11px; }
+.foot { margin-top:26px; font-size:11px; color:var(--mut); border-top:1px solid var(--line); padding-top:8px; }
+@media (max-width:800px){ .kpis{grid-template-columns:repeat(2,1fr);} }
 </style>
 </head>
-<body>
-<h1>GetPick — Cockpit Produit</h1>
-<div class="sub">Run du samedi 12 septembre 2026 · relevés 14:00–14:05 UTC (en-tête <code>Date</code> de /api/funnel) · précédents : produit 11/09 13:19 UTC, CEO 12/09 13:10 UTC · run de surveillance (commande CEO : aucune)</div>
+<body><div class="wrap">
+<h1>Cockpit Produit GetPick</h1>
+<div class="sub">Run produit du lundi 14/09/2026 · relevés 06:46–06:53 UTC (en-tête <code>Date</code> de <code>/api/funnel</code>) · run automatisé, Charles absent · précédent : 12/09 14:05 UTC · CEO : 13/09 (15:12 UTC + déploiement 20:08–20:33 UTC)</div>
 
 <div class="kpis">
-  <div class="kpi"><div class="l">1 · Ventes</div><div class="v">0</div><div class="d">Δ = · Stripe livemode : 0 charge, 0 abonnement, 4 sessions expirées (27/08 ×3, 31/07) · ~14:00 UTC</div></div>
-  <div class="kpi"><div class="l">2 · Rapports vus (human, 14 j)</div><div class="v">0</div><div class="d">Δ = · 16ᵉ jour sans événement humain · /api/funnel 14:00:57 UTC</div></div>
-  <div class="kpi"><div class="l">3 · Emails capturés (human, 14 j)</div><div class="v">0</div><div class="d">Δ = · /api/funnel 14:00:57 UTC</div></div>
-  <div class="kpi"><div class="l">4 · Prod</div><div class="v green">VERT</div><div class="d"><code>1d338cb</code> servi, déployé 07/09 07:16:56 UTC (statut GitHub, getpick2, re-lu) · 5 surfaces 200 · <span class="amber">683f3fd fusionné localement, NON poussé (5 commits devant origin/main)</span></div></div>
-  <div class="kpi"><div class="l">5 · Dépense en attente</div><div class="v">0 €</div><div class="d">Rien à débloquer</div></div>
+  <div class="kpi"><div class="l">1 · Ventes</div><div class="v">0</div><div class="d">Δ = · Stripe non relevé ce run (connecteur absent) ; dernier CEO 13/09 15:12 : 0 charge, 4 sessions expirées · <code>checkout_opened</code> 0 toutes classes depuis mise en prod de l'instrument (10 h)</div></div>
+  <div class="kpi"><div class="l">2 · Rapports vus (human, 14 j)</div><div class="v">0</div><div class="d">Δ = · <code>report_viewed.human</code>, 06:49 UTC · total 1 (internal +1, auteur non nominatif) · 18ᵉ jour sans humain</div></div>
+  <div class="kpi"><div class="l">3 · Emails capturés (human, 14 j)</div><div class="v">0</div><div class="d">Δ = · <code>email_captured.human</code> · total 1 (<em>unknown</em> = <code>/api/claim-audit</code>, +1)</div></div>
+  <div class="kpi ok"><div class="l">4 · Prod</div><div class="v">VERT — 65dd297</div><div class="d">déployé 13/09 20:31:18 UTC (statut GitHub « Vercel – getpick2 »), <b>réceptionné</b> : 536/522/0 · lint 0 err · tsc 0 · préflight GO · 4 surfaces 200 · chunk <code>1uj6n_doqneqo.js</code> porte <code>checkout_opened</code></div></div>
+  <div class="kpi"><div class="l">5 · Dépense en attente</div><div class="v">0 €</div><div class="d">aucune demande · coût passif : 1 audit interne neuf enrôlé au rescan 30 j (backfill)</div></div>
 </div>
 
-<h2>À valider</h2>
-<div class="card"><b>Rien.</b> Aucune orientation stratégique, aucune dépense. Un geste technique débloque le déploiement du lot vérifié vert ×2 : <code>cd ~/Dev/Projects/getpick && git push origin main</code> (Vercel déploie seul ; rollback <code>git push --force-with-lease origin 1d338cb:main</code>).</div>
+<h2>À valider (stratégie / dépenses)</h2>
+<div class="box v"><b>Rien à valider côté produit.</b> Les deux questions ouvertes restent au CEO : prospection oui/non (28 jours sans envoi) et remise de <code>outbound/keys.env</code>. Signaux de veille à relire <em>si</em> la prospection reprend (orientation, pas chantier) : canal agence « pitch workspace » (Profound), positionnement « exécution vs tracking » (Visiblie).</div>
 
-<h2>Commande CEO (12/09) → exécutée</h2>
-<div class="card">
-<p><b>Commande :</b> aucune — surveillance seule (Stripe → funnel → prod), pas de lot, pas de <code>deploy_to_vercel</code> par upload. <b>Exécutée telle quelle.</b></p>
-<table>
-<tr><th>Lot en attente de push</th><th>Contrôles (11/09, deux agents indépendants, clone jetable, node 23.11 / 24.8)</th><th>État 12/09</th></tr>
-<tr><td><code>be1c9cb</code> + <code>683f3fd</code> — les 2 boutons de prix émettent <code>checkout_opened</code> (sendBeacon, navigation native intacte)</td><td class="green">536 tests / 522 pass / 0 fail / 14 skip · 0 lint err (4 avert.) · 0 tsc · préflight NO-GO uniquement par AUDIT_SHARE_SECRET absent · diff tests 1 A, 0 M</td><td class="amber">inchangé, non relancé (même SHA) · <code>git push --dry-run</code> re-mesuré : sans identifiant</td></tr>
+<h2>Commande CEO · livré · déployé</h2>
+<div class="box">
+<b>Commande du 13/09 (§5 + §10) :</b> surveillance seule, interdiction de lancer un lot ; après le push : contrôle croisé de l'instrument + relecture du bloc verrouillé par <code>/api/audit-status</code>. <span class="tag ok">exécutée</span><br>
+<b>Réception a posteriori de <code>65dd297</code></b> (poussé par Charles 13/09 20:08 UTC, go nommé « Pousse ») — clone jetable GitHub, Node 23.11.1 :
+<table style="margin-top:6px">
+<tr><th>contrôle</th><th>résultat</th><th></th></tr>
+<tr><td><code>node scripts/run-tests.mjs</code></td><td>536 tests / 522 pass / <b>0 fail</b> / 14 skip</td><td><span class="tag ok">OK</span></td></tr>
+<tr><td><code>npx eslint .</code></td><td>0 erreur, 4 avertissements (inchangés)</td><td><span class="tag ok">OK</span></td></tr>
+<tr><td><code>npx tsc --noEmit</code></td><td>0 erreur</td><td><span class="tag ok">OK</span></td></tr>
+<tr><td><code>node scripts/preflight-merge.mjs</code></td><td>VERDICT GO — <code>AUDIT_SHARE_SECRET</code> fourni en placeholder (présence seule testée, vrai secret dans keys.env absent) ; Playwright non lancé</td><td><span class="tag ok">GO</span></td></tr>
+<tr><td>Diff tests <code>1d338cb..65dd297</code></td><td>1 A (<code>home-checkout-counter.test.ts</code>), 0 M</td><td><span class="tag ok">OK</span></td></tr>
+<tr><td>Prod servie</td><td><code>/</code> <code>/fr</code> <code>/vs</code> <code>/study</code> 200 · <code>/api/audit-status</code> 400 sans param · <code>pricing_card</code>×2 + <code>checkout_opened</code>×1 dans le chunk client</td><td><span class="tag ok">vérifié</span></td></tr>
+<tr><td>Bloc verrouillé (f5a70f9)</td><td><code>/api/audit-status</code> ne rend pas le teaser ⇒ <code>publishTeaserItems()</code> du commit déployé exécutée sur l'audit de contrôle <code>2f1bccd9</code> (Solene Atelier, score 75, 6 questions) : 3 libellés FR/EN conformes. Défaut : « GPTBot <i>ne peuvent</i> pas » (pluriel figé, pré-existant)</td><td><span class="tag warn">1 défaut de copy</span></td></tr>
+<tr><td>Clic interne sur bouton de prix</td><td>non fait (crée une session Stripe) — même choix que le CEO</td><td><span class="tag info">choix</span></td></tr>
 </table>
-<p><b>Après le push</b> (au run suivant) : statut GitHub du commit, <code>grep checkout_opened</code> sur la home servie, un clic interne sur chaque bouton de prix ⇒ <code>checkout_opened.internal</code> +2 et Stripe +2 sessions <code>unpaid</code>, sans coût, sans page /audit/.</p>
+<div class="src" style="margin-top:6px">Rollback si besoin : <code>git push --force-with-lease origin 1d338cb:main</code> (geste Charles — push impossible du bac à sable).</div>
 </div>
 
-<h2>Funnel 14 j — 14:00:57 UTC (cookie interne sur chaque requête)</h2>
-<div class="card">
+<h2>Funnel complet — 14 j, 06:49:09 UTC (re-relevé 06:53:27, identique)</h2>
 <table>
-<tr><th>événement</th><th>total</th><th>human</th><th>internal</th><th>bot</th><th>unknown</th><th>Δ vs 11/09</th></tr>
-<tr><td>audit_started</td><td>25</td><td>0</td><td>25</td><td>0</td><td>0</td><td>=</td></tr>
-<tr><td>audit_completed</td><td>25</td><td>0</td><td>25</td><td>0</td><td>0</td><td>=</td></tr>
-<tr><td>report_viewed</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>=</td></tr>
-<tr><td>report_link_opened</td><td>7</td><td>0</td><td>7</td><td>0</td><td>0</td><td>=</td></tr>
-<tr><td>email_captured · teaser_cta_click · checkout_opened · followup_1_sent · followup_2_sent · followup_click</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>=</td></tr>
+<tr><th>événement</th><th>total</th><th>human</th><th>internal</th><th>bot</th><th>unknown</th><th>Δ vs CEO 13/09 15:12</th></tr>
+<tr><td>audit_started</td><td class="n">26</td><td class="n">0</td><td class="n">26</td><td class="n">0</td><td class="n">0</td><td>+1 internal</td></tr>
+<tr><td>audit_completed</td><td class="n">26</td><td class="n">0</td><td class="n">26</td><td class="n">0</td><td class="n">0</td><td>+1 internal</td></tr>
+<tr><td><b>report_viewed</b></td><td class="n">1</td><td class="n"><b>0</b></td><td class="n">1</td><td class="n">0</td><td class="n">0</td><td>+1 internal</td></tr>
+<tr><td>report_link_opened</td><td class="n">6</td><td class="n">0</td><td class="n">6</td><td class="n">0</td><td class="n">0</td><td>=</td></tr>
+<tr><td><b>email_captured</b></td><td class="n">1</td><td class="n"><b>0</b></td><td class="n">0</td><td class="n">0</td><td class="n">1</td><td>+1 unknown (claim-audit)</td></tr>
+<tr><td>teaser_cta_click · checkout_opened · followup_1/2_sent · followup_click</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td>=</td></tr>
 </table>
-<p><code>traffic_class_since</code> = 30/07 07:03 UTC ⇒ 44 j classés &gt; 14 j ⇒ zéros mesurés. 6 liens du 03/09 : 9 jours, 0 ouverture humaine. Identique au relevé CEO de 13:10 UTC.</p>
-<p><b>Prévision à vérifier au run suivant :</b> <code>audit_started.internal</code> +8 vers le <b>16/09</b> (rescan 30 j des 8 audits du 17/08, cron 07:22–07:55 UTC). Prévisions antérieures (report_viewed.human → 0) : vérifiées et retirées le 11/09.</p>
+<div class="box" style="margin-top:8px">
+<b>Lecture du mouvement (+1/+1/+1 entre 13/09 15:12 et 14/09 06:49 UTC).</b> Pas le cron (07:22–07:55 UTC, hors fenêtre ; un rescan n'émet pas de <code>report_viewed</code>). Pas ce run (aucune page <code>/audit/</code>, aucune écriture). <code>email_captured.unknown</code> = signature de <code>/api/claim-audit</code> (n'écrit pas la classe). <b>Inférence, non mesure :</b> navigateur marqué <code>gp_internal</code> — cohérent avec un test de Charles après le push. Attribution nominative : <span class="tag bad">incapacité</span> (<code>x-funnel-key</code> dans keys.env absent). <b>KPI humains inchangés à 0.</b> Coût passif : l'audit créé est enrôlé dans <code>monitored_brands</code> (rescan 30 j).<br>
+<b>Prévisions à vérifier :</b> <code>audit_started.internal</code> +8 vers le 16/09 (rescan des 8 audits du 17/08) · <code>report_link_opened</code> 6 → 0 le 17/09 (sortie des liens du 03/09) · <code>report_viewed.internal</code> 1 et <code>email_captured.unknown</code> 1 sortent vers le 27/09. <code>traffic_class_since</code> 30/07 ⇒ zéros humains mesurés.
 </div>
 
-<h2>Veille — 2 acteurs re-mesurés (navigateur réel, toggles cliqués, JSON-LD + cookies lus)</h2>
-<div class="card">
+<h2>Veille Product Marketing — navigateur réel, 14/09 06:51–06:53 UTC</h2>
 <table>
-<tr><th>Acteur</th><th>Mesure (source, date)</th><th>Décision</th></tr>
-<tr><td><b>Otterly.ai</b></td><td>/pricing 12/09 14:01 UTC : rendu €29 / €189 / €489 mensuel (annuel −15 %), Enterprise « from €1,000 », +100 prompts €99 ; JSON-LD USD 29/189/489 P1M. <b>Anomalie EUR/USD du 05/09 résolue</b> : cookie <code>otterly_currency=EUR</code> par géoloc, le site swape le symbole (<code>data-currency-symbol</code>) sans convertir — tarif « 1 = 1 ». Écart constaté vs 05/09, date non établie : « ChatGPT Ads Tracking » sur tous les tiers, « MCP access », « Agent Analytics ».</td><td>aucune</td></tr>
-<tr><td><b>Peec AI</b></td><td>/pricing 12/09 14:02 UTC : <b>toggle Monthly/Annual, mensuel par défaut</b> — Starter €85 · Pro €205 · Advanced €425 mensuel ; €70 / €180 / €360 annuel (−15 %, FAQ). 0 JSON-LD. <b>Écart vs 05/09 (« annuel imposé ») : mensuel disponible aujourd'hui, date non établie</b> (neuf ou manqué). Features : « AI Shopping » SKU-level, « Ads library », « Local GEO ».</td><td>aucune</td></tr>
-<tr><td>Lecture</td><td>Plancher self-serve mensuel <b>€29 Otterly</b> · €85 Peec · $71 Visiblie (annuel) · €85 Promptwatch · $99 Profound · $99 Semrush add-on / $199 bundle · $250 Scrunch · $295 Athena · $800 Evertune demo-only · Ahrefs $50 sous abo ≥ $199. <b>GetPick 9 €/19 € seul sous 29.</b> Annuel imposé : Visiblie seule désormais. Signal « shopping/SKU + pubs dans les réponses » : 3 acteurs (Scrunch, Peec, Otterly), 2 sans (Evertune, Semrush toolkit) — pas une tendance établie.</td><td>0 action tant que report_viewed.human = 0</td></tr>
+<tr><th>acteur</th><th>gating / pricing (rendu · JSON-LD)</th><th>promesse / preuve / sortie</th><th>source · date</th><th>décision</th></tr>
+<tr><td><b>Visiblie</b> <span class="tag warn">CHANGÉ</span></td><td>Platform, <b>mensuel par défaut</b>, toggle « Yearly −20 % » : Starter <b>€79</b> (€63 an) · Growth €129 (€103) · Scale €199 (€159) · Enterprise+Agencies custom · USD $89/$149/$229 mensuel, $71/$119/$183 annuel · JSON-LD EUR concordant · <b>CB requise pour l'essai</b> · DFY : Audit+Roadmap « from €900 » rendu vs JSON-LD <b>499 EUR</b> (écart persistant), Advisory €2 300/mo, DFY €4 100/mo</td><td>« Annuel imposé » (05/09) <b>ne tient plus</b> — colonne annuelle lue sans cliquer le toggle. Bandeau « Funding €500K ». Bloc comparatif contre Otterly · Peec · Promptwatch : « More data. No action. » — se vend sur l'exécution et la preuve avant/après</td><td>visiblie.com/pricing · 14/09 06:52Z · date du changement non établie</td><td>0 action · plancher self-serve : GetPick seul sous €29 · positionnement « exécution » à relire vs hero si prospection reprend</td></tr>
+<tr><td><b>Profound</b></td><td>Brands : Starter <b>$99/mo</b> · Growth <b>$399/mo</b> (aria-label number-flow), « billed yearly, 2 months free », Try for free sur Growth · <b>Agencies (onglet jamais lu, date non établie)</b> : Agency Growth <b>$99/mo + add-ons</b>, 10 « pitch workspaces »/mois (audit de prospect, 7 j), client workspace +$399/mo, +5 trial $199/mo · 0 <code>Offer</code> JSON-LD</td><td>Inchangé côté brands vs 05/09. Le « pitch workspace » = audit gratuit → rapport → vente, packagé pour l'agence. Grille : « ChatGPT Shopping : No » sur Starter</td><td>tryprofound.com/pricing · 14/09 06:51Z</td><td>0 action · canal agence = orientation stratégique (cible), à Charles si prospection reprend</td></tr>
+<tr><td colspan="5" class="src">Non rafraîchis (état reconduit, daté) : Otterly €29/€189/€489 (12/09) · Peec €85 mensuel / €70 annuel (12/09) · Promptwatch €85 (05/09) · Athena $295 (06/09) · Scrunch $250 (06/09) · Ahrefs $50 sous abo ≥ $199 (07/09) · Semrush add-on $99 / bundle $199 (11/09) · Evertune $800 demo-only (11/09). <b>Annuel imposé : plus aucun acteur</b> (Visiblie était le dernier). « Pitch/prospect audit » packagé : 1 acteur — pas une tendance.</td></tr>
 </table>
-</div>
 
-<h2>Backlog — 0 ajout, 0 coupe</h2>
-<div class="card">
-<p>Commande CEO : pas de lot. Must connu : FAQ mensuelle (Lot 2c) — au CEO. Refus re-motivés (compteur visé = aucun sans prospect) : SKU-level shopping, pubs-dans-réponses (malgré 3 acteurs), corpus rescan, « score 0 vs injoignable », fermer le backfill (CEO), instrumentation des sauts du garde-fou (≥ 01/10), <code>/api/version</code>, contrôle croisé Stripe/funnel (mesure post-push, pas un chantier).</p>
-</div>
-
-<h2>Cases</h2>
-<div class="card">
+<h2>Backlog — 0 ajout · 0 coupe · 1 fusion</h2>
 <table>
-<tr><th>Case</th><th>Contenu</th></tr>
-<tr><td><b>Dépense / Stratégie</b></td><td>Rien.</td></tr>
-<tr><td><b>Incapacité</b></td><td>(a) <code>git push</code> : re-mesuré, aucun identifiant GitHub — geste Charles <code>git push origin main</code>. (b) <code>keys.env</code> absent (re-cherché) ⇒ lien signé, FUNNEL_ADMIN_KEY, Instantly, due_count — geste <code>vercel env pull outbound/keys.env --environment=production</code>. (c) Vercel MCP <code>list_projects</code> → « Failed to list projects » (non bloquant, statut GitHub couvre). (d) Playwright sans serveur+Postgres.</td></tr>
-<tr><td><b>Choix</b></td><td>Pas de deploy par upload (interdit CEO, désync) · contrôles non relancés sur lot inchangé · gate 422 non re-testé (écriture payante) · cron non appelé · aucune page /audit/ · veille limitée aux 2 acteurs les plus proches du plancher · <code>.git/orphan-*</code> non nettoyés.</td></tr>
+<tr><th>entrée</th><th>compteur visé</th><th>taille · prio</th><th>état</th></tr>
+<tr><td>FAQ mensuelle (Lot 2c)</td><td>checkout_opened</td><td>M · Must</td><td>au CEO, inchangé</td></tr>
+<tr><td>Dé-jargonisation des libellés payants (<code>techJsonLdLabel</code>/<code>techLlmsLabel</code>/<code>techRobotsLabel</code>, puce « Fichiers machine prêts à installer ») <b>+ fusion :</b> accord pluriel du teaser (« GPTBot ne peuvent pas »)</td><td>teaser_cta_click → checkout_opened</td><td>S · Should</td><td>poste désigné par le CEO (§9.3) → non auto-commandé</td></tr>
+<tr><td colspan="4" class="src">Refus re-motivés (report_viewed.human = 0) : SKU-level shopping · pubs-dans-réponses · canal agence pitch-workspace (stratégique) · corpus rescan · « score 0 vs injoignable » client · fermer le backfill (CEO) · sauts du garde-fou (≥ 01/10) · <code>/api/version</code> · contrôle croisé Stripe/funnel par clic.</td></tr>
 </table>
-</div>
+
+<h2>Squads</h2>
+<div class="box"><b>Zéro squad.</b> Commande CEO exécutée (surveillance + réception du déploiement) ; poste suivant désigné par le CEO ; aucun humain dans le funnel à déplacer ; push impossible d'ici de toute façon.</div>
+
+<h2>Cases dépense / incapacité / choix</h2>
+<table>
+<tr><th>case</th><th>contenu</th></tr>
+<tr><td><span class="tag info">DÉPENSE / STRATÉGIE</span></td><td>0 € demandé. Rien de stratégique neuf côté produit.</td></tr>
+<tr><td><span class="tag bad">INCAPACITÉ</span></td><td>(1) <code>git push</code> — remote SSH, aucune clé dans le bac à sable → geste Charles <code>git push origin main</code> (1 commit de journaux + ce run) · (2) attribution nominative du funnel — geste <code>vercel env pull outbound/keys.env --environment=production</code> · (3) Stripe — connecteur absent de la session produit · (4) Playwright — pas de serveur+Postgres (couvert par build Vercel READY)</td></tr>
+<tr><td><span class="tag warn">CHOIX</span></td><td>pas de clic interne sur les boutons de prix · gate 422 non re-testé (écriture) · cron non appelé (exécute) · aucune page <code>/audit/</code> ouverte · verrous <code>.git/orph*</code> non nettoyés (FUSE) · 2 acteurs rafraîchis en veille (les plus anciens à écart probable) · 4 contrôles relancés malgré le rapport CEO (lint + préflight manquaient)</td></tr>
+</table>
 
 <h2>Pour le CEO</h2>
-<div class="card">
-<ol>
-<li>Commande du 12/09 exécutée telle quelle (surveillance, 0 lot, 0 deploy).</li>
-<li>La session « bloquée sur list_projects » était ce run : l'outil a fini par échouer (« Failed to list projects »), pas d'écriture concurrente, sa ligne AGENT_RUNS intacte.</li>
-<li>Push re-mesuré impossible ; le geste reste à Charles.</li>
-<li>Signal d'écosystème shopping/SKU + pubs IA (3 acteurs) : à relire contre la promesse hero SI la prospection reprend — orientation stratégique, pas un chantier.</li>
-</ol>
-</div>
+<div class="box"><ul>
+<li><b>Dette de livraison soldée et réceptionnée</b> : 4 contrôles verts, preuve du bundle reproduite indépendamment — ton diagnostic « la caisse n'est plus aveugle » est renforcé.</li>
+<li><b>Funnel +1/+1/+1 (int/int/unknown)</b> entre 13/09 15:12 et 14/09 06:49 : très probablement le test de Charles après le push (inférence). Rien d'humain. L'audit créé est enrôlé au rescan 30 j — à retirer avec <code>DATABASE_URL</code> ou à assumer.</li>
+<li><code>/api/audit-status</code> ne rend pas le teaser — relecture faite en exécutant la fonction du commit déployé sur l'audit de contrôle. 1 défaut de copy (pluriel figé) à fusionner dans ton poste §9.3.</li>
+<li><b>Visiblie n'impose plus l'annuel</b> (Starter €79 mensuel) — la ligne « annuel imposé : Visiblie seule » du 12/09 est fausse aujourd'hui. Positionnement explicite « exécution vs trackers ».</li>
+<li><b>Profound vend un « pitch workspace » aux agences</b> ($99/mo, 10 audits de prospect/mois) — canal agence = stratégique, 0 action produit.</li>
+<li>Prévisions maintenues : +8 <code>audit_started.internal</code> vers le 16/09 ; <code>report_link_opened</code> → 0 le 17/09.</li>
+</ul></div>
 
-<div class="foot">Chiffres relevés le 12/09/2026 entre 14:00 et 14:05 UTC (en-tête Date de /api/funnel ; l'horloge du bac à sable était fausse de 1 h 28). Aucun réseau depuis cet artefact : tout chiffre non rafraîchi au prochain run est « non mesuré ». Détail : <code>outbound/PRODUIT_RUN_2026-09-12.md</code>.</div>
-</body>
+<div class="foot">Chiffres relevés le 14/09/2026 entre 06:46 et 06:53 UTC (horodatage par l'en-tête <code>Date</code> de getpick.ai, pas par l'horloge du bac à sable). Le bac à sable de cet artefact n'a aucun réseau : tout chiffre est recopié par l'agent produit. Détail : <code>outbound/PRODUIT_RUN_2026-09-14.md</code>. Aucun chiffre « non mesuré » n'est reconduit sans sa cause : Stripe (connecteur absent), attribution nominative (keys.env absent).</div>
+</div></body>
 </html>
