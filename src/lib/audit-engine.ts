@@ -22,7 +22,23 @@ const FREE_AUDIT_CACHE_HOURS = 24;
 const FREE_AUDIT_EMAIL_DAILY_LIMIT = 1;
 const FREE_AUDIT_DOMAIN_DAILY_LIMIT = 1;
 const BUYER_PROMPT_SET_VERSION = "relevant_content_clean_category_v2";
-const DEFAULT_GEMINI_MODEL = "gemini-flash-latest";
+// Modèle ÉPINGLÉ — jamais un alias `…-latest`.
+//
+// Deux raisons, toutes deux MESURÉES le 20/09/2026, pas déduites :
+//  1. un alias bascule à chaque sortie Google. Le comportement du produit change
+//     alors sans qu'aucun commit ne l'explique, et l'alias pointe par
+//     construction sur le modèle le plus RÉCENT — donc le plus demandé :
+//     cinq HTTP 503 « This model is currently experiencing high demand »
+//     d'affilée, chacun déjà réessayé cinq fois.
+//  2. les variantes `flash-lite` sont destinées par Google au *high-throughput
+//     execution* — exactement l'usage d'un audit (beaucoup de questions
+//     courtes). Elles raisonnent moins, donc tronquent moins.
+//
+// Chaîne de repli éprouvée AU CONTRÔLE le 20/09 (`outbound/lot7_stabilite.py`) :
+// gemini-3.5-flash-lite → gemini-3.1-flash-lite → gemini-2.5-flash-lite → gemini-3.5-flash.
+// `GEMINI_MODEL` permet de basculer sans déploiement ; `currentGeminiModel()`
+// refuse tout alias `…-latest` pour que la variable ne réintroduise pas la faute.
+const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite";
 const DEFAULT_OPENAI_MODEL = ["gpt", "4o", "mini"].join("-");
 const COMPETITOR_EXTRACTION_VERSION = "gemini_recommended_brands_sentiment_v5_icp_segments";
 
@@ -1102,6 +1118,8 @@ type GeminiGenerateContentResponse = {
     content?: {
       parts?: Array<{ text?: string }>;
     };
+    // "MAX_TOKENS" quand la réponse a été COUPÉE par le budget de sortie.
+    finishReason?: string;
   }>;
   error?: {
     code?: number;
@@ -1185,8 +1203,50 @@ const ANSWER_ENGINE_BY_TIER: Record<AuditTier, AnswerEngineProviderKey> = {
 
 function currentGeminiModel() {
   const configured = (process.env.GEMINI_MODEL ?? process.env.GOOGLE_GEMINI_MODEL)?.trim();
-  if (configured && !/^gemini-(?:1\.5|2\.0)(?:-|$)/i.test(configured)) return configured;
+  // Refus des générations obsolètes ET de TOUT alias `…-latest` : un alias change
+  // le modèle réellement servi sans commit (voir DEFAULT_GEMINI_MODEL).
+  if (configured && !/^gemini-(?:1\.5|2\.0)(?:-|$)/i.test(configured) && !/-latest$/i.test(configured)) return configured;
   return DEFAULT_GEMINI_MODEL;
+}
+
+/**
+ * Point d'appel Gemini — URL SANS la clé.
+ *
+ * L'authentification passe par l'en-tête `x-goog-api-key`, forme documentée par
+ * Google (ai.google.dev/gemini-api/docs/api-key, à jour au 16/09/2026). Deux
+ * raisons, la première étant un risque de panne TOTALE :
+ *
+ *  1. depuis le 28/05/2026 toute nouvelle clé AI Studio est une « auth key »
+ *     (préfixe `AQ.`) que `?key=` n'authentifie PAS ; les anciennes « standard
+ *     keys » (`AIza…`) non restreintes sont déjà rejetées, et Google annonce
+ *     « On September 2026: the Gemini API will reject requests from standard
+ *     keys ». Une prod restée sur `?key=` s'arrête alors ENTIÈREMENT — audit
+ *     gratuit, Monitor, rescans — **sans qu'aucune alerte ne se déclenche** :
+ *     `answerEngineForTier` rend simplement des questions non vérifiées.
+ *     La forme de la clé ne dit rien : on n'infère RIEN d'un préfixe.
+ *  2. une clé en query string se retrouve dans les journaux d'accès.
+ *
+ * Verrou : `scripts/gemini-auth-header.test.ts`, qui lit la SOURCE — un test
+ * unitaire sur une fonction pure ne prouverait pas le câblage de l'appel.
+ */
+function geminiEndpoint(model: string) {
+  return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+}
+
+function geminiHeaders(apiKey: string): Record<string, string> {
+  return { "Content-Type": "application/json", "x-goog-api-key": apiKey };
+}
+
+/**
+ * Une réponse tronquée n'est PAS une panne : c'est un budget de sortie trop court.
+ *
+ * Les modèles « thinking » consomment `maxOutputTokens` AVANT d'écrire la réponse.
+ * Le JSON revient coupé et remonte comme une erreur de PARSING — donc comme un
+ * moteur défaillant — alors que le bon diagnostic est « réponse incomplète,
+ * réessayable ». On le lit sur `finishReason`, jamais en devinant sur le texte.
+ */
+function geminiTruncated(body: GeminiGenerateContentResponse) {
+  return body.candidates?.some((candidate) => candidate.finishReason === "MAX_TOKENS") ?? false;
 }
 
 function geminiApiKey() {
@@ -1532,14 +1592,14 @@ function createGeminiProvider(): AnswerEngineProvider {
       if (!apiKey) throw new Error(GEMINI_UNAVAILABLE);
 
       const prompt = answerEnginePrompt(question);
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+      const url = geminiEndpoint(model);
       let lastError = GEMINI_UNAVAILABLE;
 
       for (let attempt = 0; attempt < 3; attempt += 1) {
         try {
           const response = await fetch(url, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: geminiHeaders(apiKey),
             body: JSON.stringify({
               contents: [
                 {
@@ -1549,7 +1609,13 @@ function createGeminiProvider(): AnswerEngineProvider {
               ],
               generationConfig: {
                 temperature: 0.2,
-                maxOutputTokens: 700,
+                // 700 était un budget de modèle non-« thinking ». Le raisonnement
+                // est facturé et consommé AVANT la réponse : à 700 le JSON revient
+                // coupé et l'appel est perdu. 2048 est la valeur éprouvée au
+                // contrôle du 20/09. Le plafond ne facture rien par lui-même —
+                // seuls les tokens réellement produits sont comptés — il évite des
+                // appels gaspillés.
+                maxOutputTokens: 2048,
                 responseMimeType: "application/json",
               },
             }),
@@ -1559,9 +1625,15 @@ function createGeminiProvider(): AnswerEngineProvider {
           const parsed = safeJsonParse<GeminiGenerateContentResponse>(responseText, {});
 
           if (response.ok) {
-            const answer = geminiAnswerText(parsed);
-            if (answer) return parseStructuredBrandResponse(answer);
-            lastError = GEMINI_UNAVAILABLE;
+            if (geminiTruncated(parsed)) {
+              // Contrôlé AVANT de lire le texte : un JSON coupé parse en objet
+              // partiel et produirait un verdict faux au lieu d'un réessai.
+              lastError = `${GEMINI_UNAVAILABLE} reponse tronquee (maxOutputTokens)`;
+            } else {
+              const answer = geminiAnswerText(parsed);
+              if (answer) return parseStructuredBrandResponse(answer);
+              lastError = GEMINI_UNAVAILABLE;
+            }
           } else {
             lastError = parsed.error?.message ? `${GEMINI_UNAVAILABLE} HTTP ${response.status}: ${parsed.error.message}` : `${GEMINI_UNAVAILABLE} HTTP ${response.status}`;
             if (response.status !== 429 && response.status < 500) break;
@@ -2418,20 +2490,25 @@ async function inferCategoryAI(brandName: string, domain: string, homepageText: 
   ]
     .filter(Boolean)
     .join("\n");
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const url = geminiEndpoint(model);
 
   try {
     const response = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: geminiHeaders(apiKey),
       body: JSON.stringify({
         contents: [{ role: "user", parts: [{ text: instruction }] }],
-        generationConfig: { temperature: 0.1, maxOutputTokens: 1024, responseMimeType: "application/json" },
+        generationConfig: { temperature: 0.1, maxOutputTokens: 2048, responseMimeType: "application/json" },
       }),
       signal: AbortSignal.timeout(ANSWER_TIMEOUT_MS),
     });
     if (!response.ok) return null;
     const parsed = safeJsonParse<GeminiGenerateContentResponse>(await response.text(), {});
+    // CHOIX assumé : pas de réessai ici, contrairement aux deux autres sites.
+    // L'appelant a déjà un chemin de repli pour la catégorie, et un réessai
+    // doublerait le coût d'inférence sur un champ non critique. Rendre `null`
+    // sur une troncature est correct ; parser un JSON coupé ne l'est pas.
+    if (geminiTruncated(parsed)) return null;
     const json = safeJsonParse<{ category?: unknown }>(geminiAnswerText(parsed), {});
     const raw = typeof json.category === "string" ? json.category.trim() : "";
     if (raw.length < 2 || raw.length > 60) return null;
@@ -3560,14 +3637,14 @@ async function generateBuyerIntentPromptsAI(
     .filter(Boolean)
     .join("\n");
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const url = geminiEndpoint(model);
   let lastDebug = "unknown";
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
       const response = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: geminiHeaders(apiKey),
         body: JSON.stringify({
           contents: [{ role: "user", parts: [{ text: instruction }] }],
           generationConfig: { temperature: 0.7, maxOutputTokens: 2048, responseMimeType: "application/json" },
@@ -3577,7 +3654,12 @@ async function generateBuyerIntentPromptsAI(
       const responseText = await response.text();
       const parsed = safeJsonParse<GeminiGenerateContentResponse>(responseText, {});
 
-      if (response.ok) {
+      if (response.ok && geminiTruncated(parsed)) {
+        // Budget de sortie épuisé par le raisonnement : réessayable. Sans ce
+        // contrôle, le repli « découpage par lignes » plus bas ramasse la
+        // structure JSON coupée et la sert au client comme une question.
+        lastDebug = "truncated_max_tokens";
+      } else if (response.ok) {
         const answer = geminiAnswerText(parsed);
         // Tolerant extraction: Gemini may return {"questions":[...]}, a bare array,
         // another key, or newline-delimited text. Accept all of them.

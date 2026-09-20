@@ -2,7 +2,8 @@ import type { BrandSentiment, BuyerIntentPromptResult, PlainAction } from "./aud
 import { brandSentimentText, localizePlainAction, type Locale } from "./i18n";
 
 const CHAT_TIMEOUT_MS = 20_000;
-const DEFAULT_GEMINI_MODEL = "gemini-flash-latest";
+// Modèle ÉPINGLÉ, jamais un alias `…-latest` — voir la note dans audit-engine.ts.
+const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite";
 const DEFAULT_OPENAI_MODEL = ["gpt", "4o", "mini"].join("-");
 
 type AuditAgentChatAudit = {
@@ -40,7 +41,8 @@ export type AuditAgentChatResponse = {
 };
 
 type GeminiGenerateContentResponse = {
-  candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+  // `finishReason` vaut "MAX_TOKENS" quand la réponse a été coupée par le budget.
+  candidates?: Array<{ content?: { parts?: Array<{ text?: string }> }; finishReason?: string }>;
   error?: { message?: string };
 };
 
@@ -78,7 +80,9 @@ function safeJsonParse<T>(value: string, fallback: T): T {
 
 function currentGeminiModel() {
   const configured = (process.env.GEMINI_MODEL ?? process.env.GOOGLE_GEMINI_MODEL)?.trim();
-  if (configured && !/^gemini-(?:1\.5|2\.0)(?:-|$)/i.test(configured)) return configured;
+  // Refus des générations obsolètes ET de TOUT alias `…-latest` : un alias change
+  // le modèle réellement servi sans commit (voir DEFAULT_GEMINI_MODEL).
+  if (configured && !/^gemini-(?:1\.5|2\.0)(?:-|$)/i.test(configured) && !/-latest$/i.test(configured)) return configured;
   return DEFAULT_GEMINI_MODEL;
 }
 
@@ -203,13 +207,18 @@ async function askGemini(system: string, user: string): Promise<EngineChatResult
   if (!apiKey) return { engine: "Gemini", model, ok: false, error: "Gemini API key is not configured." };
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+    // Authentification par en-tête `x-goog-api-key` : `?key=` n'authentifie pas
+    // les « auth keys » AI Studio et Google rejette les « standard keys » à
+    // partir de septembre 2026. Voir la note complète dans audit-engine.ts.
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: system }] },
         contents: [{ role: "user", parts: [{ text: user }] }],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 1100 },
+        // 1100 était un budget de modèle non-« thinking » : le raisonnement se
+        // sert AVANT la réponse et coupait le message rendu au client.
+        generationConfig: { temperature: 0.2, maxOutputTokens: 2048 },
       }),
       signal: AbortSignal.timeout(CHAT_TIMEOUT_MS),
     });
@@ -218,6 +227,12 @@ async function askGemini(system: string, user: string): Promise<EngineChatResult
 
     if (!response.ok) {
       return { engine: "Gemini", model, ok: false, error: parsed.error?.message ?? `Gemini HTTP ${response.status}` };
+    }
+
+    // Une réponse coupée n'est pas une réponse : la servir donnerait au client
+    // une phrase interrompue présentée comme un conseil.
+    if (parsed.candidates?.some((candidate) => candidate.finishReason === "MAX_TOKENS")) {
+      return { engine: "Gemini", model, ok: false, error: "Gemini answer was truncated (maxOutputTokens)." };
     }
 
     const answer = geminiAnswerText(parsed);
