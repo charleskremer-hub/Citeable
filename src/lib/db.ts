@@ -194,6 +194,28 @@ export async function ensureAuditSchema() {
     )
   `);
   await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS monitored_brands_due_idx ON monitored_brands (active, next_run_at)`);
+  // LOT A (commande du 20/09) — les questions d'une marque surveillée sont
+  // stockées à la première exécution et rejouées telles quelles ensuite.
+  //
+  // Table séparée plutôt qu'une colonne sur `monitored_brands` : la ligne de
+  // surveillance est mise à jour à CHAQUE rescan (`last_run_at`,
+  // `next_run_at`), le jeu de questions ne doit bouger que sur un déclencheur
+  // explicite. Deux durées de vie différentes, deux tables — une colonne
+  // partagée invite à réécrire le jeu par inadvertance dans un `UPDATE` qui
+  // visait l'échéance.
+  //
+  // `ON DELETE CASCADE` : un désabonnement supprime la marque ET ses
+  // questions, aucun orphelin à nettoyer plus tard.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS monitored_brand_prompts (
+      monitored_brand_id UUID PRIMARY KEY REFERENCES monitored_brands (id) ON DELETE CASCADE,
+      prompts JSONB NOT NULL,
+      category TEXT NOT NULL,
+      prompt_count INTEGER NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `);
   await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS audits_followup_1_due_idx ON audits (created_at) WHERE score IS NOT NULL AND followup_1_sent_at IS NULL`);
   await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS audits_followup_2_due_idx ON audits (created_at) WHERE score IS NOT NULL AND followup_2_sent_at IS NULL`);
   await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS audits_brand_site_created_idx ON audits (lower(brand_name), website_url, created_at DESC)`);

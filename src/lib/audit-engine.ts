@@ -11,6 +11,7 @@ import { renderEmail, quoted, type EmailContent } from "./email-template";
 import { verdictCompetitors } from "./competitor-floor";
 import { entitlementForEmail } from "./subscriptions";
 import { trafficClassOrUnknown, type TrafficClass } from "./traffic-filter";
+import { resolveBuyerIntentPromptSet, loadPromptSetForAudit, persistPromptSetAfterAudit, detectPromptSetAnomaly, findMonitoredBrandId, loadStoredPromptSet, saveStoredPromptSet, type StoredPromptSet } from "./stored-prompts";
 
 const USER_AGENT = "Mozilla/5.0 (compatible; CiteeableBot/1.0)";
 const CHECK_TIMEOUT_MS = 8_000;
@@ -207,6 +208,11 @@ export type AuditReport = {
   icpSegment: IcpSegmentMetadata;
   buyerIntentPrompts: BuyerIntentPromptResult[];
   promptDebug?: string;
+  // LOT A — le jeu de questions réellement posé (liste COMPLÈTE, pas la liste
+  // tronquée par la règle d'arrêt) et son origine. `completeQueuedAudit` les
+  // persiste ; ils rendent aussi la régénération auditable a posteriori.
+  promptSet?: StoredPromptSet;
+  promptSetSource?: "stored" | "generated";
   emailSent: boolean;
   emailError?: string;
   checks: AuditCheckResult[];
@@ -305,6 +311,22 @@ type RunAuditParams = {
   email: string;
   auditTier?: AuditTier;
   locale?: Locale;
+  // LOT A — jeu de questions déjà stocké pour cette marque surveillée, chargé
+  // par l'appelant AVANT le pipeline. `null` = première exécution ou marque
+  // non surveillée : le plan régénérera avec le motif `new_brand`.
+  //
+  // REQUIS, pas optionnel, et c'est délibéré. L'audit adversarial du 21/09 a
+  // montré qu'oublier de passer ce champ annule tout le lot en silence, sans
+  // faire tomber le moindre test — la ligne n'est pas atteignable depuis une
+  // suite unitaire. En le rendant obligatoire, l'oubli devient une erreur de
+  // TYPE : `tsc --noEmit` rougit et le préflight rend NO-GO. *Ce qu'un test ne
+  // peut pas attraper, le compilateur le peut parfois — encore faut-il lui en
+  // donner le moyen.*
+  storedPromptSet: StoredPromptSet | null;
+  // Déclencheur EXPLICITE de régénération (« demande du client »). Jamais
+  // positionné par le moteur lui-même : c'est la seule porte par laquelle une
+  // régénération volontaire entre.
+  forcePromptRegeneration?: boolean;
 };
 
 type MonitoredBrandRow = {
@@ -2050,14 +2072,34 @@ function brandMentionByPrompt(prompts: BuyerIntentPromptResult[]) {
   return byPrompt;
 }
 
-function compareCompetitorMovement(currentPrompts: BuyerIntentPromptResult[], previousPrompts: BuyerIntentPromptResult[] = []) {
+/**
+ * LOT A, exigence 3 de la commande du 20/09 : « `compareCompetitorMovement`
+ * n'annonce un `new_competitor` que sur une question PRÉSENTE AUX DEUX
+ * exécutions. Une question neuve n'a pas d'historique : elle ne produit aucun
+ * mouvement. »
+ *
+ * Avant ce correctif, `previousCompetitors.get(key) ?? new Set()` transformait
+ * une question absente du mois précédent en « aucun concurrent le mois
+ * dernier » — indistinguable d'une vraie disparition. Tous les rivaux de la
+ * question étaient alors annoncés comme apparus ce mois-ci. Un ensemble vide
+ * et une absence d'historique sont deux faits opposés : l'un dit « personne »,
+ * l'autre dit « on ne sait pas ». Le code les confondait.
+ *
+ * `undefined` est donc distingué de `Set()` — c'est toute la correction, et
+ * elle vaut pour les DEUX types de mouvement : sans historique, ni
+ * `new_competitor` ni `overtook_brand` ne sont prononçables.
+ */
+export function compareCompetitorMovement(currentPrompts: BuyerIntentPromptResult[], previousPrompts: BuyerIntentPromptResult[] = []) {
   const previousCompetitors = competitorsByPrompt(previousPrompts);
   const previousBrandMentioned = brandMentionByPrompt(previousPrompts);
   const movements: CompetitorMovement[] = [];
 
   for (const prompt of currentPrompts) {
     const promptKey = normalizePromptKey(prompt.prompt);
-    const previousForPrompt = previousCompetitors.get(promptKey) ?? new Set<string>();
+    const previousForPrompt = previousCompetitors.get(promptKey);
+
+    if (previousForPrompt === undefined) continue;
+
     const brandWasMentioned = previousBrandMentioned.get(promptKey) ?? false;
 
     for (const competitor of prompt.competitors) {
@@ -3762,28 +3804,16 @@ export async function mapWithConcurrency<T, R>(
   return results;
 }
 
-async function analyzeBuyerIntentPrompts(brandName: string, websiteUrl: string, domain: string, category: string, homepageText: string, tier: AuditTier, locale?: Locale): Promise<{ prompts: BuyerIntentPromptResult[]; promptDebug: string }> {
-  // 3 questions ne suffisaient pas à faire apparaître un écart : mesuré en base le
-  // 21/07, les 7 audits gratuits ont tous rendu 3/3 mentions et un score ai_visibility
-  // de 100/100. Or l'audit gratuit n'a qu'un seul job — montrer le rival cité à ta
-  // place. 6 questions doublent les chances d'exposer un trou pour un coût Gemini
-  // qui reste négligeable, et laissent les 12 questions comme bénéfice payant.
-  const count = tier === "free" ? 6 : 12;
-  const ai = await generateBuyerIntentPromptsAI(brandName, websiteUrl, category, homepageText, count, locale);
-  const minAi = tier === "free" ? 3 : 4;
-  const usedAi = Boolean(ai.prompts && ai.prompts.length >= minAi);
-  const promptDebug = usedAi ? `ai:${ai.prompts?.length}` : `template(${ai.debug})`;
-  // Filet final : quelle que soit la source, aucune question envoyée aux moteurs ne doit
-  // contenir le nom de la marque auditée. Si le filtrage fait descendre la liste sous le
-  // compte attendu, on complète avec les modèles — non brandés par construction depuis
-  // ce correctif. Sans ce complément, un audit filtré rendrait moins de questions que
-  // le tier ne le promet.
-  const templatePrompts = generateBuyerIntentPrompts(brandName, websiteUrl, category, homepageText, locale);
-  const unbranded = (list: string[]) => list.filter((prompt) => !promptMentionsAuditedBrand(prompt, brandName, domain));
-  const prompts = uniqueInOrder(
-    [...unbranded(usedAi && ai.prompts ? ai.prompts : templatePrompts), ...unbranded(templatePrompts)],
-    count
-  );
+/**
+ * Sonde une liste de questions DÉJÀ ARRÊTÉE et rend les résultats.
+ *
+ * Extrait de `analyzeBuyerIntentPrompts` par le LOT A, sans une ligne de
+ * changement dans le corps : les deux chemins — questions rejouées depuis le
+ * stockage, questions fraîchement générées — doivent sonder EXACTEMENT de la
+ * même façon. Une deuxième implémentation du sondage aurait fait diverger le
+ * mois 2 du mois 1 par un autre bout que celui qu'on vient de fermer.
+ */
+async function probeBuyerIntentPrompts(prompts: string[], brandName: string, domain: string, tier: AuditTier): Promise<{ prompts: BuyerIntentPromptResult[] }> {
   const results: BuyerIntentPromptResult[] = [];
   const answerEngine = answerEngineForTier(tier);
 
@@ -3830,7 +3860,50 @@ async function analyzeBuyerIntentPrompts(brandName: string, websiteUrl: string, 
     if (answerEngine && searchSurface.status !== "checked") break;
   }
 
-  return { prompts: results, promptDebug };
+  return { prompts: results };
+}
+
+async function analyzeBuyerIntentPrompts(brandName: string, websiteUrl: string, domain: string, category: string, homepageText: string, tier: AuditTier, locale: Locale | undefined, storedPromptSet: StoredPromptSet | null, forcePromptRegeneration: boolean | undefined): Promise<{ prompts: BuyerIntentPromptResult[]; promptDebug: string; promptSet: StoredPromptSet; promptSetSource: "stored" | "generated" }> {
+  // 3 questions ne suffisaient pas à faire apparaître un écart : mesuré en base le
+  // 21/07, les 7 audits gratuits ont tous rendu 3/3 mentions et un score ai_visibility
+  // de 100/100. Or l'audit gratuit n'a qu'un seul job — montrer le rival cité à ta
+  // place. 6 questions doublent les chances d'exposer un trou pour un coût Gemini
+  // qui reste négligeable, et laissent les 12 questions comme bénéfice payant.
+  const count = tier === "free" ? 6 : 12;
+  // LOT A — le moteur ne décide plus lui-même s'il régénère, et il n'applique
+  // pas non plus la décision : `resolveBuyerIntentPromptSet` la prend ET
+  // l'applique, en n'appelant la closure de génération que sur le chemin
+  // « régénérer ». Un rejeu ne fait donc AUCUN appel à Gemini — c'est ce qui
+  // rend deux exécutions successives comparables, et accessoirement ce qui
+  // retire un appel d'inférence par cycle sous la contrainte des 19 €/mois.
+  //
+  // La closure est injectée plutôt qu'appelée ici pour que cette propriété
+  // soit EXÉCUTABLE en test (doublure qui lève) et pas seulement lisible.
+  const resolved = await resolveBuyerIntentPromptSet(storedPromptSet, { category, count, force: forcePromptRegeneration }, async () => {
+    const ai = await generateBuyerIntentPromptsAI(brandName, websiteUrl, category, homepageText, count, locale);
+    const minAi = tier === "free" ? 3 : 4;
+    const usedAi = Boolean(ai.prompts && ai.prompts.length >= minAi);
+    // Filet final : quelle que soit la source, aucune question envoyée aux moteurs ne doit
+    // contenir le nom de la marque auditée. Si le filtrage fait descendre la liste sous le
+    // compte attendu, on complète avec les modèles — non brandés par construction depuis
+    // ce correctif. Sans ce complément, un audit filtré rendrait moins de questions que
+    // le tier ne le promet.
+    const templatePrompts = generateBuyerIntentPrompts(brandName, websiteUrl, category, homepageText, locale);
+    const unbranded = (list: string[]) => list.filter((prompt) => !promptMentionsAuditedBrand(prompt, brandName, domain));
+
+    return {
+      prompts: uniqueInOrder([...unbranded(usedAi && ai.prompts ? ai.prompts : templatePrompts), ...unbranded(templatePrompts)], count),
+      promptDebug: usedAi ? `ai:${ai.prompts?.length}` : `template(${ai.debug})`,
+    };
+  });
+  const probed = await probeBuyerIntentPrompts(resolved.prompts, brandName, domain, tier);
+
+  return {
+    prompts: probed.prompts,
+    promptDebug: resolved.promptDebug,
+    promptSet: resolved.promptSet,
+    promptSetSource: resolved.promptSetSource,
+  };
 }
 
 // Rejette les résidus de structure JSON que le fallback ligne-à-ligne peut
@@ -5126,7 +5199,7 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
   const inferred = await inferCategory(args.brandName, args.websiteUrl, foundationChecks.find((check) => check.check === "structured_data") ?? foundationChecks[0]);
   const icpSegment = detectIcpSegment();
   const auditLocale = args.locale ?? recipientLocaleFromSignals(args.email, args.websiteUrl, inferred.homepageText);
-  const { prompts: buyerIntentPrompts, promptDebug } = await analyzeBuyerIntentPrompts(args.brandName, args.websiteUrl, domain, inferred.category, inferred.homepageText, auditTier, auditLocale);
+  const { prompts: buyerIntentPrompts, promptDebug, promptSet, promptSetSource } = await analyzeBuyerIntentPrompts(args.brandName, args.websiteUrl, domain, inferred.category, inferred.homepageText, auditTier, auditLocale, args.storedPromptSet, args.forcePromptRegeneration);
   const checkedAnswerEnginePrompts = buyerIntentPrompts.filter((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine" && surface.status === "checked"));
   const failedAnswerEnginePrompts = buyerIntentPrompts.filter((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine" && surface.status !== "checked"));
 
@@ -5172,6 +5245,8 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
     locale: auditLocale,
     answerEngine,
     promptDebug,
+    promptSet,
+    promptSetSource,
   };
   const emailResult = await sendAuditEmail(args.email, args.brandName, args.websiteUrl, reportWithoutEmail, auditLocale);
 
@@ -5211,6 +5286,12 @@ export async function completeQueuedAudit(auditId: string): Promise<QueuedAuditR
 
   try {
     const auditTier = row.raw_results?.auditTier ?? "free";
+    // LOT A — le jeu de questions stocké est CHARGÉ AVANT le pipeline, pour
+    // que le rescan repose les mêmes questions que l'exécution précédente.
+    // Tier gratuit : aucune marque surveillée, aucun historique à respecter,
+    // aucune requête inutile.
+    const promptContext = { auditTier, email: row.email, brandName: row.brand_name, websiteUrl: row.website_url };
+    const { monitoredBrandId, storedPromptSet } = await loadPromptSetForAudit(promptContext, { findMonitoredBrandId, loadStoredPromptSet });
     const report = await runAudit({
       auditId: row.id,
       brandName: row.brand_name,
@@ -5218,6 +5299,7 @@ export async function completeQueuedAudit(auditId: string): Promise<QueuedAuditR
       email: row.email,
       auditTier,
       locale: row.raw_results?.locale,
+      storedPromptSet,
     });
 
     await pool.query(
@@ -5242,6 +5324,12 @@ export async function completeQueuedAudit(auditId: string): Promise<QueuedAuditR
           icpSegment: report.icpSegment,
           buyerIntentPrompts: report.buyerIntentPrompts,
           promptDebug: report.promptDebug,
+          promptSetSource: report.promptSetSource,
+          // Invariant OBSERVABLE, faute de test possible : si un jeu stocké a
+          // été chargé et que le rapport revient quand même « régénéré », la
+          // contradiction est écrite dans l'audit au lieu de passer sous
+          // silence. `null` en fonctionnement normal.
+          promptSetAnomaly: detectPromptSetAnomaly(storedPromptSet, report),
           auditTier: report.auditTier,
           locale: report.locale,
           brandSentiment: report.brandSentiment,
@@ -5277,6 +5365,12 @@ export async function completeQueuedAudit(auditId: string): Promise<QueuedAuditR
 
     if (auditTier !== "free") {
       await upsertMonitoredBrandForAudit(auditId);
+      // L'écriture passe par `persistPromptSetAfterAudit` : la décision (tier,
+      // origine du jeu, second passage sur l'identifiant de marque) y est
+      // exécutable en test avec des doublures, au lieu d'être seulement
+      // lisible ici. Trois contournements trouvés par l'audit du 21/09
+      // vivaient précisément dans cette logique restée non exécutable.
+      await persistPromptSetAfterAudit({ ...promptContext, monitoredBrandId }, report, { findMonitoredBrandId, saveStoredPromptSet });
     }
 
     const monitoring = await getAuditMonitoringSnapshot(auditId);
