@@ -4,7 +4,7 @@ export type { DetectedPlatform } from "./platform-detect";
 import { pool } from "./db";
 import { recordFunnelEvent } from "./funnel";
 import { localizePlainAction, type Locale } from "./i18n";
-import { RECHECK_CADENCE, RECHECK_INTERVAL_DAYS } from "./plan-promises";
+import { RECHECK_CADENCE, RECHECK_INTERVAL_DAYS, SERVICE_OFFER_COPY } from "./plan-promises";
 import { isWebSearchConfigured, runWebSearch } from "./web-search";
 import { isMailConfigured, sendMail } from "./mailer";
 import { renderEmail, quoted, type EmailContent } from "./email-template";
@@ -4155,9 +4155,7 @@ export function buildAuditResultEmail(email: string, brandName: string, report: 
         }
       : undefined,
     button: { label: fr ? "Voir le rapport" : "View the report", url: reportUrl },
-    footnote: fr
-      ? "Tu peux tout appliquer toi-même. GetPick Agent (19 €/mois) le fait à ta place, sans engagement."
-      : "You can do all of it yourself. GetPick Agent (€19/month) does it for you, no commitment.",
+    footnote: SERVICE_OFFER_COPY[fr ? "fr" : "en"].emailSentence,
     unsubscribe: { label: fr ? "Se désinscrire" : "Unsubscribe", url: unsubscribeUrl },
     locale,
   };
@@ -4244,7 +4242,7 @@ function unsubscribeUrlForEmail(email: string) {
   return `${siteBaseUrl()}/api/unsubscribe?token=${encodeURIComponent(unsubscribeTokenForEmail(email))}`;
 }
 
-function followupClickUrl(auditId: string, step: PostAuditEmailStep, target: "report" | "agent_checkout") {
+function followupClickUrl(auditId: string, step: PostAuditEmailStep, target: "report" | "agent_checkout" | "service_checkout") {
   const params = new URLSearchParams({ audit_id: auditId, step, target });
   return `${siteBaseUrl()}/api/funnel/followup-click?${params.toString()}`;
 }
@@ -4493,7 +4491,7 @@ export function buildPostAuditEmail(step: PostAuditEmailStep, email: string, bra
   const totalPrompts = report.buyerIntentPrompts.length || 1;
   const brandMentions = report.buyerIntentPrompts.filter((prompt) => prompt.brandMentioned).length;
   const reportUrl = followupClickUrl(report.audit_id, step, "report");
-  const agentCheckoutUrl = followupClickUrl(report.audit_id, step, "agent_checkout");
+  const serviceCheckoutUrl = followupClickUrl(report.audit_id, step, "service_checkout");
   const unsubscribeUrl = unsubscribeUrlForEmail(email);
   const fr = locale === "fr";
 
@@ -4523,11 +4521,9 @@ export function buildPostAuditEmail(step: PostAuditEmailStep, email: string, bra
         fr
           ? "Reprendre cette réponse demande d'écrire les pages, les FAQ et les mentions qui manquent — c'est du travail, et il se refait à chaque fois que les moteurs bougent."
           : "Winning that answer back means writing the pages, FAQs and mentions you are missing — that is real work, and it starts over every time the engines move.",
-        fr
-          ? "GetPick Agent (19 €/mois) les écrit à partir de ton audit, prêts à copier-coller. Sans engagement, résiliable en un clic."
-          : "GetPick Agent (€19/month) writes them from your own audit, ready to paste. No commitment, cancel in one click.",
+        SERVICE_OFFER_COPY[fr ? "fr" : "en"].emailSentence,
       ],
-      button: { label: fr ? "Démarrer Agent — 19 €/mois" : "Start Agent — €19/month", url: agentCheckoutUrl },
+      button: { label: SERVICE_OFFER_COPY[fr ? "fr" : "en"].emailCta, url: serviceCheckoutUrl },
       footnote: fr
         ? "Tout part des données réelles de ton audit. Rien n'est inventé."
         : "Everything comes from the real data in your audit. Nothing is invented.",
