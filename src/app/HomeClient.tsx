@@ -103,10 +103,16 @@ export default function HomeClient({ locale }: HomeClientProps) {
         // Refus du gate du champ « site » : l'API repond 4xx avec un
         // `error_code` stable, mappe ici vers le message localise qui propose
         // la correction. Tout autre echec garde le message generique.
+        // TOUT code que l'API peut emettre doit avoir sa ligne ici. Un code
+        // sans message retombe sur `copy.error` (« reessaie dans un instant »),
+        // qui est FAUX pour un refus de quota : l'action ne peut pas reussir
+        // avant 24 h. `funnel-error-codes.test.ts` verrouille l'exhaustivite.
         const gateMessages: Record<string, string> = {
           website_looks_like_email: copy.errorWebsiteLooksLikeEmail,
           website_credentials: copy.errorWebsiteCredentials,
           website_unreachable: copy.errorWebsiteUnreachable,
+          free_quota_email: copy.errorFreeQuotaEmail,
+          free_quota_domain: copy.errorFreeQuotaDomain,
         };
         const errorCode = typeof data.error_code === "string" ? data.error_code : "";
 

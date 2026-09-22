@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
       const quota = await checkFreeAuditQuota(email, websiteUrl);
 
       if (!quota.allowed) {
-        return NextResponse.json({ error: quota.error, limit_type: quota.limitType, retry_after_hours: quota.retryAfterHours }, { status: 429 });
+        return NextResponse.json({ error: quota.error, error_code: quota.errorCode, limit_type: quota.limitType, retry_after_hours: quota.retryAfterHours }, { status: 429 });
       }
     }
 

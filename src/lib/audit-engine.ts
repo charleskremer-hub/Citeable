@@ -385,9 +385,13 @@ type PostAuditEmailSendResult = {
   preview?: string;
 };
 
+/** Codes stables du refus de quota. Le front DOIT en avoir un message pour
+ *  chacun : `funnel-error-codes.test.ts` échoue sinon. */
+export type FreeAuditQuotaCode = "free_quota_email" | "free_quota_domain";
+
 export type FreeAuditQuotaResult =
   | { allowed: true }
-  | { allowed: false; error: string; limitType: "email" | "domain"; retryAfterHours: number };
+  | { allowed: false; error: string; errorCode: FreeAuditQuotaCode; limitType: "email" | "domain"; retryAfterHours: number };
 
 export function normalizeWebsiteUrl(input: string) {
   const raw = input.trim();
@@ -634,10 +638,19 @@ export async function checkFreeAuditQuota(email: string, websiteUrl: string): Pr
   const emailCount = result.rows.filter((row) => row.email.trim().toLowerCase() === normalizedEmail).length;
   const domainCount = result.rows.filter((row) => safeDomainFromWebsite(row.website_url) === domain).length;
 
+  // LE MESSAGE N'EST PAS LE CONTRAT, LE CODE L'EST (22/09/2026). Ce refus
+  // partait en 429 avec une phrase française en dur et AUCUN code stable : le
+  // front, qui ne sait mapper que des codes, retombait sur son message
+  // generique « Un probleme est survenu. Reessaie dans un instant. » — c'est-a-dire
+  // qu'il disait a l'utilisateur de RECOMMENCER TOUT DE SUITE une action qui ne
+  // peut pas reussir avant 24 h. Charles l'a rencontre sur sa propre landing.
+  // La limite est de UN audit gratuit par email ET par domaine et par jour :
+  // deux essais de suite sur le meme site suffisent a la declencher.
   if (emailCount >= FREE_AUDIT_EMAIL_DAILY_LIMIT) {
     return {
       allowed: false,
       error: "Limite d'audits gratuits atteinte pour cet email aujourd'hui. Réessaie demain.",
+      errorCode: "free_quota_email",
       limitType: "email",
       retryAfterHours: 24,
     };
@@ -647,6 +660,7 @@ export async function checkFreeAuditQuota(email: string, websiteUrl: string): Pr
     return {
       allowed: false,
       error: "Limite d'audits gratuits atteinte pour ce domaine aujourd'hui. Réessaie demain.",
+      errorCode: "free_quota_domain",
       limitType: "domain",
       retryAfterHours: 24,
     };

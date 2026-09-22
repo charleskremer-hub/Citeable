@@ -78,6 +78,11 @@ export const homeCopy = {
     errorWebsiteLooksLikeEmail: "That looks like an email address — enter your website address instead, e.g. yourbrand.com.",
     errorWebsiteCredentials: "A website address can't contain a login or password — enter just your domain, e.g. yourbrand.com.",
     errorWebsiteUnreachable: "We couldn't reach that website — check the address, e.g. yourbrand.com.",
+    // Refus de QUOTA (429). Un seul diagnostic gratuit par email et par site et
+    // par jour : sans message dédié, le front disait « réessaie dans un
+    // instant » pour une action qui ne peut pas réussir avant 24 h.
+    errorFreeQuotaEmail: "You already ran a free diagnostic with this email today. Come back tomorrow — or email hello@getpick.ai and I'll run it for you.",
+    errorFreeQuotaDomain: "A free diagnostic already ran for this website today. Come back tomorrow — or email hello@getpick.ai and I'll run it for you.",
     formFootnote: "Your clients’ real questions, sent live to Gemini — never simulated. No card, no signup.",
     formBuyerIntentNote: `Ask AI the real question your clients ask — “best ${BEACHHEAD_TRADE.en} for a startup / freelancer / e-commerce in [city]”. In 2 minutes, GetPick shows you the peer it names in your place, and why.`,
     // 2. AI conversation demo
@@ -252,6 +257,9 @@ export const homeCopy = {
     errorWebsiteLooksLikeEmail: "On dirait une adresse email — indique plutôt l'adresse de ton site, par exemple marque.com.",
     errorWebsiteCredentials: "Une adresse de site ne contient pas d'identifiants — indique juste ton domaine, par exemple marque.com.",
     errorWebsiteUnreachable: "Ce site ne répond pas — vérifie l'adresse, par exemple marque.com.",
+    // Voir la note du bloc EN.
+    errorFreeQuotaEmail: "Tu as déjà lancé un diagnostic gratuit avec cet email aujourd'hui. Reviens demain — ou écris à hello@getpick.ai et je le lance pour toi.",
+    errorFreeQuotaDomain: "Un diagnostic gratuit a déjà été lancé pour ce site aujourd'hui. Reviens demain — ou écris à hello@getpick.ai et je le lance pour toi.",
     formFootnote: "Les vraies questions de tes clients, envoyées en direct à Gemini — jamais simulées. Sans carte, sans inscription.",
     formBuyerIntentNote: `Pose à l'IA la vraie question de tes clients — « meilleur ${BEACHHEAD_TRADE.fr} pour SAS / freelance / e-commerce à [ville] ». En 2 minutes, GetPick te montre le confrère qu'elle cite à ta place, nommé, et pourquoi.`,
     // 2. Démo conversation IA
