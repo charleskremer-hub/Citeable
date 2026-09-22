@@ -168,14 +168,48 @@ for (const locale of LOCALES) {
 
 const OLD_ICP_WORDS = [/\bDTC\b/, /direct-to-consumer/i, /\bshopper/i, /Shopify/i, /\bcatalogue\b/i] as const;
 
-test("ICP — le vocabulaire DTC ne survit ni sur la home ni sur llms.txt", () => {
-  const surfaces: readonly (readonly [string, string])[] = [
+// ÉLARGI LE 22/09 APRÈS UNE FUITE EN PRODUCTION. La première version de ce ban
+// ne lisait que `homeCopy` et `llms.txt`. Le pivot est parti en prod avec :
+//   - `<title>` et `<meta description>` de `/fr` et `/en` encore en « agent GEO
+//     des marques DTC » — une `metadata` de PAGE écrase celle du layout, et ce
+//     sont ces deux URL que les moteurs lisent ;
+//   - la réponse FAQ de `/vs`, servie aussi en JSON-LD `FAQPage`, qui vendait
+//     « un agent GEO pour marques DTC » et des « correctifs à copier-coller ».
+// Un corps de page vendant un service aux experts-comptables, sous un titre
+// vendant un outil aux marques DTC. Le ban lit donc désormais les FICHIERS qui
+// expédient du texte public, commentaires retirés — c'est la seule façon
+// d'attraper une chaîne qui ne passe par aucun dictionnaire de copy.
+const stripComments = (source: string) =>
+  source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+
+const PUBLIC_TEXT_FILES = [
+  ["src/app/fr/page.tsx", ["src", "app", "fr", "page.tsx"]],
+  ["src/app/en/page.tsx", ["src", "app", "en", "page.tsx"]],
+  ["src/app/layout.tsx", ["src", "app", "layout.tsx"]],
+  ["src/lib/vs-comparison.ts", ["src", "lib", "vs-comparison.ts"]],
+] as const;
+
+test("ICP — le vocabulaire DTC ne survit sur aucune surface publique", () => {
+  const surfaces: (readonly [string, string])[] = [
     ...LOCALES.map((locale) => [`homeCopy.${locale}`, homeFlat(locale)] as const),
     ["public/llms.txt", llmsTxtFlat],
+    ...PUBLIC_TEXT_FILES.map(([label, segments]) => [label, stripComments(readRepoFile(...segments))] as const),
   ];
   for (const [label, text] of surfaces) {
     for (const forbidden of OLD_ICP_WORDS) {
       assert.doesNotMatch(text, forbidden, `${label}: vocabulaire de l'ancienne cible « ${forbidden.source} »`);
+    }
+  }
+});
+
+test("ICP — le titre et la description de /fr et /en dérivent du métier, jamais écrits en dur", () => {
+  // Une `metadata` de page écrase celle du layout : si elle n'est pas dérivée,
+  // elle se fige au métier du jour où elle a été écrite.
+  for (const [label, segments] of PUBLIC_TEXT_FILES.slice(0, 2)) {
+    const source = readRepoFile(...segments);
+    assert.match(source, /BEACHHEAD_TRADE/, `${label}: la metadata doit dériver de BEACHHEAD_TRADE`);
+    for (const trade of Object.values(BEACHHEAD_TRADE)) {
+      assert.ok(!stripComments(source).includes(trade), `${label}: « ${trade} » écrit en dur`);
     }
   }
 });

@@ -262,7 +262,7 @@ function vsFaqCopy(locale: Locale): { question: string; answer: string }[] {
         question:
           "Quel est le meilleur outil GEO, et quelle est l'alternative la moins chère à Otterly ?",
         answer:
-          `GetPick est un agent GEO pour marques DTC à ${formatVsPrice(VS_GETPICK, "fr")}/mois — il fait le travail qu'une agence GEO facture 2 000 à 20 000 €/mois. Les outils de monitoring nommés — Otterly (dès ${formatVsPrice(otterly, "fr")}/mois${vsBillingSuffix(otterly, "fr")}), Peec (dès ${formatVsPrice(peec, "fr")}/mois${vsBillingSuffix(peec, "fr")}), Rankscale (dès ${formatVsPrice(rankscale, "fr")}/mois${vsBillingSuffix(rankscale, "fr")}) et Profound (dès ${formatVsPrice(profound, "fr")}/mois${vsBillingSuffix(profound, "fr")}) — rapportent où l'IA te mentionne ; GetPick écrit en plus les correctifs à copier-coller et re-vérifie ${RECHECK_CADENCE.fr.adverb}. Prix relevés en juillet 2026.`,
+          `GetPick est un agent GEO pour les professionnels de service à ${formatVsPrice(VS_GETPICK, "fr")}/mois — il fait le travail qu'une agence GEO facture 2 000 à 20 000 €/mois. Les outils de monitoring nommés — Otterly (dès ${formatVsPrice(otterly, "fr")}/mois${vsBillingSuffix(otterly, "fr")}), Peec (dès ${formatVsPrice(peec, "fr")}/mois${vsBillingSuffix(peec, "fr")}), Rankscale (dès ${formatVsPrice(rankscale, "fr")}/mois${vsBillingSuffix(rankscale, "fr")}) et Profound (dès ${formatVsPrice(profound, "fr")}/mois${vsBillingSuffix(profound, "fr")}) — rapportent où l'IA te mentionne ; GetPick fait en plus le travail à ta place, hors de ton site, et re-teste ${RECHECK_CADENCE.fr.adverb}. Prix relevés en juillet 2026.`,
       },
       {
         question:
@@ -283,7 +283,7 @@ function vsFaqCopy(locale: Locale): { question: string; answer: string }[] {
     {
       question: "What is the best GEO tool, and what is the cheapest alternative to Otterly?",
       answer:
-        `GetPick is a GEO agent for DTC brands at ${formatVsPrice(VS_GETPICK, "en")}/month — it does the work a GEO agency charges €2,000–20,000/month for. The named monitoring tools — Otterly (from ${formatVsPrice(otterly, "en")}/mo${vsBillingSuffix(otterly, "en")}), Peec (from ${formatVsPrice(peec, "en")}/mo${vsBillingSuffix(peec, "en")}), Rankscale (from ${formatVsPrice(rankscale, "en")}/mo${vsBillingSuffix(rankscale, "en")}) and Profound (from ${formatVsPrice(profound, "en")}/mo${vsBillingSuffix(profound, "en")}) — report where AI mentions you; GetPick also writes the copy-paste fixes and re-checks ${RECHECK_CADENCE.en.adverb}. Prices recorded July 2026.`,
+        `GetPick is a GEO agent for service professionals at ${formatVsPrice(VS_GETPICK, "en")}/month — it does the work a GEO agency charges €2,000–20,000/month for. The named monitoring tools — Otterly (from ${formatVsPrice(otterly, "en")}/mo${vsBillingSuffix(otterly, "en")}), Peec (from ${formatVsPrice(peec, "en")}/mo${vsBillingSuffix(peec, "en")}), Rankscale (from ${formatVsPrice(rankscale, "en")}/mo${vsBillingSuffix(rankscale, "en")}) and Profound (from ${formatVsPrice(profound, "en")}/mo${vsBillingSuffix(profound, "en")}) — report where AI mentions you; GetPick also does the work for you, off-site, and re-tests ${RECHECK_CADENCE.en.adverb}. Prices recorded July 2026.`,
     },
     {
       question: "How is GetPick different from Otterly, Peec, Rankscale and Profound?",
