@@ -5,6 +5,7 @@ import { pool } from "./db";
 import { recordFunnelEvent } from "./funnel";
 import { localizePlainAction, type Locale } from "./i18n";
 import { RECHECK_CADENCE, RECHECK_INTERVAL_DAYS, SERVICE_PLAN_PRICE_EUR } from "./plan-promises";
+import { buildMonthlyMonitoringEmail } from "./monitoring-email";
 import { isWebSearchConfigured, runWebSearch } from "./web-search";
 import { isMailConfigured, sendMail } from "./mailer";
 import { renderEmail, quoted, type EmailContent } from "./email-template";
@@ -4917,42 +4918,25 @@ export async function upsertMonitoredBrandForAudit(auditId: string) {
   return monitoredBrandId;
 }
 
-function monitoringSummaryText(snapshot: MonitoringSnapshot) {
-  const deltaText = snapshot.scoreDelta === null ? "no previous completed run yet" : `${snapshot.scoreDelta >= 0 ? "+" : ""}${snapshot.scoreDelta} points vs previous run`;
-  const movements = snapshot.competitorMovements.length
-    ? snapshot.competitorMovements.slice(0, 5).map((movement) => `- ${movement.competitor}: ${movement.detail} (${movement.prompt})`).join("\n")
-    : "- No competitor changes detected from the previous saved run.";
-  const topAction = snapshot.actions[0]
-    ? `${snapshot.actions[0].title}: ${snapshot.actions[0].doThis} Where: ${snapshot.actions[0].where}`
-    : "No action could be generated from this run.";
-
-  return { deltaText, movements, topAction };
-}
-
-export async function sendWeeklyMonitoringEmail(email: string, brandName: string, websiteUrl: string, report: AuditReport) {
-  const summary = monitoringSummaryText(report.monitoring);
-
-  const subject = `Monthly GetPick Monitor — ${brandName}`;
-  const body = [
-      `Monthly GetPick Monitor for ${brandName}`,
-      "",
-      `Score: ${report.score}/100 (${summary.deltaText})`,
-      "",
-      "Competitor movement from Gemini recommendation checks:",
-      summary.movements,
-      "",
-      "First action to take:",
-      `- ${summary.topAction}`,
-      "",
-      "Your 3 things to do this week:",
-      ...report.monitoring.actions.slice(0, 3).flatMap((action, index) => [
-        `${index + 1}. ${action.title}`,
-        `   What to do: ${action.doThis}`,
-        `   Where: ${action.where}`,
-      ]),
-      "",
-      `View the report: https://www.getpick.ai/audit/${report.audit_id}`,
-    ].join("\n");
+/**
+ * Le rapport mensuel part d'ici. Le CORPS est construit par un module pur
+ * (`monitoring-email.ts`) : l'ancien corps vivait dans cette fonction, en
+ * anglais en dur, et ne pouvait être vérifié que par lecture de source.
+ *
+ * L'étape de journalisation reste `weekly_monitoring` : c'est une valeur
+ * PERSISTÉE dans `email_deliveries`, la renommer casserait l'historique de
+ * livraison pour un gain cosmétique.
+ */
+export async function sendMonthlyMonitoringEmail(email: string, brandName: string, websiteUrl: string, report: AuditReport, now: Date = new Date()) {
+  const { subject, body } = buildMonthlyMonitoringEmail({
+    brandName,
+    auditId: report.audit_id,
+    score: report.score,
+    locale: report.locale,
+    monitoring: report.monitoring,
+    buyerIntentPrompts: report.buyerIntentPrompts,
+    now,
+  });
 
   return sendGuardedEmail({ auditId: report.audit_id, email, websiteUrl, step: "weekly_monitoring", subject, body });
 }
@@ -5143,7 +5127,7 @@ export async function runDueWeeklyRescans(limit = 3) {
     if (result.status === "complete") {
       const monitoring = await getAuditMonitoringSnapshot(auditId);
       const report = { ...result.report, monitoring };
-      const emailResult = await sendWeeklyMonitoringEmail(brand.email, brand.brand_name, brand.website_url, report);
+      const emailResult = await sendMonthlyMonitoringEmail(brand.email, brand.brand_name, brand.website_url, report);
 
       await pool.query(
         `UPDATE audits

@@ -377,7 +377,7 @@ const CADENCE_SOURCE_SURFACES = [
 ] as const;
 
 /** Identifiants et clés techniques : ils contiennent « weekly » sans rien promettre. */
-const TECHNICAL_WEEKLY = /weekly_rescan|weeklyRescan|weekly_monitoring|weeklyEmail\w*|weeklyActionPlan|sendWeeklyMonitoringEmail|changeFrequency:\s*"weekly"/g;
+const TECHNICAL_WEEKLY = /weekly_rescan|weeklyRescan|weekly_monitoring|weeklyEmail\w*|weeklyActionPlan|sendMonthlyMonitoringEmail|changeFrequency:\s*"weekly"/g;
 
 test("cadence — aucune SOURCE cliente ne promet une cadence que le produit ne sert pas", () => {
   if (RECHECK_INTERVAL_DAYS === 7) return; // la promesse hebdo serait alors vraie
