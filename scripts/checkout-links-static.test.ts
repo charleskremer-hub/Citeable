@@ -24,7 +24,13 @@ const SOURCE = readFileSync(resolve(here, "../src/lib/checkout-links.ts"), "utf8
 // expliquer pourquoi elle est interdite ne doit pas faire echouer le tripwire.
 const CODE = SOURCE.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
 
+// 22/09/2026 : `NEXT_PUBLIC_SERVICE_CHECKOUT_URL` rejoint la liste avec le plan
+// unique « Fait pour toi ». C'est la variable du SEUL bouton d'achat publie sur
+// la home : si Next cesse de l'inliner, le pivot perd sa caisse en silence,
+// exactement comme le 14/09. Les quatre autres restent verrouillees : la page
+// de rapport sert encore Monitor et Agent.
 const VARIABLES = [
+  "NEXT_PUBLIC_SERVICE_CHECKOUT_URL",
   "NEXT_PUBLIC_MONITOR_CHECKOUT_URL",
   "NEXT_PUBLIC_AGENT_CHECKOUT_URL",
   "NEXT_PUBLIC_MONITOR_TEST_CHECKOUT_URL",

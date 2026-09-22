@@ -38,6 +38,20 @@
  */
 const clean = (value: string | undefined): string => (value ?? "").trim();
 
+/**
+ * OFFRE PUBLIQUE DEPUIS LE 22/09/2026 — le plan unique « Fait pour toi ».
+ * Meme fail-safe que les deux precedentes : variable absente -> chaine vide ->
+ * pas de caisse. `HomeClient.tsx` retombe alors sur le diagnostic gratuit
+ * (`#audit`) plutot que de rendre un bouton mort, et n'emet PAS
+ * `checkout_opened` : un compteur de caisse qui bouge sans caisse est pire
+ * qu'un compteur a zero.
+ *
+ * POUR ACTIVER : creer le Stripe Payment Link du plan a 69 EUR/mois puis
+ * renseigner NEXT_PUBLIC_SERVICE_CHECKOUT_URL dans Vercel. Aucun code, aucun
+ * deploiement.
+ */
+export const SERVICE_CHECKOUT_URL = clean(process.env.NEXT_PUBLIC_SERVICE_CHECKOUT_URL);
+
 export const MONITOR_CHECKOUT_URL = clean(process.env.NEXT_PUBLIC_MONITOR_CHECKOUT_URL);
 export const AGENT_CHECKOUT_URL = clean(process.env.NEXT_PUBLIC_AGENT_CHECKOUT_URL);
 

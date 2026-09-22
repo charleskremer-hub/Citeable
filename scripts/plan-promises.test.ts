@@ -167,24 +167,29 @@ test("moteurs — le libellé public est celui du moteur d'audit, pas un synonym
   }
 });
 
-test("moteurs — la copy d'offre nomme le moteur réellement interrogé pour ce tier", () => {
+// MODIFIÉ LE 22/09/2026 (pivot offre services) — JUSTIFICATION.
+// La landing ne publie plus Monitor ni Agent : elle publie UN plan payant,
+// « Fait pour toi » / « Done for you ». Chercher `name === "Monitor"` y renvoie
+// désormais `undefined`, donc le test échouait pour une raison fausse — l'offre
+// n'a pas disparu du produit, elle a disparu de la PAGE. L'invariant protégé
+// est inchangé : aucune offre PUBLIÉE ne peut promettre deux moteurs quand le
+// produit n'en interroge qu'un. Il est simplement porté par le tier publié,
+// retrouvé par `plan !== "free"`, et non plus par un nom de palier — un nom de
+// palier n'est pas un contrat, c'est de la copy.
+const paidTiers = (locale: Locale) => homeCopy[locale].pricingTiers.filter((entry) => entry.plan !== "free");
+
+test("moteurs — aucune offre publiée ne promet deux moteurs sur un même audit", () => {
+  if (ENABLED_ANSWER_ENGINE_KEYS.length === 0) return;
   for (const locale of LOCALES) {
-    const tiers = homeCopy[locale].pricingTiers;
-    const monitor = tiers.find((entry) => entry.name === "Monitor");
-    const agent = tiers.find((entry) => entry.name === "Agent");
-    assert.ok(monitor && agent, `${locale}: les offres Monitor et Agent doivent exister`);
-    const agentFeature = agent!.features[0];
-    assert.ok(
-      agentFeature.includes(PLAN_PROMISES.agent_19eur.engineLabel[locale]),
-      `${locale}: la première puce Agent doit nommer ${PLAN_PROMISES.agent_19eur.engineLabel[locale]}`
-    );
-    // Le défaut d'origine : « Gemini + ChatGPT » sur une offre qui n'interroge
-    // qu'un moteur. Interdit tant que le tier ne sert qu'un moteur.
-    if (PLAN_PROMISES.agent_19eur.answerEngineKeys.length === 1) {
+    const tiers = paidTiers(locale);
+    assert.equal(tiers.length, 1, `${locale}: la landing publie exactement une offre payante`);
+    const servesTwoEngines = Object.values(ANSWER_ENGINE_KEYS_BY_TIER).some((keys) => keys.length > 1);
+    if (servesTwoEngines) return;
+    for (const feature of tiers[0].features) {
       assert.doesNotMatch(
-        agentFeature,
+        feature,
         /Gemini \+ ChatGPT|ChatGPT \+ Gemini/i,
-        `${locale}: l'offre Agent n'interroge qu'un moteur, elle ne peut pas en promettre deux sur un même audit`
+        `${locale}: aucun tier n'interroge deux moteurs sur un même audit, la puce ne peut pas en promettre deux`
       );
     }
   }
@@ -210,14 +215,30 @@ test("questions — le compte publié par tier est celui du moteur d'audit", () 
   assert.equal(BUYER_QUESTION_COUNT_BY_TIER.agent_19eur, Number(paid), "le compte Agent doit être celui du moteur");
 });
 
-test("questions — la puce Monitor publie le compte du moteur, FR et EN", () => {
+// MODIFIÉ LE 22/09/2026 (pivot offre services) — JUSTIFICATION.
+// L'ancienne version exigeait que la PREMIÈRE puce Monitor OUVRE sur « 12 » ;
+// la landing ne publie plus de palier Monitor et l'offre unique n'annonce plus
+// de compte de questions sur la home (il vit sur les surfaces machine,
+// `llms.txt` et le JSON-LD, où `landing-copy.test.ts` le verrouille contre le
+// moteur). Le risque réel n'était pas « la puce commence par 12 » mais « une
+// surface publie un compte que le moteur ne sert pas » : c'est ce qui est
+// testé ici, sur TOUTES les puces publiées, dans les deux langues. Un test qui
+// exige la présence d'un chiffre serait un test qui interdit de le retirer.
+const PUBLISHED_COUNT_RE = /(\d+)\s+(?:buyer |client |buying )?questions?/gi;
+
+test("questions — aucune puce publiée n'annonce un compte que le moteur ne sert pas", () => {
+  const served = new Set(Object.values(BUYER_QUESTION_COUNT_BY_TIER).map(String));
   for (const locale of LOCALES) {
-    const monitor = homeCopy[locale].pricingTiers.find((entry) => entry.name === "Monitor");
-    assert.ok(monitor, `${locale}: l'offre Monitor doit exister`);
-    assert.ok(
-      monitor!.features[0].startsWith(String(BUYER_QUESTION_COUNT_BY_TIER.monitor_9eur)),
-      `${locale}: la puce Monitor doit ouvrir sur ${BUYER_QUESTION_COUNT_BY_TIER.monitor_9eur} questions`
-    );
+    for (const tier of homeCopy[locale].pricingTiers) {
+      for (const feature of tier.features) {
+        for (const [, count] of feature.matchAll(PUBLISHED_COUNT_RE)) {
+          assert.ok(
+            served.has(count),
+            `${locale} / ${tier.name}: « ${count} questions » ne correspond à aucun compte du moteur (${[...served].join(" / ")})`
+          );
+        }
+      }
+    }
   }
 });
 
@@ -230,14 +251,24 @@ test("cadence — les libellés dérivent de la constante, dans les deux langues
   }
 });
 
-test("cadence — la puce Monitor publie la cadence réelle, FR et EN", () => {
+// MODIFIÉ LE 22/09/2026 (pivot offre services) — JUSTIFICATION.
+// L'ancienne version comparait la première puce Monitor à une phrase exacte.
+// Cette puce n'existe plus. Ce qu'elle protégeait — l'offre payante publiée
+// annonce la cadence que le produit SERT — est conservé et même renforcé : la
+// promesse de re-test de l'offre unique doit porter la cadence dérivée de
+// `RECHECK_INTERVAL_DAYS`, quelle qu'elle soit. La comparaison est insensible à
+// la casse parce que la copy met la cadence en tête de phrase (« Tous les
+// mois, … » / « Every month … »), ce qu'une égalité stricte interdirait pour
+// une raison purement typographique.
+test("cadence — l'offre payante publiée annonce la cadence réelle, FR et EN", () => {
   for (const locale of LOCALES) {
-    const monitor = homeCopy[locale].pricingTiers.find((entry) => entry.name === "Monitor");
-    const expected =
-      locale === "en"
-        ? `${BUYER_QUESTION_COUNT_BY_TIER.monitor_9eur} buying questions re-checked ${RECHECK_CADENCE.en.adverb}`
-        : `${BUYER_QUESTION_COUNT_BY_TIER.monitor_9eur} questions d'achat re-vérifiées ${RECHECK_CADENCE.fr.adverb}`;
-    assert.equal(monitor!.features[0], expected, `${locale}: la puce Monitor doit publier la cadence réelle`);
+    const tiers = homeCopy[locale].pricingTiers.filter((entry) => entry.plan !== "free");
+    assert.equal(tiers.length, 1, `${locale}: la landing publie exactement une offre payante`);
+    const cadence = RECHECK_CADENCE[locale].every.toLowerCase();
+    assert.ok(
+      tiers[0].features.some((feature) => feature.toLowerCase().includes(cadence)),
+      `${locale}: une puce de l'offre payante doit porter « ${RECHECK_CADENCE[locale].every} »`
+    );
   }
 });
 

@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { DM_Serif_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { localeFromHeaders } from "@/lib/i18n";
-import { RECHECK_CADENCE } from "@/lib/plan-promises";
+import { BEACHHEAD_TRADE, RECHECK_CADENCE, SERVICE_PLAN_PRICE_EUR } from "@/lib/plan-promises";
 import { Analytics } from "@vercel/analytics/next";
 import PostHogInit from "./PostHogInit";
 
@@ -23,14 +23,14 @@ export async function generateMetadata(): Promise<Metadata> {
 
   if (locale === "fr") {
     return {
-      title: "GetPick — L'agent GEO des marques DTC",
-      description: "Il fait recommander ta marque par ChatGPT et Gemini — diagnostic, contenu, suivi. Sans agence. Audit gratuit en 2 minutes.",
+      title: `GetPick — L'agent qui fait recommander les ${BEACHHEAD_TRADE.fr}s par l'IA`,
+      description: `Quand un client cherche un ${BEACHHEAD_TRADE.fr}, ChatGPT répond un nom. GetPick construit et entretient ta présence là où l'IA va chercher qui recommander — hors de ton site, zéro technique. Diagnostic gratuit en 2 minutes.`,
     };
   }
 
   return {
-    title: "GetPick — The GEO agent for DTC brands",
-    description: "It gets your brand recommended by ChatGPT and Gemini — diagnosis, content, monitoring. No agency needed. Free audit in 2 minutes.",
+    title: `GetPick — The agent that gets ${BEACHHEAD_TRADE.en}s recommended by AI`,
+    description: `When a client looks for an ${BEACHHEAD_TRADE.en}, ChatGPT answers with a name. GetPick builds and maintains your presence where AI looks for who to recommend — off-site, zero technical. Free diagnostic in 2 minutes.`,
   };
 }
 
@@ -53,10 +53,10 @@ const STRUCTURED_DATA = {
   applicationSubCategory: "GEO agent (AI visibility / AEO)",
   operatingSystem: "Web",
   description:
-    `GetPick is the GEO agent for DTC brands. It gets your brand recommended by AI assistants like ChatGPT and Gemini: it sends real buying questions to the AIs live, names the rival recommended in your place, writes the copy-paste fixes, and monitors ${RECHECK_CADENCE.en.adverb}. The work a GEO agency charges 2,000-20,000 EUR/month for, at a flat tool price.`,
+    `GetPick is the GEO agent for service professionals, ${BEACHHEAD_TRADE.en}s first. It gets you recommended by AI assistants like ChatGPT and Gemini and does the work off-site: it sends your clients' real questions to the AIs live, names the peer cited in your place, then creates and hosts your answer page, places you on the sources AI trusts, and re-tests ${RECHECK_CADENCE.en.adverb}. You never touch your own website. The work a GEO agency charges 2,000-20,000 EUR/month for, at one flat price.`,
   audience: {
     "@type": "Audience",
-    audienceType: "Direct-to-consumer and e-commerce brands",
+    audienceType: "Service professionals and small firms (accountants, lawyers, consultants, trades)",
   },
   offers: [
     {
@@ -74,17 +74,14 @@ const STRUCTURED_DATA = {
     },
     {
       "@type": "Offer",
-      name: "Monitor",
-      price: "9",
+      // Le montant vient de `SERVICE_PLAN_PRICE_EUR` (`plan-promises.ts`), jamais
+      // d'une valeur de copy : ce JSON-LD est rendu sur TOUTES les pages et ne
+      // peut pas contredire la grille, `public/llms.txt` ou /vs. Verrouillé par
+      // `offre-services.test.ts`.
+      name: "Done for you",
+      price: String(SERVICE_PLAN_PRICE_EUR),
       priceCurrency: "EUR",
-      description: `12 buyer questions, ${RECHECK_CADENCE.en.adjective} tracking and copy-paste fixes.`,
-    },
-    {
-      "@type": "Offer",
-      name: "Agent",
-      price: "19",
-      priceCurrency: "EUR",
-      description: "Interactive chat over your audit data.",
+      description: `12 buyer questions, ${RECHECK_CADENCE.en.adjective} re-testing, answer page created and hosted for you, placement on the sources AI trusts. Nothing to install.`,
     },
   ],
 } as const;

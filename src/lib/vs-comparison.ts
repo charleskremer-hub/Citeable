@@ -11,16 +11,18 @@
 // `priceAsOf`, la page affiche « relevé 2026-07 ».
 import { faqJsonLdForBrand } from "./audit-engine";
 import { homeCopy, type Locale } from "./i18n";
-import { RECHECK_CADENCE } from "./plan-promises";
+import { RECHECK_CADENCE, SERVICE_PLAN_PRICE_EUR } from "./plan-promises";
 
 export const SITE_URL = "https://www.getpick.ai";
 
 export type VsCurrency = "EUR" | "USD";
 
 // Le mois de relevé est un littéral : le test AC3 exige `priceAsOf === "2026-07"`
-// sur chaque concurrent, ce qui casse volontairement si on ajoute une ligne sans
-// re-vérifier le prix.
-export type PriceAsOf = "2026-07";
+// sur chaque CONCURRENT, ce qui casse volontairement si on ajoute une ligne sans
+// re-vérifier le prix. Notre propre ligne n'est pas un relevé : elle date la
+// décision de prix (pivot du 22/09/2026), d'où le second littéral — que le test
+// des concurrents continue d'interdire sur leurs lignes.
+export type PriceAsOf = "2026-07" | "2026-09";
 
 type Localized = { en: string; fr: string };
 
@@ -56,15 +58,18 @@ export const VS_TOOLS: VsToolRow[] = [
   {
     name: "GetPick",
     isUs: true,
-    entryPlan: { en: "Monitor", fr: "Monitor" },
-    entryPrice: 9,
+    entryPlan: { en: "Done for you", fr: "Fait pour toi" },
+    // Prix DÉRIVÉ de `SERVICE_PLAN_PRICE_EUR` (`plan-promises.ts`) : /vs est une
+    // surface publique de plus, elle ne peut pas publier un montant que la home
+    // et le JSON-LD ne publient pas. Verrouillé par `offre-services.test.ts`.
+    entryPrice: SERVICE_PLAN_PRICE_EUR,
     currency: "EUR",
-    priceAsOf: "2026-07",
+    priceAsOf: "2026-09",
     sourceUrl: `${SITE_URL}/`,
     sourceLabel: "getpick.ai",
     does: {
-      en: `Diagnoses who AI names instead of you, writes the copy-paste fixes, re-checks ${RECHECK_CADENCE.en.adverb}. Agency work at a tool price.`,
-      fr: `Diagnostique qui l'IA cite à ta place, écrit les correctifs à copier-coller, re-vérifie ${RECHECK_CADENCE.fr.adverb}. Le travail d'agence, au prix d'un outil.`,
+      en: `Names the peer AI cites instead of you, then creates and hosts your answer page and places you on the sources AI trusts, re-tested ${RECHECK_CADENCE.en.adverb}. Agency work, done off-site — you touch nothing.`,
+      fr: `Nomme le confrère que l'IA cite à ta place, puis crée et héberge ta page-réponse et te place sur les sources que l'IA croit, re-testé ${RECHECK_CADENCE.fr.adverb}. Le travail d'agence, fait hors de ton site — tu ne touches à rien.`,
     },
   },
   {
@@ -200,7 +205,7 @@ export const vsCopy: Record<Locale, {
     eyebrow: "Comparison · July 2026",
     title: "GetPick vs the named GEO tools",
     intro:
-      "Otterly, Peec, Rankscale and Profound tell you where AI mentions your brand. GetPick does the work a GEO agency does — it writes the fixes and re-checks them — at a tool price. Here is the honest side-by-side.",
+      "Otterly, Peec, Rankscale and Profound tell you where AI mentions you. GetPick does the work a GEO agency does — off-site, so you change nothing on your own website — at one flat price. Here is the honest side-by-side.",
     agencyAnchor: homeCopy.en.pricingTitle,
     th: { tool: "Tool", price: "Entry price", does: "What it actually does", source: "Source" },
     priceNote: "Entry prices as read on each tool's pricing page — recorded 2026-07. Prices move; check the source.",
@@ -211,15 +216,15 @@ export const vsCopy: Record<Locale, {
       "We don't reprint numbers here — they go stale, and ours did worse than that: we withdrew the figures of our own study, because the measurement that produced them was defective. The page says what broke, and what replaced it.",
     studyCta: "Read what we withdrew, and why →",
     backHome: "← GetPick",
-    metaTitle: "GetPick vs Otterly, Peec, Rankscale & Profound — the best GEO tool for DTC brands",
+    metaTitle: "GetPick vs Otterly, Peec, Rankscale & Profound — the GEO tool that does the work for you",
     metaDescription:
-      "An honest side-by-side of GetPick against the named GEO tools (Otterly, Peec, Rankscale, Profound), with entry prices recorded July 2026. GetPick does the agency work — writing the fixes — at €9/month.",
+      `An honest side-by-side of GetPick against the named GEO tools (Otterly, Peec, Rankscale, Profound), with entry prices recorded July 2026. GetPick does the agency work off-site — you touch nothing — at €${SERVICE_PLAN_PRICE_EUR}/month.`,
   },
   fr: {
     eyebrow: "Comparatif · Juillet 2026",
     title: "GetPick face aux outils GEO nommés",
     intro:
-      "Otterly, Peec, Rankscale et Profound te disent où l'IA mentionne ta marque. GetPick fait le travail d'une agence GEO — il écrit les correctifs et les re-vérifie — au prix d'un outil. Voici le face-à-face honnête.",
+      "Otterly, Peec, Rankscale et Profound te disent où l'IA te mentionne. GetPick fait le travail d'une agence GEO — hors de ton site, tu ne changes rien chez toi — pour un prix unique. Voici le face-à-face honnête.",
     agencyAnchor: homeCopy.fr.pricingTitle,
     th: { tool: "Outil", price: "Prix d'entrée", does: "Ce que ça fait vraiment", source: "Source" },
     priceNote: "Prix d'entrée relevés sur la page pricing de chaque outil — relevé 2026-07. Les prix bougent ; vérifie la source.",
@@ -227,9 +232,9 @@ export const vsCopy: Record<Locale, {
       "On ne réimprime aucun chiffre ici — ça se périme, et les nôtres ont fait pire : on a retiré les chiffres de notre propre étude, parce que la mesure qui les avait produits était défectueuse. La page dit ce qui a cassé, et ce qui l'a remplacé.",
     studyCta: "Lire ce qu'on a retiré, et pourquoi →",
     backHome: "← GetPick",
-    metaTitle: "GetPick vs Otterly, Peec, Rankscale & Profound — le meilleur outil GEO pour les marques DTC",
+    metaTitle: "GetPick vs Otterly, Peec, Rankscale & Profound — l'outil GEO qui fait le travail à ta place",
     metaDescription:
-      "Le face-à-face honnête de GetPick contre les outils GEO nommés (Otterly, Peec, Rankscale, Profound), prix d'entrée relevés juillet 2026. GetPick fait le travail d'agence — écrire les correctifs — à 9 €/mois.",
+      `Le face-à-face honnête de GetPick contre les outils GEO nommés (Otterly, Peec, Rankscale, Profound), prix d'entrée relevés juillet 2026. GetPick fait le travail d'agence hors de ton site — tu ne touches à rien — à ${SERVICE_PLAN_PRICE_EUR} €/mois.`,
   },
 };
 
@@ -288,14 +293,14 @@ function vsFaqCopy(locale: Locale): { question: string; answer: string }[] {
     {
       question: `Why does GetPick cost ${formatVsPrice(VS_GETPICK, "en")} when these tools start at ${formatVsPrice(cheapest, "en")}–${formatVsPrice(priciest, "en")}/month?`,
       answer:
-        "GetPick does one job for one founder — diagnose, write, watch — so it runs lean and the price stays flat. The honest comparison isn't those tools anyway: it's a GEO agency at €2,000–20,000/month.",
+        "GetPick does one job for one professional — name the peer, build the page, place the sources, watch the shift — so it runs lean and the price stays flat. The honest comparison isn't those tools anyway: it's a GEO agency at €2,000–20,000/month.",
     },
   ];
 }
 
 const VS_DESCRIPTION: Record<Locale, string> = {
-  en: "GetPick is a GEO agent for DTC brands that does the agency work — writing the fixes that get AI to recommend you — at €9/month.",
-  fr: "GetPick est un agent GEO pour marques DTC qui fait le travail d'agence — écrire les correctifs qui font recommander ta marque par l'IA — à 9 €/mois.",
+  en: `GetPick is a GEO agent for service professionals that does the agency work off-site — the answer page, the sources, the content that gets AI to recommend you — at €${SERVICE_PLAN_PRICE_EUR}/month.`,
+  fr: `GetPick est un agent GEO pour les professionnels de service qui fait le travail d'agence hors de ton site — la page-réponse, les sources, le contenu qui te font recommander par l'IA — à ${SERVICE_PLAN_PRICE_EUR} €/mois.`,
 };
 
 // Bloc 1 : Organization + FAQPage via la machinerie existante (réutilisée sans

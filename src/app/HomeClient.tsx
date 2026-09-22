@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import LocaleLang from "./LocaleLang";
 import { answerPages } from "@/lib/answer-pages";
-import { AGENT_CHECKOUT_URL, MONITOR_CHECKOUT_URL } from "@/lib/checkout-links";
+import { SERVICE_CHECKOUT_URL, isCheckoutConfigured } from "@/lib/checkout-links";
 import { homeCopy, type Locale } from "@/lib/i18n";
 
 const inputStyle = {
@@ -31,7 +31,7 @@ type HomeClientProps = {
  * navigation reste native, l'evenement part en sendBeacon et ne se met jamais
  * entre l'acheteur et Stripe. La classe de trafic est constatee cote serveur.
  */
-function trackCheckoutOpened(plan: "monitor_9eur" | "agent_19eur", href: string, locale: Locale) {
+function trackCheckoutOpened(plan: "service_69eur", href: string, locale: Locale) {
   const body = JSON.stringify({
     events: [{ event_name: "checkout_opened", source: "pricing_card", metadata: { checkout_url: href, plan, locale } }],
   });
@@ -328,7 +328,7 @@ export default function HomeClient({ locale }: HomeClientProps) {
           </div>
         </section>
 
-        {/* 6. PRIX ANCRÉ — agence 2 000–20 000 €/mois vs 9 € */}
+        {/* 6. PRIX ANCRÉ — agence 2 000–20 000 €/mois vs le plan unique fait-pour-toi */}
         <section className="mx-auto max-w-5xl border-t border-white/[0.06] px-5 py-14 sm:px-6 sm:py-20">
           <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.pricingEyebrow}</p>
           <h2 className="max-w-3xl text-[clamp(2rem,5vw,3rem)] leading-[1.02] tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
@@ -338,9 +338,14 @@ export default function HomeClient({ locale }: HomeClientProps) {
             {copy.pricingSubtitle}
           </p>
 
-          <div className="mt-8 grid gap-4 lg:grid-cols-3">
+          <div className="mt-8 grid gap-4 lg:grid-cols-2">
             {copy.pricingTiers.map((tier) => {
-              const href = tier.href === "monitor" ? MONITOR_CHECKOUT_URL : tier.href === "agent" ? AGENT_CHECKOUT_URL : tier.href;
+              // Le plan unique « Fait pour toi » : caisse si elle est configurée,
+              // sinon le diagnostic gratuit. Jamais un `href=""` — un bouton
+              // d'achat qui ne mène nulle part abîme plus la confiance qu'un
+              // bouton absent (`checkout-links.ts`).
+              const serviceCheckout = isCheckoutConfigured(SERVICE_CHECKOUT_URL);
+              const href = tier.href === "service" ? (serviceCheckout ? SERVICE_CHECKOUT_URL : "#audit") : tier.href;
 
               return (
                 <div key={tier.name} className={`relative rounded-2xl border p-6 ${tier.highlight ? "border-[#CAFF3C]/35 bg-[#CAFF3C]/[0.055]" : "border-white/[0.08] bg-[#111116]"}`}>
@@ -366,8 +371,7 @@ export default function HomeClient({ locale }: HomeClientProps) {
                     href={href}
                     onClick={() => {
                       window.posthog?.capture(tier.plan === "free" ? "audit_cta_clicked" : "purchase_started", { plan: tier.plan, source: "pricing_card", locale });
-                      if (tier.href === "monitor") trackCheckoutOpened("monitor_9eur", href, locale);
-                      else if (tier.href === "agent") trackCheckoutOpened("agent_19eur", href, locale);
+                      if (tier.href === "service" && serviceCheckout) trackCheckoutOpened("service_69eur", href, locale);
                     }}
                     className={`block rounded-xl px-5 py-3 text-center text-sm font-black no-underline transition hover:brightness-110 ${tier.highlight ? "bg-[#CAFF3C] text-[#09090B]" : "bg-white/[0.08] text-[#F0F0EC]"}`}
                   >

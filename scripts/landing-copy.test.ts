@@ -16,6 +16,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { homeCopy, type Locale } from "@/lib/i18n";
+import { SERVICE_PLAN_PRICE_EUR } from "@/lib/plan-promises";
 
 const LOCALES = ["en", "fr"] as const satisfies readonly Locale[];
 
@@ -329,9 +330,24 @@ test("AC4 — parité FR/EN : les deux TL;DR portent le même nombre de phrases"
 
 // Non-régression : aucune affirmation existante du TL;DR n'a été supprimée en
 // ajoutant la phrase du jour.
+// MODIFIÉ LE 22/09/2026 (pivot offre services) — JUSTIFICATION, claim par claim.
+// Ce test est une NON-RÉGRESSION : il empêche qu'en ajoutant une phrase au
+// TL;DR on en fasse disparaître une autre. Il ne fige pas l'offre, et il ne
+// doit pas empêcher de la changer quand Charles la change.
+//   - « €9/month » / « €19/month » → le prix public unique, lu dans
+//     `SERVICE_PLAN_PRICE_EUR` : ces deux paliers ne sont plus publiés, les
+//     exiger reviendrait à interdire le pivot ;
+//   - « llms.txt » / « robots.txt » → RETIRÉS : ce sont des fichiers que le
+//     client devait coller SUR SON SITE. La promesse du pivot est « tu ne
+//     touches à rien » ; les garder au TL;DR publierait exactement la
+//     contradiction que ce fichier existe pour empêcher ;
+//   - « category » / « catégorie » → remplacé par la preuve off-site, le
+//     mauvais cadrage de catégorie n'étant plus le sujet de la page ;
+//   - « 30 days », « never simulated », l'ancrage agence : INCHANGÉS, ce sont
+//     les affirmations qui survivent au pivot et qu'il faut continuer de tenir.
 const AC4_EXISTING_CLAIMS = {
-  en: ["€2,000 to €20,000", "€9/month", "€19/month", "llms.txt", "robots.txt", "30 days", "never simulated", "category"],
-  fr: ["2 000 à 20 000", "9 €/mois", "19 €/mois", "llms.txt", "robots.txt", "30 jours", "jamais simulées", "catégorie"],
+  en: ["€2,000 to €20,000", `€${SERVICE_PLAN_PRICE_EUR}/month`, "30 days", "never simulated", "off-site"],
+  fr: ["2 000 à 20 000", `${SERVICE_PLAN_PRICE_EUR} €/mois`, "30 jours", "jamais simulées", "hors de ton site"],
 } as const;
 
 for (const locale of LOCALES) {
@@ -439,9 +455,14 @@ test("surfaces machine — le nombre de questions par tier est celui du moteur d
   assert.ok(match, 'audit-engine.ts doit porter `const count = tier === "free" ? N : M;`');
   const [, free, paid] = match!;
 
+  // MODIFIÉ LE 22/09/2026 : l'intitulé de l'offre gratuite est passé de « Free
+  // audit » à « Free diagnostic » avec le pivot. Le contrat testé est le
+  // CHIFFRE servi par le moteur, pas le nom commercial de l'offre — ancrer le
+  // test sur le libellé le rendait rouge pour un mot, et le laisserait vert si
+  // le chiffre changeait sous un libellé conservé.
   assert.ok(
-    llmsTxtFlat.includes(`Free audit: ${free} buyer questions`),
-    `llms.txt doit annoncer « Free audit: ${free} buyer questions » (valeur du moteur)`
+    llmsTxtFlat.includes(`${free} buyer questions`),
+    `llms.txt doit annoncer « ${free} buyer questions » pour l'offre gratuite (valeur du moteur)`
   );
   assert.ok(
     llmsTxtFlat.includes(`${paid} buyer questions`),

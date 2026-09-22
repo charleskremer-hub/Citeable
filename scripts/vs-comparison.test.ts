@@ -20,11 +20,19 @@ import {
   vsBillingSuffix,
   vsCopy,
 } from "@/lib/vs-comparison";
+import { SERVICE_PLAN_PRICE_EUR } from "@/lib/plan-promises";
 
 const LOCALES = ["en", "fr"] as const;
 const RIVALS = ["Otterly", "Peec", "Rankscale", "Profound"] as const;
 
-// --- AC1 : les 4 rivaux nommés + ligne GetPick à 9 € + ancrage agence --------
+// --- AC1 : les 4 rivaux nommés + ligne GetPick au prix public + ancrage agence
+// JUSTIFICATION DE LA MODIFICATION (22/09/2026, pivot offre services) : le prix
+// public passe de 9 € (Monitor) au plan unique « Fait pour toi ». Le montant
+// n'est plus écrit dans le test : il est LU dans `SERVICE_PLAN_PRICE_EUR`, la
+// source de vérité que la home, le JSON-LD, llms.txt et /vs consomment tous.
+// L'invariant protégé est inchangé — /vs affiche NOTRE prix public, pas un
+// autre — et il devient insensible au prochain changement de prix, tout en
+// restant rouge si une surface diverge (cf. `offre-services.test.ts`).
 
 test("AC1 — les 4 rivaux GEO sont nommés dans les données", () => {
   for (const rival of RIVALS) {
@@ -44,20 +52,20 @@ test("AC1 — VS_COMPETITORS = exactement les 4 rivaux (GetPick exclu)", () => {
   );
 });
 
-test("AC1 — la ligne GetPick porte le prix d'entrée 9 € (EUR)", () => {
+test("AC1 — la ligne GetPick porte le prix public en euros", () => {
   assert.equal(VS_GETPICK.name, "GetPick");
-  assert.equal(VS_GETPICK.entryPrice, 9);
+  assert.equal(VS_GETPICK.entryPrice, SERVICE_PLAN_PRICE_EUR);
   assert.equal(VS_GETPICK.currency, "EUR");
   assert.equal(VS_GETPICK.isUs, true);
-  assert.equal(formatVsPrice(VS_GETPICK, "fr"), "9 €");
-  assert.equal(formatVsPrice(VS_GETPICK, "en"), "€9");
+  assert.equal(formatVsPrice(VS_GETPICK, "fr"), `${SERVICE_PLAN_PRICE_EUR} €`);
+  assert.equal(formatVsPrice(VS_GETPICK, "en"), `€${SERVICE_PLAN_PRICE_EUR}`);
 });
 
-test("AC1 — l'ancrage « travail d'une agence GEO » + « 9 € » est présent, FR et EN", () => {
+test("AC1 — l'ancrage « travail d'une agence GEO » + le prix public est présent, FR et EN", () => {
   assert.match(vsCopy.fr.agencyAnchor, /agence GEO/i);
-  assert.match(vsCopy.fr.agencyAnchor, /9\s?€/);
+  assert.ok(vsCopy.fr.agencyAnchor.includes(`${SERVICE_PLAN_PRICE_EUR} €`), "l'ancrage FR doit porter le prix public");
   assert.match(vsCopy.en.agencyAnchor, /GEO agency/i);
-  assert.match(vsCopy.en.agencyAnchor, /€9/);
+  assert.ok(vsCopy.en.agencyAnchor.includes(`€${SERVICE_PLAN_PRICE_EUR}`), "l'ancrage EN doit porter le prix public");
 });
 
 // --- AC2 : JSON-LD FAQPage + ItemList parsables, question de catégorie -------

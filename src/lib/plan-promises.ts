@@ -64,6 +64,32 @@ export type PromiseLocale = "en" | "fr";
  */
 export const RECHECK_INTERVAL_DAYS: number = 30;
 
+/**
+ * OFFRE PUBLIQUE — pivot du 22/09/2026, décidé par Charles (CEO).
+ *
+ * La landing ne vend plus trois paliers outil à une marque DTC : elle vend UN
+ * plan fait-pour-toi à un professionnel de service, qui ne touche ni à son
+ * site ni à son code. Le prix est écrit ICI et nulle part ailleurs — la copy
+ * FR/EN, le JSON-LD de `layout.tsx`, `public/llms.txt` et la page /vs le
+ * DÉRIVENT. `offre-services.test.ts` échoue si une surface publique publie un
+ * autre montant : c'est la même discipline que la cadence ci-dessus, née de la
+ * même faute (deux surfaces, deux chiffres, aucune des deux fausse isolément).
+ *
+ * Les tiers internes `monitor_9eur` / `agent_19eur` NE DISPARAISSENT PAS du
+ * code : des droits y sont attachés (`entitlement.ts`, `stripe-webhook.ts`,
+ * page de rapport). Ce qui change est ce qui est PUBLIÉ sur la landing.
+ */
+export const SERVICE_PLAN_PRICE_EUR: number = 69;
+
+/**
+ * Métier du beachhead. C'est un PARAMÈTRE, pas une conviction : basculer vers
+ * un autre métier de service est un seul mot, et toute la copy FR/EN suit.
+ */
+export const BEACHHEAD_TRADE: Record<PromiseLocale, string> = {
+  en: "accountant",
+  fr: "expert-comptable",
+};
+
 /** Libellé public de chaque moteur — miroir du champ `engine` de
  *  `ANSWER_ENGINE_PROVIDER_CONFIGS` (`audit-engine.ts`). */
 const ANSWER_ENGINE_LABELS: Record<AnswerEngineKey, string> = {
