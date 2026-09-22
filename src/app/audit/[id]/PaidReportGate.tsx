@@ -1,5 +1,6 @@
 import { AGENT_CHECKOUT_URL, MONITOR_CHECKOUT_URL } from "@/lib/checkout-links";
 import type { Locale } from "@/lib/i18n";
+import { SERVICE_PLAN_PRICE_EUR } from "@/lib/plan-promises";
 import FunnelCheckoutLink from "./FunnelCheckoutLink";
 
 /**
@@ -30,9 +31,9 @@ export default function PaidReportGate({ auditId, isAgentReport, locale }: { aud
         source="report_paid_gate"
         className="mt-4 inline-flex rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline transition hover:brightness-110"
       >
-        {isAgentReport
-          ? locale === "fr" ? "Ouvrir mon rapport — 19 € →" : "Open my report — €19 →"
-          : locale === "fr" ? "Ouvrir mon rapport — 9 € →" : "Open my report — €9 →"}
+        {/* Un seul prix public depuis le pivot du 22/09 : le libellé ne nomme plus
+            le palier interne du rapport, il nomme l'offre qu'on vend. */}
+        {locale === "fr" ? `Ouvrir mon rapport — ${SERVICE_PLAN_PRICE_EUR} € →` : `Open my report — €${SERVICE_PLAN_PRICE_EUR} →`}
       </FunnelCheckoutLink>
       <p className="m-0 mt-3 text-xs font-bold text-[#8E8E9A]">
         {locale === "fr"

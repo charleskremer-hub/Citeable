@@ -46,7 +46,7 @@ const clean = (value: string | undefined): string => (value ?? "").trim();
  * `checkout_opened` : un compteur de caisse qui bouge sans caisse est pire
  * qu'un compteur a zero.
  *
- * POUR ACTIVER : creer le Stripe Payment Link du plan a 69 EUR/mois puis
+ * POUR ACTIVER : creer le Stripe Payment Link du plan unique puis
  * renseigner NEXT_PUBLIC_SERVICE_CHECKOUT_URL dans Vercel. Aucun code, aucun
  * deploiement.
  */

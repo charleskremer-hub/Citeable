@@ -32,7 +32,7 @@ const source = readFileSync(resolve(here, "../src/app/HomeClient.tsx"), "utf8");
 // exigés ci-dessous.
 test("la home émet checkout_opened pour le plan payant publié", () => {
   assert.match(source, /event_name: "checkout_opened"/);
-  assert.match(source, /trackCheckoutOpened\("service_69eur"/);
+  assert.match(source, /trackCheckoutOpened\("service"/);
   assert.match(source, /source: "pricing_card"/);
 });
 
@@ -56,7 +56,7 @@ test("aucun checkout_opened n'est émis quand la caisse n'est pas configurée", 
 function checkoutPath(): string {
   const fn = source.match(/function trackCheckoutOpened[\s\S]*?\n}\n/);
   assert.ok(fn, "trackCheckoutOpened introuvable dans HomeClient.tsx");
-  const onClick = source.match(/onClick=\{\(\) => \{[\s\S]*?trackCheckoutOpened\("service_69eur"[\s\S]*?\}\}/);
+  const onClick = source.match(/onClick=\{\(\) => \{[\s\S]*?trackCheckoutOpened\("service"[\s\S]*?\}\}/);
   assert.ok(onClick, "onClick des boutons de prix introuvable dans HomeClient.tsx");
   return fn[0] + onClick[0];
 }

@@ -4,7 +4,7 @@ export type { DetectedPlatform } from "./platform-detect";
 import { pool } from "./db";
 import { recordFunnelEvent } from "./funnel";
 import { localizePlainAction, type Locale } from "./i18n";
-import { RECHECK_CADENCE, RECHECK_INTERVAL_DAYS } from "./plan-promises";
+import { RECHECK_CADENCE, RECHECK_INTERVAL_DAYS, SERVICE_PLAN_PRICE_EUR } from "./plan-promises";
 import { isWebSearchConfigured, runWebSearch } from "./web-search";
 import { isMailConfigured, sendMail } from "./mailer";
 import { renderEmail, quoted, type EmailContent } from "./email-template";
@@ -3967,11 +3967,11 @@ function formulaText() {
 
 function formulaTextForTier(tier: AuditTier) {
   if (tier === "agent_19eur" || tier === "agent_49eur") {
-    return "Your Agent €19/month report checks visibility with Gemini + ChatGPT and shows whether they name your brand or cite competitors instead. If a check is unavailable, GetPick says so and never fabricates data.";
+    return "Your GetPick report checks visibility with Gemini and ChatGPT and shows whether they name you or cite a peer instead. If a check is unavailable, GetPick says so and never fabricates data.";
   }
 
   if (tier === "monitor_9eur") {
-    return `Your Monitor €9 report watches visibility with Gemini: does Gemini recommend your brand/domain, or cite competitors instead? Monitor adds 3 priority actions to do this week and ${RECHECK_CADENCE.en.recheckNoun}s.`;
+    return `Your GetPick report watches visibility with Gemini: does Gemini name you, or cite a peer instead? It adds the priority actions GetPick takes off-site for you, and a ${RECHECK_CADENCE.en.recheckNoun}.`;
   }
 
   return formulaText();
@@ -4156,8 +4156,8 @@ export function buildAuditResultEmail(email: string, brandName: string, report: 
       : undefined,
     button: { label: fr ? "Voir le rapport" : "View the report", url: reportUrl },
     footnote: fr
-      ? "Tu peux tout appliquer toi-même. GetPick Agent (19 €/mois) le fait à ta place, sans engagement."
-      : "You can do all of it yourself. GetPick Agent (€19/month) does it for you, no commitment.",
+      ? `Tu peux tout appliquer toi-même. GetPick (${SERVICE_PLAN_PRICE_EUR} €/mois) le fait à ta place, hors de ton site, sans engagement.`
+      : `You can do all of it yourself. GetPick (€${SERVICE_PLAN_PRICE_EUR}/month) does it for you, off-site, no commitment.`,
     unsubscribe: { label: fr ? "Se désinscrire" : "Unsubscribe", url: unsubscribeUrl },
     locale,
   };
@@ -4524,10 +4524,10 @@ export function buildPostAuditEmail(step: PostAuditEmailStep, email: string, bra
           ? "Reprendre cette réponse demande d'écrire les pages, les FAQ et les mentions qui manquent — c'est du travail, et il se refait à chaque fois que les moteurs bougent."
           : "Winning that answer back means writing the pages, FAQs and mentions you are missing — that is real work, and it starts over every time the engines move.",
         fr
-          ? "GetPick Agent (19 €/mois) les écrit à partir de ton audit, prêts à copier-coller. Sans engagement, résiliable en un clic."
-          : "GetPick Agent (€19/month) writes them from your own audit, ready to paste. No commitment, cancel in one click.",
+          ? `GetPick (${SERVICE_PLAN_PRICE_EUR} €/mois) les écrit depuis ton audit et les publie à ta place, hors de ton site. Sans engagement, résiliable en un clic.`
+          : `GetPick (€${SERVICE_PLAN_PRICE_EUR}/month) writes them from your own audit and publishes them for you, off-site. No commitment, cancel in one click.`,
       ],
-      button: { label: fr ? "Démarrer Agent — 19 €/mois" : "Start Agent — €19/month", url: agentCheckoutUrl },
+      button: { label: fr ? `Démarrer — ${SERVICE_PLAN_PRICE_EUR} €/mois` : `Start — €${SERVICE_PLAN_PRICE_EUR}/month`, url: agentCheckoutUrl },
       footnote: fr
         ? "Tout part des données réelles de ton audit. Rien n'est inventé."
         : "Everything comes from the real data in your audit. Nothing is invented.",

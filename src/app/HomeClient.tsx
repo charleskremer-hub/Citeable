@@ -31,7 +31,14 @@ type HomeClientProps = {
  * navigation reste native, l'evenement part en sendBeacon et ne se met jamais
  * entre l'acheteur et Stripe. La classe de trafic est constatee cote serveur.
  */
-function trackCheckoutOpened(plan: "service_69eur", href: string, locale: Locale) {
+/**
+ * ÉTIQUETTE DE PLAN SANS PRIX (22/09/2026). La première version écrivait
+ * `service_69eur` ; le prix est passé à 49 € une heure plus tard. Une étiquette
+ * d'événement qui se renomme à chaque changement de prix coupe la série du
+ * funnel en deux et rend toute comparaison fausse. `monitor_9eur` et
+ * `agent_19eur` gardent leur nom : ils portent de l'historique.
+ */
+function trackCheckoutOpened(plan: "service", href: string, locale: Locale) {
   const body = JSON.stringify({
     events: [{ event_name: "checkout_opened", source: "pricing_card", metadata: { checkout_url: href, plan, locale } }],
   });
@@ -328,6 +335,81 @@ export default function HomeClient({ locale }: HomeClientProps) {
           </div>
         </section>
 
+        {/* 5bis. L'ÉCRAN DE MONITORING — ce que l'abonnement livre, pour que le
+            prospect se projette (demande de Charles, 22/09). Ce n'est PAS un
+            graphique : le travail de ces données est « où j'en suis, et qui est
+            devant », donc des tuiles de stat et une liste, pas une courbe.
+            Le statut n'est jamais porté par la couleur seule — chaque ligne
+            gagnante porte le mot « Toi » / « You » et chaque écart porte son
+            chiffre en toutes lettres. */}
+        <section className="mx-auto max-w-5xl border-t border-white/[0.06] px-5 py-14 sm:px-6 sm:py-20">
+          <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.monitorEyebrow}</p>
+          <h2 className="max-w-2xl text-[clamp(2rem,5vw,3rem)] leading-[1.02] tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
+            {copy.monitorTitle}
+          </h2>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-[#B8B8C4]">{copy.monitorSubtitle}</p>
+
+          <div className="mt-8 overflow-hidden rounded-[1.6rem] border border-white/[0.08] bg-[#111116] shadow-2xl shadow-black/30">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.07] bg-black/25 px-5 py-4">
+              <div className="flex items-center gap-2.5">
+                <span className="h-2 w-2 rounded-full bg-[#CAFF3C] shadow-[0_0_10px_#CAFF3C]" />
+                <p className="m-0 text-sm font-black tracking-[-0.01em] text-[#F0F0EC]">{copy.monitorDocTitle}</p>
+              </div>
+              <span className="rounded-full border border-white/[0.12] px-2.5 py-1 text-[0.68rem] font-black uppercase tracking-[0.08em] text-[#8E8E9A]">
+                {copy.monitorDocChip}
+              </span>
+            </div>
+
+            <div className="grid gap-px bg-white/[0.07] sm:grid-cols-3">
+              {copy.monitorTiles.map((tile) => (
+                <div key={tile.label} className="bg-[#111116] px-5 py-5">
+                  <p className="m-0 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[#8E8E9A]">{tile.label}</p>
+                  <p className="mt-1.5 mb-0 text-3xl font-black tracking-[-0.04em] text-[#F0F0EC]" style={{ fontFamily: "var(--font-display)" }}>
+                    {tile.value}
+                  </p>
+                  {tile.delta ? <p className="mt-1 mb-0 text-xs font-bold text-[#A7A7B4]">{tile.delta}</p> : null}
+                </div>
+              ))}
+            </div>
+
+            <div className="border-t border-white/[0.07] px-5 py-4">
+              <div className="mb-2 flex items-baseline justify-between gap-4 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[#6F6F80]">
+                <span>{copy.monitorColQuestion}</span>
+                <span>{copy.monitorColCited}</span>
+              </div>
+              <ul className="m-0 flex list-none flex-col p-0">
+                {copy.monitorRows.map((row) => (
+                  <li key={row.question} className="flex items-center justify-between gap-4 border-t border-white/[0.06] py-3 first:border-t-0">
+                    <span className="min-w-0 text-sm leading-6 text-[#B8B8C4]">{row.question}</span>
+                    <span className="flex shrink-0 items-center gap-2">
+                      {row.move ? (
+                        <span className="rounded-md bg-white/[0.06] px-2 py-0.5 text-[0.66rem] font-black uppercase tracking-[0.06em] text-[#8E8E9A]">
+                          {row.move}
+                        </span>
+                      ) : null}
+                      <span
+                        className={
+                          row.mine
+                            ? "rounded-md bg-[#CAFF3C] px-2.5 py-1 text-[0.78rem] font-black text-[#09090B]"
+                            : "rounded-md border border-white/[0.1] px-2.5 py-1 text-[0.78rem] font-bold text-[#A7A7B4]"
+                        }
+                      >
+                        {row.cited}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <p className="m-0 border-t border-white/[0.07] bg-black/20 px-5 py-3.5 text-sm font-bold text-[#B8B8C4]">
+              {copy.monitorFooter}
+            </p>
+          </div>
+
+          <p className="mt-4 text-sm font-bold leading-6 text-[#6F6F80]">{copy.monitorCaption}</p>
+        </section>
+
         {/* 6. PRIX ANCRÉ — agence 2 000–20 000 €/mois vs le plan unique fait-pour-toi */}
         <section className="mx-auto max-w-5xl border-t border-white/[0.06] px-5 py-14 sm:px-6 sm:py-20">
           <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.pricingEyebrow}</p>
@@ -371,7 +453,7 @@ export default function HomeClient({ locale }: HomeClientProps) {
                     href={href}
                     onClick={() => {
                       window.posthog?.capture(tier.plan === "free" ? "audit_cta_clicked" : "purchase_started", { plan: tier.plan, source: "pricing_card", locale });
-                      if (tier.href === "service" && serviceCheckout) trackCheckoutOpened("service_69eur", href, locale);
+                      if (tier.href === "service" && serviceCheckout) trackCheckoutOpened("service", href, locale);
                     }}
                     className={`block rounded-xl px-5 py-3 text-center text-sm font-black no-underline transition hover:brightness-110 ${tier.highlight ? "bg-[#CAFF3C] text-[#09090B]" : "bg-white/[0.08] text-[#F0F0EC]"}`}
                   >

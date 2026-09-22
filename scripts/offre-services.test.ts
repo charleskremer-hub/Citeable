@@ -3,7 +3,7 @@
 //
 // POURQUOI CE FICHIER EXISTE. Le 22/09 la landing est passée de trois paliers
 // outil pour marques DTC (gratuit / Monitor 9 € / Agent 19 €) à UNE offre
-// fait-pour-toi pour professionnels de service, à 69 €/mois, où le client ne
+// fait-pour-toi pour professionnels de service, à prix unique, où le client ne
 // touche ni à son site ni à son code. Ce changement traverse SIX surfaces
 // publiques qui se citent les unes les autres : la copy FR et EN
 // (`src/lib/i18n.ts`), le JSON-LD `SoftwareApplication` rendu sur toutes les
@@ -18,7 +18,7 @@
 // pire : un montant périmé qui survit sur une seule surface est une promesse
 // commerciale fausse, et c'est précisément la surface machine qu'une IA cite.
 //
-// L'invariant testé n'est donc PAS « le prix vaut 69 ». C'est :
+// L'invariant testé n'est donc PAS « le prix vaut N ». C'est :
 //   1. toutes les surfaces publiques publient LE MÊME montant, celui de
 //      `SERVICE_PLAN_PRICE_EUR` — changer le prix reste un seul geste ;
 //   2. aucun ancien palier ne survit quelque part ;
@@ -33,8 +33,8 @@ import { test } from "node:test";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { homeCopy, type Locale } from "@/lib/i18n";
-import { BEACHHEAD_TRADE, SERVICE_PLAN_PRICE_EUR } from "@/lib/plan-promises";
+import { auditCopy, homeCopy, type Locale } from "@/lib/i18n";
+import { BEACHHEAD_TRADE, BUYER_QUESTION_COUNT_BY_TIER, SERVICE_PLAN_PRICE_EUR } from "@/lib/plan-promises";
 import { VS_GETPICK, vsCopy } from "@/lib/vs-comparison";
 
 const LOCALES = ["en", "fr"] as const satisfies readonly Locale[];
@@ -44,6 +44,7 @@ const readRepoFile = (...segments: string[]) => readFileSync(resolve(repoRoot, .
 const llmsTxt = readRepoFile("public", "llms.txt");
 const llmsTxtFlat = llmsTxt.replace(/\s+/g, " ");
 const layoutSource = readRepoFile("src", "app", "layout.tsx");
+const homeClientSource = readRepoFile("src", "app", "HomeClient.tsx");
 
 /** Toutes les chaînes d'un dictionnaire de copy, à plat. */
 function shippedStrings(value: unknown, out: string[] = []): string[] {
@@ -107,7 +108,7 @@ test("prix — la page /vs publie le même montant que la home", () => {
 
 // --- 3. aucun ancien palier ne survit sur une surface publique --------------
 
-// Bornes obligatoires : « 69 € » CONTIENT « 9 € », et « €69 » contient « €6 ».
+// Bornes obligatoires : « 69 € » CONTENAIT « 9 € », et « €69 » contient « €6 ».
 // Un ban naïf sur la sous-chaîne interdirait le prix courant lui-même — une
 // suite rouge pour la bonne intention et la mauvaise raison.
 const OBSOLETE_PRICES = [/(?<!\d)(9|19)\s?€/, /€\s?(9|19)(?!\d)/, /(?<!\d)(9|19) EUR\b/] as const;
@@ -118,6 +119,13 @@ test("aucun ancien palier (9 €, 19 €) ne survit sur une surface publique", (
     ["public/llms.txt", llmsTxtFlat],
     ["src/app/layout.tsx", layoutSource],
     ...LOCALES.map((locale) => [`vsCopy.${locale}`, shippedStrings(vsCopy[locale]).join("\n")] as const),
+    // AJOUTÉ LE 22/09 (2e passe) : la page de rapport est une surface publique
+    // de plus, et c'est celle qu'un prospect voit APRÈS avoir donné son email.
+    // Elle vendait encore « Monitor · 9 €/mois » pendant que la home vendait le
+    // plan unique — deux prix pour le même produit, sur le même domaine, à
+    // deux clics d'intervalle. C'est la faute du 28/07 (llms.txt 6 / JSON-LD 3)
+    // déplacée sur le prix, et c'est Charles qui l'a vue avant ce test.
+    ...LOCALES.map((locale) => [`auditCopy.${locale}`, shippedStrings(auditCopy[locale]).join("\n")] as const),
   ];
   for (const [label, text] of surfaces) {
     for (const forbidden of OBSOLETE_PRICES) {
@@ -199,4 +207,50 @@ test("beachhead — le métier n'est jamais écrit en dur dans la copy de la hom
     );
   }
   assert.ok(homeCopySource.includes("BEACHHEAD_TRADE"), "homeCopy doit consommer BEACHHEAD_TRADE");
+});
+
+// --- 7. la maquette de monitoring : ce que l'abonnement livre -----------------
+
+// Demandée par Charles le 22/09 pour que le prospect « se projette ». Une
+// maquette qui montre un livrable est une PROMESSE : elle doit annoncer les
+// chiffres que le produit sert, se déclarer illustrative, et être réellement
+// rendue. Une maquette qui n'est rendue nulle part est de la copy morte qui
+// dérive en silence.
+
+for (const locale of LOCALES) {
+  test(`${locale} — la maquette de monitoring annonce le compte de questions du moteur`, () => {
+    const { monitorTiles, monitorRows, monitorCaption } = homeCopy[locale];
+    assert.equal(monitorTiles.length, 3, `${locale}: trois tuiles de stat`);
+    const served = String(BUYER_QUESTION_COUNT_BY_TIER.monitor_9eur);
+    for (const tile of monitorTiles) {
+      for (const [, count] of tile.value.matchAll(/(\d+)/g)) {
+        assert.ok(
+          Number(count) <= Number(served),
+          `${locale} / ${tile.label}: « ${count} » dépasse les ${served} questions que le moteur sert`
+        );
+      }
+    }
+    assert.ok(
+      monitorTiles.some((tile) => tile.value === served),
+      `${locale}: une tuile doit porter le compte servi (${served})`
+    );
+    // Une maquette où le prospect ne gagne jamais ne le fait pas se projeter,
+    // elle le décourage — et elle ne montrerait pas le basculement qu'on vend.
+    assert.ok(monitorRows.some((row) => row.mine), `${locale}: au moins une ligne où l'IA nomme le client`);
+    assert.ok(monitorRows.some((row) => !row.mine), `${locale}: au moins une ligne où un confrère est cité`);
+    assert.match(
+      monitorCaption,
+      locale === "fr" ? /illustratif/i : /illustrative/i,
+      `${locale}: la maquette doit se déclarer illustrative`
+    );
+  });
+}
+
+test("la maquette de monitoring est réellement rendue par la home", () => {
+  for (const key of ["monitorTiles", "monitorRows", "monitorCaption", "monitorFooter"]) {
+    assert.ok(homeClientSource.includes(`copy.${key}`), `HomeClient.tsx doit rendre copy.${key}`);
+  }
+  // Le statut ne peut pas être porté par la couleur seule : la ligne gagnante
+  // affiche le NOM cité (« Toi » / « You »), pas seulement une pastille verte.
+  assert.match(homeClientSource, /\{row\.cited\}/, "chaque ligne doit afficher le nom cité, pas une couleur seule");
 });
