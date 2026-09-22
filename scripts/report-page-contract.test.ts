@@ -4,8 +4,12 @@
  *
  *   1. `page.tsx` tient SOUS 600 LIGNES — le rapport ne peut plus regrossir en
  *      silence vers les 1 133 lignes mesurées par le CEO.
- *   2. UN SEUL lien de paiement dans le DOM du rapport OUVERT : Monitor 9 €.
- *      Agent 19 € a quitté la page (il vit sur la landing et les relances).
+ *   2. UN SEUL lien de paiement dans le DOM du rapport OUVERT. Depuis le pivot
+ *      d'offre du 22/09/2026 ce lien est l'offre unique « Fait pour toi », plus
+ *      Monitor 9 € : la home ne vend plus ce palier, le rapport ne peut donc pas
+ *      continuer à le vendre. L'invariant testé est INCHANGÉ (un seul geste de
+ *      paiement, aucun lien de paiement hors de page.tsx) ; seule la DESTINATION
+ *      attendue change, et elle change dans le sens de la landing.
  *   3. AUCUN contenu de fichier machine (JSON-LD, llms.txt, robots.txt) servi
  *      à un tier gratuit — le gratuit voit des NOMS et des COMPTES, jamais un
  *      extrait.
@@ -76,7 +80,7 @@ test("AC2 — Agent 19 € a entièrement quitté la page d'audit", () => {
   }
 });
 
-test("AC2 — exactement UN lien de paiement dans le DOM du rapport ouvert : Monitor", () => {
+test("AC2 — exactement UN lien de paiement dans le DOM du rapport ouvert : l'offre unique", () => {
   // Les liens de paiement du rapport passent tous par FunnelCheckoutLink (qui
   // rend UN <a>) ou par un href={*_CHECKOUT_URL} direct. On compte les deux.
   const funnelLinks = pageSource.match(/<FunnelCheckoutLink/g) ?? [];
@@ -88,12 +92,20 @@ test("AC2 — exactement UN lien de paiement dans le DOM du rapport ouvert : Mon
   assert.equal(
     paymentAnchors,
     1,
-    `${paymentAnchors} liens de paiement dans page.tsx — le rapport propose UN geste : Monitor 9 €`
+    `${paymentAnchors} liens de paiement dans page.tsx — le rapport propose UN geste : l'offre unique`
   );
 
-  // Et ce lien unique est bien Monitor : une occurrence d'import, une d'usage.
-  const monitorUses = pageSource.match(/MONITOR_CHECKOUT_URL/g) ?? [];
-  assert.equal(monitorUses.length, 2, "MONITOR_CHECKOUT_URL : un import + un seul usage");
+  // Et ce lien unique mène à l'offre PUBLIÉE. Deux assertions séparées, parce
+  // qu'elles tombent pour deux raisons différentes : republier un palier retiré
+  // n'est pas la même faute qu'oublier d'en publier un.
+  assert.ok(
+    !pageSource.includes("MONITOR_CHECKOUT_URL"),
+    "MONITOR_CHECKOUT_URL est de retour dans page.tsx : le rapport revend un palier que la landing ne vend plus"
+  );
+  assert.ok(
+    pageSource.includes("SERVICE_CHECKOUT_URL"),
+    "page.tsx doit mener à la caisse de l'offre unique"
+  );
 
   // Aucun composant du rapport ouvert ne porte de lien de paiement.
   for (const relPath of OPEN_REPORT_COMPONENTS) {

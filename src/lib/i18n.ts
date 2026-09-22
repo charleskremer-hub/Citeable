@@ -1,4 +1,4 @@
-import { BEACHHEAD_TRADE, PLAN_PROMISES, RECHECK_CADENCE, SERVICE_PLAN_PRICE_EUR } from "./plan-promises";
+import { BEACHHEAD_TRADE, PLAN_PROMISES, RECHECK_CADENCE, SERVICE_OFFER_COPY, SERVICE_PLAN_PRICE_EUR } from "./plan-promises";
 
 export type Locale = "en" | "fr";
 
@@ -417,10 +417,10 @@ export const auditCopy = {
     scoreCategoryLine: (score: number, category: string) => `Score ${score}/100 · detected category: ${category}`,
     verdictRivalReplacement: (engine: string, rival: string, prompt: string) => `On “${prompt}”, ${engine} recommends ${rival}. Not you.`,
     verdictRivalAlso: (engine: string, rival: string, prompt: string) => `On “${prompt}”, ${engine} cites you — and also cites ${rival}.`,
-    publishLockedEyebrow: `Done for you · €${SERVICE_PLAN_PRICE_EUR}/month`,
-    publishLockedTitle: "Your “to publish” block, written for you",
-    publishLockedBody: `No gesture on your side: GetPick writes what follows and publishes it off-site for you, then refreshes it ${RECHECK_CADENCE.en.adverb}. Here is what you unlock — named and counted, never invented:`,
-    publishLockedCta: `Unlock the full report — €${SERVICE_PLAN_PRICE_EUR}/month →`,
+    publishLockedEyebrow: SERVICE_OFFER_COPY.en.badge,
+    publishLockedTitle: SERVICE_OFFER_COPY.en.title,
+    publishLockedBody: SERVICE_OFFER_COPY.en.body,
+    publishLockedCta: SERVICE_OFFER_COPY.en.cta,
     publishEyebrow: "To publish",
     publishTitle: "To publish on your site",
     publishBody: `Everything GetPick wrote for you, in one place. Published off-site for you, re-checked and refreshed ${RECHECK_CADENCE.en.adverb}.`,
@@ -505,10 +505,10 @@ export const auditCopy = {
     scoreCategoryLine: (score: number, category: string) => `Score ${score}/100 · catégorie détectée : ${category}`,
     verdictRivalReplacement: (engine: string, rival: string, prompt: string) => `Sur « ${prompt} », ${engine} recommande ${rival}. Pas toi.`,
     verdictRivalAlso: (engine: string, rival: string, prompt: string) => `Sur « ${prompt} », ${engine} te cite — et cite aussi ${rival}.`,
-    publishLockedEyebrow: `Fait pour toi · ${SERVICE_PLAN_PRICE_EUR} €/mois`,
-    publishLockedTitle: "Ton bloc « À publier », rédigé pour toi",
-    publishLockedBody: `Aucun geste de ton côté : GetPick rédige ce qui suit et le publie hors de ton site, à ta place, puis le rafraîchit ${RECHECK_CADENCE.fr.adverb}. Voici ce que tu débloques — nommé et compté, jamais inventé :`,
-    publishLockedCta: `Débloquer le rapport complet — ${SERVICE_PLAN_PRICE_EUR} €/mois →`,
+    publishLockedEyebrow: SERVICE_OFFER_COPY.fr.badge,
+    publishLockedTitle: SERVICE_OFFER_COPY.fr.title,
+    publishLockedBody: SERVICE_OFFER_COPY.fr.body,
+    publishLockedCta: SERVICE_OFFER_COPY.fr.cta,
     publishEyebrow: "À publier",
     publishTitle: "À publier sur ton site",
     publishBody: `Tout ce que GetPick a rédigé pour toi, au même endroit. Publié hors de ton site, à ta place, re-vérifié et rafraîchi ${RECHECK_CADENCE.fr.adverb}.`,

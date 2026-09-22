@@ -245,3 +245,70 @@ export const PLAN_PROMISES: Record<PlanTier, PlanPromise> = {
   monitor_9eur: promiseFor("monitor_9eur"),
   agent_19eur: promiseFor("agent_19eur"),
 };
+
+/**
+ * COPY DE L'OFFRE PUBLIQUE, DÉRIVÉE — ajoutée le 22/09/2026 (lot « surfaces
+ * prospect »).
+ *
+ * POURQUOI. Le pivot du matin a réaligné la LANDING sur l'offre unique à
+ * `SERVICE_PLAN_PRICE_EUR`. Il n'a pas touché aux surfaces qu'un prospect voit
+ * APRÈS son diagnostic gratuit : le bloc verrouillé de la page de rapport et
+ * les deux emails post-audit vendaient encore « Monitor 9 € » et « Agent
+ * 19 € », et le bloc verrouillé demandait au client de COLLER quelque chose
+ * sur son site — c'est-à-dire l'exact contraire de la promesse « tu ne touches
+ * à rien » affichée sur la home. Deux prix et deux promesses opposées sur le
+ * même parcours, chacun vrai isolément : même famille que le 28/07
+ * (llms.txt 6 questions / JSON-LD 3) et que le 16/08 (cadence promise non
+ * servie).
+ *
+ * L'invariant n'est pas « le prix vaut 69 » : c'est que ces surfaces DÉRIVENT
+ * du même endroit que la landing. Changer le prix, le métier ou la cadence
+ * reste un seul geste. `scripts/surfaces-prospect.test.ts` échoue si une de ces
+ * surfaces republie un ancien palier ou redemande un geste technique.
+ *
+ * CE QUE CE MODULE NE TOUCHE PAS, et c'est délibéré : les libellés destinés aux
+ * CLIENTS EXISTANTS (description de tier dans `audit-engine.ts`, `PaidReportGate`,
+ * chat Agent). Un droit déjà vendu ne se réécrit pas par une copy de landing.
+ */
+export type ServiceOfferCopy = {
+  /** « 69 €/mois » — le prix seul, dans la forme de la langue. */
+  price: string;
+  /** « Fait pour toi · 69 €/mois » — badge court du plan. */
+  badge: string;
+  /** Titre du bloc vendu à un prospect qui vient de lire son diagnostic. */
+  title: string;
+  /** Ce que l'offre fait — aucun geste demandé au client. */
+  body: string;
+  /** Libellé du bouton. */
+  cta: string;
+  /** Une phrase pour un email : ce qu'on fait, à quel prix. */
+  emailSentence: string;
+  /** Libellé du bouton d'email. */
+  emailCta: string;
+};
+
+const SERVICE_PRICE_LABEL: Record<PromiseLocale, string> = {
+  fr: `${SERVICE_PLAN_PRICE_EUR} €/mois`,
+  en: `€${SERVICE_PLAN_PRICE_EUR}/month`,
+};
+
+export const SERVICE_OFFER_COPY: Record<PromiseLocale, ServiceOfferCopy> = {
+  fr: {
+    price: SERVICE_PRICE_LABEL.fr,
+    badge: `Fait pour toi · ${SERVICE_PRICE_LABEL.fr}`,
+    title: "Ce travail, GetPick le fait à ta place",
+    body: `GetPick crée et héberge ta page-réponse, celle que l'IA lit et cite, et te place sur les sources qu'elle croit — annuaires, avis, comparatifs de ta profession. Hors de ton site : tu ne changes rien de ton côté. ${RECHECK_CADENCE.fr.every}, il repose ces mêmes questions et te montre le basculement. Voici ce qui t'attend — nommé et compté, jamais inventé :`,
+    cta: `Démarrer — ${SERVICE_PRICE_LABEL.fr} →`,
+    emailSentence: `Tu peux t'en occuper toi-même. GetPick le fait à ta place, hors de ton site, pour ${SERVICE_PRICE_LABEL.fr}, sans engagement.`,
+    emailCta: `Démarrer — ${SERVICE_PRICE_LABEL.fr}`,
+  },
+  en: {
+    price: SERVICE_PRICE_LABEL.en,
+    badge: `Done for you · ${SERVICE_PRICE_LABEL.en}`,
+    title: "GetPick does this work for you",
+    body: `GetPick creates and hosts your answer page — the one AI reads and cites — and places you on the sources it trusts: directories, reviews, category comparisons. Off-site: you change nothing on your end. ${RECHECK_CADENCE.en.every}, it asks those same questions again and shows you the shift. Here is what is waiting — named and counted, never invented:`,
+    cta: `Start — ${SERVICE_PRICE_LABEL.en} →`,
+    emailSentence: `You can handle it yourself. GetPick does it for you, off-site, for ${SERVICE_PRICE_LABEL.en}, no commitment.`,
+    emailCta: `Start — ${SERVICE_PRICE_LABEL.en}`,
+  },
+};

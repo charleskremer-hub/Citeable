@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { MONITOR_CHECKOUT_URL } from "@/lib/checkout-links";
+import { SERVICE_CHECKOUT_URL, isCheckoutConfigured } from "@/lib/checkout-links";
 import { ensureAuditSchema, pool } from "@/lib/db";
 import { recordReportLinkOpened } from "@/lib/funnel";
 import { auditCopy, brandSentimentView, localeFromHeaders, localeFromUnknown, localizeCategoryLabel, localizePlainAction, type Locale } from "@/lib/i18n";
@@ -544,9 +544,9 @@ export default async function AuditPage({
                   </ul>
                   <div className="mt-5">
                     <FunnelCheckoutLink
-                      auditId={audit.id}
-                      href={MONITOR_CHECKOUT_URL}
-                      source="report_monitor_actions"
+                      auditId={audit.id} checkoutConfigured={isCheckoutConfigured(SERVICE_CHECKOUT_URL)}
+                      href={isCheckoutConfigured(SERVICE_CHECKOUT_URL) ? SERVICE_CHECKOUT_URL : `${locale === "fr" ? "/fr" : "/en"}#pricing`}
+                      source="report_service_offer"
                       className="inline-flex rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline shadow-2xl shadow-[#CAFF3C]/20 transition hover:brightness-110"
                     >
                       {copy.publishLockedCta}
