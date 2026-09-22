@@ -1,6 +1,6 @@
 import type { AuditTier } from "@/lib/audit-engine";
 import { resolveAuditTier } from "@/lib/audit-engine";
-import { entitlementForEmail } from "@/lib/subscriptions";
+import { servedTierForEmail } from "@/lib/subscriptions";
 
 /**
  * Le tier servi, une fois l'intention confrontee au droit REEL du client.
@@ -39,19 +39,22 @@ export async function resolveAuditTierWithEntitlement(
     return { ...base, source: "free" };
   }
 
-  let plan: Awaited<ReturnType<typeof entitlementForEmail>> = null;
+  // On sert le TIER correspondant au plan acheté, jamais l'identifiant du plan :
+  // depuis le 22/09 les deux listes ne coïncident plus (`service` -> tier
+  // `monitor_9eur`). Voir `TIER_BY_ENTITLEMENT_PLAN`.
+  let tier: Awaited<ReturnType<typeof servedTierForEmail>> = null;
   try {
-    plan = await entitlementForEmail(email);
+    tier = await servedTierForEmail(email);
   } catch {
     return { ...base, source: "free" };
   }
 
-  if (!plan) return { ...base, source: "free" };
+  if (!tier) return { ...base, source: "free" };
 
   return {
-    tier: plan,
+    tier,
     requested: base.requested,
-    downgradedFrom: plan === base.requested ? null : base.requested,
+    downgradedFrom: tier === base.requested ? null : base.requested,
     source: "subscription",
   };
 }

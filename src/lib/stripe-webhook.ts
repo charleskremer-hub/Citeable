@@ -66,8 +66,20 @@ export function verifyStripeSignature(
   return matched ? { ok: true, timestamp } : { ok: false, reason: "mismatch" };
 }
 
-/** Les seuls plans qu'un abonnement peut porter. Tout autre libelle est ignore. */
-export type EntitlementPlan = "monitor_9eur" | "agent_19eur";
+/**
+ * Les seuls plans qu'un abonnement peut porter. Tout autre libelle est ignore.
+ *
+ * `service` AJOUTE LE 22/09/2026, ET C'EST UN PREALABLE AU PAIEMENT, PAS UNE
+ * FINITION. La landing vend depuis ce jour UN plan unique a 49 EUR/mois. Avant
+ * cet ajout, `planFromStripeObject` rendait `null` pour tout abonnement qui ne
+ * portait pas `monitor_9eur` ou `agent_19eur` : un client aurait paye 49 EUR par
+ * mois et n'aurait recu AUCUN droit — l'abonnement encaisse, le produit ferme.
+ * Le lien de paiement ne doit pas exister avant que ce code soit en production.
+ *
+ * Les deux anciens restent : ils portent de l'historique, et un droit deja vendu
+ * ne se retire pas parce que la page a change.
+ */
+export type EntitlementPlan = "monitor_9eur" | "agent_19eur" | "service";
 
 const PLAN_BY_PRICE: Record<string, EntitlementPlan> = {
   price_1TzBZoCZqJGb866fjK9GMVkv: "monitor_9eur",
@@ -87,12 +99,12 @@ const PLAN_BY_PRICE: Record<string, EntitlementPlan> = {
 export function planFromStripeObject(obj: Record<string, unknown>): EntitlementPlan | null {
   const meta = (obj.metadata ?? {}) as Record<string, unknown>;
   const declared = typeof meta.getpick_plan === "string" ? meta.getpick_plan : null;
-  if (declared === "monitor_9eur" || declared === "agent_19eur") return declared;
+  if (declared === "monitor_9eur" || declared === "agent_19eur" || declared === "service") return declared;
 
   const items = (obj.items as { data?: Array<{ price?: { id?: string; metadata?: Record<string, unknown> } }> })?.data ?? [];
   for (const item of items) {
     const priceMeta = item.price?.metadata?.getpick_plan;
-    if (priceMeta === "monitor_9eur" || priceMeta === "agent_19eur") return priceMeta;
+    if (priceMeta === "monitor_9eur" || priceMeta === "agent_19eur" || priceMeta === "service") return priceMeta;
     const byId = item.price?.id ? PLAN_BY_PRICE[item.price.id] : undefined;
     if (byId) return byId;
   }

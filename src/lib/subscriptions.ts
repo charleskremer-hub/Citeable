@@ -1,4 +1,5 @@
 import { pool } from "@/lib/db";
+import type { PlanTier } from "@/lib/plan-promises";
 import type { EntitlementPlan } from "@/lib/stripe-webhook";
 import { isEntitling } from "@/lib/stripe-webhook";
 
@@ -127,8 +128,41 @@ export async function entitlementForEmail(email: string): Promise<EntitlementPla
   let best: EntitlementPlan | null = null;
   for (const row of res.rows) {
     if (!isEntitling(row.status)) continue;
-    if (row.plan === "agent_19eur") return "agent_19eur";
-    if (row.plan === "monitor_9eur") best = "monitor_9eur";
+    // `service` est le plan VENDU depuis le 22/09 : il prime, sinon un ancien
+    // abonne qui souscrit la nouvelle offre recevrait l'ancienne.
+    if (row.plan === "service") return "service";
+    if (row.plan === "agent_19eur") best = "agent_19eur";
+    if (row.plan === "monitor_9eur" && best === null) best = "monitor_9eur";
   }
   return best;
+}
+
+/**
+ * CE QUE LE PLAN VENDU FAIT SERVIR PAR LE MOTEUR — la traduction manquait.
+ *
+ * Le plan (ce que le client a acheté) et le tier (ce que le moteur exécute)
+ * étaient le même identifiant : `entitlementForEmail` rendait un `EntitlementPlan`
+ * qui était consommé tel quel comme `AuditTier`. Ça tenait tant que les deux
+ * listes coïncidaient ; le plan `service` les sépare, et c'est tant mieux —
+ * changer le prix public ne doit pas changer le moteur interrogé.
+ *
+ * `service` sert le tier `monitor_9eur` : 12 questions, cadence mensuelle et
+ * Gemini, c'est-à-dire EXACTEMENT ce que `public/llms.txt` et la grille
+ * publient. Pas `agent_19eur`, qui bascule le client sur ChatGPT et lui
+ * promettrait un moteur que la page ne vend pas.
+ */
+// Le type dit l'invariant : un plan VENDU sert un tier dont la promesse est
+// PUBLIÉE (`PlanTier`, la liste de `plan-promises.ts`). Un tier non publié —
+// `agent_49eur` — ne peut pas être servi à un client par accident, et `tsc` le
+// refuse à la compilation plutôt qu'au premier paiement.
+export const TIER_BY_ENTITLEMENT_PLAN: Record<EntitlementPlan, PlanTier> = {
+  service: "monitor_9eur",
+  agent_19eur: "agent_19eur",
+  monitor_9eur: "monitor_9eur",
+};
+
+/** Le tier servi à cette adresse, ou `null` si elle n'a aucun droit actif. */
+export async function servedTierForEmail(email: string): Promise<PlanTier | null> {
+  const plan = await entitlementForEmail(email);
+  return plan === null ? null : TIER_BY_ENTITLEMENT_PLAN[plan];
 }
