@@ -45,7 +45,7 @@ const DEFAULT_OPENAI_MODEL = ["gpt", "4o", "mini"].join("-");
 const COMPETITOR_EXTRACTION_VERSION = "gemini_recommended_brands_sentiment_v5_icp_segments";
 
 export type AuditTier = "free" | "monitor_9eur" | "agent_19eur" | "agent_49eur";
-export type IcpSegmentKey = "small_brand_ecommerce" | "local_independent" | "creator_influencer";
+export type IcpSegmentKey = "small_brand_ecommerce" | "service_professional" | "local_independent" | "creator_influencer";
 
 export type IcpSegmentMetadata = {
   key: IcpSegmentKey;
@@ -60,6 +60,19 @@ const ICP_SEGMENTS: Record<IcpSegmentKey, IcpSegmentMetadata> = {
     label: "Small brand / ecommerce",
     buyerIntent: "best brand of [product]",
     remediationFocus: ["FAQ", "product pages", "reviews", "third-party listicles"],
+  },
+  // PIVOT DU 22/09/2026. La landing vend un service fait hors du site du client
+  // a un metier de service (beachhead : expert-comptable). Le 23/09, le CEO a
+  // lance trois audits gratuits reels sur trois cabinets : les trois sont
+  // ressortis `small_brand_ecommerce`, avec un `buyerIntent` « best brand of
+  // [product] » et des correctifs parlant de product pages et de marketplaces.
+  // Ce segment-ci porte la demande telle qu'un client de service la formule, et
+  // un `remediationFocus` ENTIEREMENT hors-site : c'est la promesse publiee.
+  service_professional: {
+    key: "service_professional",
+    label: "Professional service",
+    buyerIntent: "quel [métier] pour [situation du client]",
+    remediationFocus: ["page-réponse hébergée", "annuaires et avis du métier", "comparatifs", "fils communautaires"],
   },
   local_independent: {
     key: "local_independent",
@@ -739,7 +752,7 @@ function reportFromRow(row: AuditRow): AuditReport {
   const buyerIntentPrompts = row.raw_results?.buyerIntentPrompts ?? [];
   const auditTier = row.raw_results?.auditTier ?? "free";
   const category = row.raw_results?.category ?? "unknown";
-  const icpSegment = row.raw_results?.icpSegment ?? detectIcpSegment();
+  const icpSegment = row.raw_results?.icpSegment ?? detectIcpSegment(category);
 
   return {
     audit_id: row.id,
@@ -2387,7 +2400,9 @@ function cleanCategoryText(value: string) {
   return value.replace(NAVIGATION_FOOTER_PATTERN, " ").replace(/\b(?:a|an|and|or|the|de|des|du|la|le|les)\b\s*$/gi, "").replace(/\s+/g, " ").trim();
 }
 
-function categoryFromHomepageText(text: string, domain: string) {
+/** Exporte pour que la table de cas reels du 23/09 puisse etre rejouee sans
+ *  reseau : les trois `<title>` mesures en production sont des fixtures. */
+export function categoryFromHomepageText(text: string, domain: string) {
   const lower = text.toLowerCase();
   const phraseRules: Array<[RegExp, string]> = [
     [/\bbombas\b|\bsocks?\b|chaussettes?|hosiery|merino socks?|compression socks?|dress socks?|ankle socks?|crew socks?/, "socks and apparel"],
@@ -2405,7 +2420,13 @@ function categoryFromHomepageText(text: string, domain: string) {
     [/[ée]lectricien|electrician|electrical contractor/, "electrician"],
     [/dentiste|dental|orthodont/, "dentist"],
     [/avocat|law firm|lawyer|legal services/, "law firm"],
-    [/expert-?comptable|accountant|bookkeeping/, "accounting firm"],
+    // 23/09/2026 — `inoxem.fr` sert `<title>Expert comptable Lyon — Cabinet
+    // d'expertise comptable pour TPE-PME</title>` et ressortait « web agency ».
+    // Cause exacte : `expert-?comptable` rend le trait d'union FACULTATIF mais
+    // n'admet pas l'ESPACE, et « expertise comptable » n'etait pas couvert du
+    // tout ; la page mentionnant « site internet » par ailleurs, la regle
+    // « agence web », plus bas dans la liste, ramassait la mise.
+    [/expert[-\s]?comptables?|expertise comptable|cabinet comptable|accountants?|accounting firm|bookkeeping|comptabilit[ée] (?:pour|des|d')/, "accounting firm"],
     [/agence immobili[èe]re|real estate agency|property agency/, "real estate agency"],
     [/agence web|site internet|web design|seo agency|marketing agency/, "web agency"],
     [/salon de coiffure|hair salon|barber/, "hair salon"],
@@ -2711,7 +2732,42 @@ function promptCategoryTerms(category: string) {
 // Les métadonnées des deux autres segments restent déclarées le temps que les rapports
 // déjà en base, qui les référencent, continuent de s'afficher. Plus aucun audit neuf
 // ne peut les atteindre.
-function detectIcpSegment(): IcpSegmentMetadata {
+/**
+ * Les categories inferees qui designent un METIER DE SERVICE.
+ *
+ * Miroir exact des libelles produits par `categoryFromHomepageText` : une
+ * categorie qui n'est pas dans cette liste ne peut pas devenir un segment de
+ * service, et une categorie de service ajoutee la-bas sans etre ajoutee ici
+ * retomberait silencieusement sur le segment marque. Le test
+ * `diagnostic-metier-service.test.ts` verifie que les deux listes se
+ * correspondent.
+ */
+export const SERVICE_CATEGORIES = new Set([
+  "accounting firm",
+  "law firm",
+  "dentist",
+  "plumber",
+  "electrician",
+  "real estate agency",
+  "web agency",
+  "hair salon",
+  "fitness coach",
+  "auto repair shop",
+  "architecture firm",
+]);
+
+export function isServiceCategory(category: string | undefined | null): boolean {
+  return typeof category === "string" && SERVICE_CATEGORIES.has(category.trim().toLowerCase());
+}
+
+// ADDENDUM DU 23/09/2026 a la decision du 21/07 ci-dessus. Sa premisse — « un
+// seul segment servi : la marque DTC / e-commerce » — a ete RETIREE par Charles
+// le 22/09 : l'ICP est desormais un metier de service. La fonction gelee etait
+// juste tant que l'ICP l'etait ; elle est devenue fausse le jour du pivot, et
+// personne ne l'a rouverte parce qu'elle ne prenait aucun argument. Elle en
+// prend un maintenant, et le defaut reste inchange pour tout le reste.
+export function detectIcpSegment(category?: string | null): IcpSegmentMetadata {
+  if (isServiceCategory(category)) return ICP_SEGMENTS.service_professional;
   return ICP_SEGMENTS.small_brand_ecommerce;
 }
 
@@ -4000,10 +4056,53 @@ function categoryFromWebsite(websiteHtmlCheck: AuditCheckResult) {
   return "website category";
 }
 
-function buildFixes(checks: AuditCheckResult[], segment: IcpSegmentMetadata = ICP_SEGMENTS.small_brand_ecommerce, category = UNKNOWN_CATEGORY) {
+/**
+ * Les correctifs rendus a un metier de service.
+ *
+ * DEUX EXIGENCES, posees par la commande CEO du 23/09 et par la copy publiee le
+ * 22/09 : ils sont ecrits dans la LANGUE du rapport, et ils decrivent CE QUE
+ * GETPICK FAIT, jamais un geste demande au client — la landing lui jure qu'il
+ * ne touche a rien. Un correctif a l'imperatif contredit l'offre vendue.
+ */
+const SERVICE_FIXES: Record<"fr" | "en", Record<"structured_data" | "search_visibility" | "technical_seo" | "ai_visibility" | "wikipedia" | "maintain", (categoryText: string) => string>> = {
+  fr: {
+    structured_data: () => "GetPick publie et tient à jour la fiche structurée du cabinet — identité, spécialités, zone servie — sur la page-réponse qu'il héberge, pour que les moteurs aient une source propre à citer.",
+    search_visibility: (c) => `GetPick aligne les annuaires et les fiches professionnelles du métier (${c}) sur une seule et même description : même nom, même spécialité, mêmes clients servis.`,
+    technical_seo: () => "GetPick héberge la page-réponse hors de ton site : elle est lisible par les moteurs même si ton site ne l'est pas, et tu n'as rien à modifier chez toi.",
+    ai_visibility: (c) => `GetPick écrit et publie, à ta place, la page-réponse et les comparatifs qui répondent aux questions que tes clients posent à l'IA sur ${c}, puis va chercher les mentions et les avis qui les appuient.`,
+    wikipedia: () => "GetPick construit la couverture tierce et la cohérence d'entité — mentions, citations, références croisées — avant toute ambition encyclopédique : c'est un travail long, et il est fait hors de ton site.",
+    maintain: (c) => `GetPick maintient la page-réponse, les annuaires et les comparatifs sur ${c}, et te montre chaque mois ce qui a basculé.`,
+  },
+  en: {
+    structured_data: () => "GetPick publishes and maintains the firm's structured profile (identity, specialities, area served) on the answer page it hosts, so engines have a clean source to cite.",
+    search_visibility: (c) => `GetPick aligns the directories and professional listings for ${c} on one single description: same name, same speciality, same clients served.`,
+    technical_seo: () => "GetPick hosts the answer page off your site: engines can read it even if your own site is hard to crawl, and you change nothing on your end.",
+    ai_visibility: (c) => `GetPick writes and publishes, on your behalf, the answer page and comparisons that address what your clients ask AI about ${c}, then earns the mentions and reviews that back them.`,
+    wikipedia: () => "GetPick builds third-party coverage and entity consistency (mentions, citations, cross-references) before any encyclopedia ambition — slow work, done off your site.",
+    maintain: (c) => `GetPick maintains the answer page, directories and comparisons for ${c}, and shows you every month what moved.`,
+  },
+};
+
+export function buildFixes(
+  checks: AuditCheckResult[],
+  segment: IcpSegmentMetadata = ICP_SEGMENTS.small_brand_ecommerce,
+  category = UNKNOWN_CATEGORY,
+  locale: "fr" | "en" = "en"
+) {
   const categoryText = categoryLabel(category);
   const byName = new Map(checks.map((check) => [check.check, check]));
   const fixes: string[] = [];
+  const service = segment.key === "service_professional" ? SERVICE_FIXES[locale === "fr" ? "fr" : "en"] : null;
+
+  if (service) {
+    if ((byName.get("structured_data")?.score ?? 0) < 25) fixes.push(service.structured_data(categoryText));
+    if ((byName.get("search_visibility")?.score ?? 0) < 25) fixes.push(service.search_visibility(categoryText));
+    if ((byName.get("technical_seo")?.score ?? 0) < 15) fixes.push(service.technical_seo(categoryText));
+    if ((byName.get("ai_visibility")?.score ?? 0) < 15) fixes.push(service.ai_visibility(categoryText));
+    if ((byName.get("wikipedia")?.score ?? 0) < 20) fixes.push(service.wikipedia(categoryText));
+    if (fixes.length === 0) fixes.push(service.maintain(categoryText));
+    return fixes.slice(0, 5);
+  }
 
   if ((byName.get("structured_data")?.score ?? 0) < 25) {
     fixes.push(segment.key === "creator_influencer"
@@ -5191,8 +5290,8 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
   );
   const structuredDataFound = (foundationChecks.find((check) => check.check === "structured_data")?.score ?? 0) > 0;
   const inferred = await inferCategory(args.brandName, args.websiteUrl, foundationChecks.find((check) => check.check === "structured_data") ?? foundationChecks[0]);
-  const icpSegment = detectIcpSegment();
   const auditLocale = args.locale ?? recipientLocaleFromSignals(args.email, args.websiteUrl, inferred.homepageText);
+  const icpSegment = detectIcpSegment(inferred.category);
   const { prompts: buyerIntentPrompts, promptDebug, promptSet, promptSetSource } = await analyzeBuyerIntentPrompts(args.brandName, args.websiteUrl, domain, inferred.category, inferred.homepageText, auditTier, auditLocale, args.storedPromptSet, args.forcePromptRegeneration);
   const checkedAnswerEnginePrompts = buyerIntentPrompts.filter((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine" && surface.status === "checked"));
   const failedAnswerEnginePrompts = buyerIntentPrompts.filter((prompt) => prompt.surfaces.some((surface) => surface.kind === "ai_engine" && surface.status !== "checked"));
@@ -5204,7 +5303,7 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
 
   const checks = [...foundationChecks, checkAIVisibilityFromBuyerPrompts(buyerIntentPrompts)];
   const engines = checks.map(checkToEngine);
-  const fixes = buildFixes(checks, icpSegment, inferred.category);
+  const fixes = buildFixes(checks, icpSegment, inferred.category, auditLocale);
   const score = computeScore(checks, buyerIntentPrompts);
   const competitors = sortedByFrequency(buyerIntentPrompts.flatMap((prompt) => prompt.competitors), 20);
   const firstAnswerEngineSurface = buyerIntentPrompts.flatMap((prompt) => prompt.surfaces).find((surface) => surface.kind === "ai_engine");
