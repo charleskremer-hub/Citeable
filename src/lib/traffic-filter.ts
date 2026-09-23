@@ -179,7 +179,7 @@ export function hashIp(ip: string | null | undefined, salt: string | undefined |
 export type TrafficVerdict = {
   accepted: boolean;
   /** Renseigné uniquement quand `accepted` est faux. */
-  rejectedBy: "bot" | "internal_cookie" | "internal_ip" | null;
+  rejectedBy: "bot" | "internal_cookie" | "internal_ip" | "non_production" | null;
   ipHash: string | null;
 };
 
@@ -189,11 +189,35 @@ export function classifyTraffic(input: {
   ip: string | null | undefined;
   internalIps: string[];
   ipSalt?: string | null;
+  /**
+   * `process.env.VERCEL_ENV` de l'instance qui sert la requête, ou `null`.
+   *
+   * POURQUOI (22/09/2026). Le north star a bougé pour la première fois en
+   * 26 jours pendant qu'une preview du pivot était testée. Deux hypothèses sont
+   * restées ouvertes, faute d'attribution : un vrai prospect, ou un test sur
+   * `*.vercel.app`. Une preview partage `DATABASE_URL` avec la production, et
+   * le cookie `gp_internal` est posé PAR DOMAINE : il est donc absent sur un
+   * domaine de preview. Un test sur une preview peut ainsi s'écrire `human`.
+   * Ce n'est pas un compteur qui monte à tort : c'est le seul compteur qui
+   * décide, rendu indistinguable.
+   */
+  vercelEnv?: string | null;
 }): TrafficVerdict {
   const ipHash = hashIp(input.ip, input.ipSalt ?? null);
 
   // Ordre délibéré : du plus sûr au plus heuristique, pour que la raison
   // remontée soit la plus explicative possible quand on débruite à la main.
+
+  // ASYMÉTRIE VOULUE : on ne classe `internal` que si l'environnement se DÉCLARE
+  // et se déclare autre chose que la production. Une variable absente laisse le
+  // comportement inchangé. Traiter l'absence comme « pas la production » ferait
+  // qu'une `VERCEL_ENV` perdue en production mettrait le north star à zéro pour
+  // toujours, sans erreur nulle part — un mode de panne pire que le bruit qu'on
+  // corrige.
+  const declaredEnv = typeof input.vercelEnv === "string" ? input.vercelEnv.trim() : "";
+  if (declaredEnv !== "" && declaredEnv !== "production") {
+    return { accepted: false, rejectedBy: "non_production", ipHash };
+  }
   if (hasInternalCookie(input.cookieHeader)) {
     return { accepted: false, rejectedBy: "internal_cookie", ipHash };
   }
@@ -267,8 +291,9 @@ export const CLASSIFIED_TRAFFIC_CLASSES_PREDICATE_SQL = `metadata->>'trafficClas
 export function trafficClassFromVerdict(verdict: TrafficVerdict): Exclude<TrafficClass, "unknown"> {
   if (verdict.accepted) return "human";
   if (verdict.rejectedBy === "bot") return "bot";
-  // `internal_cookie` et `internal_ip` répondent à la même question — « est-ce
-  // nous ? » — et se distinguent déjà par `rejectedBy` côté logs.
+  // `internal_cookie`, `internal_ip` et `non_production` répondent à la même
+  // question — « est-ce nous ? » — et se distinguent déjà par `rejectedBy`
+  // côté logs.
   return "internal";
 }
 
@@ -302,6 +327,7 @@ export function requestTrafficClass(headers: { get(name: string): string | null 
     ip: clientIpFromHeaders(headers),
     internalIps: parseInternalIps(process.env.INTERNAL_IPS),
     ipSalt: process.env.IP_HASH_SALT,
+    vercelEnv: process.env.VERCEL_ENV ?? null,
   });
 
   return { trafficClass: trafficClassFromVerdict(verdict), ipHash: verdict.ipHash };
