@@ -1,7 +1,12 @@
+import { BEACHHEAD_TRADE } from "./plan-promises";
+
 export type AnswerLocale = "en" | "fr";
+
+export type AnswerAudience = "beachhead" | "legacy";
 
 export type AnswerPage = {
   locale: AnswerLocale;
+  audience: AnswerAudience;
   slug: string;
   categoryKey: string;
   category: string;
@@ -52,6 +57,16 @@ const marketSources = {
 
 type CategorySeed = {
   key: string;
+  /** `beachhead` = le metier que la landing vend aujourd'hui ; `legacy` = une
+   *  page publiee avant le pivot du 22/09, qui reste en ligne pour son
+   *  referencement mais ne s'affiche plus sur la landing. */
+  audience: AnswerAudience;
+  /** Le mot qui designe l'entite recommandee. Une marque n'est pas un cabinet :
+   *  la copy generique parle du sujet de la page, pas de l'ancien ICP. Les
+   *  formulations qui l'entourent sont ecrites SANS article ni accord, parce
+   *  que le genre du mot change d'une categorie a l'autre. */
+  enSubjectPlural: string;
+  frSubjectPlural: string;
   enSlug: string;
   frSlug: string;
   enCategory: string;
@@ -63,8 +78,43 @@ type CategorySeed = {
 };
 
 const categories: CategorySeed[] = [
+  // BEACHHEAD (23/09). La landing vend un service aux ${BEACHHEAD_TRADE} depuis
+  // le 22/09, et sa section « Guides IA » proposait encore cinq pages de
+  // l'ancien ICP : sneakers DTC, cafe de specialite, cosmetique clean, mode
+  // ethique, coworking. Mesure du 23/09 06:2xZ : « DTC » apparaissait 2 fois sur
+  // `/fr` et 2 fois sur `/en`, dans ces cartes — la seule surface publique ou le
+  // vocabulaire de l'ancienne cible ait survecu au pivot. Cette page-ci est la
+  // categorie du metier vendu ; les cinq autres restent en ligne (leur
+  // referencement ne se jette pas) mais quittent la landing.
+  {
+    key: "beachhead-trade",
+    audience: "beachhead",
+    enSlug: `does-ai-recommend-${BEACHHEAD_TRADE.en}s`,
+    frSlug: `ia-recommande-${BEACHHEAD_TRADE.fr}s`,
+    enCategory: `${BEACHHEAD_TRADE.en}s`,
+    frCategory: `${BEACHHEAD_TRADE.fr}s`,
+    enSubjectPlural: "firms",
+    frSubjectPlural: "cabinets",
+    enAngle: "Buyers ask for a local, specialised recommendation, so AI leans on city and speciality pages, client-type wording, public reviews, directory listings and press or partner mentions rather than on a homepage that says «\u00a0we support you\u00a0».",
+    frAngle: "La demande est locale et specialisee : l'IA s'appuie sur les pages ville et specialite, le type de client servi, les avis publics, les annuaires et les mentions presse ou partenaires, plutot que sur une home qui dit «\u00a0on vous accompagne\u00a0».",
+    enSignals: [
+      "A page per city and per speciality, worded the way a client asks",
+      "The client profiles actually served: freelancers, e-commerce, startups, TPE-PME",
+      "Public reviews and directory listings that agree with the site on name, address and speciality",
+      "Press, partner, software or professional-body mentions that prove the firm exists outside its own site",
+    ],
+    frSignals: [
+      "Une page par ville et par specialite, ecrite comme un client la demande",
+      "Les profils de clients reellement servis : freelances, e-commerce, startups, TPE-PME",
+      "Des avis publics et des annuaires qui disent la meme chose que le site : nom, adresse, specialite",
+      "Des mentions presse, partenaires, editeurs ou ordre professionnel qui prouvent une existence hors du site",
+    ],
+  },
   {
     key: "dtc-sneakers",
+    audience: "legacy",
+    enSubjectPlural: "brands",
+    frSubjectPlural: "marques",
     enSlug: "does-ai-recommend-dtc-sneakers",
     frSlug: "ia-recommande-chaussures-sneakers-dtc",
     enCategory: "DTC sneaker brands",
@@ -76,6 +126,9 @@ const categories: CategorySeed[] = [
   },
   {
     key: "specialty-coffee",
+    audience: "legacy",
+    enSubjectPlural: "brands",
+    frSubjectPlural: "marques",
     enSlug: "does-ai-recommend-specialty-coffee",
     frSlug: "ia-recommande-cafe-specialite",
     enCategory: "specialty coffee brands",
@@ -87,6 +140,9 @@ const categories: CategorySeed[] = [
   },
   {
     key: "clean-beauty",
+    audience: "legacy",
+    enSubjectPlural: "brands",
+    frSubjectPlural: "marques",
     enSlug: "does-ai-recommend-clean-beauty",
     frSlug: "ia-recommande-cosmetique-clean",
     enCategory: "clean beauty brands",
@@ -98,6 +154,9 @@ const categories: CategorySeed[] = [
   },
   {
     key: "ethical-fashion",
+    audience: "legacy",
+    enSubjectPlural: "brands",
+    frSubjectPlural: "marques",
     enSlug: "does-ai-recommend-ethical-fashion",
     frSlug: "ia-recommande-mode-ethique",
     enCategory: "ethical fashion brands",
@@ -109,6 +168,9 @@ const categories: CategorySeed[] = [
   },
   {
     key: "coworking",
+    audience: "legacy",
+    enSubjectPlural: "brands",
+    frSubjectPlural: "marques",
     enSlug: "does-ai-recommend-coworking-spaces",
     frSlug: "ia-recommande-coworking",
     enCategory: "coworking spaces",
@@ -123,14 +185,16 @@ const categories: CategorySeed[] = [
 function createPage(seed: CategorySeed, locale: AnswerLocale): AnswerPage {
   const isFr = locale === "fr";
   const category = isFr ? seed.frCategory : seed.enCategory;
+  const subjects = isFr ? seed.frSubjectPlural : seed.enSubjectPlural;
   const slug = isFr ? seed.frSlug : seed.enSlug;
   const title = isFr ? `Est-ce que l'IA recommande les ${category} ?` : `Does AI recommend ${category}?`;
   const directAnswer = isFr
-    ? `Oui, l'IA peut recommander des ${category}, mais elle cite surtout les marques dont les preuves sont faciles à lire : pages claires, avis, comparatifs, mentions tierces et réponses directes aux questions d'achat. Une marque peu citée peut être excellente mais invisible si ses signaux sont dispersés ou trop marketing.`
-    : `Yes, AI can recommend ${category}, but it tends to cite brands with evidence it can read: clear pages, reviews, comparisons, third-party mentions and direct answers to buying questions. A strong brand can still be invisible if those signals are scattered or too promotional.`;
+    ? `Oui, l'IA peut recommander des ${category}, mais elle cite surtout les ${subjects} dont les preuves sont faciles à lire : pages claires, avis, comparatifs, mentions tierces et réponses directes aux questions d'achat. Tu peux être très bon et rester invisible si tes signaux sont dispersés ou trop marketing.`
+    : `Yes, AI can recommend ${category}, but it tends to cite ${subjects} with evidence it can read: clear pages, reviews, comparisons, third-party mentions and direct answers to buying questions. You can be excellent and still be invisible if those signals are scattered or too promotional.`;
 
   return {
     locale,
+    audience: seed.audience,
     slug,
     categoryKey: seed.key,
     category,
@@ -141,25 +205,25 @@ function createPage(seed: CategorySeed, locale: AnswerLocale): AnswerPage {
       : `Clear answer: when AI recommends ${category}, which signals it uses, and how GetPick checks or fixes your visibility.`,
     eyebrow: isFr ? "Réponse SEO/GEO" : "SEO/GEO answer",
     directAnswer,
-    featuredListIntro: isFr ? "Pour apparaître dans une réponse IA, une marque doit rendre ses preuves faciles à extraire :" : "To appear in an AI answer, a brand needs to make its proof easy to extract:",
+    featuredListIntro: isFr ? "Pour apparaître dans une réponse IA, il faut rendre ses preuves faciles à extraire :" : "To appear in an AI answer, you need to make your proof easy to extract:",
     featuredList: isFr
       ? ["une proposition de valeur en une phrase", "des pages qui répondent aux questions d'achat", "des avis et comparatifs lisibles", "des mentions tierces cohérentes", "des informations locales, prix ou disponibilité à jour"]
       : ["a one-sentence value proposition", "pages that answer buying questions", "readable reviews and comparisons", "consistent third-party mentions", "current local, price or availability information"],
-    verificationTitle: isFr ? `Comment vérifier si l'IA recommande une marque dans la catégorie ${category} ?` : `How do you check whether AI recommends a brand in ${category}?`,
+    verificationTitle: isFr ? `Comment savoir qui l'IA recommande parmi les ${category} ?` : `How do you find out who AI recommends among ${category}?`,
     verificationIntro: isFr
-      ? "Ne te fie pas à une seule question. Teste plusieurs formulations proches d'une vraie intention d'achat, puis regarde si la marque est citée, pourquoi elle l'est, et qui est recommandé à la place."
-      : "Do not trust one prompt. Test several versions of a real buying intent, then check whether the brand is cited, why it is cited, and which competitors are recommended instead.",
+      ? "Ne te fie pas à une seule question. Teste plusieurs formulations proches d'une vraie intention d'achat, puis regarde si tu es cité, pourquoi, et qui est recommandé à ta place."
+      : "Do not trust one prompt. Test several versions of a real buying intent, then check whether you are cited, why, and who is recommended instead.",
     verificationSteps: isFr
-      ? ["Demande une recommandation large : meilleur choix, alternative locale, option durable ou rapport qualité-prix.", "Note les marques citées en premier, les arguments utilisés et les sources visibles.", "Compare avec ton site : la réponse IA peut-elle trouver la même preuve en moins de deux clics ?", "Ajoute ou corrige les pages qui manquent : FAQ, comparatif, preuve, Google Business, mentions."]
-      : ["Ask a broad recommendation question: best choice, local alternative, sustainable option or value pick.", "Record which brands appear first, which arguments are used and which visible sources are cited.", "Compare the answer with your site: can the AI find the same proof in fewer than two clicks?", "Add or fix the missing assets: FAQ, comparison, proof, Google Business and mentions."],
+      ? ["Demande une recommandation large : meilleur choix, alternative locale, option durable ou rapport qualité-prix.", "Note qui est cité en premier, les arguments utilisés et les sources visibles.", "Compare avec ton site : la réponse IA peut-elle trouver la même preuve en moins de deux clics ?", "Ajoute ou corrige les pages qui manquent : FAQ, comparatif, preuve, Google Business, mentions."]
+      : ["Ask a broad recommendation question: best choice, local alternative, sustainable option or value pick.", "Record who appears first, which arguments are used and which visible sources are cited.", "Compare the answer with your site: can the AI find the same proof in fewer than two clicks?", "Add or fix the missing assets: FAQ, comparison, proof, Google Business and mentions."],
     getpickTitle: isFr ? "L'angle GetPick" : "The GetPick angle",
     getpickBody: isFr
-      ? `GetPick lance un audit gratuit qui pose les questions que tes clients posent à l'IA, repère si ta marque est recommandée, nomme les concurrents cités à ta place, puis écrit les corrections prêtes à publier.`
-      : `GetPick runs a free audit that asks the questions your customers ask AI, checks whether your brand is recommended, names the competitors cited in your place, and writes the fixes ready to publish.`,
+      ? `GetPick lance un audit gratuit qui pose les questions que tes clients posent à l'IA, repère si tu es recommandé, nomme les concurrents cités à ta place, puis écrit les corrections prêtes à publier.`
+      : `GetPick runs a free audit that asks the questions your customers ask AI, checks whether you are recommended, names the competitors cited in your place, and writes the fixes ready to publish.`,
     sourceTitle: isFr ? "Pourquoi ça compte maintenant" : "Why this matters now",
     sourceIntro: isFr
-      ? "Les recommandations IA ne sont plus marginales dans le parcours d'achat. Les sources ci-dessous montrent pourquoi les marques doivent mesurer leur présence dans les réponses, pas seulement leurs positions Google."
-      : "AI recommendations are no longer a fringe part of the buying journey. The sources below show why brands should measure answer presence, not only Google rankings.",
+      ? `Les recommandations IA ne sont plus marginales dans le parcours d'achat. Les sources ci-dessous montrent pourquoi les ${subjects} doivent mesurer leur présence dans les réponses, pas seulement leurs positions Google.`
+      : `AI recommendations are no longer a fringe part of the buying journey. The sources below show why ${subjects} should measure answer presence, not only Google rankings.`,
     sources: [
       { label: marketSources.capgemini.label, href: marketSources.capgemini.href, note: isFr ? marketSources.capgemini.noteFr : marketSources.capgemini.noteEn },
       { label: marketSources.bain.label, href: marketSources.bain.href, note: isFr ? marketSources.bain.noteFr : marketSources.bain.noteEn },
@@ -175,7 +239,7 @@ function createPage(seed: CategorySeed, locale: AnswerLocale): AnswerPage {
     relatedTitle: isFr ? "Autres catégories" : "Other categories",
     faq: [
       {
-        question: isFr ? "Pourquoi l'IA ne recommande-t-elle pas ma marque dans cette catégorie ?" : "Why does AI not recommend my brand in this category?",
+        question: isFr ? "Pourquoi l'IA ne me recommande-t-elle pas dans cette catégorie ?" : "Why does AI not recommend me in this category?",
         answer: isFr
           ? `Souvent parce que les preuves publiques sont trop faibles, contradictoires ou difficiles à extraire. ${seed.frAngle}`
           : `Usually because public proof is too thin, inconsistent or hard to extract. ${seed.enAngle}`,
@@ -210,4 +274,12 @@ export function getRelatedAnswerPages(page: AnswerPage) {
 
 export function getAlternateAnswerPage(page: AnswerPage) {
   return answerPages.find((candidate) => candidate.categoryKey === page.categoryKey && candidate.locale !== page.locale);
+}
+
+/** Les pages presentees SUR LA LANDING. La landing vend un metier ; elle ne
+ *  propose que les guides de ce metier. Les pages `legacy` restent servies a
+ *  leur URL et dans le sitemap — elles ne sont pas detruites, elles ne sont
+ *  plus mises en avant devant un visiteur a qui elles ne parlent pas. */
+export function landingAnswerPages(locale: AnswerLocale, limit = 5) {
+  return answerPages.filter((page) => page.locale === locale && page.audience === "beachhead").slice(0, limit);
 }

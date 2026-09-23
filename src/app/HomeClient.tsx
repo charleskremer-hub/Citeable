@@ -3,9 +3,10 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import LocaleLang from "./LocaleLang";
-import { answerPages } from "@/lib/answer-pages";
+import { landingAnswerPages } from "@/lib/answer-pages";
 import { SERVICE_CHECKOUT_URL, isCheckoutConfigured } from "@/lib/checkout-links";
 import { homeCopy, type Locale } from "@/lib/i18n";
+import { BEACHHEAD_TRADE } from "@/lib/plan-promises";
 
 const inputStyle = {
   width: "100%",
@@ -54,7 +55,7 @@ function trackCheckoutOpened(plan: "service", href: string, locale: Locale) {
 
 export default function HomeClient({ locale }: HomeClientProps) {
   const copy = homeCopy[locale];
-  const resourcePages = answerPages.filter((page) => page.locale === locale).slice(0, 5);
+  const resourcePages = landingAnswerPages(locale);
   const [email, setEmail] = useState("");
   const [brandName, setBrandName] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
@@ -531,8 +532,8 @@ export default function HomeClient({ locale }: HomeClientProps) {
               </h2>
               <p className="mt-5 max-w-xl text-base leading-7 text-[#A7A7B4] sm:text-lg">
                 {locale === "fr"
-                  ? "Des pages answer-ready pour comprendre les signaux que ChatGPT, Gemini et les AI Overviews peuvent citer avant de recommander une marque."
-                  : "Answer-ready pages explaining the signals ChatGPT, Gemini and AI Overviews can cite before recommending a brand."}
+                  ? `Des pages answer-ready pour comprendre les signaux que ChatGPT, Gemini et les AI Overviews peuvent citer avant de recommander des ${BEACHHEAD_TRADE.fr}s.`
+                  : `Answer-ready pages explaining the signals ChatGPT, Gemini and AI Overviews can cite before recommending ${BEACHHEAD_TRADE.en}s.`}
               </p>
             </div>
             <div className="grid gap-3">

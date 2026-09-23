@@ -182,11 +182,28 @@ const OLD_ICP_WORDS = [/\bDTC\b/, /direct-to-consumer/i, /\bshopper/i, /Shopify/
 const stripComments = (source: string) =>
   source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 
+// ÉLARGI LE 23/09 APRÈS UNE SECONDE FUITE, DE LA MÊME FAMILLE. `HomeClient.tsx`
+// expédie du texte public que `homeCopy` ne porte pas (titres de section,
+// intros). Le 23/09 son intro « Guides IA » vendait encore « recommander une
+// marque ». `src/lib/answer-pages.ts` n'est volontairement PAS dans cette
+// liste : ses cinq pages d'avant le pivot restent en ligne et portent
+// légitimement le vocabulaire de leur propre catégorie. Ce qui est verrouillé,
+// c'est ce que la LANDING met en avant — `scripts/pages-ressources-landing.test.ts`.
 const PUBLIC_TEXT_FILES = [
   ["src/app/fr/page.tsx", ["src", "app", "fr", "page.tsx"]],
   ["src/app/en/page.tsx", ["src", "app", "en", "page.tsx"]],
   ["src/app/layout.tsx", ["src", "app", "layout.tsx"]],
   ["src/lib/vs-comparison.ts", ["src", "lib", "vs-comparison.ts"]],
+  ["src/app/HomeClient.tsx", ["src", "app", "HomeClient.tsx"]],
+] as const;
+
+// Les deux fichiers dont la `metadata` de PAGE écrase celle du layout. Nommés
+// explicitement : le 23/09, ajouter une entrée au milieu de la liste ci-dessus
+// a fait sortir `en/page.tsx` d'un `slice(0, 2)` sans qu'aucun test ne rougisse
+// — un verrou affaibli en silence par un ajout qui se croyait additif.
+const PAGE_METADATA_FILES = [
+  ["src/app/fr/page.tsx", ["src", "app", "fr", "page.tsx"]],
+  ["src/app/en/page.tsx", ["src", "app", "en", "page.tsx"]],
 ] as const;
 
 test("ICP — le vocabulaire DTC ne survit sur aucune surface publique", () => {
@@ -205,7 +222,7 @@ test("ICP — le vocabulaire DTC ne survit sur aucune surface publique", () => {
 test("ICP — le titre et la description de /fr et /en dérivent du métier, jamais écrits en dur", () => {
   // Une `metadata` de page écrase celle du layout : si elle n'est pas dérivée,
   // elle se fige au métier du jour où elle a été écrite.
-  for (const [label, segments] of PUBLIC_TEXT_FILES.slice(0, 2)) {
+  for (const [label, segments] of PAGE_METADATA_FILES) {
     const source = readRepoFile(...segments);
     assert.match(source, /BEACHHEAD_TRADE/, `${label}: la metadata doit dériver de BEACHHEAD_TRADE`);
     for (const trade of Object.values(BEACHHEAD_TRADE)) {
