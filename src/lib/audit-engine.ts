@@ -776,7 +776,7 @@ function reportFromRow(row: AuditRow): AuditReport {
     checks,
     monitoring: {
       ...emptyMonitoringSnapshot(buyerIntentPrompts),
-      actions: buildPlainActions(buyerIntentPrompts, category, row.competitors_found ?? [], icpSegment),
+      actions: buildPlainActions(buyerIntentPrompts, category, row.competitors_found ?? [], icpSegment, row.raw_results?.locale === "fr" ? "fr" : "en"),
     },
     auditTier,
     brandSentiment: normalizeBrandSentiment(row.raw_results?.brandSentiment ?? bestBrandSentimentFromPrompts(buyerIntentPrompts)),
@@ -1981,11 +1981,61 @@ function supportingQuestions(prompts: BuyerIntentPromptResult[], supports: (prom
   return supported.length ? supported : undefined;
 }
 
+// LOT G, 24/09/2026 — le PLAN D'ACTIONS parle le metier que la landing vend.
+// Le LOT F du 23/09 a corrige `buildFixes` ; il n'a pas touche `buildPlainActions`,
+// qui rendait le bloc DTC a TOUT segment autre que `local_independent` et
+// `creator_influencer` — donc aussi au `service_professional` cree la veille.
+// Un cabinet d'expertise comptable recevait « Add FAQ and product-page answers »,
+// « marketplaces, Trustpilot », en anglais, a l'imperatif. Deux fautes en une :
+// mauvais metier, et une consigne adressee AU CLIENT alors que la landing lui
+// jure « zero geste technique ».
+const SERVICE_ACTIONS: Record<"fr" | "en", (ctx: { questionText: string; categoryText: string; compareText: string }) => PlainAction[]> = {
+  fr: ({ questionText, categoryText, compareText }) => [
+    {
+      title: "GetPick publie la page-réponse qui traite ces questions",
+      doThis: `GetPick écrit et publie, hors de ton site, la page-réponse qui traite les questions que tes clients posent à l'IA : ${questionText}. Tu n'as rien à modifier chez toi.`,
+      where: "Page-réponse hébergée par GetPick, reliée aux annuaires et aux comparatifs du métier.",
+    },
+    {
+      title: "GetPick va chercher les mentions là où le confrère est cité",
+      doThis: `GetPick aligne les annuaires et les fiches du métier (${categoryText}) sur une seule et même description, et publie les comparatifs là où l'audit a vu des confrères cités. ${compareText}`,
+      where: "Annuaires et fiches professionnelles du métier, pages d'avis, comparatifs, fils communautaires.",
+    },
+    {
+      title: "GetPick construit la preuve là où tu n'es pas cité",
+      doThis: `GetPick publie la preuve — spécialités, zone servie, clients suivis — sur les questions où l'audit ne t'a pas trouvé, puis te montre chaque mois ce qui a basculé.`,
+      where: "Page-réponse, annuaires, comparatifs et pages d'avis maintenus par GetPick.",
+    },
+  ],
+  en: ({ questionText, categoryText, compareText }) => [
+    {
+      title: "GetPick publishes the answer page that addresses these questions",
+      doThis: `GetPick writes and publishes, off your site, the answer page that addresses what your clients ask AI: ${questionText}. You change nothing on your end.`,
+      where: "Answer page hosted by GetPick, linked to the directories and comparisons of your trade.",
+    },
+    {
+      title: "GetPick earns the mentions where a peer is cited instead of you",
+      doThis: `GetPick aligns the directories and professional listings for ${categoryText} on one single description, and publishes the comparisons where the audit saw peers cited. ${compareText}`,
+      where: "Trade directories and professional listings, review pages, comparisons, community threads.",
+    },
+    {
+      title: "GetPick builds the proof where you are not cited",
+      doThis: `GetPick publishes the proof — specialities, area served, clients handled — on the questions where the audit did not find you, then shows you every month what moved.`,
+      where: "Answer page, directories, comparisons and review pages maintained by GetPick.",
+    },
+  ],
+};
+
 export function buildPlainActions(
   prompts: BuyerIntentPromptResult[] = [],
   category = UNKNOWN_CATEGORY,
   competitors: string[] = [],
-  segment: IcpSegmentMetadata = ICP_SEGMENTS.small_brand_ecommerce
+  // DEFAUT DERIVE DE LA CATEGORIE, jamais une constante. Avant le 24/09 il
+  // valait `ICP_SEGMENTS.small_brand_ecommerce` en dur : un appelant qui
+  // oubliait l'argument recevait le segment d'avant le pivot, en silence, et
+  // AUCUN test ne pouvait rougir. Le defaut depend maintenant d'une donnee.
+  segment: IcpSegmentMetadata = detectIcpSegment(category),
+  locale: "fr" | "en" = "en"
 ): PlainAction[] {
   const categoryText = categoryLabel(category);
   const testedQuestions = uniqueInOrder(
@@ -2003,12 +2053,24 @@ export function buildPlainActions(
   const answeredQuestions = testedQuestions.length ? testedQuestions : undefined;
   const contestedQuestions = supportingQuestions(prompts, (prompt) => prompt.competitors.length > 0);
   const lostQuestions = supportingQuestions(prompts, (prompt) => !prompt.brandMentioned);
+  const fr = locale === "fr";
   const questionText = testedQuestions.length
-    ? testedQuestions.map((prompt) => `“${prompt}”`).join("; ")
-    : "the buyer questions in this audit";
+    ? testedQuestions.map((prompt) => fr ? `« ${prompt} »` : `“${prompt}”`).join("; ")
+    : fr ? "les questions d'achat de cet audit" : "the buyer questions in this audit";
   const compareText = competitorExamples.length
-    ? `Use the real names already surfaced by the audit: ${competitorExamples.join(", ")}.`
-    : "Use the names buyers already compare you with, if any appear in future audits.";
+    ? fr
+      ? `Les noms sont ceux que l'audit a réellement fait sortir : ${competitorExamples.join(", ")}.`
+      : `Use the real names already surfaced by the audit: ${competitorExamples.join(", ")}.`
+    : fr
+      ? "Aucun nom n'est sorti de cet audit : GetPick travaille sur ceux que les prochains passages feront apparaître."
+      : "Use the names buyers already compare you with, if any appear in future audits.";
+
+  if (segment.key === "service_professional") {
+    return SERVICE_ACTIONS[fr ? "fr" : "en"]({ questionText, categoryText, compareText }).map((action, index) => ({
+      ...action,
+      basedOn: [answeredQuestions, contestedQuestions, lostQuestions][index],
+    }));
+  }
 
   if (segment.key === "local_independent") {
     return [
@@ -2280,7 +2342,17 @@ function monitoringSnapshotFromRuns(current: StoredPromptRow, runs: StoredPrompt
     trend,
     scoreDelta: previousTrendPoint && current.score !== null && current.score !== undefined ? current.score - previousTrendPoint.score : null,
     competitorMovements: compareCompetitorMovement(currentPrompts, previousPrompts),
-    actions: buildPlainActions(currentPrompts, current.raw_results?.category ?? UNKNOWN_CATEGORY, [], current.raw_results?.icpSegment ?? ICP_SEGMENTS.small_brand_ecommerce),
+    // FALLBACK UNIFIE (24/09). Il valait `ICP_SEGMENTS.small_brand_ecommerce` en
+    // dur, alors que `reportFromRow` recalculait `detectIcpSegment(category)` pour
+    // le MEME champ manquant : la meme ligne d'audit rendait donc un plan de
+    // service sur la page du rapport et un plan DTC dans son suivi mensuel.
+    actions: buildPlainActions(
+      currentPrompts,
+      current.raw_results?.category ?? UNKNOWN_CATEGORY,
+      [],
+      current.raw_results?.icpSegment ?? detectIcpSegment(current.raw_results?.category),
+      current.raw_results?.locale === "fr" ? "fr" : "en"
+    ),
     sources: extractSourceCitationReports(currentPrompts),
     previousAuditId: previousRun?.id,
   };
@@ -4163,7 +4235,9 @@ const SERVICE_FIXES: Record<"fr" | "en", Record<"structured_data" | "search_visi
 
 export function buildFixes(
   checks: AuditCheckResult[],
-  segment: IcpSegmentMetadata = ICP_SEGMENTS.small_brand_ecommerce,
+  // REQUIS depuis le 24/09 : aucun defaut. Le defaut gele
+  // `ICP_SEGMENTS.small_brand_ecommerce` rendait un oubli d'argument invisible.
+  segment: IcpSegmentMetadata,
   category = UNKNOWN_CATEGORY,
   locale: "fr" | "en" = "en"
 ) {
@@ -5038,7 +5112,13 @@ export function generateGeoAgentAssetsFromAudit(audit: {
     faqPageCopy,
     faqJsonLd: faqJsonLdForBrand(audit.brand_name, audit.website_url, faqPageCopy, description),
     llmsTxt: llmsTxtForBrand(audit.brand_name, audit.website_url, category, availablePromptTexts, description),
-    weeklyActionPlan: buildPlainActions(prompts, category, competitors, audit.raw_results?.icpSegment ?? ICP_SEGMENTS.small_brand_ecommerce),
+    weeklyActionPlan: buildPlainActions(
+      prompts,
+      category,
+      competitors,
+      audit.raw_results?.icpSegment ?? detectIcpSegment(category),
+      audit.raw_results?.locale === "fr" ? "fr" : "en"
+    ),
     reviewRequestTemplates: [
       `Hi {{customer_name}}, quick favour: would you leave a short review for ${audit.brand_name}? Please mention what you were trying to solve, why you chose us, and the result you got. It helps new buyers understand when ${audit.brand_name} is the right fit.`,
       `Could you share one sentence about your experience with ${audit.brand_name}? A useful review says: “We used ${audit.brand_name} for {{use_case}} and it helped us {{result}}.”`,
@@ -5408,7 +5488,7 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
     checks,
     monitoring: {
       ...emptyMonitoringSnapshot(buyerIntentPrompts),
-      actions: buildPlainActions(buyerIntentPrompts, inferred.category, competitors, icpSegment),
+      actions: buildPlainActions(buyerIntentPrompts, inferred.category, competitors, icpSegment, auditLocale === "fr" ? "fr" : "en"),
     },
     auditTier,
     brandSentiment: bestBrandSentimentFromPrompts(buyerIntentPrompts),
