@@ -88,6 +88,12 @@ export async function ensureAuditSchema() {
   await pool.query(`ALTER TABLE audits ADD COLUMN IF NOT EXISTS dedupe_domain TEXT`);
   await pool.query(`UPDATE audits SET dedupe_domain = lower(split_part(regexp_replace(regexp_replace(website_url, '^https?://', ''), '^www\\.', ''), '/', 1)) WHERE dedupe_domain IS NULL`);
   await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS audits_dedupe_domain_created_idx ON audits (dedupe_domain, created_at DESC)`);
+  // Page-réponse hébergée (moteur off-site). NULL = la page existe mais n'est PAS
+  // indexable ni au sitemap (noindex) ; une date = publiée par GetPick pour un
+  // client. On ne met JAMAIS en indexation les milliers de diagnostics anonymes :
+  // la publication est un geste explicite, pas un effet de bord de l'audit.
+  await pool.query(`ALTER TABLE audits ADD COLUMN IF NOT EXISTS answer_page_published_at TIMESTAMPTZ`);
+  await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS audits_answer_page_published_idx ON audits (answer_page_published_at) WHERE answer_page_published_at IS NOT NULL`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS audit_email_unsubscribes (
       email TEXT PRIMARY KEY,

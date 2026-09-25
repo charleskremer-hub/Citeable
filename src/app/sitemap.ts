@@ -1,13 +1,40 @@
 import type { MetadataRoute } from "next";
 import { answerPages } from "@/lib/answer-pages";
+import { ensureAuditSchema, pool } from "@/lib/db";
+import { hostedAnswerPageSlug } from "@/lib/hosted-answer-page";
 
 // CANONIQUE = www tant que l'apex getpick.ai n'est pas déclaré dans le projet
 // Vercel (son certificat SSL ne le couvre pas, il refuse les connexions).
 // Voir le commentaire détaillé dans src/app/robots.ts.
 const siteUrl = "https://www.getpick.ai";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+// Pages-réponses PUBLIÉES uniquement (answer_page_published_at non nul). Les
+// diagnostics anonymes ne sont jamais listés. La base peut être indisponible au
+// build : on dégrade en liste vide plutôt que de casser tout le sitemap.
+async function publishedHostedAnswerPages(now: Date): Promise<MetadataRoute.Sitemap> {
+  try {
+    await ensureAuditSchema();
+    const result = await pool.query<{ id: string; brand_name: string; answer_page_published_at: string }>(
+      `SELECT id, brand_name, answer_page_published_at
+       FROM audits
+       WHERE answer_page_published_at IS NOT NULL AND score IS NOT NULL
+       ORDER BY answer_page_published_at DESC
+       LIMIT 5000`
+    );
+    return result.rows.map((row) => ({
+      url: `${siteUrl}/reponses/${hostedAnswerPageSlug(row.brand_name, row.id)}`,
+      lastModified: row.answer_page_published_at ? new Date(row.answer_page_published_at) : now,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
+  const hostedPages = await publishedHostedAnswerPages(now);
 
   return [
     {
@@ -65,5 +92,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly" as const,
       priority: 0.72,
     })),
+    ...hostedPages,
   ];
 }

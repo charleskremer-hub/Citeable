@@ -247,7 +247,7 @@ export type QueuedAuditResult =
   | { status: "running" }
   | { status: "failed"; error: string };
 
-type AuditRawResults = {
+export type AuditRawResults = {
   status?: string;
   error?: string;
   formula?: string;
@@ -4893,7 +4893,7 @@ function cleanExtractedDescription(value: string) {
     .trim();
 }
 
-function descriptionFromAudit(rawResults: AuditRawResults | null) {
+export function descriptionFromAudit(rawResults: AuditRawResults | null) {
   if (rawResults?.geoAgentDescription) return cleanExtractedDescription(rawResults.geoAgentDescription);
 
   const evidence = rawResults?.checks?.find((check) => check.check === "structured_data")?.evidence ?? "";
