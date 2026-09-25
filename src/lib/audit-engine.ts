@@ -2820,10 +2820,10 @@ function generateBuyerIntentPrompts(brandName: string, websiteUrl: string, categ
   const buyerCategory = localizedCategoryTerm(categoryTerm, language);
   const ecommerceLocationSuffix = location ? (language === "fr" ? ` à ${location}` : ` in ${location}`) : "";
 
-  // Métier de service local avec ville détectée : questions d'achat LOCALES
-  // (« meilleur expert-comptable à Lyon »), jamais des questions nationales.
-  if (isLocalServiceCategory(category) && location) {
-    const inCity = language === "fr" ? `à ${location}` : `in ${location}`;
+  // Métier de service local : questions d'achat LOCALES, jamais nationales. Ville si
+  // détectée, sinon ancrage « près de chez moi » — jamais de question nationale.
+  if (isLocalServiceCategory(category)) {
+    const inCity = location ? (language === "fr" ? `à ${location}` : `in ${location}`) : (language === "fr" ? "près de chez moi" : "near me");
     const forWho = language === "fr" ? `pour ${audience}` : `for ${audience}`;
     return cleanPromptList(
       language === "fr"
@@ -3776,7 +3776,8 @@ async function generateBuyerIntentPromptsAI(
   const language = preferredLocale ?? detectBuyerQuestionLanguage(homepageText, domain);
   const languageName = language === "fr" ? "French" : "English";
   const context = homepageText.replace(/\s+/g, " ").trim().slice(0, 1500);
-  const localCity = isLocalServiceCategory(category) ? inferLocationFromHomepage(homepageText) : null;
+  const isLocal = isLocalServiceCategory(category);
+  const localCity = isLocal ? inferLocationFromHomepage(homepageText) : null;
 
   const instruction = [
     "You generate realistic buyer-intent questions for an AI-visibility audit.",
@@ -3799,8 +3800,8 @@ async function generateBuyerIntentPromptsAI(
     `- Do NOT mention "${brandName}" or "${domain}" in any question — these are demand-side questions used to test whether the AI recommends the brand on its own.`,
     `- Write them in natural ${languageName}.`,
     "- No numbering, no surrounding quotes, no preamble, no duplicates.",
-    localCity
-      ? `LOCAL BUSINESS in ${localCity}: a ${category} is chosen LOCALLY. Every question MUST contain "${localCity}" (or "près de moi"/"near me") and use the natural ${languageName} term for a ${category}. Cover: best provider in ${localCity}, best provider in ${localCity} for a given client type/sector, which provider to choose in ${localCity}, reviews or quotes in ${localCity}. Do NOT write generic national questions like "how to choose a ...", "average price of a ...", or "benefits of an online ..." — those make a local business compete against national platforms it can never outrank.`
+    isLocal
+      ? `LOCAL BUSINESS: a ${category} is chosen LOCALLY, by proximity. ${localCity ? `It is based in ${localCity} — put "${localCity}" in EVERY question.` : `No city was detected: anchor EVERY question locally with "près de moi"/"near me", "dans ma ville", "dans ma région", or "local".`} Use the natural ${languageName} term for a ${category}. Cover: best local provider, best local provider for a given client type/sector, which local provider to choose, local reviews or quotes. NEVER write generic national questions like "how to choose a ...", "average price of a ...", or "traditional vs online ..." — those pit a local business against national platforms it can never outrank.`
       : "",
     'Return ONLY valid JSON with this exact shape: {"questions":["...","..."]}',
   ]
