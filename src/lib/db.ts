@@ -94,6 +94,17 @@ export async function ensureAuditSchema() {
   // la publication est un geste explicite, pas un effet de bord de l'audit.
   await pool.query(`ALTER TABLE audits ADD COLUMN IF NOT EXISTS answer_page_published_at TIMESTAMPTZ`);
   await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS audits_answer_page_published_idx ON audits (answer_page_published_at) WHERE answer_page_published_at IS NOT NULL`);
+  // Présence off-site (brique 2) : statut par source d'annuaire/avis pour un
+  // audit. Une ligne par (audit, source) ; l'absence de ligne = 'not_started'.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS offsite_presence (
+      audit_id UUID NOT NULL REFERENCES audits(id) ON DELETE CASCADE,
+      source_key TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'not_started',
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (audit_id, source_key)
+    )
+  `);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS audit_email_unsubscribes (
       email TEXT PRIMARY KEY,
