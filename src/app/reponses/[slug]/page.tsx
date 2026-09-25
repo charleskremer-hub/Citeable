@@ -27,20 +27,33 @@ type HostedAnswerPageProps = {
   params: Promise<{ slug: string }>;
 };
 
+// Page publique censée être crawlée : un cold-start de connexion Neon ne doit
+// JAMAIS produire un 500 dur. On réessaie une fois avant d'abandonner.
+async function withDbRetry<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch {
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    return await fn();
+  }
+}
+
 async function loadRow(slug: string): Promise<HostedAnswerRow | null> {
   const shortId = shortIdFromSlug(slug);
   if (!shortId) return null;
 
-  await ensureAuditSchema();
-  const result = await pool.query<HostedAnswerRow>(
-    `SELECT id, brand_name, website_url, score, competitors_found, raw_results, answer_page_published_at
-     FROM audits
-     WHERE id::text LIKE $1 AND score IS NOT NULL
-     ORDER BY created_at DESC
-     LIMIT 1`,
-    [`${shortId}%`]
-  );
-  return result.rows[0] ?? null;
+  return withDbRetry(async () => {
+    await ensureAuditSchema();
+    const result = await pool.query<HostedAnswerRow>(
+      `SELECT id, brand_name, website_url, score, competitors_found, raw_results, answer_page_published_at
+       FROM audits
+       WHERE id::text LIKE $1 AND score IS NOT NULL
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [`${shortId}%`]
+    );
+    return result.rows[0] ?? null;
+  });
 }
 
 function localeOf(row: HostedAnswerRow): Locale {

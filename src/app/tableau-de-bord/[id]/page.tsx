@@ -139,8 +139,8 @@ export default async function ClientDashboard({ params, searchParams }: Dashboar
           {vis.brand.citedCount === 0 && (
             <p className="mt-4 text-sm leading-6 text-[#B8B8C4]">
               {fr
-                ? "GetPick construit ta présence off-site pour que l'IA commence à te citer sur ces questions."
-                : "GetPick builds your off-site presence so AI starts citing you on these questions."}
+                ? "L'IA ne te cite pas encore sur ces questions — c'est exactement ce que GetPick fait bouger."
+                : "AI doesn't cite you on these questions yet — that's exactly what GetPick moves."}
             </p>
           )}
         </section>
