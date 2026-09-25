@@ -155,10 +155,43 @@ export async function ensureAuditSchema() {
   // événements funnel plus bas : l'ancienne définition ne porte pas le prédicat
   // et `IF NOT EXISTS` seul ne re-créerait jamais l'index avec le bon WHERE.
   await pool.query(`ALTER TABLE audit_email_delivery_log ADD COLUMN IF NOT EXISTS audience TEXT NOT NULL DEFAULT 'prospect'`);
+  // LOT G1 (25/09/2026) — LE DIAGNOSTIC QUE L'UTILISATEUR DEMANDE LUI-MEME SORT
+  // DES TROIS GARDES ANTI-SPAM.
+  //
+  // Mesure en production le 25/09 (CEO, 07:03-07:04Z, trois audits `free`) :
+  // une adresse JAMAIS VUE s'est vu refuser son PREMIER diagnostic sur
+  // `inoxem.fr` et `kapsens.com`. Ce n'est pas l'index a vie `(email, step)`
+  // qui a tire, c'est `(brand_domain, step, send_day)` — dont la cle ne
+  // contient PAS le destinataire. Consequence :
+  //
+  //   LE PREMIER QUI DEMANDE UN DIAGNOSTIC SUR UN DOMAINE, UN JOUR DONNE, EST
+  //   LE SEUL A LE RECEVOIR. TOUS LES SUIVANTS RECOIVENT LE SILENCE.
+  //
+  // Deux personnes de la meme entreprise qui testent le meme jour : une seule
+  // recoit. Et un audit lance le matin pour preparer une prospection coupe le
+  // prospect qui demande son propre diagnostic l'apres-midi.
+  //
+  // Les trois gardes ont ete poses contre le spam de prospection NON
+  // SOLLICITEE. Ils restent entiers pour les etapes non sollicitees
+  // (`j1_value`, `j3_offer`, `weekly_monitoring`) : c'est la qu'ils protegent.
+  // Le pas `audit_result` — reclame par l'utilisateur en tapant son adresse sur
+  // la landing — recoit sa propre regle, et LE DESTINATAIRE EST DANS LA CLE :
+  // une livraison par (adresse, domaine de marque, jour).
+  //
+  // DROP + CREATE obligatoire, jamais `IF NOT EXISTS` seul : un index deja
+  // present ne verrait pas son predicat mis a jour, et la migration passerait
+  // en silence en laissant le defaut en place.
   await pool.query(`DROP INDEX IF EXISTS audit_email_delivery_one_step_per_prospect_idx`);
-  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS audit_email_delivery_one_step_per_prospect_idx ON audit_email_delivery_log (email, step) WHERE status IN ('claimed', 'sent', 'failed') AND audience = 'prospect'`);
-  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS audit_email_delivery_one_day_per_prospect_idx ON audit_email_delivery_log (email, send_day) WHERE status IN ('claimed', 'sent', 'failed')`);
-  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS audit_email_delivery_one_brand_step_day_idx ON audit_email_delivery_log (brand_domain, step, send_day) WHERE brand_domain IS NOT NULL AND status IN ('claimed', 'sent', 'failed')`);
+  await pool.query(`DROP INDEX IF EXISTS audit_email_delivery_one_day_per_prospect_idx`);
+  await pool.query(`DROP INDEX IF EXISTS audit_email_delivery_one_brand_step_day_idx`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS audit_email_delivery_one_step_per_prospect_idx ON audit_email_delivery_log (email, step) WHERE status IN ('claimed', 'sent', 'failed') AND audience = 'prospect' AND step <> 'audit_result'`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS audit_email_delivery_one_day_per_prospect_idx ON audit_email_delivery_log (email, send_day) WHERE status IN ('claimed', 'sent', 'failed') AND step <> 'audit_result'`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS audit_email_delivery_one_brand_step_day_idx ON audit_email_delivery_log (brand_domain, step, send_day) WHERE brand_domain IS NOT NULL AND status IN ('claimed', 'sent', 'failed') AND step <> 'audit_result'`);
+  // LA REGLE PROPRE AU DIAGNOSTIC DEMANDE. `brand_domain IS NOT NULL` reprend
+  // le predicat de l'index de marque : une ligne sans domaine lisible n'est
+  // dedupliquee par aucun de ces index — c'est assume, le plafond quotidien de
+  // l'audit gratuit (`FREE_AUDIT_EMAIL_DAILY_LIMIT`) tient ce cas en amont.
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS audit_email_delivery_requested_audit_recipient_day_idx ON audit_email_delivery_log (email, brand_domain, step, send_day) WHERE step = 'audit_result' AND brand_domain IS NOT NULL AND status IN ('claimed', 'sent', 'failed')`);
   await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS audit_email_delivery_email_created_idx ON audit_email_delivery_log (email, created_at DESC)`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS audit_email_sequence_jobs (
