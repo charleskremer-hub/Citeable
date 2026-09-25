@@ -45,7 +45,7 @@ seat pricing and no setup.
 
 - Free diagnostic: 6 buyer questions, checked live on Gemini, no payment, no
   signup.
-- Done for you — 49 EUR per month: 12 buyer questions re-tested monthly on
+- Done for you — 69 EUR per month: 12 buyer questions re-tested monthly on
   Gemini, the answer page created and hosted for you, placement on the
   sources AI trusts, and the content written for you. One flat price, all in.
 
@@ -79,7 +79,7 @@ matters for any brand deciding where to spend.
   new markets; check the date above before relying on it.
 - What this changes commercially: being the brand the assistant names in
   its organic answer is still free, while a sponsored click is bid at
-  roughly 3 to 5 USD. GetPick costs 49 EUR per month and works on
+  roughly 3 to 5 USD. GetPick costs 69 EUR per month and works on
   the organic answer, not on the ad slot.
 
 GetPick does not buy, resell or manage ChatGPT ads. It is a GEO agent: it

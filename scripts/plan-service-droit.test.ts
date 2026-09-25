@@ -1,7 +1,7 @@
 // Un client qui paie le plan vendu doit RECEVOIR quelque chose.
 //
 // POURQUOI CE FICHIER EXISTE (22/09/2026). Charles demande de configurer Stripe
-// pour encaisser le plan unique à 49 €. En allant lire le webhook avant de
+// pour encaisser le plan unique à 69 €. En allant lire le webhook avant de
 // toucher au dashboard : `planFromStripeObject` n'acceptait que `monitor_9eur`
 // et `agent_19eur`. Un abonnement créé pour la nouvelle offre serait rentré avec
 // `plan = null` — Stripe encaisse tous les mois, `subscriptions` ne porte aucun

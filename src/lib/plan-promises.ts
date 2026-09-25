@@ -79,7 +79,7 @@ export const RECHECK_INTERVAL_DAYS: number = 30;
  * code : des droits y sont attachés (`entitlement.ts`, `stripe-webhook.ts`,
  * page de rapport). Ce qui change est ce qui est PUBLIÉ sur la landing.
  */
-export const SERVICE_PLAN_PRICE_EUR: number = 49;
+export const SERVICE_PLAN_PRICE_EUR: number = 69;
 
 /**
  * Métier du beachhead. C'est un PARAMÈTRE, pas une conviction : basculer vers

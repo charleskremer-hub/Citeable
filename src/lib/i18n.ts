@@ -50,9 +50,9 @@ export const homeCopy = {
     navCompare: "Compare",
     // 1. HERO — pain + transformation
     heroEyebrow: "The agent that gets you recommended by AI",
-    heroTitle: `When a client looks for an ${BEACHHEAD_TRADE.en}, ChatGPT answers with a name.`,
+    heroTitle: `When a client looks for an ${BEACHHEAD_TRADE.en} near them, ChatGPT answers with a name.`,
     heroTitleAccent: "Make it yours.",
-    heroSubtitle: `GetPick builds and maintains your presence where AI looks for who to recommend. You touch nothing — no code, no site. ${CAPITALISED_CADENCE.en} it shows you who AI cites, and how you climb.`,
+    heroSubtitle: `GetPick builds and maintains your local presence where AI looks for who to recommend in your area. You touch nothing — no code, no site. ${CAPITALISED_CADENCE.en} it shows you who AI cites in your place, and how you climb.`,
     formTitle: "Your free diagnostic",
     // « Email optional » était vrai pour LANCER l'audit et faux pour ce qu'on en
     // voit : une fois le gate déployé (`resolveReportAccess`, tier free non
@@ -99,7 +99,7 @@ export const homeCopy = {
     steps: [
       { num: "1", time: "30 sec", title: "Give us your firm", body: "Your name and your website address. That's the entire setup." },
       { num: "2", time: "2 min", title: "The agent asks the AIs", body: `The real questions your clients ask, sent live at diagnostic time to ${PLAN_PROMISES.free.engineLabel.en}. Never simulated.` },
-      { num: "3", time: "Same day", title: "We do the work off-site", body: "GetPick names the peer cited in your place, then builds and hosts your answer page and places you on the sources AI trusts. You change nothing on your side." },
+      { num: "3", time: "Same day", title: "We do the work off-site", body: "GetPick names the peer cited in your place, then builds and hosts your answer page and places you on the local sources AI trusts — the directories and reviews for your town. You change nothing on your side." },
     ],
     // 5. The deliverable
     deliverableEyebrow: "What you get",
@@ -235,9 +235,9 @@ export const homeCopy = {
     navCompare: "Comparatif",
     // 1. HERO — douleur + transformation
     heroEyebrow: "L'agent qui te fait recommander par l'IA",
-    heroTitle: `Quand un client cherche un ${BEACHHEAD_TRADE.fr}, ChatGPT répond un nom.`,
+    heroTitle: `Quand un client cherche un ${BEACHHEAD_TRADE.fr} près de chez lui, ChatGPT répond un nom.`,
     heroTitleAccent: "Fais que ce soit le tien.",
-    heroSubtitle: `GetPick construit et entretient ta présence là où l'IA va chercher qui recommander. Tu ne touches à rien — ni code, ni site. ${CAPITALISED_CADENCE.fr}, il te montre qui l'IA cite, et comment tu remontes.`,
+    heroSubtitle: `GetPick construit et entretient ta présence locale là où l'IA va chercher qui recommander dans ta ville. Tu ne touches à rien — ni code, ni site. ${CAPITALISED_CADENCE.fr}, il te montre qui l'IA cite à ta place, et comment tu remontes.`,
     formTitle: "Ton diagnostic gratuit",
     formSubtitle: "Ton cabinet + ton site. Email optionnel — il débloque ton score et le confrère nommé à ta place.",
     freeBadge: "Gratuit",
@@ -276,7 +276,7 @@ export const homeCopy = {
     steps: [
       { num: "1", time: "30 s", title: "Donne-nous ton cabinet", body: "Ton nom et l'adresse de ton site. C'est toute la configuration." },
       { num: "2", time: "2 min", title: "L'agent interroge les IA", body: `Les vraies questions de tes clients, envoyées en direct au moment du diagnostic à ${PLAN_PROMISES.free.engineLabel.fr}. Jamais simulées.` },
-      { num: "3", time: "Le jour même", title: "On travaille hors de ton site", body: "GetPick nomme le confrère cité à ta place, puis construit et héberge ta page-réponse et te place sur les sources que l'IA croit. Tu ne changes rien de ton côté." },
+      { num: "3", time: "Le jour même", title: "On travaille hors de ton site", body: "GetPick nomme le confrère cité à ta place, puis construit et héberge ta page-réponse et te place sur les sources locales que l'IA croit — les annuaires et les avis de ta ville. Tu ne changes rien de ton côté." },
     ],
     // 5. Le livrable
     deliverableEyebrow: "Le livrable",
