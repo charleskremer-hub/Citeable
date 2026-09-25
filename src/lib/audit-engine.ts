@@ -2766,7 +2766,31 @@ export function isServiceCategory(category: string | undefined | null): boolean 
 // juste tant que l'ICP l'etait ; elle est devenue fausse le jour du pivot, et
 // personne ne l'a rouverte parce qu'elle ne prenait aucun argument. Elle en
 // prend un maintenant, et le defaut reste inchange pour tout le reste.
+// Métiers de service PHYSIQUEMENT LOCAUX : choisis sur une intention « meilleur X
+// à [ville] », pas sur une question nationale. Sous-ensemble de SERVICE_CATEGORIES
+// (on exclut web agency / fitness coach, qui opèrent souvent à distance).
+export const LOCAL_SERVICE_CATEGORIES = new Set([
+  "accounting firm",
+  "law firm",
+  "dentist",
+  "plumber",
+  "electrician",
+  "real estate agency",
+  "hair salon",
+  "auto repair shop",
+  "architecture firm",
+]);
+
+export function isLocalServiceCategory(category: string | undefined | null): boolean {
+  return typeof category === "string" && LOCAL_SERVICE_CATEGORIES.has(category.trim().toLowerCase());
+}
+
 export function detectIcpSegment(category?: string | null): IcpSegmentMetadata {
+  // NB : un métier local est bien routé sur service_professional, PAS
+  // local_independent — ses correctifs restent « done-for-you » (GetPick fait le
+  // travail), conformément au pivot. La localisation des QUESTIONS d'achat se fait
+  // par catégorie (isLocalServiceCategory) dans les générateurs, indépendamment du
+  // segment, qui n'était de toute façon jamais passé à la génération.
   if (isServiceCategory(category)) return ICP_SEGMENTS.service_professional;
   return ICP_SEGMENTS.small_brand_ecommerce;
 }
@@ -2795,6 +2819,35 @@ function generateBuyerIntentPrompts(brandName: string, websiteUrl: string, categ
   const audience = inferAudienceFromHomepage(homepageText, language);
   const buyerCategory = localizedCategoryTerm(categoryTerm, language);
   const ecommerceLocationSuffix = location ? (language === "fr" ? ` à ${location}` : ` in ${location}`) : "";
+
+  // Métier de service local avec ville détectée : questions d'achat LOCALES
+  // (« meilleur expert-comptable à Lyon »), jamais des questions nationales.
+  if (isLocalServiceCategory(category) && location) {
+    const inCity = language === "fr" ? `à ${location}` : `in ${location}`;
+    const forWho = language === "fr" ? `pour ${audience}` : `for ${audience}`;
+    return cleanPromptList(
+      language === "fr"
+        ? [
+            `meilleur ${buyerCategory} ${inCity}`,
+            `meilleur ${buyerCategory} ${inCity} ${forWho}`,
+            `quel ${buyerCategory} choisir ${inCity}`,
+            `${buyerCategory} ${inCity} avis`,
+            `meilleur ${buyerCategory} ${inCity} pas cher`,
+            `${buyerCategory} recommandé ${inCity}`,
+            `bon ${buyerCategory} près de chez moi ${inCity}`,
+          ]
+        : [
+            `best ${buyerCategory} ${inCity}`,
+            `best ${buyerCategory} ${inCity} ${forWho}`,
+            `which ${buyerCategory} to choose ${inCity}`,
+            `${buyerCategory} ${inCity} reviews`,
+            `affordable ${buyerCategory} ${inCity}`,
+            `recommended ${buyerCategory} ${inCity}`,
+            `good ${buyerCategory} near me ${inCity}`,
+          ],
+      12
+    );
+  }
 
   if (language !== "fr" && /footwear|shoe|sneaker|running shoe/i.test(category)) {
     return cleanPromptList([
@@ -3723,6 +3776,7 @@ async function generateBuyerIntentPromptsAI(
   const language = preferredLocale ?? detectBuyerQuestionLanguage(homepageText, domain);
   const languageName = language === "fr" ? "French" : "English";
   const context = homepageText.replace(/\s+/g, " ").trim().slice(0, 1500);
+  const localCity = isLocalServiceCategory(category) ? inferLocationFromHomepage(homepageText) : null;
 
   const instruction = [
     "You generate realistic buyer-intent questions for an AI-visibility audit.",
@@ -3745,6 +3799,9 @@ async function generateBuyerIntentPromptsAI(
     `- Do NOT mention "${brandName}" or "${domain}" in any question — these are demand-side questions used to test whether the AI recommends the brand on its own.`,
     `- Write them in natural ${languageName}.`,
     "- No numbering, no surrounding quotes, no preamble, no duplicates.",
+    localCity
+      ? `LOCAL BUSINESS in ${localCity}: a ${category} is chosen LOCALLY. Every question MUST contain "${localCity}" (or "près de moi"/"near me") and use the natural ${languageName} term for a ${category}. Cover: best provider in ${localCity}, best provider in ${localCity} for a given client type/sector, which provider to choose in ${localCity}, reviews or quotes in ${localCity}. Do NOT write generic national questions like "how to choose a ...", "average price of a ...", or "benefits of an online ..." — those make a local business compete against national platforms it can never outrank.`
+      : "",
     'Return ONLY valid JSON with this exact shape: {"questions":["...","..."]}',
   ]
     .filter(Boolean)
