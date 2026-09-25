@@ -149,3 +149,20 @@ export function auditShareUrl(
   url.searchParams.set(AUDIT_SHARE_TOKEN_PARAM, token);
   return url.toString();
 }
+
+/**
+ * Lien personnel vers le tableau de bord CLIENT (`/tableau-de-bord/<id>`). Le
+ * jeton est signé sur l'`auditId`, donc indépendant du chemin : c'est le même
+ * mécanisme que `auditShareUrl`, pointé vers l'espace privé du client.
+ */
+export function dashboardShareUrl(
+  baseUrl: string,
+  auditId: string,
+  ttlDays: number = AUDIT_SHARE_TOKEN_TTL_DAYS,
+  now: number = Date.now()
+): string {
+  const token = signAuditShareToken(auditId, ttlDays, now);
+  const url = new URL(`/tableau-de-bord/${encodeURIComponent(auditId)}`, baseUrl);
+  url.searchParams.set(AUDIT_SHARE_TOKEN_PARAM, token);
+  return url.toString();
+}
