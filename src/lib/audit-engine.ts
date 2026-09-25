@@ -2487,19 +2487,28 @@ function detectBuyerQuestionLanguage(text: string, domain: string) {
 const LOCATION_HINTS = [
   "Paris", "Lyon", "Marseille", "Toulouse", "Nice", "Nantes", "Montpellier", "Strasbourg", "Bordeaux", "Lille",
   "Rennes", "Reims", "Saint-Étienne", "Toulon", "Grenoble", "Dijon", "Angers", "Nîmes", "Villeurbanne", "Clermont-Ferrand",
+  "Le Havre", "Aix-en-Provence", "Brest", "Limoges", "Tours", "Amiens", "Perpignan", "Metz", "Besançon", "Orléans",
+  "Rouen", "Mulhouse", "Caen", "Nancy", "Argenteuil", "Montreuil", "Roubaix", "Tourcoing", "Nanterre", "Avignon",
+  "Poitiers", "Versailles", "Pau", "La Rochelle", "Antibes", "Cannes", "Colmar", "Bourges", "Quimper", "Vannes",
+  "Annecy", "Chambéry", "Valence", "Béziers", "Cholet", "Lorient", "Troyes", "Niort", "Chartres", "Bayonne",
   "London", "New York", "Los Angeles", "Chicago", "San Francisco", "Austin", "Seattle", "Boston", "Miami", "Toronto",
 ];
 
 function inferLocationFromHomepage(text: string) {
   const normalized = text.replace(/\s+/g, " ");
-  const postalMatch = normalized.match(/\b\d{5}\s+([A-ZÀ-Ÿ][A-Za-zÀ-ÿ' -]{2,38})\b/);
-  const explicitLocationMatch = normalized.match(/\b(?:based in|located in|situ[eé]\s+[aà])\s+([A-ZÀ-Ÿ][A-Za-zÀ-ÿ' -]{2,38})\b/);
-  const knownCity = LOCATION_HINTS.find((city) => new RegExp(`\b${escapedRegex(city)}\b`, "i").test(normalized));
+  // French postal code (5 digits) followed by a city name. Capture only
+  // capitalised tokens (handles "Saint-Étienne", "Clermont-Ferrand") and stop
+  // at the first lowercase word or punctuation so we don't grab "44000 Nantes - Cabinet".
+  const postalMatch = normalized.match(/\b\d{5}\s+([A-ZÀ-Ÿ][A-Za-zÀ-ÿ']+(?:[ -][A-ZÀ-Ÿ][A-Za-zÀ-ÿ']+)*)/);
+  const explicitLocationMatch = normalized.match(/(?:based in|located in|situ[eé]e?s?\s+[aà])\s+([A-ZÀ-Ÿ][A-Za-zÀ-ÿ']+(?:[ -][A-ZÀ-Ÿ][A-Za-zÀ-ÿ']+)*)/i);
+  // Known-city fallback. NOTE: use "\\b" (word boundary) — a template-literal
+  // "\b" is a backspace char (0x08) and never matches real text.
+  const knownCity = LOCATION_HINTS.find((city) => new RegExp(`\\b${escapedRegex(city)}\\b`, "i").test(normalized));
   const city = postalMatch?.[1] ?? knownCity ?? explicitLocationMatch?.[1];
 
   if (city) {
     return city
-      .replace(/\b(?:France|Europe|Contact|Accueil|Home|Services|Clients|About|Legal)\b.*$/i, "")
+      .replace(/\b(?:France|Europe|Contact|Accueil|Home|Services|Clients|About|Legal|Mentions?)\b.*$/i, "")
       .trim()
       .slice(0, 40);
   }
