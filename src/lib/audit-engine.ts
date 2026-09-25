@@ -757,7 +757,7 @@ function reportFromRow(row: AuditRow): AuditReport {
   const buyerIntentPrompts = row.raw_results?.buyerIntentPrompts ?? [];
   const auditTier = row.raw_results?.auditTier ?? "free";
   const category = row.raw_results?.category ?? "unknown";
-  const icpSegment = row.raw_results?.icpSegment ?? detectIcpSegment(category);
+  const icpSegment = resolveIcpSegment(row.raw_results?.icpSegment, category);
 
   return {
     audit_id: row.id,
@@ -2350,7 +2350,7 @@ function monitoringSnapshotFromRuns(current: StoredPromptRow, runs: StoredPrompt
       currentPrompts,
       current.raw_results?.category ?? UNKNOWN_CATEGORY,
       [],
-      current.raw_results?.icpSegment ?? detectIcpSegment(current.raw_results?.category),
+      resolveIcpSegment(current.raw_results?.icpSegment, current.raw_results?.category),
       current.raw_results?.locale === "fr" ? "fr" : "en"
     ),
     sources: extractSourceCitationReports(currentPrompts),
@@ -2883,6 +2883,36 @@ export function detectIcpSegment(category?: string | null): IcpSegmentMetadata {
   // segment, qui n'était de toute façon jamais passé à la génération.
   if (isServiceCategory(category)) return ICP_SEGMENTS.service_professional;
   return ICP_SEGMENTS.small_brand_ecommerce;
+}
+
+// LOT H (25/09/2026). `detectIcpSegment` ne repare que les lignes ou le champ
+// `icpSegment` est ABSENT. Or toute ligne `audits` completee AVANT le
+// deploiement du LOT F porte le champ PRESENT et egal au defaut d'avant le
+// pivot, y compris pour les trois cabinets audites le 23/09 : leur suivi
+// mensuel, persiste et ENVOYE PAR EMAIL, servirait un plan DTC indefiniment,
+// jusqu'a un re-audit. Un `??` ne peut pas le voir.
+//
+// DECISION ECRITE, ET ELLE VAUT POUR LES TROIS CHEMINS DE LECTURE — c'est
+// precisement le defaut du 24/09 (deux replis differents sur le meme champ dans
+// le meme fichier) qui reviendrait par la porte d'a cote si un seul chemin
+// reconciliait. Le segment est une valeur DERIVEE de la categorie : quand la
+// valeur stockee est le defaut d'avant le pivot et que la categorie de la meme
+// ligne dit autre chose, la valeur stockee est une derivation PERIMEE, pas un
+// choix — on la recalcule.
+//
+// RECONCILIATION A SENS UNIQUE, et c'est la limite qui rend ce lot sur. On ne
+// remplace JAMAIS un segment stocke non-DTC : une ligne portant
+// `service_professional` le garde, meme si `SERVICE_CATEGORIES` retrecit un
+// jour. Une ligne DTC avec une categorie DTC ne bouge pas non plus. Le seul
+// mouvement possible est la reparation du defaut d'avant le pivot.
+const SEGMENT_AVANT_PIVOT: IcpSegmentKey = "small_brand_ecommerce";
+
+export function resolveIcpSegment(stored: IcpSegmentMetadata | undefined | null, category?: string | null): IcpSegmentMetadata {
+  const derived = detectIcpSegment(category);
+  if (!stored) return derived;
+  if (stored.key !== SEGMENT_AVANT_PIVOT) return stored;
+  if (derived.key === SEGMENT_AVANT_PIVOT) return stored;
+  return derived;
 }
 
 function promptHasBannedNavigationTerm(prompt: string) {
@@ -5116,7 +5146,7 @@ export function generateGeoAgentAssetsFromAudit(audit: {
       prompts,
       category,
       competitors,
-      audit.raw_results?.icpSegment ?? detectIcpSegment(category),
+      resolveIcpSegment(audit.raw_results?.icpSegment, category),
       audit.raw_results?.locale === "fr" ? "fr" : "en"
     ),
     reviewRequestTemplates: [
