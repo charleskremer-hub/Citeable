@@ -61,10 +61,12 @@ test("dashboard — livrable privé : noindex", () => {
   assert.match(page, /index:\s*false/);
 });
 
-test("dashboard — agrège les 3 briques", () => {
-  assert.match(page, /buildPresencePack/);
+test("dashboard — centré sur la visibilité GEO (autonome), off-site retiré", () => {
+  assert.match(page, /computeGeoVisibility/);
   assert.match(page, /computeShiftProof/);
   assert.match(page, /hostedAnswerPageSlug/);
+  // La présence off-site (intervention humaine) ne doit plus être surfacée ici.
+  assert.equal(/buildPresencePack/.test(page), false, "l'off-site (action client) est retiré du dashboard");
 });
 
 test("dashboard — aucun gating de paiement dans l'espace client", () => {
