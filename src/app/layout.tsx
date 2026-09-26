@@ -104,7 +104,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }}
         />
       </head>
-      <body className="min-h-full bg-[#09090B] text-[#F0F0EC] antialiased">
+      <body className="min-h-full bg-[#F5F7FA] text-[#132A43] antialiased">
         {children}
         <Analytics />
         <PostHogInit />

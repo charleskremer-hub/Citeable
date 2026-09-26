@@ -13,7 +13,7 @@ const inputStyle = {
   border: "1px solid rgba(255,255,255,0.12)",
   borderRadius: "14px",
   background: "rgba(255,255,255,0.05)",
-  color: "#F0F0EC",
+  color: "#132A43",
   fontFamily: "var(--font-sans)",
   fontSize: "1rem",
   outline: "none",
@@ -133,23 +133,23 @@ export default function HomeClient({ locale }: HomeClientProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#09090B] text-[#F0F0EC]" style={{ fontFamily: "var(--font-sans)" }}>
+    <div className="min-h-screen bg-[#F5F7FA] text-[#132A43]" style={{ fontFamily: "var(--font-sans)" }}>
       <LocaleLang locale={locale} />
-      <nav className="border-b border-white/[0.06]">
+      <nav className="border-b border-[#E4E9F0]">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-3 sm:px-6 sm:py-5">
-          <a href="#hero" className="flex items-center gap-2 text-[#F0F0EC] no-underline">
+          <a href="#hero" className="flex items-center gap-2 text-[#132A43] no-underline">
             <span className="font-serif text-xl tracking-[-0.02em]" style={{ fontFamily: "var(--font-display)" }}>
               GetPick
             </span>
-            <span className="rounded bg-[#CAFF3C]/15 px-1.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.08em] text-[#CAFF3C]">
+            <span className="rounded bg-[#123E5C]/15 px-1.5 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.08em] text-[#123E5C]">
               Beta
             </span>
           </a>
           <div className="flex items-center gap-4 sm:gap-6">
-            <Link href={locale === "fr" ? "/fr/vs" : "/vs"} className="text-sm font-semibold text-[#F0F0EC]/70 no-underline transition hover:text-[#F0F0EC]">
+            <Link href={locale === "fr" ? "/fr/vs" : "/vs"} className="text-sm font-semibold text-[#132A43]/70 no-underline transition hover:text-[#132A43]">
               {copy.navCompare}
             </Link>
-            <a href="#audit" className="text-sm font-semibold text-[#CAFF3C] no-underline">
+            <a href="#audit" className="text-sm font-semibold text-[#123E5C] no-underline">
               {copy.navAudit}
             </a>
           </div>
@@ -159,38 +159,38 @@ export default function HomeClient({ locale }: HomeClientProps) {
       <main>
         {/* 1. HERO — douleur + transformation, formulaire d'audit inchangé */}
         <section id="hero" className="relative mx-auto max-w-5xl overflow-hidden px-5 pb-12 pt-3 sm:px-6 sm:pb-20 sm:pt-12">
-          <div className="pointer-events-none absolute left-1/2 top-0 h-72 w-[42rem] -translate-x-1/2 rounded-full bg-[#CAFF3C]/[0.055] blur-3xl" />
+          <div className="pointer-events-none absolute left-1/2 top-0 h-72 w-[42rem] -translate-x-1/2 rounded-full bg-[#123E5C]/[0.055] blur-3xl" />
 
           <div className="relative grid gap-3 sm:gap-5 lg:grid-cols-[1.02fr_0.78fr] lg:items-center lg:gap-12">
             <div>
-              <div className="mb-1.5 inline-flex items-center gap-2 rounded-full border border-[#CAFF3C]/20 bg-[#CAFF3C]/10 px-3 py-1 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[#CAFF3C] sm:mb-4">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#CAFF3C] shadow-[0_0_10px_#CAFF3C]" />
+              <div className="mb-1.5 inline-flex items-center gap-2 rounded-full border border-[#123E5C]/20 bg-[#123E5C]/10 px-3 py-1 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[#123E5C] sm:mb-4">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#123E5C] shadow-[0_0_10px_#123E5C]" />
                 {copy.heroEyebrow}
               </div>
               <h1
-                className="max-w-3xl text-[clamp(1.75rem,6.5vw,3.6rem)] leading-[1.02] tracking-[-0.045em] text-[#F0F0EC]"
+                className="max-w-3xl text-[clamp(1.75rem,6.5vw,3.6rem)] leading-[1.02] tracking-[-0.045em] text-[#132A43]"
                 style={{ fontFamily: "var(--font-display)" }}
               >
-                <span className="text-[#B8B8C4]">{copy.heroTitle}</span>{" "}
-                <span className="text-[#CAFF3C]">{copy.heroTitleAccent}</span>
+                <span className="text-[#5B6B82]">{copy.heroTitle}</span>{" "}
+                <span className="text-[#123E5C]">{copy.heroTitleAccent}</span>
               </h1>
-              <p className="mt-2.5 max-w-2xl text-[0.95rem] leading-[1.32] text-[#B8B8C4] sm:mt-5 sm:text-xl sm:leading-[1.55]">
+              <p className="mt-2.5 max-w-2xl text-[0.95rem] leading-[1.32] text-[#5B6B82] sm:mt-5 sm:text-xl sm:leading-[1.55]">
                 {copy.heroSubtitle}
               </p>
             </div>
 
-            <div id="audit" className="rounded-[1.35rem] border border-white/10 bg-[#111116]/95 p-4 shadow-2xl shadow-black/30 sm:p-6">
+            <div id="audit" className="rounded-[1.35rem] border border-[#E4E9F0] bg-[#FFFFFF]/95 p-4 shadow-2xl shadow-black/5 sm:p-6">
               {/* Visible on mobile too — trust signal above the fold (funnel diagnostic 2026-07-16) */}
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-base font-bold tracking-[-0.02em] text-[#F0F0EC] sm:text-lg">{copy.formTitle}</h2>
-                  <p className="mt-0.5 text-xs text-[#858594] sm:mt-1 sm:text-sm">{copy.formSubtitle}</p>
+                  <h2 className="text-base font-bold tracking-[-0.02em] text-[#132A43] sm:text-lg">{copy.formTitle}</h2>
+                  <p className="mt-0.5 text-xs text-[#8FA0B4] sm:mt-1 sm:text-sm">{copy.formSubtitle}</p>
                 </div>
-                <span className="shrink-0 rounded-full bg-[#CAFF3C] px-2.5 py-1 text-xs font-black text-[#09090B]">{copy.freeBadge}</span>
+                <span className="shrink-0 rounded-full bg-[#123E5C] px-2.5 py-1 text-xs font-black text-white">{copy.freeBadge}</span>
               </div>
 
               {status === "success" ? (
-                <div className="rounded-xl border border-[#CAFF3C]/30 bg-[#CAFF3C]/10 p-4 text-sm font-semibold text-[#CAFF3C]">
+                <div className="rounded-xl border border-[#123E5C]/30 bg-[#123E5C]/10 p-4 text-sm font-semibold text-[#123E5C]">
                   {copy.success}
                 </div>
               ) : (
@@ -239,14 +239,14 @@ export default function HomeClient({ locale }: HomeClientProps) {
                   <button
                     type="submit"
                     disabled={status === "loading"}
-                    className="rounded-[14px] bg-[#CAFF3C] px-5 py-3.5 text-base font-black tracking-[-0.01em] text-[#09090B] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-[14px] bg-[#123E5C] px-5 py-3.5 text-base font-black tracking-[-0.01em] text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
                     data-ph-capture-attribute-form-field="submit"
                   >
                     {status === "loading" ? copy.loadingCta : copy.submitCta}
                   </button>
-                  {errorMsg && <p className="m-0 text-sm text-[#FF6B6B]">{errorMsg}</p>}
-                  <p className="m-0 text-xs leading-5 text-[#6F6F80]">{copy.formFootnote}</p>
-                  <p className="m-0 text-xs font-bold leading-5 text-[#8E8E9A]">{copy.formBuyerIntentNote}</p>
+                  {errorMsg && <p className="m-0 text-sm text-[#C0492E]">{errorMsg}</p>}
+                  <p className="m-0 text-xs leading-5 text-[#8FA0B4]">{copy.formFootnote}</p>
+                  <p className="m-0 text-xs font-bold leading-5 text-[#8FA0B4]">{copy.formBuyerIntentNote}</p>
                 </form>
               )}
             </div>
@@ -255,33 +255,33 @@ export default function HomeClient({ locale }: HomeClientProps) {
 
         {/* 2. DÉMO CONVERSATION IA — la douleur rendue visible */}
         <section className="mx-auto max-w-5xl px-5 pb-2 pt-2 sm:px-6">
-          <div className="relative overflow-hidden rounded-[1.6rem] border border-[#FF8F6B]/25 bg-[#FF8F6B]/[0.04] p-6 sm:p-8">
-            <div className="pointer-events-none absolute -left-16 -top-16 h-48 w-48 rounded-full bg-[#FF8F6B]/10 blur-3xl" />
+          <div className="relative overflow-hidden rounded-[1.6rem] border border-[#C0492E]/25 bg-[#C0492E]/[0.04] p-6 sm:p-8">
+            <div className="pointer-events-none absolute -left-16 -top-16 h-48 w-48 rounded-full bg-[#C0492E]/10 blur-3xl" />
             <div className="relative grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
               <div>
-                <p className="mb-3 text-xs font-bold uppercase tracking-[0.12em] text-[#FF8F6B]">{copy.demoEyebrow}</p>
-                <h2 className="text-[clamp(1.6rem,4vw,2.5rem)] leading-[1.05] tracking-[-0.03em] text-[#F0F0EC]" style={{ fontFamily: "var(--font-display)" }}>
+                <p className="mb-3 text-xs font-bold uppercase tracking-[0.12em] text-[#C0492E]">{copy.demoEyebrow}</p>
+                <h2 className="text-[clamp(1.6rem,4vw,2.5rem)] leading-[1.05] tracking-[-0.03em] text-[#132A43]" style={{ fontFamily: "var(--font-display)" }}>
                   {copy.demoTitle}
                 </h2>
-                <p className="mt-4 text-base leading-7 text-[#B8B8C4] sm:text-lg">{copy.demoCaption}</p>
+                <p className="mt-4 text-base leading-7 text-[#5B6B82] sm:text-lg">{copy.demoCaption}</p>
               </div>
 
-              <div className="rounded-[1.35rem] border border-white/[0.08] bg-[#111116] p-4 shadow-2xl shadow-black/30 sm:p-6">
+              <div className="rounded-[1.35rem] border border-[#E4E9F0] bg-[#FFFFFF] p-4 shadow-2xl shadow-black/5 sm:p-6">
                 <div className="flex flex-col gap-3">
-                  <div className="self-end rounded-2xl rounded-br-md bg-white/[0.08] px-4 py-3 text-sm font-semibold leading-6 text-[#F0F0EC]">
+                  <div className="self-end rounded-2xl rounded-br-md bg-[#FBFCFD] px-4 py-3 text-sm font-semibold leading-6 text-[#132A43]">
                     {copy.demoQuestion}
                   </div>
-                  <div className="max-w-[92%] self-start rounded-2xl rounded-bl-md border border-white/[0.07] bg-black/30 px-4 py-3 text-sm leading-6 text-[#B8B8C4]">
-                    <span className="mb-1.5 flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-[#6F6F80]">
-                      <span className="h-1.5 w-1.5 rounded-full bg-[#6F6F80]" />
+                  <div className="max-w-[92%] self-start rounded-2xl rounded-bl-md border border-[#E4E9F0] bg-[#EEF2F7] px-4 py-3 text-sm leading-6 text-[#5B6B82]">
+                    <span className="mb-1.5 flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-[#8FA0B4]">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#8FA0B4]" />
                       AI
                     </span>
                     {copy.demoAnswerBefore}
-                    <strong className="font-black text-[#FF8F6B]">{copy.demoAnswerRival}</strong>
+                    <strong className="font-black text-[#C0492E]">{copy.demoAnswerRival}</strong>
                     {copy.demoAnswerAfter}
                   </div>
                 </div>
-                <p className="m-0 mt-4 border-t border-white/[0.06] pt-3 text-xs font-bold text-[#6F6F80]">{copy.demoEyebrow}</p>
+                <p className="m-0 mt-4 border-t border-[#E4E9F0] pt-3 text-xs font-bold text-[#8FA0B4]">{copy.demoEyebrow}</p>
               </div>
             </div>
           </div>
@@ -289,51 +289,51 @@ export default function HomeClient({ locale }: HomeClientProps) {
 
         {/* 3. TROIS ÉTAPES CHIFFRÉES */}
         <section className="mx-auto max-w-5xl px-5 py-14 sm:px-6 sm:py-20">
-          <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.stepsEyebrow}</p>
+          <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#123E5C]">{copy.stepsEyebrow}</p>
           <h2 className="max-w-2xl text-[clamp(2rem,5vw,3rem)] leading-[1.02] tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
             {copy.stepsTitle}
           </h2>
 
-          <div className="mt-8 grid gap-1 overflow-hidden rounded-2xl bg-white/[0.07] sm:grid-cols-3">
+          <div className="mt-8 grid gap-1 overflow-hidden rounded-2xl bg-[#FBFCFD] sm:grid-cols-3">
             {copy.steps.map((step) => (
-              <div key={step.num} className="bg-[#111116] p-6">
+              <div key={step.num} className="bg-[#FFFFFF] p-6">
                 <div className="mb-4 flex items-center justify-between gap-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#CAFF3C] text-sm font-black text-[#09090B]">{step.num}</span>
-                  <span className="rounded-full border border-white/[0.1] px-2.5 py-1 text-[0.68rem] font-black uppercase tracking-[0.08em] text-[#8E8E9A]">{step.time}</span>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#123E5C] text-sm font-black text-white">{step.num}</span>
+                  <span className="rounded-full border border-[#E4E9F0] px-2.5 py-1 text-[0.68rem] font-black uppercase tracking-[0.08em] text-[#8FA0B4]">{step.time}</span>
                 </div>
-                <p className="m-0 text-lg font-bold leading-6 tracking-[-0.02em] text-[#F0F0EC]">{step.title}</p>
-                <p className="mt-2 text-sm leading-6 text-[#A7A7B4]">{step.body}</p>
+                <p className="m-0 text-lg font-bold leading-6 tracking-[-0.02em] text-[#132A43]">{step.title}</p>
+                <p className="mt-2 text-sm leading-6 text-[#5B6B82]">{step.body}</p>
               </div>
             ))}
           </div>
         </section>
 
         {/* 5. LE LIVRABLE — extrait de rapport stylisé */}
-        <section className="mx-auto max-w-5xl border-t border-white/[0.06] px-5 py-14 sm:px-6 sm:py-20">
+        <section className="mx-auto max-w-5xl border-t border-[#E4E9F0] px-5 py-14 sm:px-6 sm:py-20">
           <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
             <div>
-              <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.deliverableEyebrow}</p>
+              <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#123E5C]">{copy.deliverableEyebrow}</p>
               <h2 className="max-w-xl text-[clamp(2rem,5vw,3rem)] leading-[1.02] tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
                 {copy.deliverableTitle}
               </h2>
-              <p className="mt-5 text-sm font-bold leading-6 text-[#6F6F80]">{copy.reportCaption}</p>
+              <p className="mt-5 text-sm font-bold leading-6 text-[#8FA0B4]">{copy.reportCaption}</p>
             </div>
 
-            <div className="relative overflow-hidden rounded-[1.6rem] border border-white/[0.08] bg-[#111116] p-5 shadow-2xl shadow-black/30 sm:p-7">
-              <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-[#CAFF3C]/10 blur-3xl" />
+            <div className="relative overflow-hidden rounded-[1.6rem] border border-[#E4E9F0] bg-[#FFFFFF] p-5 shadow-2xl shadow-black/5 sm:p-7">
+              <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-[#123E5C]/10 blur-3xl" />
               <div className="relative flex flex-col gap-4">
-                <div className="rounded-2xl border border-white/[0.08] bg-black/25 p-4">
-                  <p className="m-0 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#8E8E9A]">{copy.reportVerdictLabel}</p>
-                  <p className="mt-2 text-base font-bold leading-6 text-[#F0F0EC]">{copy.reportVerdict}</p>
+                <div className="rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-4">
+                  <p className="m-0 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#8FA0B4]">{copy.reportVerdictLabel}</p>
+                  <p className="mt-2 text-base font-bold leading-6 text-[#132A43]">{copy.reportVerdict}</p>
                 </div>
-                <div className="rounded-2xl border border-[#FF8F6B]/25 bg-[#FF8F6B]/[0.06] p-4">
-                  <p className="m-0 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#FF8F6B]">{copy.reportRivalLabel}</p>
-                  <p className="mt-2 text-xl font-black tracking-[-0.02em] text-[#FF8F6B]">{copy.reportRival}</p>
+                <div className="rounded-2xl border border-[#C0492E]/25 bg-[#C0492E]/[0.06] p-4">
+                  <p className="m-0 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#C0492E]">{copy.reportRivalLabel}</p>
+                  <p className="mt-2 text-xl font-black tracking-[-0.02em] text-[#C0492E]">{copy.reportRival}</p>
                 </div>
-                <div className="rounded-2xl border border-[#CAFF3C]/25 bg-[#CAFF3C]/[0.06] p-4">
-                  <p className="m-0 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.reportFixLabel}</p>
-                  <p className="mt-2 text-sm font-bold text-[#F0F0EC]">{copy.reportFixTitle}</p>
-                  <p className="mt-2 rounded-xl border border-white/[0.07] bg-black/30 p-3 font-mono text-[0.8rem] leading-6 text-[#DDEFC0]">
+                <div className="rounded-2xl border border-[#123E5C]/25 bg-[#123E5C]/[0.06] p-4">
+                  <p className="m-0 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#123E5C]">{copy.reportFixLabel}</p>
+                  <p className="mt-2 text-sm font-bold text-[#132A43]">{copy.reportFixTitle}</p>
+                  <p className="mt-2 rounded-xl border border-[#E4E9F0] bg-[#EEF2F7] p-3 font-mono text-[0.8rem] leading-6 text-[#D6E2EC]">
                     {copy.reportFixBody}
                   </p>
                 </div>
@@ -349,56 +349,56 @@ export default function HomeClient({ locale }: HomeClientProps) {
             Le statut n'est jamais porté par la couleur seule — chaque ligne
             gagnante porte le mot « Toi » / « You » et chaque écart porte son
             chiffre en toutes lettres. */}
-        <section className="mx-auto max-w-5xl border-t border-white/[0.06] px-5 py-14 sm:px-6 sm:py-20">
-          <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.monitorEyebrow}</p>
+        <section className="mx-auto max-w-5xl border-t border-[#E4E9F0] px-5 py-14 sm:px-6 sm:py-20">
+          <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#123E5C]">{copy.monitorEyebrow}</p>
           <h2 className="max-w-2xl text-[clamp(2rem,5vw,3rem)] leading-[1.02] tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
             {copy.monitorTitle}
           </h2>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-[#B8B8C4]">{copy.monitorSubtitle}</p>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-[#5B6B82]">{copy.monitorSubtitle}</p>
 
-          <div className="mt-8 overflow-hidden rounded-[1.6rem] border border-white/[0.08] bg-[#111116] shadow-2xl shadow-black/30">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.07] bg-black/25 px-5 py-4">
+          <div className="mt-8 overflow-hidden rounded-[1.6rem] border border-[#E4E9F0] bg-[#FFFFFF] shadow-2xl shadow-black/5">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E4E9F0] bg-[#EEF2F7] px-5 py-4">
               <div className="flex items-center gap-2.5">
-                <span className="h-2 w-2 rounded-full bg-[#CAFF3C] shadow-[0_0_10px_#CAFF3C]" />
-                <p className="m-0 text-sm font-black tracking-[-0.01em] text-[#F0F0EC]">{copy.monitorDocTitle}</p>
+                <span className="h-2 w-2 rounded-full bg-[#123E5C] shadow-[0_0_10px_#123E5C]" />
+                <p className="m-0 text-sm font-black tracking-[-0.01em] text-[#132A43]">{copy.monitorDocTitle}</p>
               </div>
-              <span className="rounded-full border border-white/[0.12] px-2.5 py-1 text-[0.68rem] font-black uppercase tracking-[0.08em] text-[#8E8E9A]">
+              <span className="rounded-full border border-[#E4E9F0] px-2.5 py-1 text-[0.68rem] font-black uppercase tracking-[0.08em] text-[#8FA0B4]">
                 {copy.monitorDocChip}
               </span>
             </div>
 
-            <div className="grid gap-px bg-white/[0.07] sm:grid-cols-3">
+            <div className="grid gap-px bg-[#FBFCFD] sm:grid-cols-3">
               {copy.monitorTiles.map((tile) => (
-                <div key={tile.label} className="bg-[#111116] px-5 py-5">
-                  <p className="m-0 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[#8E8E9A]">{tile.label}</p>
-                  <p className="mt-1.5 mb-0 text-3xl font-black tracking-[-0.04em] text-[#F0F0EC]" style={{ fontFamily: "var(--font-display)" }}>
+                <div key={tile.label} className="bg-[#FFFFFF] px-5 py-5">
+                  <p className="m-0 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[#8FA0B4]">{tile.label}</p>
+                  <p className="mt-1.5 mb-0 text-3xl font-black tracking-[-0.04em] text-[#132A43]" style={{ fontFamily: "var(--font-display)" }}>
                     {tile.value}
                   </p>
-                  {tile.delta ? <p className="mt-1 mb-0 text-xs font-bold text-[#A7A7B4]">{tile.delta}</p> : null}
+                  {tile.delta ? <p className="mt-1 mb-0 text-xs font-bold text-[#5B6B82]">{tile.delta}</p> : null}
                 </div>
               ))}
             </div>
 
-            <div className="border-t border-white/[0.07] px-5 py-4">
-              <div className="mb-2 flex items-baseline justify-between gap-4 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[#6F6F80]">
+            <div className="border-t border-[#E4E9F0] px-5 py-4">
+              <div className="mb-2 flex items-baseline justify-between gap-4 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[#8FA0B4]">
                 <span>{copy.monitorColQuestion}</span>
                 <span>{copy.monitorColCited}</span>
               </div>
               <ul className="m-0 flex list-none flex-col p-0">
                 {copy.monitorRows.map((row) => (
-                  <li key={row.question} className="flex items-center justify-between gap-4 border-t border-white/[0.06] py-3 first:border-t-0">
-                    <span className="min-w-0 text-sm leading-6 text-[#B8B8C4]">{row.question}</span>
+                  <li key={row.question} className="flex items-center justify-between gap-4 border-t border-[#E4E9F0] py-3 first:border-t-0">
+                    <span className="min-w-0 text-sm leading-6 text-[#5B6B82]">{row.question}</span>
                     <span className="flex shrink-0 items-center gap-2">
                       {row.move ? (
-                        <span className="rounded-md bg-white/[0.06] px-2 py-0.5 text-[0.66rem] font-black uppercase tracking-[0.06em] text-[#8E8E9A]">
+                        <span className="rounded-md bg-[#FBFCFD] px-2 py-0.5 text-[0.66rem] font-black uppercase tracking-[0.06em] text-[#8FA0B4]">
                           {row.move}
                         </span>
                       ) : null}
                       <span
                         className={
                           row.mine
-                            ? "rounded-md bg-[#CAFF3C] px-2.5 py-1 text-[0.78rem] font-black text-[#09090B]"
-                            : "rounded-md border border-white/[0.1] px-2.5 py-1 text-[0.78rem] font-bold text-[#A7A7B4]"
+                            ? "rounded-md bg-[#123E5C] px-2.5 py-1 text-[0.78rem] font-black text-white"
+                            : "rounded-md border border-[#E4E9F0] px-2.5 py-1 text-[0.78rem] font-bold text-[#5B6B82]"
                         }
                       >
                         {row.cited}
@@ -409,21 +409,21 @@ export default function HomeClient({ locale }: HomeClientProps) {
               </ul>
             </div>
 
-            <p className="m-0 border-t border-white/[0.07] bg-black/20 px-5 py-3.5 text-sm font-bold text-[#B8B8C4]">
+            <p className="m-0 border-t border-[#E4E9F0] bg-[#EEF2F7] px-5 py-3.5 text-sm font-bold text-[#5B6B82]">
               {copy.monitorFooter}
             </p>
           </div>
 
-          <p className="mt-4 text-sm font-bold leading-6 text-[#6F6F80]">{copy.monitorCaption}</p>
+          <p className="mt-4 text-sm font-bold leading-6 text-[#8FA0B4]">{copy.monitorCaption}</p>
         </section>
 
         {/* 6. PRIX ANCRÉ — agence 2 000–20 000 €/mois vs le plan unique fait-pour-toi */}
-        <section className="mx-auto max-w-5xl border-t border-white/[0.06] px-5 py-14 sm:px-6 sm:py-20">
-          <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.pricingEyebrow}</p>
+        <section className="mx-auto max-w-5xl border-t border-[#E4E9F0] px-5 py-14 sm:px-6 sm:py-20">
+          <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#123E5C]">{copy.pricingEyebrow}</p>
           <h2 className="max-w-3xl text-[clamp(2rem,5vw,3rem)] leading-[1.02] tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
             {copy.pricingTitle}
           </h2>
-          <p className="mt-4 inline-flex rounded-full border border-white/[0.1] bg-white/[0.04] px-4 py-2 text-sm font-bold text-[#B8B8C4]">
+          <p className="mt-4 inline-flex rounded-full border border-[#E4E9F0] bg-[#FBFCFD] px-4 py-2 text-sm font-bold text-[#5B6B82]">
             {copy.pricingSubtitle}
           </p>
 
@@ -437,23 +437,23 @@ export default function HomeClient({ locale }: HomeClientProps) {
               const href = tier.href === "service" ? (serviceCheckout ? SERVICE_CHECKOUT_URL : "#audit") : tier.href;
 
               return (
-                <div key={tier.name} className={`relative rounded-2xl border p-6 ${tier.highlight ? "border-[#CAFF3C]/35 bg-[#CAFF3C]/[0.055]" : "border-white/[0.08] bg-[#111116]"}`}>
-                  <span className={`mb-4 inline-flex rounded-md px-2.5 py-1 text-[0.7rem] font-black uppercase tracking-[0.08em] ${tier.highlight ? "bg-[#CAFF3C] text-[#09090B]" : "bg-white/[0.06] text-[#B8B8C4]"}`}>
+                <div key={tier.name} className={`relative rounded-2xl border p-6 ${tier.highlight ? "border-[#123E5C]/35 bg-[#123E5C]/[0.055]" : "border-[#E4E9F0] bg-[#FFFFFF]"}`}>
+                  <span className={`mb-4 inline-flex rounded-md px-2.5 py-1 text-[0.7rem] font-black uppercase tracking-[0.08em] ${tier.highlight ? "bg-[#123E5C] text-white" : "bg-[#FBFCFD] text-[#5B6B82]"}`}>
                     {tier.badge}
                   </span>
-                  <p className="mb-3 text-xs font-bold uppercase tracking-[0.1em] text-[#CAFF3C]">{tier.name}</p>
+                  <p className="mb-3 text-xs font-bold uppercase tracking-[0.1em] text-[#123E5C]">{tier.name}</p>
                   <div className="mb-2 text-4xl tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                    {tier.price}<span className="text-base text-[#9A9AA8]">{"suffix" in tier ? tier.suffix : ""}</span>
+                    {tier.price}<span className="text-base text-[#8FA0B4]">{"suffix" in tier ? tier.suffix : ""}</span>
                   </div>
-                  <p className="mb-3 min-h-10 text-sm text-[#A7A7B4]">{tier.note}</p>
+                  <p className="mb-3 min-h-10 text-sm text-[#5B6B82]">{tier.note}</p>
                   {tier.plan !== "free" ? (
-                    <p className="m-0 mb-5 rounded-xl border border-white/[0.07] bg-black/20 px-3 py-2 text-xs font-bold leading-5 text-[#8E8E9A]">
+                    <p className="m-0 mb-5 rounded-xl border border-[#E4E9F0] bg-[#EEF2F7] px-3 py-2 text-xs font-bold leading-5 text-[#8FA0B4]">
                       {copy.pricingReassurance}
                     </p>
                   ) : null}
-                  <ul className="m-0 mb-6 flex list-none flex-col gap-2 p-0 text-sm text-[#B8B8C4]">
+                  <ul className="m-0 mb-6 flex list-none flex-col gap-2 p-0 text-sm text-[#5B6B82]">
                     {tier.features.map((feature) => (
-                      <li key={feature} className="flex gap-2"><span className="text-[#CAFF3C]">✓</span>{feature}</li>
+                      <li key={feature} className="flex gap-2"><span className="text-[#123E5C]">✓</span>{feature}</li>
                     ))}
                   </ul>
                   <a
@@ -462,7 +462,7 @@ export default function HomeClient({ locale }: HomeClientProps) {
                       window.posthog?.capture(tier.plan === "free" ? "audit_cta_clicked" : "purchase_started", { plan: tier.plan, source: "pricing_card", locale });
                       if (tier.href === "service" && serviceCheckout) trackCheckoutOpened("service", href, locale);
                     }}
-                    className={`block rounded-xl px-5 py-3 text-center text-sm font-black no-underline transition hover:brightness-110 ${tier.highlight ? "bg-[#CAFF3C] text-[#09090B]" : "bg-white/[0.08] text-[#F0F0EC]"}`}
+                    className={`block rounded-xl px-5 py-3 text-center text-sm font-black no-underline transition hover:brightness-110 ${tier.highlight ? "bg-[#123E5C] text-white" : "bg-[#FBFCFD] text-[#132A43]"}`}
                   >
                     {tier.cta}
                   </a>
@@ -474,31 +474,31 @@ export default function HomeClient({ locale }: HomeClientProps) {
           {/* Garantie 30 jours — lève l'objection « et si ça ne marche pas ? » sans dépendre de NanoCorp */}
           <p
             data-testid="pricing-guarantee"
-            className="m-0 mt-6 inline-flex items-center gap-2 rounded-xl border border-[#CAFF3C]/25 bg-[#CAFF3C]/[0.05] px-4 py-3 text-sm font-bold text-[#D6D6DF]"
+            className="m-0 mt-6 inline-flex items-center gap-2 rounded-xl border border-[#123E5C]/25 bg-[#123E5C]/[0.05] px-4 py-3 text-sm font-bold text-[#5B6B82]"
           >
-            <span className="text-[#CAFF3C]">✓</span>
+            <span className="text-[#123E5C]">✓</span>
             {copy.pricingGuarantee}
           </p>
         </section>
 
         {/* 7. EN BREF — paragraphe dense, lisible par les IA */}
-        <section className="mx-auto max-w-5xl border-t border-white/[0.06] px-5 py-12 sm:px-6">
-          <div className="rounded-[1.6rem] border border-white/[0.08] bg-[#111116] p-6 sm:p-8">
-            <p className="mb-3 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.tldrEyebrow}</p>
-            <p className="m-0 max-w-4xl text-base leading-7 text-[#B8B8C4] sm:text-lg sm:leading-8">{copy.tldrBody}</p>
+        <section className="mx-auto max-w-5xl border-t border-[#E4E9F0] px-5 py-12 sm:px-6">
+          <div className="rounded-[1.6rem] border border-[#E4E9F0] bg-[#FFFFFF] p-6 sm:p-8">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.12em] text-[#123E5C]">{copy.tldrEyebrow}</p>
+            <p className="m-0 max-w-4xl text-base leading-7 text-[#5B6B82] sm:text-lg sm:leading-8">{copy.tldrBody}</p>
           </div>
         </section>
 
         {/* 8. FONDATEUR */}
         <section className="mx-auto max-w-5xl px-5 py-12 sm:px-6">
-          <div className="rounded-[1.6rem] border border-[#CAFF3C]/20 bg-[#CAFF3C]/[0.04] p-6 sm:p-8">
-            <p className="mb-3 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.founderEyebrow}</p>
-            <p className="m-0 max-w-2xl text-base leading-7 text-[#D6D6DF] sm:text-lg">{copy.founderBody}</p>
+          <div className="rounded-[1.6rem] border border-[#123E5C]/20 bg-[#123E5C]/[0.04] p-6 sm:p-8">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.12em] text-[#123E5C]">{copy.founderEyebrow}</p>
+            <p className="m-0 max-w-2xl text-base leading-7 text-[#5B6B82] sm:text-lg">{copy.founderBody}</p>
             <div className="mt-5 flex flex-wrap items-center gap-4">
-              <p className="m-0 text-lg font-bold tracking-[-0.02em] text-[#F0F0EC]" style={{ fontFamily: "var(--font-display)" }}>
+              <p className="m-0 text-lg font-bold tracking-[-0.02em] text-[#132A43]" style={{ fontFamily: "var(--font-display)" }}>
                 {copy.founderSignature}
               </p>
-              <a href={`mailto:${copy.founderEmail}`} className="text-sm font-black text-[#CAFF3C] no-underline">
+              <a href={`mailto:${copy.founderEmail}`} className="text-sm font-black text-[#123E5C] no-underline">
                 {copy.founderEmail}
               </a>
             </div>
@@ -506,13 +506,13 @@ export default function HomeClient({ locale }: HomeClientProps) {
         </section>
 
         {/* 9. FAQ — les vraies objections */}
-        <section className="mx-auto max-w-5xl border-t border-white/[0.06] px-5 py-12 sm:px-6">
-          <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#777786]">{copy.faqEyebrow}</p>
+        <section className="mx-auto max-w-5xl border-t border-[#E4E9F0] px-5 py-12 sm:px-6">
+          <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#8FA0B4]">{copy.faqEyebrow}</p>
           <div className="grid gap-4 md:grid-cols-2">
             {copy.faqItems.map((item) => (
-              <div key={item.question} className="rounded-2xl border border-white/[0.07] bg-white/[0.03] p-6">
+              <div key={item.question} className="rounded-2xl border border-[#E4E9F0] bg-[#FBFCFD] p-6">
                 <h2 className="mb-3 text-xl font-bold tracking-[-0.02em]">{item.question}</h2>
-                <p className="m-0 text-sm leading-6 text-[#A7A7B4]">
+                <p className="m-0 text-sm leading-6 text-[#5B6B82]">
                   {item.answer}
                 </p>
               </div>
@@ -521,16 +521,16 @@ export default function HomeClient({ locale }: HomeClientProps) {
         </section>
 
         {/* Guides IA — pages answer-ready (SEO/GEO interne) */}
-        <section className="mx-auto max-w-5xl border-t border-white/[0.06] px-5 py-14 sm:px-6 sm:py-20">
+        <section className="mx-auto max-w-5xl border-t border-[#E4E9F0] px-5 py-14 sm:px-6 sm:py-20">
           <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
             <div>
-              <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#CAFF3C]">
+              <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#123E5C]">
                 {locale === "fr" ? "Guides IA" : "AI guides"}
               </p>
               <h2 className="max-w-xl text-[clamp(2rem,5vw,3rem)] leading-[1.02] tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
                 {locale === "fr" ? "Est-ce que l'IA recommande ta catégorie ?" : "Does AI recommend your category?"}
               </h2>
-              <p className="mt-5 max-w-xl text-base leading-7 text-[#A7A7B4] sm:text-lg">
+              <p className="mt-5 max-w-xl text-base leading-7 text-[#5B6B82] sm:text-lg">
                 {locale === "fr"
                   ? `Des pages answer-ready pour comprendre les signaux que ChatGPT, Gemini et les AI Overviews peuvent citer avant de recommander des ${BEACHHEAD_TRADE.fr}s.`
                   : `Answer-ready pages explaining the signals ChatGPT, Gemini and AI Overviews can cite before recommending ${BEACHHEAD_TRADE.en}s.`}
@@ -538,8 +538,8 @@ export default function HomeClient({ locale }: HomeClientProps) {
             </div>
             <div className="grid gap-3">
               {resourcePages.map((page) => (
-                <a key={page.slug} href={`/${page.locale}/${page.slug}`} className="rounded-2xl border border-white/[0.08] bg-white/[0.035] p-5 text-[#F0F0EC] no-underline transition hover:border-[#CAFF3C]/35 hover:bg-[#CAFF3C]/[0.04]">
-                  <span className="block text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">{page.category}</span>
+                <a key={page.slug} href={`/${page.locale}/${page.slug}`} className="rounded-2xl border border-[#E4E9F0] bg-[#FBFCFD] p-5 text-[#132A43] no-underline transition hover:border-[#123E5C]/35 hover:bg-[#123E5C]/[0.04]">
+                  <span className="block text-xs font-black uppercase tracking-[0.12em] text-[#123E5C]">{page.category}</span>
                   <span className="mt-2 block text-lg font-black tracking-[-0.02em]">{page.title}</span>
                 </a>
               ))}
@@ -549,17 +549,17 @@ export default function HomeClient({ locale }: HomeClientProps) {
 
         {/* 10. CLÔTURE — aversion à la perte + CTA vers le formulaire */}
         <section className="mx-auto max-w-5xl px-5 pb-16 sm:px-6 sm:pb-20">
-          <div className="relative overflow-hidden rounded-[1.8rem] border border-[#CAFF3C]/30 bg-[#CAFF3C]/[0.07] p-7 sm:p-10">
-            <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[#CAFF3C]/15 blur-3xl" />
+          <div className="relative overflow-hidden rounded-[1.8rem] border border-[#123E5C]/30 bg-[#123E5C]/[0.07] p-7 sm:p-10">
+            <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[#123E5C]/15 blur-3xl" />
             <div className="relative">
-              <h2 className="max-w-2xl text-[clamp(2rem,5.5vw,3.4rem)] leading-[1.0] tracking-[-0.045em] text-[#F0F0EC]" style={{ fontFamily: "var(--font-display)" }}>
+              <h2 className="max-w-2xl text-[clamp(2rem,5.5vw,3.4rem)] leading-[1.0] tracking-[-0.045em] text-[#132A43]" style={{ fontFamily: "var(--font-display)" }}>
                 {copy.closingTitle}
               </h2>
-              <p className="mt-4 max-w-xl text-base leading-7 text-[#B8B8C4] sm:text-lg">{copy.closingBody}</p>
+              <p className="mt-4 max-w-xl text-base leading-7 text-[#5B6B82] sm:text-lg">{copy.closingBody}</p>
               <a
                 href="#audit"
                 onClick={() => window.posthog?.capture("audit_cta_clicked", { plan: "free", source: "closing_cta", locale })}
-                className="mt-6 inline-flex rounded-xl bg-[#CAFF3C] px-6 py-3.5 text-base font-black text-[#09090B] no-underline transition hover:brightness-110"
+                className="mt-6 inline-flex rounded-xl bg-[#123E5C] px-6 py-3.5 text-base font-black text-white no-underline transition hover:brightness-110"
               >
                 {copy.closingCta}
               </a>
@@ -568,19 +568,19 @@ export default function HomeClient({ locale }: HomeClientProps) {
         </section>
       </main>
 
-      <footer className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] px-5 py-8 sm:px-6">
+      <footer className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 border-t border-[#E4E9F0] px-5 py-8 sm:px-6">
         <div>
           <div className="text-lg tracking-[-0.02em]" style={{ fontFamily: "var(--font-display)" }}>GetPick</div>
-          <p className="m-0 text-sm text-[#686879]">{copy.footerTagline}</p>
+          <p className="m-0 text-sm text-[#8FA0B4]">{copy.footerTagline}</p>
         </div>
         <div className="flex flex-wrap items-center gap-4">
-          <Link href="/study" className="m-0 text-sm text-[#686879] no-underline hover:text-[#F0F0EC]">
+          <Link href="/study" className="m-0 text-sm text-[#8FA0B4] no-underline hover:text-[#132A43]">
             {copy.footerStudy}
           </Link>
-          <Link href="/prospection" className="m-0 text-sm text-[#686879] no-underline hover:text-[#F0F0EC]">
+          <Link href="/prospection" className="m-0 text-sm text-[#8FA0B4] no-underline hover:text-[#132A43]">
             {copy.footerProspection}
           </Link>
-          <p className="m-0 text-sm text-[#444454]">© {new Date().getFullYear()} GetPick. {copy.rights}</p>
+          <p className="m-0 text-sm text-[#8FA0B4]">© {new Date().getFullYear()} GetPick. {copy.rights}</p>
         </div>
       </footer>
     </div>

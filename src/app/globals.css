@@ -1,13 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --accent: #CAFF3C;
-  --accent-dim: rgba(202, 255, 60, 0.12);
-  --bg: #09090B;
-  --surface: #111116;
-  --border: rgba(255, 255, 255, 0.08);
-  --text: #F0F0EC;
-  --muted: #666676;
+  /* Charte « Clair & confiance » — adaptée à l'ICP expert-comptable (26/09/2026) */
+  --accent: #123E5C;
+  --accent-dim: rgba(18, 62, 92, 0.08);
+  --bg: #F5F7FA;
+  --surface: #FFFFFF;
+  --border: #E4E9F0;
+  --text: #132A43;
+  --muted: #5B6B82;
 }
 
 * {
