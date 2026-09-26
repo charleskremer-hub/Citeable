@@ -1,3 +1,4 @@
+import { isAnonymousEmail } from "@/lib/anonymous-email";
 import { pool } from "@/lib/db";
 import type { PlanTier } from "@/lib/plan-promises";
 import type { EntitlementPlan } from "@/lib/stripe-webhook";
@@ -165,4 +166,22 @@ export const TIER_BY_ENTITLEMENT_PLAN: Record<EntitlementPlan, PlanTier> = {
 export async function servedTierForEmail(email: string): Promise<PlanTier | null> {
   const plan = await entitlementForEmail(email);
   return plan === null ? null : TIER_BY_ENTITLEMENT_PLAN[plan];
+}
+
+/**
+ * Un abonnement actif est-il rattaché à cet audit ? Le rattachement passe par
+ * l'EMAIL, seul identifiant partagé avec Stripe.
+ * FAIL-SAFE : toute panne de base rend `false` — ne pas pouvoir prouver le
+ * droit n'est pas une raison de l'accorder.
+ *
+ * Vivait dans `/audit/[id]/page.tsx` ; déplacé ici le 26/09 — la page rend,
+ * elle ne décide pas d'un droit, et le contrat AC1 la borne à 600 lignes.
+ */
+export async function hasActiveSubscriptionForAudit(email: string): Promise<boolean> {
+  if (!email || isAnonymousEmail(email)) return false;
+  try {
+    return (await entitlementForEmail(email)) !== null;
+  } catch {
+    return false;
+  }
 }

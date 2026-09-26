@@ -5,13 +5,14 @@ import { SERVICE_CHECKOUT_URL, isCheckoutConfigured } from "@/lib/checkout-links
 import { ensureAuditSchema, pool } from "@/lib/db";
 import { recordReportLinkOpened } from "@/lib/funnel";
 import { auditCopy, brandSentimentView, localeFromHeaders, localeFromUnknown, localizeCategoryLabel, localizePlainAction, type Locale } from "@/lib/i18n";
-import { categoryPerceptionFromPrompts, extractSourceCitationReports, generateGeoAgentAssetsFromAudit, isAnonymousEmail, isAuditedBrandName, robotsTxtFixForBlockedCrawlers, youtubeContentTipIsRelevant } from "@/lib/audit-engine";
+import { categoryPerceptionFromPrompts, extractSourceCitationReports, generateGeoAgentAssetsFromAudit, hostnameFromUrl, isAnonymousEmail, isAuditedBrandName, reportUrlForAudit, robotsTxtFixForBlockedCrawlers, youtubeContentTipIsRelevant } from "@/lib/audit-engine";
 import type { BrandSentiment, BuyerIntentPromptResult, CategoryPerception, DetectedPlatform, IcpSegmentMetadata, PlainAction, SourceCitationReport } from "@/lib/audit-engine";
 import { AUDIT_SHARE_TOKEN_PARAM, auditShareTokenState, verifyAuditShareToken } from "@/lib/audit-share-token";
 import { resolveReportAccess } from "@/lib/report-access";
-import { entitlementForEmail } from "@/lib/subscriptions";
+import { hasActiveSubscriptionForAudit } from "@/lib/subscriptions";
 import LocaleLang from "@/app/LocaleLang";
 import AuditPoller from "./AuditPoller";
+import EmailDeliveryNotice from "./EmailDeliveryNotice";
 import ReportViewBeacon from "./ReportViewBeacon";
 import AgentAuditChat from "./AgentAuditChat";
 import FunnelCheckoutLink from "./FunnelCheckoutLink";
@@ -72,6 +73,8 @@ type AuditRow = {
     answerEngine?: { engine?: string; model?: string; realLlmCall?: boolean };
     brandSentiment?: BrandSentiment;
     categoryPerception?: CategoryPerception;
+    emailSent?: boolean;
+    emailError?: string;
     structuredDataFound?: boolean;
     locale?: string; platform?: DetectedPlatform;
     buyerIntentPrompts?: BuyerIntentPromptResult[];
@@ -93,21 +96,6 @@ function StatusPill({ failed, complete, locale }: { failed: boolean; complete: b
       {label}
     </span>
   );
-}
-
-/**
- * Un abonnement actif est-il rattaché à cet audit ? Le rattachement passe par
- * l'EMAIL (seul identifiant partagé avec Stripe, voir src/lib/subscriptions.ts).
- * FAIL-SAFE : toute panne de base rend `false` — ne pas pouvoir prouver le
- * droit n'est pas une raison de l'accorder.
- */
-async function hasActiveSubscriptionForAudit(email: string): Promise<boolean> {
-  if (!email || isAnonymousEmail(email)) return false;
-  try {
-    return (await entitlementForEmail(email)) !== null;
-  } catch {
-    return false;
-  }
 }
 
 export default async function AuditPage({
@@ -136,13 +124,7 @@ export default async function AuditPage({
   const complete = audit.score !== null;
   // Filet : d'anciens audits contiennent la marque elle-même dans ses
   // concurrents (« Pick » pour « GetPick ») — on ne l'affiche plus.
-  const auditDomain = (() => {
-    try {
-      return new URL(audit.website_url).hostname;
-    } catch {
-      return audit.website_url.replace(/^https?:\/\//i, "").split("/")[0] ?? "";
-    }
-  })();
+  const auditDomain = hostnameFromUrl(audit.website_url);
   const isSelf = (name: string) => isAuditedBrandName(name, audit.brand_name, auditDomain);
   const questions = checkedQuestions(audit.raw_results?.buyerIntentPrompts ?? []).map((question) => ({
     ...question,
@@ -410,6 +392,15 @@ export default async function AuditPage({
                 ) : null}
               </div>
             )}
+
+            <EmailDeliveryNotice
+              locale={locale}
+              complete={complete}
+              failed={failed}
+              emailIsAnonymous={isAnonymousEmail(audit.email)}
+              emailSent={audit.raw_results?.emailSent}
+              reportUrl={reportUrlForAudit(audit.id)}
+            />
 
             {/* « L'IA ne sait pas ce que tu vends » — rendu uniquement s'il y a un
                 vrai signal : sans catégorie perçue, on n'affiche rien. */}

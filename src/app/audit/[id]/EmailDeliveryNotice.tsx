@@ -1,0 +1,38 @@
+import { emailDeliveryNoticeVisible, type EmailDeliveryNoticeState } from "@/lib/email-delivery-notice";
+import { auditCopy, type Locale } from "@/lib/i18n";
+
+/**
+ * G2 — UN ENVOI RATÉ NE DOIT JAMAIS ÊTRE MUET.
+ *
+ * Quand le diagnostic que l'utilisateur a RÉCLAMÉ n'a pas pu lui être envoyé,
+ * l'écran de fin d'audit le dit et lui donne le lien direct. Avant ce bloc,
+ * seul `/admin/emails`, derrière une clé, savait qu'un rapport n'était pas
+ * parti : le prospect, lui, attendait un email qui n'arriverait jamais.
+ *
+ * Le composant porte SA PROPRE décision d'affichage et rend `null` sinon —
+ * `page.tsx` tient sous 600 lignes (contrat AC1) et ne doit pas gagner une
+ * condition de plus. La règle elle-même est dans `@/lib/email-delivery-notice`
+ * pour être exécutée par la suite de tests, pas seulement relue.
+ */
+export type EmailDeliveryNoticeProps = EmailDeliveryNoticeState & {
+  locale: Locale;
+  reportUrl: string;
+};
+
+export default function EmailDeliveryNotice({ locale, reportUrl, ...state }: EmailDeliveryNoticeProps) {
+  if (!emailDeliveryNoticeVisible(state)) return null;
+  const copy = auditCopy[locale];
+
+  return (
+    <div className="mt-5 rounded-2xl border border-[#FFB84D]/25 bg-[#FFB84D]/10 p-4 text-sm leading-6 text-[#FFD18A]">
+      <p className="m-0 font-bold">{copy.emailUndeliveredTitle}</p>
+      <p className="m-0 mt-1 text-[#FFD18A]/85">{copy.emailUndeliveredBody}</p>
+      <p className="m-0 mt-2">
+        <span className="font-bold">{copy.emailUndeliveredLinkLabel} : </span>
+        <a href={reportUrl} className="break-all font-bold text-[#CAFF3C] underline decoration-[#CAFF3C]/40 underline-offset-4">
+          {reportUrl}
+        </a>
+      </p>
+    </div>
+  );
+}

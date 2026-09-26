@@ -10,6 +10,7 @@ import { isWebSearchConfigured, runWebSearch } from "./web-search";
 import { isMailConfigured, sendMail } from "./mailer";
 import { renderEmail, quoted, type EmailContent } from "./email-template";
 import { verdictCompetitors } from "./competitor-floor";
+import { ANONYMOUS_EMAIL_DOMAIN } from "./anonymous-email";
 import { entitlementForEmail } from "./subscriptions";
 import { trafficClassOrUnknown, type TrafficClass } from "./traffic-filter";
 import { resolveBuyerIntentPromptSet, loadPromptSetForAudit, persistPromptSetAfterAudit, detectPromptSetAnomaly, findMonitoredBrandId, loadStoredPromptSet, saveStoredPromptSet, type StoredPromptSet } from "./stored-prompts";
@@ -725,10 +726,27 @@ export async function validateAuditInput(input: Record<string, unknown>) {
  * ressembler à une vraie adresse ; son domaine est dans la liste de suppression,
  * donc aucun email ne part vers un audit anonyme.
  */
-export const ANONYMOUS_EMAIL_DOMAIN = "anonymous.citeable.invalid";
+export { ANONYMOUS_EMAIL_DOMAIN, isAnonymousEmail } from "./anonymous-email";
 
-export function isAnonymousEmail(email: string) {
-  return email.trim().toLowerCase().endsWith(`@${ANONYMOUS_EMAIL_DOMAIN}`);
+/**
+ * Le domaine audité, lu depuis l'URL saisie. Extrait de `/audit/[id]/page.tsx`
+ * (plafond AC1 de 600 lignes) : la page rend, elle ne calcule pas.
+ */
+export function hostnameFromUrl(rawUrl: string) {
+  try {
+    return new URL(rawUrl).hostname;
+  } catch {
+    return rawUrl.replace(/^https?:\/\//i, "").split("/")[0] ?? "";
+  }
+}
+
+/**
+ * Le lien direct du rapport, celui qu'on donne au demandeur quand l'email
+ * n'est pas parti. Il doit être ABSOLU : un chemin relatif ne se copie pas
+ * dans un SMS ni dans un pense-bête.
+ */
+export function reportUrlForAudit(auditId: string) {
+  return `${siteBaseUrl()}/audit/${auditId}`;
 }
 
 export async function validateAuditInputAllowAnonymous(input: Record<string, unknown>) {
