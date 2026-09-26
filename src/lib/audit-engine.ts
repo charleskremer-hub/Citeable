@@ -2409,7 +2409,6 @@ export function categoryFromHomepageText(text: string, domain: string) {
     [/\bosprey\b|backpacks?|rucksacks?|daypacks?|travel packs?|hiking packs?|outdoor gear|hydration packs?|luggage|packfinder|trekking/, "backpacks and outdoor gear"],
     [/\ballbirds\b|sustainable sneakers?|eco-?friendly shoes?|wool shoes?|tree runners?|running shoes?|walking shoes?|sneakers?|footwear|chaussures?/, "DTC footwear brand"],
     [/boulangerie|bakery|p[aâ]tisserie|pastry|restaurant|bistro|brasserie|traiteur|catering/, "bakery / restaurant"],
-    [/\bmkbhd\b|marques brownlee|youtube|youtuber|tiktok|instagram|newsletter|podcast|substack|streamer|content creator|creator|influencer|créateur|créatrice|influenceur|influenceuse/, "creator"],
     [/\beyewear\b|\bglasses\b|sunglasses|eyeglasses|prescription lenses?|progressive lenses?|\boptical\b|opticien|lunettes?|contact lenses?|frames? (?:for|and) lenses?/, "eyewear brand"],
     [/\bjewell?ery\b|\bbijoux\b|engagement rings?|necklaces?|bracelets?/, "jewelry brand"],
     [/mattress(?:es)?|bedding|\bduvet\b|\bpillows?\b|\bliterie\b/, "mattress and bedding brand"],
@@ -2433,6 +2432,11 @@ export function categoryFromHomepageText(text: string, domain: string) {
     [/coach sportif|personal trainer|fitness coach/, "fitness coach"],
     [/garage auto|auto repair|car repair|mechanic/, "auto repair shop"],
     [/architecte|architectural studio|architecture firm/, "architecture firm"],
+    // Créateur/influenceur : APRÈS les métiers de service, et resserré. La version
+    // large (bare "créateur"/"newsletter"/"instagram") classait un expert-comptable
+    // en "creator" — « créateur d'entreprise » dans le texte + liens sociaux en
+    // pied de page suffisaient. On exige désormais un vrai signal créateur.
+    [/\bmkbhd\b|marques brownlee|youtuber|tiktok|substack|streamer|content creator|créateur de contenu|créatrice de contenu|influenceu(?:r|se)|\binfluencer\b/, "creator"],
     [/agentic commerce|commerce agentique/, "agentic commerce infrastructure"],
     [/agent wallet|wallets? embarqu[eé]s?|paiements? agentiques?|agentic payments?/, "agentic payments platform"],
     [/digital product passport|product passport|\bdpp\b/, "digital product passport platform"],
@@ -3804,13 +3808,15 @@ async function generateBuyerIntentPromptsAI(
     // pour Away, « coastal California aesthetic » pour Vuori — donc la marque gagnait
     // forcément. C'est un prompt brandé déguisé : pas le nom, mais l'identité.
     `- Write from the CATEGORY, never from this specific business. A shopper who has never heard of ${brandName} must plausibly type each question.`,
-    "- Use only buying criteria that several brands in the category could satisfy: general use case, budget, durability, sizing, delivery, materials, comparison with the category leader.",
+    isLocal
+      ? "- Anchor every question on WHO the buyer is and WHAT they need locally: their client type (freelance, TPE, e-commerçant, restaurateur, profession libérale, SCI, artisan…) and their specific need (création d'entreprise, TVA, paie, bilan, contrôle fiscal, transmission…). Never product criteria like durability, sizing, delivery or materials."
+      : "- Use only buying criteria that several brands in the category could satisfy: general use case, budget, durability, sizing, delivery, materials, comparison with the category leader.",
     "- BANNED: any product feature, material combination, slogan, aesthetic or positioning phrase that reads as lifted from one brand's marketing. If a question could only describe one company, rewrite it broader.",
     `- Do NOT mention "${brandName}" or "${domain}" in any question — these are demand-side questions used to test whether the AI recommends the brand on its own.`,
     `- Write them in natural ${languageName}.`,
     "- No numbering, no surrounding quotes, no preamble, no duplicates.",
     isLocal
-      ? `LOCAL BUSINESS: a ${category} is chosen LOCALLY, by proximity. ${localCity ? `It is based in ${localCity} — put "${localCity}" in EVERY question.` : `No city was detected: anchor EVERY question locally with "près de moi"/"near me", "dans ma ville", "dans ma région", or "local".`} Use the natural ${languageName} term for a ${category}. Cover: best local provider, best local provider for a given client type/sector, which local provider to choose, local reviews or quotes. NEVER write generic national questions like "how to choose a ...", "average price of a ...", or "traditional vs online ..." — those pit a local business against national platforms it can never outrank.`
+      ? `LOCAL BUSINESS — a ${category} is chosen LOCALLY, by proximity, for a specific client profile. ${localCity ? `It is based in ${localCity} — put "${localCity}" in EVERY question.` : `No city was detected: anchor EVERY question locally with "près de moi"/"near me", "dans ma ville", or "dans ma région".`} Every question MUST combine THREE things: (a) the natural ${languageName} term for a ${category}, (b) the city or proximity, and (c) a specific client type OR need. Good shapes: "meilleur ${category} à <ville> pour <profil/besoin> ?", "quel ${category} choisir à <ville> quand on est <profil> ?", "avis sur les ${category}s à <ville> pour <besoin> ?". STRICTLY BANNED — never produce these, they are informational and pit a local firm against national platforms it can never outrank: "comment choisir…", "est-il obligatoire…", "quel budget / combien coûte…", "comment comparer les tarifs…", "quelles sont les étapes…", "en ligne ou traditionnel", "prix moyen d'un…". If a question would not help someone pick THIS local firm over a named local peer nearby, rewrite it until it does.`
       : "",
     'Return ONLY valid JSON with this exact shape: {"questions":["...","..."]}',
   ]

@@ -60,6 +60,24 @@ test("catégorie — « expert comptable » avec une espace n'est plus lu comme 
   );
 });
 
+test("catégorie — « créateur d'entreprise » + liens sociaux ne classe PAS en creator (régression Gendrot 26/09)", () => {
+  // Cause exacte : la règle "creator" (bare créateur/instagram/newsletter) passait
+  // AVANT la règle expert-comptable → un cabinet accompagnant les « créateurs
+  // d'entreprise », avec Instagram/newsletter en pied de page, ressortait "creator".
+  assert.equal(
+    categoryFromHomepageText(
+      "Gendrot, cabinet d'expertise comptable. Nous accompagnons le créateur d'entreprise. Suivez-nous sur Instagram, inscrivez-vous à la newsletter.",
+      "gendrot-ec.fr",
+    ),
+    "accounting firm",
+  );
+  // Un vrai créateur de contenu reste "creator".
+  assert.equal(
+    categoryFromHomepageText("Créateur de contenu YouTube et TikTok, streamer et influenceur tech.", "exemple.fr"),
+    "creator",
+  );
+});
+
 test("segment — un métier de service ne retombe plus sur le segment marque", () => {
   const segment = detectIcpSegment("accounting firm");
   assert.equal(segment.key, "service_professional");
