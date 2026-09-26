@@ -8,6 +8,11 @@ import { hostedAnswerPageSlug } from "@/lib/hosted-answer-page";
 // Voir le commentaire détaillé dans src/app/robots.ts.
 const siteUrl = "https://www.getpick.ai";
 
+// Le sitemap lit les pages-réponses PUBLIÉES en base : il doit être calculé à la
+// requête, sinon Next le fige au build et une page publiée après coup n'y entre
+// jamais (donc aucun crawler IA ne la découvre).
+export const dynamic = "force-dynamic";
+
 // Pages-réponses PUBLIÉES uniquement (answer_page_published_at non nul). Les
 // diagnostics anonymes ne sont jamais listés. La base peut être indisponible au
 // build : on dégrade en liste vide plutôt que de casser tout le sitemap.
