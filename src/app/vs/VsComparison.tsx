@@ -9,7 +9,7 @@ import {
 } from "@/lib/vs-comparison";
 
 // Tokens visuels repris de src/app/study/page.tsx pour rester cohérent avec la
-// page la plus citée du site (même palette #CAFF3C / #09090B, mêmes classes H2/P).
+// page la plus citée du site (même palette #123E5C / #F5F7FA, mêmes classes H2/P).
 const H2 = "m-0 mt-12 text-[1.75rem] leading-[1.15] tracking-[-0.03em] sm:text-[2rem]";
 const P = "m-0 mt-4 text-[1.02rem] font-medium leading-[1.75] text-[#C7C7D1]";
 
@@ -35,11 +35,11 @@ export default function VsComparison({ locale }: { locale: Locale }) {
         dangerouslySetInnerHTML={{ __html: buildVsItemListJsonLd(locale) }}
       />
 
-      <Link href={locale === "fr" ? "/fr" : "/"} className="text-sm font-black text-[#CAFF3C] no-underline">
+      <Link href={locale === "fr" ? "/fr" : "/"} className="text-sm font-black text-[#123E5C] no-underline">
         {copy.backHome}
       </Link>
 
-      <p className="m-0 mt-8 text-xs font-black uppercase tracking-[0.14em] text-[#CAFF3C]">
+      <p className="m-0 mt-8 text-xs font-black uppercase tracking-[0.14em] text-[#123E5C]">
         {copy.eyebrow}
       </p>
       <h1
@@ -52,17 +52,17 @@ export default function VsComparison({ locale }: { locale: Locale }) {
       <p className={P}>{copy.intro}</p>
 
       {/* Ancrage prix repris mot pour mot de homeCopy[locale].pricingTitle. */}
-      <p className="m-0 mt-8 rounded-2xl border border-[#CAFF3C]/25 bg-[#CAFF3C]/[0.07] px-5 py-4 text-[1.05rem] font-black leading-[1.4] text-[#CAFF3C]">
+      <p className="m-0 mt-8 rounded-2xl border border-[#123E5C]/25 bg-[#123E5C]/[0.07] px-5 py-4 text-[1.05rem] font-black leading-[1.4] text-[#123E5C]">
         {copy.agencyAnchor}
       </p>
 
       <h2 className={H2} style={{ fontFamily: "var(--font-display)" }}>
         {copy.title}
       </h2>
-      <div className="mt-5 overflow-x-auto rounded-2xl border border-white/[0.08]">
+      <div className="mt-5 overflow-x-auto rounded-2xl border border-[#E4E9F0]">
         <table className="w-full border-collapse text-left text-sm">
           <thead>
-            <tr className="bg-white/[0.04] text-xs font-black uppercase tracking-[0.1em] text-[#8E8E9A]">
+            <tr className="bg-[#FBFCFD] text-xs font-black uppercase tracking-[0.1em] text-[#8FA0B4]">
               <th className="px-4 py-3">{copy.th.tool}</th>
               <th className="px-4 py-3 whitespace-nowrap">{copy.th.price}</th>
               <th className="px-4 py-3">{copy.th.does}</th>
@@ -71,25 +71,25 @@ export default function VsComparison({ locale }: { locale: Locale }) {
           </thead>
           <tbody>
             {VS_TOOLS.map((tool) => (
-              <tr key={tool.name} className="border-t border-white/[0.06] align-top">
-                <td className={`px-4 py-3 font-bold ${tool.isUs ? "text-[#CAFF3C]" : "text-[#F0F0EC]"}`}>
+              <tr key={tool.name} className="border-t border-[#E4E9F0] align-top">
+                <td className={`px-4 py-3 font-bold ${tool.isUs ? "text-[#123E5C]" : "text-[#132A43]"}`}>
                   {tool.name}
                   <span className="block text-xs font-medium text-[#777787]">
                     {tool.entryPlan[locale]}
                   </span>
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap font-black text-[#F0F0EC]">
+                <td className="px-4 py-3 whitespace-nowrap font-black text-[#132A43]">
                   {formatVsPrice(tool, locale)}
                   <span className="block text-[0.7rem] font-medium text-[#777787]">
                     {locale === "fr" ? "/mois" : "/mo"}
                     {tool.billing ? ` · ${tool.billing[locale]}` : ""}
                   </span>
                 </td>
-                <td className="px-4 py-3 font-medium text-[#A7A7B4]">{tool.does[locale]}</td>
+                <td className="px-4 py-3 font-medium text-[#5B6B82]">{tool.does[locale]}</td>
                 <td className="px-4 py-3 font-medium">
                   <a
                     href={tool.sourceUrl}
-                    className="text-[#A7A7B4] underline decoration-white/20 underline-offset-2 hover:text-[#CAFF3C]"
+                    className="text-[#5B6B82] underline decoration-white/20 underline-offset-2 hover:text-[#123E5C]"
                     rel="nofollow noopener"
                   >
                     {tool.sourceLabel}
@@ -116,7 +116,7 @@ export default function VsComparison({ locale }: { locale: Locale }) {
       <p className={P}>{copy.studyIntro}</p>
       <Link
         href="/study"
-        className="mt-6 inline-flex rounded-xl border border-[#CAFF3C]/30 bg-[#CAFF3C]/[0.07] px-5 py-3 text-sm font-black text-[#CAFF3C] no-underline transition hover:bg-[#CAFF3C]/[0.12]"
+        className="mt-6 inline-flex rounded-xl border border-[#123E5C]/30 bg-[#123E5C]/[0.07] px-5 py-3 text-sm font-black text-[#123E5C] no-underline transition hover:bg-[#123E5C]/[0.12]"
       >
         {copy.studyCta}
       </Link>

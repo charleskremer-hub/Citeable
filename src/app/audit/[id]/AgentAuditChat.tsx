@@ -104,12 +104,12 @@ export default function AgentAuditChat({ auditId, brandName, category, locale }:
   }
 
   return (
-    <section className="rounded-[1.5rem] border border-[#CAFF3C]/30 bg-[radial-gradient(circle_at_top_left,rgba(202,255,60,0.16),rgba(17,17,22,0.96)_44%)] p-5 shadow-2xl shadow-[#CAFF3C]/5 sm:p-6" data-testid="agent-audit-chat">
-      <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">{t.eyebrow}</p>
+    <section className="rounded-[1.5rem] border border-[#123E5C]/30 bg-[radial-gradient(circle_at_top_left,rgba(202,255,60,0.16),rgba(17,17,22,0.96)_44%)] p-5 shadow-2xl shadow-[#123E5C]/5 sm:p-6" data-testid="agent-audit-chat">
+      <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em] text-[#123E5C]">{t.eyebrow}</p>
       <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
         {t.title}
       </h2>
-      <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#D6D6DF]">{t.body}</p>
+      <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#5B6B82]">{t.body}</p>
 
       <div className="mt-5 grid gap-3">
         {messages.length === 0 ? (
@@ -119,7 +119,7 @@ export default function AgentAuditChat({ auditId, brandName, category, locale }:
                 key={starter}
                 type="button"
                 onClick={() => void askAgent(starter)}
-                className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-left text-xs font-black text-[#D6D6DF] transition hover:border-[#CAFF3C]/35 hover:text-[#CAFF3C]"
+                className="rounded-full border border-[#E4E9F0] bg-[#EEF2F7] px-3 py-2 text-left text-xs font-black text-[#5B6B82] transition hover:border-[#123E5C]/35 hover:text-[#123E5C]"
               >
                 {starter}
               </button>
@@ -128,25 +128,25 @@ export default function AgentAuditChat({ auditId, brandName, category, locale }:
         ) : null}
 
         {messages.map((message, index) => (
-          <div key={`${message.role}-${index}`} className={message.role === "user" ? "ml-6 rounded-2xl bg-[#CAFF3C] p-4 text-sm font-black leading-6 text-[#09090B]" : "mr-6 rounded-2xl border border-white/[0.08] bg-black/25 p-4 text-sm font-bold leading-6 text-[#F0F0EC]"}>
+          <div key={`${message.role}-${index}`} className={message.role === "user" ? "ml-6 rounded-2xl bg-[#123E5C] p-4 text-sm font-black leading-6 text-white" : "mr-6 rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-4 text-sm font-bold leading-6 text-[#132A43]"}>
             <p className="m-0 whitespace-pre-wrap">{message.content}</p>
             {message.role === "assistant" && message.sources?.length ? (
-              <div className="mt-4 rounded-xl border border-white/[0.07] bg-white/[0.04] p-3">
-                <p className="m-0 text-xs font-black uppercase tracking-[0.1em] text-[#CAFF3C]">{t.sources}</p>
+              <div className="mt-4 rounded-xl border border-[#E4E9F0] bg-[#FBFCFD] p-3">
+                <p className="m-0 text-xs font-black uppercase tracking-[0.1em] text-[#123E5C]">{t.sources}</p>
                 <ul className="m-0 mt-2 grid list-none gap-1 p-0 text-xs font-bold leading-5 text-[#BCBCC8]">
                   {message.sources.map((source) => <li key={source}>{source}</li>)}
                 </ul>
               </div>
             ) : null}
             {message.role === "assistant" && message.engines?.length ? (
-              <p className="m-0 mt-3 text-xs font-bold text-[#8E8E9A]">
+              <p className="m-0 mt-3 text-xs font-bold text-[#8FA0B4]">
                 {t.engines}: {message.engines.map((engine) => `${engine.engine} ${engine.ok ? "✓" : "—"}`).join(" · ")}
               </p>
             ) : null}
           </div>
         ))}
 
-        {loading ? <p className="m-0 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm font-black text-[#CAFF3C]">{t.thinking}</p> : null}
+        {loading ? <p className="m-0 rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-4 text-sm font-black text-[#123E5C]">{t.thinking}</p> : null}
         {error ? <p className="m-0 rounded-2xl border border-[#FF5F5F]/25 bg-[#FF5F5F]/10 p-4 text-sm font-black text-[#FFB1B1]">{error}</p> : null}
       </div>
 
@@ -156,9 +156,9 @@ export default function AgentAuditChat({ auditId, brandName, category, locale }:
           onChange={(event) => setInput(event.target.value)}
           placeholder={t.placeholder}
           rows={2}
-          className="min-h-20 flex-1 resize-y rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm font-bold leading-6 text-[#F0F0EC] outline-none placeholder:text-[#8E8E9A] focus:border-[#CAFF3C]/50"
+          className="min-h-20 flex-1 resize-y rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] px-4 py-3 text-sm font-bold leading-6 text-[#132A43] outline-none placeholder:text-[#8FA0B4] focus:border-[#123E5C]/50"
         />
-        <button type="submit" disabled={loading || !input.trim()} className="rounded-2xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50">
+        <button type="submit" disabled={loading || !input.trim()} className="rounded-2xl bg-[#123E5C] px-5 py-3 text-sm font-black text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50">
           {t.send}
         </button>
       </form>

@@ -23,13 +23,13 @@ export default function CopyBlock({ label, text, copyLabel, copiedLabel }: Props
   };
 
   return (
-    <div className="rounded-2xl border border-white/[0.08] bg-black/25 p-4">
+    <div className="rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-4">
       <div className="mb-2 flex items-center justify-between gap-3">
         <span className="text-[11px] font-black uppercase tracking-[0.1em] text-[#8E9A8F]">{label}</span>
         <button
           type="button"
           onClick={onCopy}
-          className="shrink-0 rounded-lg bg-[#CAFF3C] px-3 py-1 text-xs font-black text-[#09090B] transition hover:brightness-110"
+          className="shrink-0 rounded-lg bg-[#123E5C] px-3 py-1 text-xs font-black text-white transition hover:brightness-110"
         >
           {copied ? copiedLabel : copyLabel}
         </button>

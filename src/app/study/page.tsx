@@ -59,7 +59,7 @@ function Cta({ children }: { children: React.ReactNode }) {
     <p className="m-0 mt-10">
       <Link
         href="/"
-        className="inline-flex rounded-xl border border-[#CAFF3C]/30 bg-[#CAFF3C]/[0.07] px-5 py-3 text-sm font-black text-[#CAFF3C] no-underline transition hover:bg-[#CAFF3C]/[0.12]"
+        className="inline-flex rounded-xl border border-[#123E5C]/30 bg-[#123E5C]/[0.07] px-5 py-3 text-sm font-black text-[#123E5C] no-underline transition hover:bg-[#123E5C]/[0.12]"
       >
         {children}
       </Link>
@@ -89,16 +89,16 @@ export default function StudyPage() {
     <main className="mx-auto max-w-3xl px-5 py-14 sm:px-6 sm:py-20" style={{ fontFamily: "var(--font-sans)" }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(studyArticleSchema) }} />
 
-      <Link href="/" className="text-sm font-black text-[#CAFF3C] no-underline">
+      <Link href="/" className="text-sm font-black text-[#123E5C] no-underline">
         ← GetPick
       </Link>
 
-      <p className="m-0 mt-8 inline-flex rounded-md bg-[#CAFF3C]/[0.12] px-3 py-1.5 text-[0.72rem] font-black uppercase tracking-[0.1em] text-[#CAFF3C]">
+      <p className="m-0 mt-8 inline-flex rounded-md bg-[#123E5C]/[0.12] px-3 py-1.5 text-[0.72rem] font-black uppercase tracking-[0.1em] text-[#123E5C]">
         {studyPageCopy.eyebrow.en}
       </p>
 
       <h1
-        className="m-0 mt-5 text-[clamp(2rem,6vw,3rem)] leading-[1.05] tracking-[-0.04em] text-[#F0F0EC]"
+        className="m-0 mt-5 text-[clamp(2rem,6vw,3rem)] leading-[1.05] tracking-[-0.04em] text-[#132A43]"
         style={{ fontFamily: "var(--font-display)" }}
       >
         {studyPageCopy.headline.en}
@@ -113,17 +113,17 @@ export default function StudyPage() {
       <Cta>{studyPageCopy.cta.en}</Cta>
 
       {/* La même note en français : la page est liée depuis /vs ET /fr/vs. */}
-      <section className="mt-14 border-t border-white/[0.08] pt-10">
-        <p className="m-0 text-xs font-black uppercase tracking-[0.14em] text-[#8E8E9A]">
+      <section className="mt-14 border-t border-[#E4E9F0] pt-10">
+        <p className="m-0 text-xs font-black uppercase tracking-[0.14em] text-[#8FA0B4]">
           {studyPageCopy.frenchHeading}
         </p>
 
-        <p className="m-0 mt-4 inline-flex rounded-md bg-[#CAFF3C]/[0.12] px-3 py-1.5 text-[0.72rem] font-black uppercase tracking-[0.1em] text-[#CAFF3C]">
+        <p className="m-0 mt-4 inline-flex rounded-md bg-[#123E5C]/[0.12] px-3 py-1.5 text-[0.72rem] font-black uppercase tracking-[0.1em] text-[#123E5C]">
           {studyPageCopy.eyebrow.fr}
         </p>
 
         <h2
-          className="m-0 mt-5 text-[1.75rem] leading-[1.15] tracking-[-0.03em] text-[#F0F0EC] sm:text-[2rem]"
+          className="m-0 mt-5 text-[1.75rem] leading-[1.15] tracking-[-0.03em] text-[#132A43] sm:text-[2rem]"
           style={{ fontFamily: "var(--font-display)" }}
         >
           {studyPageCopy.headline.fr}

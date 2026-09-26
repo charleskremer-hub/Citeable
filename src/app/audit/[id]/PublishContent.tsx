@@ -42,44 +42,44 @@ export default function PublishContent({ locale, actions, contentBlocks, proof, 
   const renderGuide = (file: GuideFile) => {
     const guide = installGuide(file, platform, locale);
     return (
-      <dl className="m-0 mt-2 grid gap-1.5 text-xs font-bold leading-5 text-[#8E8E9A]" data-testid={`install-guide-${file}`} data-generic={guide.generic ? "true" : "false"}>
-        <div><dt className="inline text-[#CAFF3C]">{guideLabels.where} · </dt><dd className="inline">{guide.where}</dd></div>
-        <div><dt className="inline text-[#CAFF3C]">{guideLabels.paste} · </dt><dd className="inline">{guide.paste}</dd></div>
-        <div><dt className="inline text-[#CAFF3C]">{guideLabels.verify} · </dt><dd className="inline">{guide.verify}</dd></div>
+      <dl className="m-0 mt-2 grid gap-1.5 text-xs font-bold leading-5 text-[#8FA0B4]" data-testid={`install-guide-${file}`} data-generic={guide.generic ? "true" : "false"}>
+        <div><dt className="inline text-[#123E5C]">{guideLabels.where} · </dt><dd className="inline">{guide.where}</dd></div>
+        <div><dt className="inline text-[#123E5C]">{guideLabels.paste} · </dt><dd className="inline">{guide.paste}</dd></div>
+        <div><dt className="inline text-[#123E5C]">{guideLabels.verify} · </dt><dd className="inline">{guide.verify}</dd></div>
       </dl>
     );
   };
 
   return (
     <>
-      <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.publishEyebrow}</p>
+      <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em] text-[#123E5C]">{copy.publishEyebrow}</p>
       <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
         {copy.publishTitle}
       </h2>
-      <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#D6D6DF]">{copy.publishBody}</p>
+      <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#5B6B82]">{copy.publishBody}</p>
 
       {actions.length ? (
         <ol className="m-0 mt-4 grid list-none gap-2 p-0">
           {actions.map(({ action, phase, impact }, index) => (
-            <li key={`${action.title}-${index}`} className="rounded-2xl border border-white/[0.08] bg-black/25 p-4">
+            <li key={`${action.title}-${index}`} className="rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-4">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-black text-[#CAFF3C]">{index + 1}.</span>
-                <span className="rounded-full border border-white/15 bg-white/[0.06] px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#BCBCC8]">
+                <span className="text-sm font-black text-[#123E5C]">{index + 1}.</span>
+                <span className="rounded-full border border-[#E4E9F0] bg-[#FBFCFD] px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#BCBCC8]">
                   {copy.actionPhase[phase]}
                 </span>
-                <span className="rounded-full border border-[#CAFF3C]/25 bg-[#CAFF3C]/10 px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#CAFF3C]">
+                <span className="rounded-full border border-[#123E5C]/25 bg-[#123E5C]/10 px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#123E5C]">
                   {actionImpactLabel(impact)}
                 </span>
               </div>
-              <p className="m-0 mt-1.5 text-sm font-black text-[#F0F0EC]">{action.title}</p>
+              <p className="m-0 mt-1.5 text-sm font-black text-[#132A43]">{action.title}</p>
               {action.basedOn?.length ? (
-                <p className="m-0 mt-1.5 text-xs font-bold leading-5 text-[#8E8E9A]">
-                  <span className="text-[#CAFF3C]">{copy.actionWhyFirst} · </span>
+                <p className="m-0 mt-1.5 text-xs font-bold leading-5 text-[#8FA0B4]">
+                  <span className="text-[#123E5C]">{copy.actionWhyFirst} · </span>
                   {copy.actionWhyBecause(action.basedOn)}
                 </p>
               ) : null}
-              <p className="m-0 mt-2 text-sm font-bold leading-6 text-[#F0F0EC]">{action.doThis}</p>
-              <p className="m-0 mt-2 text-xs font-bold uppercase tracking-[0.08em] text-[#8E8E9A]">{copy.where} {action.where}</p>
+              <p className="m-0 mt-2 text-sm font-bold leading-6 text-[#132A43]">{action.doThis}</p>
+              <p className="m-0 mt-2 text-xs font-bold uppercase tracking-[0.08em] text-[#8FA0B4]">{copy.where} {action.where}</p>
             </li>
           ))}
         </ol>
@@ -88,9 +88,9 @@ export default function PublishContent({ locale, actions, contentBlocks, proof, 
       {contentBlocks.length ? (
         <div className="mt-4 grid gap-4">
           {contentBlocks.map((block, index) => (
-            <div key={`${block.title}-${index}`} className="rounded-2xl border border-white/[0.08] bg-black/20 p-4">
-              <p className="m-0 text-sm font-black text-[#CAFF3C]">{index + 1}. {block.title}</p>
-              <p className="m-0 mt-1 text-xs font-bold leading-5 text-[#8E8E9A]">{block.gap}</p>
+            <div key={`${block.title}-${index}`} className="rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-4">
+              <p className="m-0 text-sm font-black text-[#123E5C]">{index + 1}. {block.title}</p>
+              <p className="m-0 mt-1 text-xs font-bold leading-5 text-[#8FA0B4]">{block.gap}</p>
               <div className="mt-3 grid gap-2.5">
                 <CopyBlock
                   label={fr ? "Réponse FAQ / section de page" : "FAQ answer / page section"}
@@ -111,34 +111,34 @@ export default function PublishContent({ locale, actions, contentBlocks, proof, 
       ) : null}
 
       {proof ? (
-        <div className="mt-4 rounded-2xl border border-white/[0.08] bg-black/20 p-4">
-          <p className="m-0 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.proofTitle}</p>
+        <div className="mt-4 rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-4">
+          <p className="m-0 text-xs font-black uppercase tracking-[0.12em] text-[#123E5C]">{copy.proofTitle}</p>
           <div className="mt-3 grid gap-3">
-            <p className="m-0 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm font-black leading-6 text-[#F0F0EC]">{proof.gap}</p>
-            <p className="m-0 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm font-black leading-6 text-[#CAFF3C]">{proof.title}</p>
-            <p className="m-0 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm font-bold leading-6 text-[#D6D6DF]">{proof.draft}</p>
-            <p className="m-0 rounded-2xl border border-white/[0.08] bg-black/20 p-4 text-sm font-bold leading-6 text-[#D6D6DF]">{proof.google}</p>
+            <p className="m-0 rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-4 text-sm font-black leading-6 text-[#132A43]">{proof.gap}</p>
+            <p className="m-0 rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-4 text-sm font-black leading-6 text-[#123E5C]">{proof.title}</p>
+            <p className="m-0 rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-4 text-sm font-bold leading-6 text-[#5B6B82]">{proof.draft}</p>
+            <p className="m-0 rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-4 text-sm font-bold leading-6 text-[#5B6B82]">{proof.google}</p>
           </div>
         </div>
       ) : null}
 
       {youtubeTipRelevant ? (
-        <div className="mt-3 rounded-2xl border border-[#FF8F6B]/25 bg-[#FF8F6B]/[0.06] p-4" data-testid="youtube-content-tip">
-          <span className="rounded-full border border-[#FF8F6B]/30 bg-[#FF8F6B]/10 px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#FF8F6B]">
+        <div className="mt-3 rounded-2xl border border-[#C0492E]/25 bg-[#C0492E]/[0.06] p-4" data-testid="youtube-content-tip">
+          <span className="rounded-full border border-[#C0492E]/30 bg-[#C0492E]/10 px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#C0492E]">
             {copy.youtubeTipBadge}
           </span>
-          <p className="m-0 mt-1.5 text-sm font-black text-[#F0F0EC]">{copy.youtubeTipTitle}</p>
-          <p className="m-0 mt-2 text-sm font-bold leading-6 text-[#D6D6DF]">{copy.youtubeTipBody}</p>
+          <p className="m-0 mt-1.5 text-sm font-black text-[#132A43]">{copy.youtubeTipTitle}</p>
+          <p className="m-0 mt-2 text-sm font-bold leading-6 text-[#5B6B82]">{copy.youtubeTipBody}</p>
         </div>
       ) : null}
 
       {hasFiles ? (
         <div className="mt-4" data-testid="technical-files-content">
-          <p className="m-0 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.techEyebrow}</p>
-          <p className="m-0 mt-2 text-sm font-bold leading-6 text-[#D6D6DF]">{copy.techBody}</p>
+          <p className="m-0 text-xs font-black uppercase tracking-[0.12em] text-[#123E5C]">{copy.techEyebrow}</p>
+          <p className="m-0 mt-2 text-sm font-bold leading-6 text-[#5B6B82]">{copy.techBody}</p>
 
           {robotsFix && blockedBots.length ? (
-            <div className="mt-4 rounded-2xl border border-[#FF8F6B]/25 bg-[#FF8F6B]/[0.06] p-4">
+            <div className="mt-4 rounded-2xl border border-[#C0492E]/25 bg-[#C0492E]/[0.06] p-4">
               <p className="m-0 mb-3 text-sm font-bold leading-6 text-[#F3C7B7]">{copy.techRobotsIntro(blockedBots.join(", "))}</p>
               <CopyBlock label={copy.techRobotsLabel} text={robotsFix} copyLabel={copyLabel} copiedLabel={copiedLabel} />
               {renderGuide("robots")}
@@ -148,22 +148,22 @@ export default function PublishContent({ locale, actions, contentBlocks, proof, 
           <div className="mt-4 grid gap-4">
             <div>
               <CopyBlock label={copy.techJsonLdLabel} text={jsonLdSnippet} copyLabel={copyLabel} copiedLabel={copiedLabel} />
-              <p className="m-0 mt-1.5 text-xs font-bold leading-5 text-[#8E8E9A]">{copy.techJsonLdHint}</p>
+              <p className="m-0 mt-1.5 text-xs font-bold leading-5 text-[#8FA0B4]">{copy.techJsonLdHint}</p>
               {renderGuide("jsonld")}
             </div>
             <div>
               <CopyBlock label={copy.techLlmsLabel} text={llmsTxt ?? ""} copyLabel={copyLabel} copiedLabel={copiedLabel} />
-              <p className="m-0 mt-1.5 text-xs font-bold leading-5 text-[#8E8E9A]">{copy.techLlmsHint}</p>
+              <p className="m-0 mt-1.5 text-xs font-bold leading-5 text-[#8FA0B4]">{copy.techLlmsHint}</p>
               {renderGuide("llms")}
             </div>
           </div>
 
-          <p className="m-0 mt-4 text-xs font-black uppercase tracking-[0.08em] text-[#8E8E9A]">{copy.techRegenNote}</p>
+          <p className="m-0 mt-4 text-xs font-black uppercase tracking-[0.08em] text-[#8FA0B4]">{copy.techRegenNote}</p>
         </div>
       ) : null}
 
       {!actions.length && !contentBlocks.length && !proof && !hasFiles ? (
-        <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#D6D6DF]">{copy.monitorEmpty}</p>
+        <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#5B6B82]">{copy.monitorEmpty}</p>
       ) : null}
     </>
   );

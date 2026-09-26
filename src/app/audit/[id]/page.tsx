@@ -85,7 +85,7 @@ function StatusPill({ failed, complete, locale }: { failed: boolean; complete: b
   const className = failed
     ? "border-[#FF8A8A]/25 bg-[#FF5F5F]/10 text-[#FF8A8A]"
     : complete
-      ? "border-[#CAFF3C]/25 bg-[#CAFF3C]/10 text-[#CAFF3C]"
+      ? "border-[#123E5C]/25 bg-[#123E5C]/10 text-[#123E5C]"
       : "border-[#FFB84D]/25 bg-[#FFB84D]/10 text-[#FFB84D]";
 
   return (
@@ -196,7 +196,7 @@ export default async function AuditPage({
     });
 
     return (
-      <main className="min-h-screen bg-[#09090B] text-[#F0F0EC]" style={{ fontFamily: "var(--font-sans)" }}>
+      <main className="min-h-screen bg-[#F5F7FA] text-[#132A43]" style={{ fontFamily: "var(--font-sans)" }}>
         <LocaleLang locale={locale} />
         <ReportViewBeacon
           auditId={audit.id}
@@ -209,7 +209,7 @@ export default async function AuditPage({
 
         <section className="mx-auto flex min-h-screen w-full max-w-3xl flex-col px-4 py-5 sm:px-6 sm:py-8">
           <nav className="mb-6 flex items-center justify-between gap-4">
-            <Link href="/" className="text-xl text-[#F0F0EC] no-underline" style={{ fontFamily: "var(--font-display)" }}>
+            <Link href="/" className="text-xl text-[#132A43] no-underline" style={{ fontFamily: "var(--font-display)" }}>
               GetPick
             </Link>
           </nav>
@@ -332,7 +332,7 @@ export default async function AuditPage({
     : [];
 
   return (
-    <main className="min-h-screen bg-[#09090B] text-[#F0F0EC]" style={{ fontFamily: "var(--font-sans)" }}>
+    <main className="min-h-screen bg-[#F5F7FA] text-[#132A43]" style={{ fontFamily: "var(--font-sans)" }}>
       <LocaleLang locale={locale} />
       <AuditPoller
         auditId={audit.id}
@@ -353,17 +353,17 @@ export default async function AuditPage({
 
       <section className="mx-auto flex min-h-screen w-full max-w-3xl flex-col px-4 py-5 sm:px-6 sm:py-8">
         <nav className="mb-6 flex items-center justify-between gap-4">
-          <Link href="/" className="text-xl text-[#F0F0EC] no-underline" style={{ fontFamily: "var(--font-display)" }}>
+          <Link href="/" className="text-xl text-[#132A43] no-underline" style={{ fontFamily: "var(--font-display)" }}>
             GetPick
           </Link>
         </nav>
 
         <div className="flex flex-1 flex-col justify-center gap-4 pb-8 sm:gap-5">
           {/* --- BLOC 1 : LE VERDICT ------------------------------------------ */}
-          <div className="rounded-[2rem] border border-white/[0.08] bg-[#111116] p-5 shadow-2xl shadow-black/30 sm:p-8">
+          <div className="rounded-[2rem] border border-[#E4E9F0] bg-[#FFFFFF] p-5 shadow-2xl shadow-black/5 sm:p-8">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <StatusPill failed={failed} complete={complete} locale={locale} />
-              <a href={audit.website_url} className="max-w-full truncate text-sm font-bold text-[#8E8E9A] underline decoration-white/10 underline-offset-4">
+              <a href={audit.website_url} className="max-w-full truncate text-sm font-bold text-[#8FA0B4] underline decoration-white/10 underline-offset-4">
                 {audit.website_url}
               </a>
             </div>
@@ -393,7 +393,7 @@ export default async function AuditPage({
                   </p>
                 ) : null}
                 {/* Score et catégorie : des chiffres, pas le fait — ligne secondaire. */}
-                <p className="m-0 text-sm font-bold text-[#8E8E9A]">
+                <p className="m-0 text-sm font-bold text-[#8FA0B4]">
                   {copy.scoreCategoryLine(score, displayCategory)}
                   <span className="ml-2" style={{ color }}>
                     {brandMentionCount}/{questionCount}
@@ -416,7 +416,7 @@ export default async function AuditPage({
             {complete && !failed && categoryPerception.status !== "not_enough_signal" ? (
               (() => {
                 const mismatch = categoryPerception.status === "mismatch";
-                const tone = mismatch ? "#FFB84D" : "#CAFF3C";
+                const tone = mismatch ? "#FFB84D" : "#123E5C";
 
                 return (
                   <section
@@ -427,18 +427,18 @@ export default async function AuditPage({
                     <p className="m-0 text-xs font-black uppercase tracking-[0.12em]" style={{ color: tone }}>
                       {copy.categoryPerceptionEyebrow}
                     </p>
-                    <p className="m-0 mt-2 text-base font-black leading-6 text-[#F0F0EC]">
+                    <p className="m-0 mt-2 text-base font-black leading-6 text-[#132A43]">
                       {mismatch ? copy.categoryPerceptionMismatchTitle : copy.categoryPerceptionMatchTitle}
                     </p>
                     <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                      <div className="rounded-xl border border-white/[0.08] bg-black/20 px-3 py-2">
-                        <p className="m-0 text-[0.6875rem] font-black uppercase tracking-[0.1em] text-[#8E8E9A]">
+                      <div className="rounded-xl border border-[#E4E9F0] bg-[#EEF2F7] px-3 py-2">
+                        <p className="m-0 text-[0.6875rem] font-black uppercase tracking-[0.1em] text-[#8FA0B4]">
                           {copy.categoryPerceptionYouSell}
                         </p>
-                        <p className="m-0 mt-1 text-sm font-bold text-[#F0F0EC]">{categoryPerception.actual}</p>
+                        <p className="m-0 mt-1 text-sm font-bold text-[#132A43]">{categoryPerception.actual}</p>
                       </div>
-                      <div className="rounded-xl border border-white/[0.08] bg-black/20 px-3 py-2">
-                        <p className="m-0 text-[0.6875rem] font-black uppercase tracking-[0.1em] text-[#8E8E9A]">
+                      <div className="rounded-xl border border-[#E4E9F0] bg-[#EEF2F7] px-3 py-2">
+                        <p className="m-0 text-[0.6875rem] font-black uppercase tracking-[0.1em] text-[#8FA0B4]">
                           {copy.categoryPerceptionAiThinks}
                         </p>
                         <p className="m-0 mt-1 text-sm font-bold" style={{ color: tone }}>
@@ -452,7 +452,7 @@ export default async function AuditPage({
                         : copy.categoryPerceptionMatchBody(answerEngineName)}
                     </p>
                     {mismatch ? (
-                      <p className="m-0 mt-2 text-sm font-black leading-6 text-[#F0F0EC]">
+                      <p className="m-0 mt-2 text-sm font-black leading-6 text-[#132A43]">
                         {copy.categoryPerceptionMismatchAction}
                       </p>
                     ) : null}
@@ -486,7 +486,7 @@ export default async function AuditPage({
                   </span>
                 </div>
                 {sentiment.justification ? (
-                  <p className="m-0 mt-2 text-sm font-black leading-6 text-[#F0F0EC]">{sentiment.justification}</p>
+                  <p className="m-0 mt-2 text-sm font-black leading-6 text-[#132A43]">{sentiment.justification}</p>
                 ) : null}
                 <p className="m-0 mt-2 text-sm font-bold leading-6 text-[#C7C7D1]">{sentiment.guidance}</p>
               </section>
@@ -523,22 +523,22 @@ export default async function AuditPage({
 
           {/* --- BLOC 2 : « À PUBLIER » — un seul bloc, un seul bouton. -------- */}
           {complete && !failed ? (
-            <section className="rounded-[1.5rem] border border-[#CAFF3C]/20 bg-[#CAFF3C]/[0.055] p-5 sm:p-6" data-testid="publish-block">
+            <section className="rounded-[1.5rem] border border-[#123E5C]/20 bg-[#123E5C]/[0.055] p-5 sm:p-6" data-testid="publish-block">
               {isFreeReport ? (
                 <>
-                  <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.publishLockedEyebrow}</p>
+                  <p className="m-0 mb-2 text-xs font-black uppercase tracking-[0.12em] text-[#123E5C]">{copy.publishLockedEyebrow}</p>
                   <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
                     {copy.publishLockedTitle}
                   </h2>
-                  <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#D6D6DF]">{copy.publishLockedBody}</p>
+                  <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#5B6B82]">{copy.publishLockedBody}</p>
                   <ul className="m-0 mt-4 grid list-none gap-2 p-0">
                     {teaserItems.map((item) => (
-                      <li key={item.name} className="rounded-2xl border border-white/[0.08] bg-black/25 p-4">
-                        <p className="m-0 flex items-start gap-2 text-sm font-black text-[#F0F0EC]">
-                          <span aria-hidden="true" className="text-[#CAFF3C]">🔒</span>
+                      <li key={item.name} className="rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-4">
+                        <p className="m-0 flex items-start gap-2 text-sm font-black text-[#132A43]">
+                          <span aria-hidden="true" className="text-[#123E5C]">🔒</span>
                           {item.name}
                         </p>
-                        <p className="m-0 mt-1 text-xs font-bold leading-5 text-[#8E8E9A]">{item.detail}</p>
+                        <p className="m-0 mt-1 text-xs font-bold leading-5 text-[#8FA0B4]">{item.detail}</p>
                       </li>
                     ))}
                   </ul>
@@ -547,12 +547,12 @@ export default async function AuditPage({
                       auditId={audit.id} checkoutConfigured={isCheckoutConfigured(SERVICE_CHECKOUT_URL)}
                       href={isCheckoutConfigured(SERVICE_CHECKOUT_URL) ? SERVICE_CHECKOUT_URL : `${locale === "fr" ? "/fr" : "/en"}#pricing`}
                       source="report_service_offer"
-                      className="inline-flex rounded-xl bg-[#CAFF3C] px-5 py-3 text-sm font-black text-[#09090B] no-underline shadow-2xl shadow-[#CAFF3C]/20 transition hover:brightness-110"
+                      className="inline-flex rounded-xl bg-[#123E5C] px-5 py-3 text-sm font-black text-white no-underline shadow-2xl shadow-[#123E5C]/20 transition hover:brightness-110"
                     >
                       {copy.publishLockedCta}
                     </FunnelCheckoutLink>
                   </div>
-                  <p className="m-0 mt-3 text-xs font-bold leading-5 text-[#8E8E9A]">{copy.reportReassurance}</p>
+                  <p className="m-0 mt-3 text-xs font-bold leading-5 text-[#8FA0B4]">{copy.reportReassurance}</p>
                 </>
               ) : (
                 <PublishContent
@@ -572,11 +572,11 @@ export default async function AuditPage({
 
           {/* --- BLOC 4 : LES QUESTIONS — la preuve, repliée. ------------------ */}
           {complete && !failed && !isFreeReport ? (
-            <details className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.035] p-5 sm:p-6" data-testid="buyer-intent-prompts">
+            <details className="rounded-[1.5rem] border border-[#E4E9F0] bg-[#FBFCFD] p-5 sm:p-6" data-testid="buyer-intent-prompts">
               <summary className="cursor-pointer list-item text-xl leading-tight tracking-[-0.03em]" style={{ fontFamily: "var(--font-display)" }}>
                 {isAnswerEngineReport ? copy.questionsTitle(answerEngineName) : copy.webQuestionsTitle}
                 {checkedPromptCount > 0 ? (
-                  <span className="ml-3 rounded-full border border-[#CAFF3C]/25 bg-[#CAFF3C]/10 px-3 py-1 align-middle text-xs font-black text-[#CAFF3C]">
+                  <span className="ml-3 rounded-full border border-[#123E5C]/25 bg-[#123E5C]/10 px-3 py-1 align-middle text-xs font-black text-[#123E5C]">
                     {fr ? `Recommandé sur ${recommendedPromptCount}/${checkedPromptCount}` : `Recommended on ${recommendedPromptCount}/${checkedPromptCount}`}
                   </span>
                 ) : null}

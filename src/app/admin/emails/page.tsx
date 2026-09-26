@@ -32,16 +32,16 @@ type RecentRow = {
   created_at: Date;
 };
 
-const BG = "#09090B";
-const PANEL = "#141417";
-const LINE = "#26262B";
-const ACCENT = "#CAFF3C";
-const WARN = "#FF8F6B";
-const MUTED = "#8A8A93";
+const BG = "#F5F7FA";
+const PANEL = "#FFFFFF";
+const LINE = "#E4E9F0";
+const ACCENT = "#123E5C";
+const WARN = "#C0492E";
+const MUTED = "#8FA0B4";
 
 function statusColor(status: string) {
   if (status === "sent") return ACCENT;
-  if (status === "failed") return "#FF5C5C";
+  if (status === "failed") return "#C0492E";
   if (status === "suppressed") return WARN;
   return MUTED;
 }
@@ -58,7 +58,7 @@ export default async function AdminEmailsPage({
   const { key } = await searchParams;
 
   const shell = (children: React.ReactNode) => (
-    <main style={{ minHeight: "100vh", background: BG, color: "#F4F4F5", fontFamily: "ui-sans-serif, system-ui, -apple-system, sans-serif", padding: "40px 24px" }}>
+    <main style={{ minHeight: "100vh", background: BG, color: "#132A43", fontFamily: "ui-sans-serif, system-ui, -apple-system, sans-serif", padding: "40px 24px" }}>
       <div style={{ maxWidth: 980, margin: "0 auto" }}>{children}</div>
     </main>
   );
@@ -104,8 +104,8 @@ export default async function AdminEmailsPage({
   const cards: Array<{ label: string; value: string; color: string }> = [
     { label: "Envoyés (14 j)", value: String(sent), color: ACCENT },
     { label: "Supprimés", value: String(totals.suppressed ?? 0), color: WARN },
-    { label: "Échecs", value: String(totals.failed ?? 0), color: "#FF5C5C" },
-    { label: "Taux d'envoi", value: `${rate}%`, color: "#F4F4F5" },
+    { label: "Échecs", value: String(totals.failed ?? 0), color: "#C0492E" },
+    { label: "Taux d'envoi", value: `${rate}%`, color: "#132A43" },
   ];
 
   return shell(
@@ -167,9 +167,9 @@ export default async function AdminEmailsPage({
       </div>
 
       <p style={{ color: MUTED, fontSize: 12, marginTop: 16, lineHeight: 1.6 }}>
-        <strong style={{ color: "#F4F4F5" }}>sent</strong> = accepté par Resend (vérifie la délivrabilité réelle sur resend.com) ·{" "}
-        <strong style={{ color: "#F4F4F5" }}>suppressed</strong> = bloqué avant envoi ·{" "}
-        <strong style={{ color: "#F4F4F5" }}>failed</strong> = tentative en erreur. Étapes : audit_result (rapport), j1_value / j2_value (relances), weekly_monitoring.
+        <strong style={{ color: "#132A43" }}>sent</strong> = accepté par Resend (vérifie la délivrabilité réelle sur resend.com) ·{" "}
+        <strong style={{ color: "#132A43" }}>suppressed</strong> = bloqué avant envoi ·{" "}
+        <strong style={{ color: "#132A43" }}>failed</strong> = tentative en erreur. Étapes : audit_result (rapport), j1_value / j2_value (relances), weekly_monitoring.
       </p>
     </>
   );

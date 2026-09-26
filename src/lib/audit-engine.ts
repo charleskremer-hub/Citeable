@@ -23,7 +23,12 @@ const OPENAI_UNAVAILABLE = "ChatGPT indisponible, réessaie.";
 const FREE_AUDIT_CACHE_HOURS = 24;
 const FREE_AUDIT_EMAIL_DAILY_LIMIT = 1;
 const FREE_AUDIT_DOMAIN_DAILY_LIMIT = 1;
-const BUYER_PROMPT_SET_VERSION = "relevant_content_clean_category_v2";
+// v3 (26/09/2026) : questions niche-locales (métier+ville+besoin, sans
+// informationnel) + fiabilisation catégorie expert-comptable. Le bump INVALIDE
+// le cache free-Gemini (findFreshFreeGeminiAudit) — sans lui, un re-audit d'un
+// domaine déjà scanné rejouait les anciennes questions. Toujours bumper cette
+// version quand la génération de prompts ou l'inférence de catégorie change.
+const BUYER_PROMPT_SET_VERSION = "niche_local_prompts_v3";
 // Modèle ÉPINGLÉ — jamais un alias `…-latest`.
 //
 // Deux raisons, toutes deux MESURÉES le 20/09/2026, pas déduites :

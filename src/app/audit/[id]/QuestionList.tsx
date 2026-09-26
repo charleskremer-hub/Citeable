@@ -20,15 +20,15 @@ export default function QuestionList({ locale, engineName, isAnswerEngineReport,
   return (
     <div className="mt-4">
       {rows.length ? (
-        <div className="mb-4 rounded-2xl border border-white/[0.07] bg-black/20 p-4" data-testid="prompt-methodology">
-          <p className="m-0 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">{copy.methodEyebrow}</p>
-          <p className="m-0 mt-1.5 text-base font-black leading-6 text-[#F0F0EC]">{copy.methodTitle}</p>
-          <p className="m-0 mt-2 text-sm font-bold leading-6 text-[#A7A7B4]">
+        <div className="mb-4 rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-4" data-testid="prompt-methodology">
+          <p className="m-0 text-xs font-black uppercase tracking-[0.12em] text-[#123E5C]">{copy.methodEyebrow}</p>
+          <p className="m-0 mt-1.5 text-base font-black leading-6 text-[#132A43]">{copy.methodTitle}</p>
+          <p className="m-0 mt-2 text-sm font-bold leading-6 text-[#5B6B82]">
             {copy.methodBody(isAnswerEngineReport ? engineName : copy.nativeWebSearch)}
           </p>
           <ul className="m-0 mt-3 flex list-none flex-wrap gap-2 p-0">
             {[copy.methodChipUnbranded, copy.methodChipIntent, copy.methodChipLive].map((chip) => (
-              <li key={chip} className="rounded-full border border-white/[0.09] bg-white/[0.05] px-2.5 py-1 text-[0.6875rem] font-black uppercase tracking-[0.1em] text-[#BCBCC8]">
+              <li key={chip} className="rounded-full border border-[#E4E9F0] bg-[#FBFCFD] px-2.5 py-1 text-[0.6875rem] font-black uppercase tracking-[0.1em] text-[#BCBCC8]">
                 {chip}
               </li>
             ))}
@@ -37,7 +37,7 @@ export default function QuestionList({ locale, engineName, isAnswerEngineReport,
       ) : null}
 
       {gapCount > 0 ? (
-        <p className="m-0 mb-4 rounded-xl border border-[#FF8F6B]/20 bg-[#FF8F6B]/[0.06] px-4 py-3 text-sm font-bold leading-6 text-[#F3C7B7]">
+        <p className="m-0 mb-4 rounded-xl border border-[#C0492E]/20 bg-[#C0492E]/[0.06] px-4 py-3 text-sm font-bold leading-6 text-[#F3C7B7]">
           {fr
             ? `${gapCount} question${gapCount > 1 ? "s" : ""} d'achat où l'IA cite un concurrent à ta place (en orange ci-dessous). Ce sont exactement celles que ton bloc « À publier » corrige.`
             : `${gapCount} buyer question${gapCount > 1 ? "s" : ""} where AI cites a competitor instead of you (in orange below). These are exactly what your "to publish" block fixes.`}
@@ -50,25 +50,25 @@ export default function QuestionList({ locale, engineName, isAnswerEngineReport,
             const pill = promptStatusPill(analysis.state, locale);
             const isGap = analysis.state === "missing";
             return (
-              <li key={question.prompt} className={`rounded-2xl border p-4 ${isGap ? "border-[#FF8F6B]/25 bg-[#FF8F6B]/[0.05]" : "border-white/[0.07] bg-black/20"}`}>
+              <li key={question.prompt} className={`rounded-2xl border p-4 ${isGap ? "border-[#C0492E]/25 bg-[#C0492E]/[0.05]" : "border-[#E4E9F0] bg-[#EEF2F7]"}`}>
                 <div className="flex flex-wrap items-start justify-between gap-2">
-                  <p className="m-0 max-w-[80%] text-sm font-black text-[#F0F0EC]">{question.prompt}</p>
+                  <p className="m-0 max-w-[80%] text-sm font-black text-[#132A43]">{question.prompt}</p>
                   <span className="shrink-0 rounded-full px-2.5 py-1 text-xs font-black" style={{ color: pill.color, background: pill.bg }}>
                     {pill.label}
                   </span>
                 </div>
                 {analysis.state === "unchecked" ? (
-                  <p className="m-0 mt-2 text-xs font-bold text-[#8E8E9A]">{localizedUnavailableReason(analysis.reason, locale, engineName)}</p>
+                  <p className="m-0 mt-2 text-xs font-bold text-[#8FA0B4]">{localizedUnavailableReason(analysis.reason, locale, engineName)}</p>
                 ) : analysis.competitors.length ? (
                   <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
                     <span className="text-[11px] font-bold text-[#8E9A8F]">{fr ? "Cité à ta place :" : "Cited instead of you:"}</span>
                     {analysis.competitors.slice(0, 5).map((competitor) => (
-                      <span key={competitor} className="rounded-full border border-white/10 bg-white/[0.03] px-2 py-0.5 text-xs font-black text-[#DFE7DB]">{competitor}</span>
+                      <span key={competitor} className="rounded-full border border-[#E4E9F0] bg-[#FBFCFD] px-2 py-0.5 text-xs font-black text-[#DFE7DB]">{competitor}</span>
                     ))}
                   </div>
                 ) : null}
                 {isGap ? (
-                  <p className="m-0 mt-2.5 text-xs font-black text-[#CAFF3C]">
+                  <p className="m-0 mt-2.5 text-xs font-black text-[#123E5C]">
                     {fr ? "→ Ton bloc « À publier » répond mot pour mot à cette question." : "→ Your \"to publish\" block answers this exact question."}
                   </p>
                 ) : null}

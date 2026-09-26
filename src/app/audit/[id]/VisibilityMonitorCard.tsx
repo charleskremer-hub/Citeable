@@ -63,7 +63,7 @@ export function VisibilityMonitorCard({
   const fr = locale === "fr";
   const isDashboard = variant === "dashboard";
   const host = websiteUrl.replace(/^https?:\/\//, "").replace(/\/$/, "");
-  const recommendedColor = recommended ? "#CAFF3C" : "#FF8F6B";
+  const recommendedColor = recommended ? "#123E5C" : "#C0492E";
   const topCompetitors = competitors.slice(0, 3);
 
   const trendPoints = (trend ?? []).filter((point) => typeof point?.score === "number");
@@ -72,7 +72,7 @@ export function VisibilityMonitorCard({
     typeof scoreDelta === "number" && scoreDelta !== 0
       ? `${scoreDelta > 0 ? "+" : ""}${scoreDelta} ${fr ? "pts vs dernier re-check" : "pts vs last re-check"}`
       : null;
-  const deltaColor = typeof scoreDelta === "number" && scoreDelta < 0 ? "#FF8F6B" : "#CAFF3C";
+  const deltaColor = typeof scoreDelta === "number" && scoreDelta < 0 ? "#C0492E" : "#123E5C";
 
   const tiles: { label: string; value: string; color?: string }[] = [
     {
@@ -90,7 +90,7 @@ export function VisibilityMonitorCard({
   ];
 
   return (
-    <section className="mt-6 overflow-hidden rounded-[1.5rem] border border-white/[0.08] bg-[#0E1210] p-4 sm:p-5" data-testid={isDashboard ? "visibility-dashboard-card" : "visibility-monitor-card"}>
+    <section className="mt-6 overflow-hidden rounded-[1.5rem] border border-[#E4E9F0] bg-[#0E1210] p-4 sm:p-5" data-testid={isDashboard ? "visibility-dashboard-card" : "visibility-monitor-card"}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="m-0 text-xs font-black uppercase tracking-[0.14em] text-[#8E9A8F]">
@@ -98,16 +98,16 @@ export function VisibilityMonitorCard({
               ? fr ? "Ton dashboard visibilité IA" : "Your AI visibility dashboard"
               : fr ? "Ta visibilité IA · suivi" : "Your AI visibility · tracking"}
           </p>
-          <p className="m-0 mt-1 text-lg font-black text-[#F0F0EC]">{host}</p>
+          <p className="m-0 mt-1 text-lg font-black text-[#132A43]">{host}</p>
         </div>
-        <span className="rounded-full border border-white/10 px-3 py-1 text-xs font-bold text-[#8E9A8F]">
+        <span className="rounded-full border border-[#E4E9F0] px-3 py-1 text-xs font-bold text-[#8E9A8F]">
           {engine} · {fr ? "aujourd'hui" : "today"}
         </span>
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         {tiles.map((tile) => (
-          <div key={tile.label} className="rounded-2xl border border-white/[0.07] bg-black/25 p-3">
+          <div key={tile.label} className="rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-3">
             <div className="text-[11px] font-bold text-[#8E9A8F]">{tile.label}</div>
             <div className="mt-1 text-base font-black" style={tile.color ? { color: tile.color } : undefined}>
               {tile.value}
@@ -117,10 +117,10 @@ export function VisibilityMonitorCard({
       </div>
 
       {topCompetitors.length > 0 ? (
-        <div className="mt-2.5 flex flex-wrap items-center gap-2 rounded-2xl border border-white/[0.07] bg-black/25 p-3">
+        <div className="mt-2.5 flex flex-wrap items-center gap-2 rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-3">
           <span className="text-[11px] font-bold text-[#8E9A8F]">{fr ? "Cité à ta place :" : "Cited instead of you:"}</span>
           {topCompetitors.map((competitor) => (
-            <span key={competitor.name} className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-xs font-black text-[#DFE7DB]">
+            <span key={competitor.name} className="rounded-full border border-[#E4E9F0] bg-[#FBFCFD] px-2.5 py-1 text-xs font-black text-[#DFE7DB]">
               {competitor.name}
               {competitor.count > 1 ? <span className="ml-1 text-[#8E9A8F]">×{competitor.count}</span> : null}
             </span>
@@ -129,13 +129,13 @@ export function VisibilityMonitorCard({
       ) : null}
 
       {isDashboard ? (
-        <div className="relative mt-3 overflow-hidden rounded-2xl border border-white/[0.07] bg-black/25 p-4">
+        <div className="relative mt-3 overflow-hidden rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="text-xs font-bold text-[#8E9A8F]">
               {fr ? `Évolution de ton score — ${RECHECK_CADENCE.fr.recheckNoun}` : `Your score over time — ${RECHECK_CADENCE.en.recheckNoun}`}
             </div>
             {deltaText ? (
-              <span className="rounded-full border border-white/10 px-2.5 py-1 text-xs font-black" style={{ color: deltaColor }}>
+              <span className="rounded-full border border-[#E4E9F0] px-2.5 py-1 text-xs font-black" style={{ color: deltaColor }}>
                 {deltaText}
               </span>
             ) : null}
@@ -143,11 +143,11 @@ export function VisibilityMonitorCard({
 
           {hasRealTrend ? (
             <svg width="100%" height="64" viewBox="0 0 640 64" preserveAspectRatio="none" className="mt-2" aria-hidden="true">
-              <polyline points={trendPolyline(trendPoints)} fill="none" stroke="#CAFF3C" strokeWidth="3" />
+              <polyline points={trendPolyline(trendPoints)} fill="none" stroke="#123E5C" strokeWidth="3" />
             </svg>
           ) : (
-            <div className="mt-3 grid gap-1 rounded-xl border border-dashed border-white/10 bg-black/20 p-4 text-center">
-              <div className="text-sm font-black text-[#F0F0EC]">
+            <div className="mt-3 grid gap-1 rounded-xl border border-dashed border-[#E4E9F0] bg-[#EEF2F7] p-4 text-center">
+              <div className="text-sm font-black text-[#132A43]">
                 {fr ? "Premier point enregistré ✓" : "First data point recorded ✓"}
               </div>
               <div className="text-xs font-bold text-[#A9B6A3]">
@@ -157,7 +157,7 @@ export function VisibilityMonitorCard({
           )}
         </div>
       ) : (
-        <div className="relative mt-3 overflow-hidden rounded-2xl border border-white/[0.07] bg-black/25 p-4">
+        <div className="relative mt-3 overflow-hidden rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-4">
           <div className="text-xs font-bold text-[#8E9A8F]">
             {fr ? "Évolution de ton score — 8 derniers re-checks" : "Your score over time — last 8 re-checks"}
           </div>
@@ -169,12 +169,12 @@ export function VisibilityMonitorCard({
             className="mt-2 blur-[3px] opacity-50"
             aria-hidden="true"
           >
-            <polyline points="0,48 90,44 180,46 270,37 360,39 450,28 540,31 640,20" fill="none" stroke="#CAFF3C" strokeWidth="3" />
-            <polyline points="0,56 90,54 180,55 270,51 360,52 450,48 540,49 640,46" fill="none" stroke="#5A6B58" strokeWidth="2" />
+            <polyline points="0,48 90,44 180,46 270,37 360,39 450,28 540,31 640,20" fill="none" stroke="#123E5C" strokeWidth="3" />
+            <polyline points="0,56 90,54 180,55 270,51 360,52 450,48 540,49 640,46" fill="none" stroke="#9FB1C6" strokeWidth="2" />
           </svg>
           <div className="absolute inset-0 grid place-items-center gap-1.5 p-4 text-center">
             <div className="text-xl">🔒</div>
-            <div className="text-sm font-black text-[#F0F0EC]">
+            <div className="text-sm font-black text-[#132A43]">
               {fr ? `Suis ta progression ${RECHECK_CADENCE.fr.adverb}` : `Track your progress ${RECHECK_CADENCE.en.every}`}
             </div>
             <div className="text-xs font-bold text-[#A9B6A3]">

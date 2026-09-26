@@ -197,7 +197,7 @@ export default async function ProspectionPolicyPage() {
   return (
     <div className="min-h-full">
       <main className="mx-auto max-w-3xl px-5 py-16 sm:px-6">
-        <Link href="/" className="text-sm text-[#686879] no-underline hover:text-[#F0F0EC]">
+        <Link href="/" className="text-sm text-[#8FA0B4] no-underline hover:text-[#132A43]">
           {copy.back}
         </Link>
 
@@ -221,19 +221,19 @@ export default async function ProspectionPolicyPage() {
           </section>
         ))}
 
-        <section className="mt-10 rounded-xl border border-white/[0.08] px-5 py-4">
+        <section className="mt-10 rounded-xl border border-[#E4E9F0] px-5 py-4">
           <h2 className="mb-3 text-xl tracking-[-0.02em]">{copy.contactHeading}</h2>
           <p className="m-0 leading-relaxed text-[#A0A0AE]">
             {LEGAL_ENTITY.name}
             {LEGAL_ENTITY.postalAddress ? ` — ${LEGAL_ENTITY.postalAddress}` : ""}
             <br />
-            <a href={`mailto:${LEGAL_ENTITY.contactEmail}`} className="text-[#CAFF3C]">
+            <a href={`mailto:${LEGAL_ENTITY.contactEmail}`} className="text-[#123E5C]">
               {LEGAL_ENTITY.contactEmail}
             </a>
           </p>
         </section>
 
-        <p className="mt-10 text-sm text-[#444454]">
+        <p className="mt-10 text-sm text-[#8FA0B4]">
           {copy.updated} : {LAST_UPDATED}
         </p>
       </main>

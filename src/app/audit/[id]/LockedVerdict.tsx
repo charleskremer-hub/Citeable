@@ -31,12 +31,12 @@ export default function LockedVerdict({
 
   return (
     <>
-      <div className="rounded-[2rem] border border-white/[0.08] bg-[#111116] p-5 shadow-2xl shadow-black/30 sm:p-8" data-testid="locked-verdict">
+      <div className="rounded-[2rem] border border-[#E4E9F0] bg-[#FFFFFF] p-5 shadow-2xl shadow-black/5 sm:p-8" data-testid="locked-verdict">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <p className="m-0 text-xs font-black uppercase tracking-[0.12em] text-[#CAFF3C]">
+          <p className="m-0 text-xs font-black uppercase tracking-[0.12em] text-[#123E5C]">
             {fr ? `Audit de visibilité IA · ${brandName}` : `AI visibility audit · ${brandName}`}
           </p>
-          <a href={websiteUrl} className="max-w-full truncate text-sm font-bold text-[#8E8E9A] underline decoration-white/10 underline-offset-4">
+          <a href={websiteUrl} className="max-w-full truncate text-sm font-bold text-[#8FA0B4] underline decoration-white/10 underline-offset-4">
             {websiteUrl}
           </a>
         </div>
@@ -46,8 +46,8 @@ export default function LockedVerdict({
       </div>
 
       {lostQuestions.length ? (
-        <section className="rounded-[1.5rem] border border-[#FF8F6B]/25 bg-[#FF8F6B]/[0.05] p-5 sm:p-6" data-testid="locked-lost-questions">
-          <p className="m-0 text-xs font-black uppercase tracking-[0.12em] text-[#FF8F6B]">
+        <section className="rounded-[1.5rem] border border-[#C0492E]/25 bg-[#C0492E]/[0.05] p-5 sm:p-6" data-testid="locked-lost-questions">
+          <p className="m-0 text-xs font-black uppercase tracking-[0.12em] text-[#C0492E]">
             {fr ? "Questions d'achat perdues" : "Lost buyer questions"}
           </p>
           <h2 className="m-0 mt-2 text-2xl leading-[1.1] tracking-[-0.03em]" style={{ fontFamily: "var(--font-display)" }}>
@@ -55,8 +55,8 @@ export default function LockedVerdict({
           </h2>
           <ol className="m-0 mt-4 grid list-none gap-2 p-0">
             {lostQuestions.map((prompt) => (
-              <li key={prompt} className="rounded-2xl border border-white/[0.08] bg-black/25 p-4">
-                <p className="m-0 text-sm font-black leading-6 text-[#F0F0EC]">« {prompt} »</p>
+              <li key={prompt} className="rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-4">
+                <p className="m-0 text-sm font-black leading-6 text-[#132A43]">« {prompt} »</p>
               </li>
             ))}
           </ol>
