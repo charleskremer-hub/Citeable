@@ -690,6 +690,13 @@ export function brandSentimentText(sentiment: SentimentLike, locale: Locale) {
 export function localizePlainAction(action: PlainActionLike, locale: Locale): PlainActionLike {
   if (locale === "en") return action;
 
+  // Les actions « service » (LOT G) sont rédigées DIRECTEMENT dans la langue de
+  // l'audit et commencent toutes par « GetPick … ». Sans ce garde, elles
+  // tombaient dans le repli générique ci-dessous et le prospect lisait
+  // « Action prioritaire » à la place de l'action réelle — dans l'email de
+  // rapport comme sur /audit/[id] (constaté en prod le 28/09 sur Gendrot).
+  if (action.title.startsWith("GetPick ")) return action;
+
   if (action.title.startsWith("Update Google Business Profile")) {
     const questions = action.basedOn?.length ? action.basedOn.map((prompt) => `« ${prompt} »`).join(" ; ") : "les questions locales testées dans cet audit";
     return {

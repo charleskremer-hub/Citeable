@@ -4,6 +4,7 @@ export type { DetectedPlatform } from "./platform-detect";
 import { pool } from "./db";
 import { recordFunnelEvent } from "./funnel";
 import { localizePlainAction, type Locale } from "./i18n";
+import { leadAlertRecipient, sendLeadAlert } from "./lead-alert";
 import { RECHECK_CADENCE, RECHECK_INTERVAL_DAYS, SERVICE_OFFER_COPY } from "./plan-promises";
 import { buildMonthlyMonitoringEmail } from "./monitoring-email";
 import { isWebSearchConfigured, runWebSearch } from "./web-search";
@@ -4505,7 +4506,43 @@ export async function sendAuditEmail(email: string, brandName: string, websiteUr
   }
 
   const message = buildAuditResultEmail(email, brandName, report, locale);
-  return sendGuardedEmail({ auditId: report.audit_id, email, websiteUrl, step: "audit_result", subject: message.subject, body: message.body, html: message.html });
+  const result = await sendGuardedEmail({ auditId: report.audit_id, email, websiteUrl, step: "audit_result", subject: message.subject, body: message.body, html: message.html });
+  await notifyFounderOfLead(email, brandName, websiteUrl, report, result);
+  return result;
+}
+
+/**
+ * Prévient le fondateur qu'un lead est entré (voir `lead-alert.ts`). Appelée
+ * une seule fois par audit : `sendAuditEmail` ne passe ici qu'après avoir posé
+ * son verrou `emailSendStartedAt`. Ne lève jamais.
+ */
+async function notifyFounderOfLead(email: string, brandName: string, websiteUrl: string, report: AuditReport, prospectResult: { sent: boolean; error?: string }) {
+  if (!leadAlertRecipient()) return;
+  try {
+    const row = await pool.query<{ traffic_class: string | null }>(
+      `SELECT raw_results->>'trafficClass' AS traffic_class FROM audits WHERE id = $1`,
+      [report.audit_id]
+    );
+    const lost = report.buyerIntentPrompts.find((prompt) => !prompt.brandMentioned && prompt.competitors.length > 0) ?? report.buyerIntentPrompts[0];
+    await sendLeadAlert(
+      {
+        auditId: report.audit_id,
+        prospectEmail: email,
+        brandName,
+        websiteUrl,
+        score: report.score,
+        category: report.category,
+        competitors: lost?.competitors?.length ? lost.competitors : report.competitors,
+        firstQuestion: lost?.prompt,
+        trafficClass: row.rows[0]?.traffic_class ?? null,
+        prospectEmailSent: prospectResult.sent,
+        prospectEmailError: prospectResult.error,
+      },
+      { siteUrl: siteBaseUrl() }
+    );
+  } catch (error) {
+    console.error("lead alert failed", error instanceof Error ? error.message : error);
+  }
 }
 
 function siteBaseUrl() {
