@@ -41,9 +41,9 @@ export function extractPasteable(text: string) {
 }
 
 export function scoreColor(score: number) {
-  if (score < 30) return "#FF5F5F";
-  if (score < 60) return "#FFB84D";
-  return "#CAFF3C";
+  if (score < 30) return "#C0492E";
+  if (score < 60) return "#8A6420";
+  return "#17705B";
 }
 
 
@@ -80,9 +80,9 @@ export function promptAnalysis(question: BuyerIntentPromptResult): { state: Prom
 }
 
 export function promptStatusPill(state: PromptState, locale: Locale): { label: string; color: string; bg: string } {
-  if (state === "recommended") return { label: locale === "fr" ? "✓ Recommandé" : "✓ Recommended", color: "#CAFF3C", bg: "rgba(202,255,60,0.12)" };
-  if (state === "missing") return { label: locale === "fr" ? "✗ Pas cité" : "✗ Not cited", color: "#FF8F6B", bg: "rgba(255,143,107,0.12)" };
-  return { label: locale === "fr" ? "— Non vérifié" : "— Not checked", color: "#9A9AA8", bg: "rgba(255,255,255,0.05)" };
+  if (state === "recommended") return { label: locale === "fr" ? "✓ Recommandé" : "✓ Recommended", color: "#17705B", bg: "rgba(202,255,60,0.12)" };
+  if (state === "missing") return { label: locale === "fr" ? "✗ Pas cité" : "✗ Not cited", color: "#B04329", bg: "rgba(255,143,107,0.12)" };
+  return { label: locale === "fr" ? "— Non vérifié" : "— Not checked", color: "#5B6B82", bg: "rgba(255,255,255,0.05)" };
 }
 
 export function checkedQuestions(questions: BuyerIntentPromptResult[]) {
@@ -486,4 +486,98 @@ export function verdictRival(questions: BuyerIntentPromptResult[]): { name: stri
   const name = any ? pick(any) : undefined;
 
   return name && any ? { name, prompt: any.prompt, replacement: any === replacement } : null;
+}
+
+/**
+ * CE QUE LE CLIENT OBTIENT — le bloc qui vend, sur le rapport gratuit.
+ *
+ * Demande de Charles (28/09/2026) : « il faut que dans le rapport on valorise
+ * mieux ce que le client obtiendrait comme résultat ». Le bloc précédent
+ * (`publishTeaserItems`) listait des livrables de l'ère marques DTC — une FAQ
+ * JSON-LD « à coller dans ton site », un llms.txt, un robots.txt — c'est-à-dire
+ * des gestes techniques, l'exact contraire de l'offre « tu ne touches à rien ».
+ *
+ * Trois étages, du résultat vers la preuve :
+ *   1. l'OBJECTIF, écrit sur SA question et SON confrère (jamais générique) ;
+ *   2. la VALEUR en euros — uniquement pour un cabinet d'expertise comptable,
+ *      seul métier dont on a un ordre de grandeur sourcé ; ailleurs, rien ;
+ *   3. le CALENDRIER de ce qui est livré, sans rien promettre qu'on ne fait pas
+ *      (pas d'annuaires ni d'avis : l'off-site est désactivé).
+ */
+export type ServiceValuePlan = {
+  objective: string;
+  value?: { text: string; source: string };
+  steps: Array<{ when: string; what: string }>;
+};
+
+/** Honoraires annuels constatés pour une petite SARL/SAS, bas de fourchette
+ *  (l-expert-comptable.com, « 2 000 à 5 000 € », relevé le 28/09/2026). */
+export const ACCOUNTING_CLIENT_ANNUAL_FEES_EUR = { low: 2000, high: 5000 } as const;
+export const ACCOUNTING_FEES_SOURCE = "l-expert-comptable.com — honoraires annuels constatés pour une petite SARL/SAS";
+
+export function serviceValuePlan(args: {
+  brandName: string;
+  engineName: string;
+  lostQuestions: string[];
+  questionCount: number;
+  rival: { name: string; prompt: string; replacement: boolean } | null;
+  topRivals: string[];
+  category?: string;
+  monthlyPriceEur: number;
+  recheckEvery: string;
+  locale: Locale;
+}): ServiceValuePlan {
+  const fr = args.locale === "fr";
+  const q = (text: string) => (fr ? `« ${text} »` : `“${text}”`);
+  const lost = args.lostQuestions.length;
+
+  const objective = args.rival?.replacement
+    ? fr
+      ? `Aujourd'hui, sur ${q(args.rival.prompt)}, ${args.engineName} recommande ${args.rival.name}. L'objectif : que ce soit ${args.brandName}.`
+      : `Today, on ${q(args.rival.prompt)}, ${args.engineName} recommends ${args.rival.name}. The goal: make it ${args.brandName}.`
+    : lost > 0
+      ? fr
+        ? `Aujourd'hui, ${args.engineName} ne te cite sur aucune de ces ${lost} question${lost > 1 ? "s" : ""} de clients. L'objectif : devenir sa réponse.`
+        : `Today, ${args.engineName} does not name you on ${lost} of these client questions. The goal: become its answer.`
+      : fr
+        ? `${args.engineName} te cite déjà. L'objectif : le rester, chaque mois, face à tes confrères.`
+        : `${args.engineName} already names you. The goal: stay there, every month, against your peers.`;
+
+  let value: ServiceValuePlan["value"];
+  if (args.category === "accounting firm") {
+    const yearly = args.monthlyPriceEur * 12;
+    const years = Math.floor(ACCOUNTING_CLIENT_ANNUAL_FEES_EUR.low / yearly);
+    value = {
+      text: fr
+        ? `Chacune de ces questions, c'est un dirigeant qui cherche son expert-comptable et appelle le cabinet que l'IA lui donne. Un client SARL ou SAS représente en général ${ACCOUNTING_CLIENT_ANNUAL_FEES_EUR.low.toLocaleString("fr-FR")} à ${ACCOUNTING_CLIENT_ANNUAL_FEES_EUR.high.toLocaleString("fr-FR")} € d'honoraires par an : un seul client gagné paie plus de ${years} ans de GetPick.`
+        : `Each of these questions is a business owner looking for an accountant and calling the firm AI names. A small company client is typically worth €${ACCOUNTING_CLIENT_ANNUAL_FEES_EUR.low.toLocaleString("en-GB")}–${ACCOUNTING_CLIENT_ANNUAL_FEES_EUR.high.toLocaleString("en-GB")} in fees per year: one client won pays for more than ${years} years of GetPick.`,
+      source: ACCOUNTING_FEES_SOURCE,
+    };
+  }
+
+  const covered = lost > 0 ? lost : args.questionCount;
+  const firstQuestion = args.lostQuestions[0];
+  const peers = args.topRivals.slice(0, 3);
+  const steps = [
+    {
+      when: fr ? "Sous 48 h" : "Within 48 h",
+      what: fr
+        ? `Ta page-réponse écrite et publiée sur ${covered === 1 ? "cette question" : `ces ${covered} questions`}${firstQuestion ? `, à commencer par ${q(firstQuestion)}` : ""}. Hébergée par GetPick : ton site ne bouge pas.`
+        : `Your answer page written and published on ${covered === 1 ? "this question" : `these ${covered} questions`}${firstQuestion ? `, starting with ${q(firstQuestion)}` : ""}. Hosted by GetPick: your site does not change.`,
+    },
+    {
+      when: args.recheckEvery.charAt(0).toUpperCase() + args.recheckEvery.slice(1),
+      what: fr
+        ? `Les mêmes questions reposées à ${args.engineName}. Tu vois, une par une, qui est cité : toi ou ${args.rival?.name ?? "tes confrères"}.`
+        : `The same questions asked to ${args.engineName} again. You see, one by one, who gets named: you or ${args.rival?.name ?? "your peers"}.`,
+    },
+    {
+      when: fr ? "En continu" : "Ongoing",
+      what: fr
+        ? `Ton tableau de bord : ta visibilité dans l'IA face à ${peers.length ? peers.join(", ") : "tes confrères"}.`
+        : `Your dashboard: your AI visibility against ${peers.length ? peers.join(", ") : "your peers"}.`,
+    },
+  ];
+
+  return { objective, value, steps };
 }

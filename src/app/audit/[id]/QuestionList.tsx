@@ -28,7 +28,7 @@ export default function QuestionList({ locale, engineName, isAnswerEngineReport,
           </p>
           <ul className="m-0 mt-3 flex list-none flex-wrap gap-2 p-0">
             {[copy.methodChipUnbranded, copy.methodChipIntent, copy.methodChipLive].map((chip) => (
-              <li key={chip} className="rounded-full border border-[#E4E9F0] bg-[#FBFCFD] px-2.5 py-1 text-[0.6875rem] font-black uppercase tracking-[0.1em] text-[#BCBCC8]">
+              <li key={chip} className="rounded-full border border-[#E4E9F0] bg-[#FBFCFD] px-2.5 py-1 text-[0.6875rem] font-black uppercase tracking-[0.1em] text-[#5B6B82]">
                 {chip}
               </li>
             ))}
@@ -37,7 +37,7 @@ export default function QuestionList({ locale, engineName, isAnswerEngineReport,
       ) : null}
 
       {gapCount > 0 ? (
-        <p className="m-0 mb-4 rounded-xl border border-[#C0492E]/20 bg-[#C0492E]/[0.06] px-4 py-3 text-sm font-bold leading-6 text-[#F3C7B7]">
+        <p className="m-0 mb-4 rounded-xl border border-[#C0492E]/20 bg-[#C0492E]/[0.06] px-4 py-3 text-sm font-bold leading-6 text-[#B04329]">
           {fr
             ? `${gapCount} question${gapCount > 1 ? "s" : ""} d'achat où l'IA cite un concurrent à ta place (en orange ci-dessous). Ce sont exactement celles que ton bloc « À publier » corrige.`
             : `${gapCount} buyer question${gapCount > 1 ? "s" : ""} where AI cites a competitor instead of you (in orange below). These are exactly what your "to publish" block fixes.`}
@@ -58,12 +58,12 @@ export default function QuestionList({ locale, engineName, isAnswerEngineReport,
                   </span>
                 </div>
                 {analysis.state === "unchecked" ? (
-                  <p className="m-0 mt-2 text-xs font-bold text-[#8FA0B4]">{localizedUnavailableReason(analysis.reason, locale, engineName)}</p>
+                  <p className="m-0 mt-2 text-xs font-bold text-[#5E6E86]">{localizedUnavailableReason(analysis.reason, locale, engineName)}</p>
                 ) : analysis.competitors.length ? (
                   <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                    <span className="text-[11px] font-bold text-[#8E9A8F]">{fr ? "Cité à ta place :" : "Cited instead of you:"}</span>
+                    <span className="text-[11px] font-bold text-[#5B6B82]">{fr ? "Cité à ta place :" : "Cited instead of you:"}</span>
                     {analysis.competitors.slice(0, 5).map((competitor) => (
-                      <span key={competitor} className="rounded-full border border-[#E4E9F0] bg-[#FBFCFD] px-2 py-0.5 text-xs font-black text-[#DFE7DB]">{competitor}</span>
+                      <span key={competitor} className="rounded-full border border-[#E4E9F0] bg-[#FBFCFD] px-2 py-0.5 text-xs font-black text-[#5B6B82]">{competitor}</span>
                     ))}
                   </div>
                 ) : null}
@@ -77,7 +77,7 @@ export default function QuestionList({ locale, engineName, isAnswerEngineReport,
           })}
         </ol>
       ) : (
-        <div className="rounded-2xl border border-[#FF8A8A]/20 bg-[#FF5F5F]/10 p-4 text-sm font-bold text-[#FFB1B1]">
+        <div className="rounded-2xl border border-[#B04329]/20 bg-[#C0492E]/10 p-4 text-sm font-bold text-[#B04329]">
           {isAnswerEngineReport ? copy.engineUnavailable(engineName) : copy.webUnavailable}
         </div>
       )}

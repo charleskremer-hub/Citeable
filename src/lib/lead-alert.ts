@@ -92,3 +92,42 @@ export async function sendLeadAlert(
     return { sent: false, error: error instanceof Error ? error.message : String(error) };
   }
 }
+
+/**
+ * Alerte fondateur générique — utilisée par le webhook Stripe : un essai qui
+ * démarre doit être VU le jour même, parce que l'offre promet la page-réponse
+ * publiée sous 48 h. Même destinataire, mêmes garanties : jamais bloquant.
+ */
+export async function sendFounderAlert(
+  subject: string,
+  text: string,
+  options: { env?: Env; send?: (message: MailMessage) => Promise<MailSendResult> } = {},
+): Promise<LeadAlertResult> {
+  const env = options.env ?? process.env;
+  const to = leadAlertRecipient(env);
+  if (!to) return { sent: false, skipped: "LEAD_ALERT_TO not configured" };
+  try {
+    const result = await (options.send ?? ((message: MailMessage) => sendMail(message, { env })))({ to, subject, text });
+    return result.sent ? { sent: true } : { sent: false, error: result.error ?? "not sent" };
+  } catch (error) {
+    return { sent: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+/** Le texte de l'alerte « nouvel essai / nouvel abonné », sans I/O (testable). */
+export function buildCheckoutAlert(args: { email: string | null; plan: string | null; status: string; subscriptionId: string | null; skipped: boolean }) {
+  const subject = args.skipped
+    ? `[GetPick] ⚠ Paiement reçu SANS droit ouvert (${args.email ?? "email inconnu"})`
+    : `[GetPick] Nouvelle souscription : ${args.email}`;
+  const text = [
+    `Email : ${args.email ?? "—"}`,
+    `Plan : ${args.plan ?? "INCONNU — droit non ouvert, à corriger à la main"}`,
+    `Statut Stripe : ${args.status}`,
+    `Abonnement : ${args.subscriptionId ?? "—"}`,
+    "",
+    args.skipped
+      ? "Le webhook n'a pas pu ouvrir le droit. Vérifie la métadonnée getpick_plan=service sur le prix et le Payment Link."
+      : "À faire sous 48 h : publier sa page-réponse (promesse de l'offre).",
+  ].join("\n");
+  return { subject, text };
+}

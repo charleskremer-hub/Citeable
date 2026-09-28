@@ -97,7 +97,7 @@ export default async function SeoAnswerPage({ params }: SeoAnswerPageProps) {
             <aside className="rounded-[1.5rem] border border-[#123E5C]/25 bg-[#123E5C]/[0.07] p-5 shadow-2xl shadow-[#123E5C]/5">
               <p className="m-0 text-xs font-black uppercase tracking-[0.14em] text-[#123E5C]">Featured snippet</p>
               <p className="mt-4 text-base font-bold leading-7 text-[#132A43]">{page.featuredListIntro}</p>
-              <ul className="m-0 mt-4 flex list-none flex-col gap-2 p-0 text-sm leading-6 text-[#D6E2EC]">
+              <ul className="m-0 mt-4 flex list-none flex-col gap-2 p-0 text-sm leading-6 text-[#5B6B82]">
                 {page.featuredList.map((item) => (
                   <li key={item} className="flex gap-2"><span className="text-[#123E5C]">✓</span>{item}</li>
                 ))}
@@ -126,7 +126,7 @@ export default async function SeoAnswerPage({ params }: SeoAnswerPageProps) {
         <article className="rounded-[1.5rem] border border-[#123E5C]/25 bg-[#123E5C]/[0.055] p-6 sm:p-7">
           <p className="m-0 text-xs font-black uppercase tracking-[0.14em] text-[#123E5C]">GetPick</p>
           <h2 className="mt-4 text-3xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>{page.getpickTitle}</h2>
-          <p className="mt-5 text-base font-bold leading-7 text-[#D6E2EC]">{page.getpickBody}</p>
+          <p className="mt-5 text-base font-bold leading-7 text-[#5B6B82]">{page.getpickBody}</p>
           <Link href="/#audit" className="mt-6 inline-flex rounded-full bg-[#123E5C] px-5 py-3 font-black text-white no-underline transition hover:brightness-110">
             {page.ctaLabel}
           </Link>
@@ -181,7 +181,7 @@ export default async function SeoAnswerPage({ params }: SeoAnswerPageProps) {
 
       <footer className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 border-t border-[#E4E9F0] px-5 py-8 sm:px-6">
         <div>
-          <p className="m-0 text-xs font-black uppercase tracking-[0.14em] text-[#8FA0B4]">{page.relatedTitle}</p>
+          <p className="m-0 text-xs font-black uppercase tracking-[0.14em] text-[#5E6E86]">{page.relatedTitle}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {related.map((relatedPage) => (
               <Link key={relatedPage.slug} href={`/${relatedPage.locale}/${relatedPage.slug}`} className="rounded-full border border-[#E4E9F0] px-3 py-1.5 text-sm text-[#5B6B82] no-underline transition hover:border-[#123E5C]/40 hover:text-[#123E5C]">
@@ -190,7 +190,7 @@ export default async function SeoAnswerPage({ params }: SeoAnswerPageProps) {
             ))}
           </div>
         </div>
-        <a href={canonical} className="text-sm text-[#8FA0B4] no-underline">{canonical.replace("https://", "")}</a>
+        <a href={canonical} className="text-sm text-[#5E6E86] no-underline">{canonical.replace("https://", "")}</a>
       </footer>
     </main>
   );

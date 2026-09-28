@@ -285,30 +285,51 @@ export type ServiceOfferCopy = {
   emailSentence: string;
   /** Libellé du bouton d'email. */
   emailCta: string;
+  /** « 14 jours gratuits, puis 69 €/mois. Annulable… » — sous chaque bouton. */
+  trialLine: string;
 };
 
 const SERVICE_PRICE_LABEL: Record<PromiseLocale, string> = {
-  fr: `${SERVICE_PLAN_PRICE_EUR} €/mois`,
-  en: `€${SERVICE_PLAN_PRICE_EUR}/month`,
+  // HT : c'est ce que Stripe facture (TVA 20 % ajoutée au checkout, 82,80 € TTC).
+  // Un cabinet raisonne en HT ; afficher « 69 € » puis encaisser 82,80 € serait
+  // la surprise qui fait abandonner le paiement (constaté au checkout le 28/09).
+  fr: `${SERVICE_PLAN_PRICE_EUR} € HT/mois`,
+  en: `€${SERVICE_PLAN_PRICE_EUR}/month ex VAT`,
+};
+
+/**
+ * ESSAI GRATUIT — décision Charles du 28/09/2026 : « Si on veut convertir, il
+ * faut un essai gratuit puis 69 euros. » Configuré sur le Payment Link Stripe
+ * (`subscription_data.trial_period_days`) ; ce nombre et celui de Stripe doivent
+ * être identiques — c'est une promesse publique, écrite ici et nulle part ailleurs.
+ */
+export const SERVICE_TRIAL_DAYS: number = 14;
+
+/** « 14 jours gratuits, puis 69 €/mois » — la formule unique de l'offre. */
+export const SERVICE_TRIAL_LABEL: Record<PromiseLocale, string> = {
+  fr: `${SERVICE_TRIAL_DAYS} jours gratuits, puis ${SERVICE_PRICE_LABEL.fr}`,
+  en: `${SERVICE_TRIAL_DAYS} days free, then ${SERVICE_PRICE_LABEL.en}`,
 };
 
 export const SERVICE_OFFER_COPY: Record<PromiseLocale, ServiceOfferCopy> = {
   fr: {
     price: SERVICE_PRICE_LABEL.fr,
-    badge: `Fait pour toi · ${SERVICE_PRICE_LABEL.fr}`,
-    title: "Ce travail, GetPick le fait à ta place",
-    body: `GetPick crée et héberge ta page-réponse, celle que l'IA lit et cite, et te place sur les sources qu'elle croit — annuaires, avis, comparatifs de ta profession. Hors de ton site : tu ne changes rien de ton côté. ${RECHECK_CADENCE.fr.every}, il repose ces mêmes questions et te montre le basculement. Voici ce qui t'attend — nommé et compté, jamais inventé :`,
-    cta: `Démarrer — ${SERVICE_PRICE_LABEL.fr} →`,
-    emailSentence: `Tu peux t'en occuper toi-même. GetPick le fait à ta place, hors de ton site, pour ${SERVICE_PRICE_LABEL.fr}, sans engagement.`,
-    emailCta: `Démarrer — ${SERVICE_PRICE_LABEL.fr}`,
+    badge: `Fait pour toi · ${SERVICE_TRIAL_LABEL.fr}`,
+    title: "Ce que GetPick obtient pour toi",
+    body: `GetPick écrit et héberge ta page-réponse — celle que l'IA lit quand un client pose ces questions — sans toucher à ton site. ${RECHECK_CADENCE.fr.every}, il repose exactement les mêmes questions et te montre, une par une, qui l'IA cite : toi ou ton confrère.`,
+    cta: `Essayer ${SERVICE_TRIAL_DAYS} jours gratuitement →`,
+    emailSentence: `GetPick le fait à ta place, sans toucher à ton site : ${SERVICE_TRIAL_LABEL.fr}, sans engagement.`,
+    emailCta: `Essayer ${SERVICE_TRIAL_DAYS} jours gratuitement`,
+    trialLine: `${SERVICE_TRIAL_LABEL.fr}. Carte demandée, rien débité pendant l'essai. Pour arrêter : un email à hello@getpick.ai avant la fin, tu ne paies rien.`,
   },
   en: {
     price: SERVICE_PRICE_LABEL.en,
-    badge: `Done for you · ${SERVICE_PRICE_LABEL.en}`,
-    title: "GetPick does this work for you",
-    body: `GetPick creates and hosts your answer page — the one AI reads and cites — and places you on the sources it trusts: directories, reviews, category comparisons. Off-site: you change nothing on your end. ${RECHECK_CADENCE.en.every}, it asks those same questions again and shows you the shift. Here is what is waiting — named and counted, never invented:`,
-    cta: `Start — ${SERVICE_PRICE_LABEL.en} →`,
-    emailSentence: `You can handle it yourself. GetPick does it for you, off-site, for ${SERVICE_PRICE_LABEL.en}, no commitment.`,
-    emailCta: `Start — ${SERVICE_PRICE_LABEL.en}`,
+    badge: `Done for you · ${SERVICE_TRIAL_LABEL.en}`,
+    title: "What GetPick gets for you",
+    body: `GetPick writes and hosts your answer page — the one AI reads when a client asks these questions — without touching your site. ${RECHECK_CADENCE.en.every}, it asks the exact same questions again and shows you, one by one, who AI names: you or your peer.`,
+    cta: `Try it free for ${SERVICE_TRIAL_DAYS} days →`,
+    emailSentence: `GetPick does it for you, without touching your site: ${SERVICE_TRIAL_LABEL.en}, no commitment.`,
+    emailCta: `Try it free for ${SERVICE_TRIAL_DAYS} days`,
+    trialLine: `${SERVICE_TRIAL_LABEL.en}. Card required, nothing charged during the trial. To stop: email hello@getpick.ai before it ends and you pay nothing.`,
   },
 };

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { SIGNATURE_HEADER, isEntitling, planFromStripeObject, verifyStripeSignature } from "@/lib/stripe-webhook";
-import { claimWebhookEvent, ensureSubscriptionSchema, upsertSubscription } from "@/lib/subscriptions";
+import { SIGNATURE_HEADER, isEntitling, verifyStripeSignature, webhookWriteFor } from "@/lib/stripe-webhook";
+import { claimWebhookEvent, ensureSubscriptionSchema, upsertSubscription, upsertSubscriptionFromSubscriptionEvent } from "@/lib/subscriptions";
+import { buildCheckoutAlert, sendFounderAlert } from "@/lib/lead-alert";
 
 export const dynamic = "force-dynamic";
 
@@ -70,39 +71,42 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, ignored: eventType });
   }
 
-  const plan = planFromStripeObject(object);
   const email = emailFrom(object);
-  const subscriptionId = subscriptionIdFrom(object, eventType);
+  const write = webhookWriteFor(eventType, object, email);
 
-  // On ne devine RIEN. Sans email ou sans identifiant d'abonnement il n'y a pas
-  // de droit a ecrire ; on renvoie 200 pour ne pas declencher de rejeu, et on
-  // laisse une trace exploitable dans la reponse.
-  if (!email || !subscriptionId || !plan) {
-    return NextResponse.json({
-      ok: true,
-      skipped: "incomplete",
-      missing: { email: !email, subscriptionId: !subscriptionId, plan: !plan },
-    });
+  if (write.kind === "skip") {
+    // Une session de paiement qu'on ne sait pas rattacher = de l'argent sans
+    // droit : le fondateur doit le voir le jour même.
+    if (eventType === "checkout.session.completed") {
+      const alert = buildCheckoutAlert({ email, plan: null, status: String(object.status ?? "?"), subscriptionId: null, skipped: true });
+      await sendFounderAlert(alert.subject, alert.text);
+    }
+    return NextResponse.json({ ok: true, skipped: write.reason });
   }
 
-  const status =
-    eventType === "customer.subscription.deleted"
-      ? "canceled"
-      : typeof object.status === "string"
-        ? object.status
-        : "active";
+  if (write.kind === "full") {
+    await upsertSubscription({
+      email: write.email,
+      stripeCustomerId: typeof object.customer === "string" ? object.customer : null,
+      stripeSubscriptionId: write.subscriptionId,
+      stripeCustomerEmail: rawCustomerEmail(object),
+      plan: write.plan,
+      status: write.status,
+      currentPeriodEnd: periodEndFrom(object),
+    });
+    const alert = buildCheckoutAlert({ email: write.email, plan: write.plan, status: "nouvelle souscription (essai ou payant)", subscriptionId: write.subscriptionId, skipped: false });
+    await sendFounderAlert(alert.subject, alert.text);
+    return NextResponse.json({ ok: true, plan: write.plan, entitled: isEntitling(write.status) });
+  }
 
-  await upsertSubscription({
-    email,
+  await upsertSubscriptionFromSubscriptionEvent({
     stripeCustomerId: typeof object.customer === "string" ? object.customer : null,
-    stripeSubscriptionId: subscriptionId,
-    stripeCustomerEmail: rawCustomerEmail(object),
-    plan,
-    status,
+    stripeSubscriptionId: write.subscriptionId,
+    plan: write.plan,
+    status: write.status,
     currentPeriodEnd: periodEndFrom(object),
   });
-
-  return NextResponse.json({ ok: true, plan, entitled: isEntitling(status) });
+  return NextResponse.json({ ok: true, plan: write.plan, entitled: isEntitling(write.status) });
 }
 
 /**
@@ -124,19 +128,6 @@ function emailFrom(object: Record<string, unknown>): string | null {
 function rawCustomerEmail(object: Record<string, unknown>): string | null {
   const details = object.customer_details as { email?: unknown } | undefined;
   return typeof details?.email === "string" ? details.email : null;
-}
-
-/**
- * L'identifiant d'abonnement n'est pas au meme endroit selon l'evenement :
- * sur une session Checkout c'est `subscription`, sur un objet Subscription c'est
- * `id`. Confondre les deux ecrirait l'identifiant de SESSION comme cle unique et
- * creerait une ligne neuve a chaque renouvellement.
- */
-function subscriptionIdFrom(object: Record<string, unknown>, eventType: string): string | null {
-  if (eventType === "checkout.session.completed") {
-    return typeof object.subscription === "string" ? object.subscription : null;
-  }
-  return typeof object.id === "string" ? object.id : null;
 }
 
 function periodEndFrom(object: Record<string, unknown>): Date | null {

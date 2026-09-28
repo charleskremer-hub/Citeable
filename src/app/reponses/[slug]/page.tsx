@@ -220,8 +220,8 @@ export default async function HostedAnswerPage({ params }: HostedAnswerPageProps
       </section>
 
       <footer className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-4 border-t border-[#E4E9F0] px-5 py-8 sm:px-6">
-        <p className="m-0 text-xs leading-5 text-[#8FA0B4]">{copy.disclaimer}</p>
-        <a href={canonical} className="text-sm text-[#8FA0B4] no-underline">{canonical.replace("https://", "")}</a>
+        <p className="m-0 text-xs leading-5 text-[#5E6E86]">{copy.disclaimer}</p>
+        <a href={canonical} className="text-sm text-[#5E6E86] no-underline">{canonical.replace("https://", "")}</a>
       </footer>
     </main>
   );

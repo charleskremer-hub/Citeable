@@ -197,7 +197,7 @@ export default async function ProspectionPolicyPage() {
   return (
     <div className="min-h-full">
       <main className="mx-auto max-w-3xl px-5 py-16 sm:px-6">
-        <Link href="/" className="text-sm text-[#8FA0B4] no-underline hover:text-[#132A43]">
+        <Link href="/" className="text-sm text-[#5E6E86] no-underline hover:text-[#132A43]">
           {copy.back}
         </Link>
 
@@ -208,13 +208,13 @@ export default async function ProspectionPolicyPage() {
           {copy.title}
         </h1>
 
-        <p className="m-0 text-lg leading-relaxed text-[#A0A0AE]">{copy.intro}</p>
+        <p className="m-0 text-lg leading-relaxed text-[#5B6B82]">{copy.intro}</p>
 
         {copy.sections.map((section) => (
           <section key={section.heading} className="mt-10">
             <h2 className="mb-3 text-xl tracking-[-0.02em]">{section.heading}</h2>
             {section.body.map((paragraph) => (
-              <p key={paragraph} className="mt-0 mb-3 leading-relaxed text-[#A0A0AE]">
+              <p key={paragraph} className="mt-0 mb-3 leading-relaxed text-[#5B6B82]">
                 {paragraph}
               </p>
             ))}
@@ -223,7 +223,7 @@ export default async function ProspectionPolicyPage() {
 
         <section className="mt-10 rounded-xl border border-[#E4E9F0] px-5 py-4">
           <h2 className="mb-3 text-xl tracking-[-0.02em]">{copy.contactHeading}</h2>
-          <p className="m-0 leading-relaxed text-[#A0A0AE]">
+          <p className="m-0 leading-relaxed text-[#5B6B82]">
             {LEGAL_ENTITY.name}
             {LEGAL_ENTITY.postalAddress ? ` — ${LEGAL_ENTITY.postalAddress}` : ""}
             <br />
@@ -233,7 +233,7 @@ export default async function ProspectionPolicyPage() {
           </p>
         </section>
 
-        <p className="mt-10 text-sm text-[#8FA0B4]">
+        <p className="mt-10 text-sm text-[#5E6E86]">
           {copy.updated} : {LAST_UPDATED}
         </p>
       </main>

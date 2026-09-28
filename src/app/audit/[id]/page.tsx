@@ -2,6 +2,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { SERVICE_CHECKOUT_URL, isCheckoutConfigured } from "@/lib/checkout-links";
+import { RECHECK_CADENCE, SERVICE_PLAN_PRICE_EUR } from "@/lib/plan-promises";
 import { ensureAuditSchema, pool } from "@/lib/db";
 import { recordReportLinkOpened } from "@/lib/funnel";
 import { auditCopy, brandSentimentView, localeFromHeaders, localeFromUnknown, localizeCategoryLabel, localizePlainAction, type Locale } from "@/lib/i18n";
@@ -18,6 +19,7 @@ import AgentAuditChat from "./AgentAuditChat";
 import FunnelCheckoutLink from "./FunnelCheckoutLink";
 import { VisibilityMonitorCard } from "./VisibilityMonitorCard";
 import PublishContent from "./PublishContent";
+import ServiceValueBlock from "./ServiceValueBlock";
 import QuestionList from "./QuestionList";
 import ClaimReportGate from "./ClaimReportGate";
 import LockedVerdict from "./LockedVerdict";
@@ -30,7 +32,7 @@ import {
   lostBuyerQuestions,
   priorityGapQuestions,
   promptAnalysis,
-  publishTeaserItems,
+  serviceValuePlan,
   rankActionsByImpact,
   scoreColor,
   treatmentProof,
@@ -86,10 +88,10 @@ function StatusPill({ failed, complete, locale }: { failed: boolean; complete: b
   const copy = auditCopy[locale];
   const label = failed ? copy.status.failed : complete ? copy.status.complete : copy.status.running;
   const className = failed
-    ? "border-[#FF8A8A]/25 bg-[#FF5F5F]/10 text-[#FF8A8A]"
+    ? "border-[#B04329]/25 bg-[#C0492E]/10 text-[#B04329]"
     : complete
       ? "border-[#123E5C]/25 bg-[#123E5C]/10 text-[#123E5C]"
-      : "border-[#FFB84D]/25 bg-[#FFB84D]/10 text-[#FFB84D]";
+      : "border-[#8A6420]/25 bg-[#8A6420]/10 text-[#8A6420]";
 
   return (
     <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.12em] ${className}`}>
@@ -304,14 +306,20 @@ export default async function AuditPage({
   const jsonLdSnippet = technicalAssets
     ? `<script type="application/ld+json">\n${technicalAssets.faqJsonLd}\n</script>`
     : "";
-  const teaserItems = complete && !failed && isFreeReport
-    ? publishTeaserItems({
+  const valuePlan = complete && !failed && isFreeReport
+    ? serviceValuePlan({
+        brandName: audit.brand_name,
+        engineName: answerEngineName,
         lostQuestions: lostQuestions.map((question) => question.prompt),
         questionCount,
-        blockedBots: aiCrawl?.state === "blocked" ? aiCrawl.blocked : [],
+        rival,
+        topRivals: rankedCompetitors.map((item) => item.name),
+        category: audit.raw_results?.category,
+        monthlyPriceEur: SERVICE_PLAN_PRICE_EUR,
+        recheckEvery: RECHECK_CADENCE[locale === "fr" ? "fr" : "en"].every,
         locale,
       })
-    : [];
+    : null;
 
   return (
     <main className="min-h-screen bg-[#F5F7FA] text-[#132A43]" style={{ fontFamily: "var(--font-sans)" }}>
@@ -345,7 +353,7 @@ export default async function AuditPage({
           <div className="rounded-[2rem] border border-[#E4E9F0] bg-[#FFFFFF] p-5 shadow-2xl shadow-black/5 sm:p-8">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <StatusPill failed={failed} complete={complete} locale={locale} />
-              <a href={audit.website_url} className="max-w-full truncate text-sm font-bold text-[#8FA0B4] underline decoration-white/10 underline-offset-4">
+              <a href={audit.website_url} className="max-w-full truncate text-sm font-bold text-[#5E6E86] underline decoration-white/10 underline-offset-4">
                 {audit.website_url}
               </a>
             </div>
@@ -355,11 +363,11 @@ export default async function AuditPage({
             </h1>
 
             {failed ? (
-              <div className="mt-5 rounded-2xl border border-[#FF8A8A]/20 bg-[#FF5F5F]/10 p-4 text-sm font-bold leading-6 text-[#FFB1B1]">
+              <div className="mt-5 rounded-2xl border border-[#B04329]/20 bg-[#C0492E]/10 p-4 text-sm font-bold leading-6 text-[#B04329]">
                 {copy.failedPrefix} {audit.raw_results?.error ?? copy.unknownError}
               </div>
             ) : !complete ? (
-              <div className="mt-5 rounded-2xl border border-[#FFB84D]/20 bg-[#FFB84D]/10 p-4 text-sm font-bold leading-6 text-[#FFD18A]">
+              <div className="mt-5 rounded-2xl border border-[#8A6420]/20 bg-[#8A6420]/10 p-4 text-sm font-bold leading-6 text-[#8A6420]">
                 {copy.runningText}
               </div>
             ) : (
@@ -368,14 +376,14 @@ export default async function AuditPage({
                   {verdictHeadline}
                 </h2>
                 {rival ? (
-                  <p className="m-0 text-base font-bold leading-6 text-[#C7C7D1]">
+                  <p className="m-0 text-base font-bold leading-6 text-[#5B6B82]">
                     {rival.replacement
                       ? copy.verdictRivalReplacement(answerEngineName, rival.name, rival.prompt)
                       : copy.verdictRivalAlso(answerEngineName, rival.name, rival.prompt)}
                   </p>
                 ) : null}
                 {/* Score et catégorie : des chiffres, pas le fait — ligne secondaire. */}
-                <p className="m-0 text-sm font-bold text-[#8FA0B4]">
+                <p className="m-0 text-sm font-bold text-[#5E6E86]">
                   {copy.scoreCategoryLine(score, displayCategory)}
                   <span className="ml-2" style={{ color }}>
                     {brandMentionCount}/{questionCount}
@@ -383,10 +391,10 @@ export default async function AuditPage({
                 </p>
                 {isAnswerEngineReport && answerEngine?.realLlmCall ? (
                   <p
-                    className="m-0 flex w-fit items-center gap-1.5 text-xs font-black text-[#8FBF6B]"
+                    className="m-0 flex w-fit items-center gap-1.5 text-xs font-black text-[#17705B]"
                     title={copy.liveCheckDetail(answerEngineName)}
                   >
-                    <span aria-hidden="true" className="inline-block h-1.5 w-1.5 rounded-full bg-[#8FBF6B]" />
+                    <span aria-hidden="true" className="inline-block h-1.5 w-1.5 rounded-full bg-[#17705B]" />
                     {copy.liveCheckLabel}
                   </p>
                 ) : null}
@@ -407,7 +415,7 @@ export default async function AuditPage({
             {complete && !failed && categoryPerception.status !== "not_enough_signal" ? (
               (() => {
                 const mismatch = categoryPerception.status === "mismatch";
-                const tone = mismatch ? "#FFB84D" : "#123E5C";
+                const tone = mismatch ? "#8A6420" : "#123E5C";
 
                 return (
                   <section
@@ -423,13 +431,13 @@ export default async function AuditPage({
                     </p>
                     <div className="mt-3 grid gap-2 sm:grid-cols-2">
                       <div className="rounded-xl border border-[#E4E9F0] bg-[#EEF2F7] px-3 py-2">
-                        <p className="m-0 text-[0.6875rem] font-black uppercase tracking-[0.1em] text-[#8FA0B4]">
+                        <p className="m-0 text-[0.6875rem] font-black uppercase tracking-[0.1em] text-[#5E6E86]">
                           {copy.categoryPerceptionYouSell}
                         </p>
                         <p className="m-0 mt-1 text-sm font-bold text-[#132A43]">{categoryPerception.actual}</p>
                       </div>
                       <div className="rounded-xl border border-[#E4E9F0] bg-[#EEF2F7] px-3 py-2">
-                        <p className="m-0 text-[0.6875rem] font-black uppercase tracking-[0.1em] text-[#8FA0B4]">
+                        <p className="m-0 text-[0.6875rem] font-black uppercase tracking-[0.1em] text-[#5E6E86]">
                           {copy.categoryPerceptionAiThinks}
                         </p>
                         <p className="m-0 mt-1 text-sm font-bold" style={{ color: tone }}>
@@ -437,7 +445,7 @@ export default async function AuditPage({
                         </p>
                       </div>
                     </div>
-                    <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#C7C7D1]">
+                    <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#5B6B82]">
                       {mismatch
                         ? copy.categoryPerceptionMismatchBody(answerEngineName)
                         : copy.categoryPerceptionMatchBody(answerEngineName)}
@@ -479,7 +487,7 @@ export default async function AuditPage({
                 {sentiment.justification ? (
                   <p className="m-0 mt-2 text-sm font-black leading-6 text-[#132A43]">{sentiment.justification}</p>
                 ) : null}
-                <p className="m-0 mt-2 text-sm font-bold leading-6 text-[#C7C7D1]">{sentiment.guidance}</p>
+                <p className="m-0 mt-2 text-sm font-bold leading-6 text-[#5B6B82]">{sentiment.guidance}</p>
               </section>
             ) : null}
           </div>
@@ -521,18 +529,9 @@ export default async function AuditPage({
                   <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
                     {copy.publishLockedTitle}
                   </h2>
-                  <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#5B6B82]">{copy.publishLockedBody}</p>
-                  <ul className="m-0 mt-4 grid list-none gap-2 p-0">
-                    {teaserItems.map((item) => (
-                      <li key={item.name} className="rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-4">
-                        <p className="m-0 flex items-start gap-2 text-sm font-black text-[#132A43]">
-                          <span aria-hidden="true" className="text-[#123E5C]">🔒</span>
-                          {item.name}
-                        </p>
-                        <p className="m-0 mt-1 text-xs font-bold leading-5 text-[#8FA0B4]">{item.detail}</p>
-                      </li>
-                    ))}
-                  </ul>
+                  {valuePlan ? <ServiceValueBlock plan={valuePlan} locale={locale} /> : (
+                    <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#5B6B82]">{copy.publishLockedBody}</p>
+                  )}
                   <div className="mt-5">
                     <FunnelCheckoutLink
                       auditId={audit.id} checkoutConfigured={isCheckoutConfigured(SERVICE_CHECKOUT_URL)}
@@ -543,7 +542,7 @@ export default async function AuditPage({
                       {copy.publishLockedCta}
                     </FunnelCheckoutLink>
                   </div>
-                  <p className="m-0 mt-3 text-xs font-bold leading-5 text-[#8FA0B4]">{copy.reportReassurance}</p>
+                  <p className="m-0 mt-3 text-xs font-bold leading-5 text-[#5E6E86]">{copy.reportReassurance}</p>
                 </>
               ) : (
                 <PublishContent

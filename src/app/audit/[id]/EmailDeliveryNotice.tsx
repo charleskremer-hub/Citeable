@@ -24,12 +24,12 @@ export default function EmailDeliveryNotice({ locale, reportUrl, ...state }: Ema
   const copy = auditCopy[locale];
 
   return (
-    <div className="mt-5 rounded-2xl border border-[#FFB84D]/25 bg-[#FFB84D]/10 p-4 text-sm leading-6 text-[#FFD18A]">
+    <div className="mt-5 rounded-2xl border border-[#8A6420]/25 bg-[#8A6420]/10 p-4 text-sm leading-6 text-[#8A6420]">
       <p className="m-0 font-bold">{copy.emailUndeliveredTitle}</p>
-      <p className="m-0 mt-1 text-[#FFD18A]/85">{copy.emailUndeliveredBody}</p>
+      <p className="m-0 mt-1 text-[#8A6420]/85">{copy.emailUndeliveredBody}</p>
       <p className="m-0 mt-2">
         <span className="font-bold">{copy.emailUndeliveredLinkLabel} : </span>
-        <a href={reportUrl} className="break-all font-bold text-[#CAFF3C] underline decoration-[#CAFF3C]/40 underline-offset-4">
+        <a href={reportUrl} className="break-all font-bold text-[#17705B] underline decoration-[#17705B]/40 underline-offset-4">
           {reportUrl}
         </a>
       </p>

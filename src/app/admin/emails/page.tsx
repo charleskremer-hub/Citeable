@@ -37,7 +37,7 @@ const PANEL = "#FFFFFF";
 const LINE = "#E4E9F0";
 const ACCENT = "#123E5C";
 const WARN = "#C0492E";
-const MUTED = "#8FA0B4";
+const MUTED = "#5E6E86";
 
 function statusColor(status: string) {
   if (status === "sent") return ACCENT;

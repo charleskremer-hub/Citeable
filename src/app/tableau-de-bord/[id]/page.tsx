@@ -56,7 +56,7 @@ const MOVEMENT_TONE: Record<ShiftMovement, string> = {
   held_you: "#1F8A70",
   lost: "#C0492E",
   held_rival: "#B8862F",
-  still_absent: "#8FA0B4",
+  still_absent: "#5E6E86",
   new: "#123E5C",
 };
 
@@ -102,7 +102,7 @@ export default async function ClientDashboard({ params, searchParams }: Dashboar
       <div className="mx-auto max-w-4xl px-5 py-8 sm:px-6">
         <nav className="flex items-center justify-between">
           <Link href="/" className="text-xl tracking-[-0.02em] no-underline text-[#132A43]" style={{ fontFamily: "var(--font-display)" }}>GetPick</Link>
-          <span className="text-xs uppercase tracking-[0.16em] text-[#8FA0B4]">{fr ? "Ton espace" : "Your space"}</span>
+          <span className="text-xs uppercase tracking-[0.16em] text-[#5E6E86]">{fr ? "Ton espace" : "Your space"}</span>
         </nav>
 
         <header className="mt-8">
@@ -121,7 +121,7 @@ export default async function ClientDashboard({ params, searchParams }: Dashboar
           </div>
           <ul className="m-0 mt-5 flex list-none flex-col gap-2.5 p-0">
             {barRows.map((player) => {
-              const tone = player.isBrand ? "#123E5C" : "#9FB1C6";
+              const tone = player.isBrand ? "#123E5C" : "#5B6B82";
               const width = Math.round((player.citedCount / maxCited) * 100);
               return (
                 <li key={`${player.isBrand ? "brand" : "c"}-${player.name}`} className="grid grid-cols-[9rem_1fr_2.5rem] items-center gap-3">
@@ -154,7 +154,7 @@ export default async function ClientDashboard({ params, searchParams }: Dashboar
               <li key={row.prompt} className="rounded-xl border border-[#E4E9F0] bg-[#FBFCFD] px-4 py-3">
                 <div className="flex items-start justify-between gap-3">
                   <span className="text-sm leading-6 text-[#5B6B82]">{row.prompt}</span>
-                  <span className="whitespace-nowrap rounded-full px-3 py-1 text-xs font-black" style={{ backgroundColor: row.brandCited ? "#123E5C22" : "#8FA0B422", color: row.brandCited ? "#123E5C" : "#8FA0B4" }}>
+                  <span className="whitespace-nowrap rounded-full px-3 py-1 text-xs font-black" style={{ backgroundColor: row.brandCited ? "#123E5C22" : "#8FA0B422", color: row.brandCited ? "#123E5C" : "#5E6E86" }}>
                     {row.brandCited ? (fr ? "L'IA te cite" : "AI cites you") : (fr ? "Pas cité" : "Not cited")}
                   </span>
                 </div>
@@ -177,7 +177,7 @@ export default async function ClientDashboard({ params, searchParams }: Dashboar
           <div className="mt-5 grid grid-cols-3 gap-3">
             <Tile label={fr ? "L'IA te cite" : "AI cites you"} value={`${proof.summary.youCitedNow}/${proof.summary.totalQuestions}`} tone="#123E5C" />
             <Tile label={fr ? "Basculé vers toi" : "Moved to you"} value={`${proof.summary.wonCount}`} tone="#1F8A70" />
-            <Tile label={fr ? "Reperdu" : "Lost"} value={`${proof.summary.lostCount}`} tone={proof.summary.lostCount ? "#C0492E" : "#8FA0B4"} />
+            <Tile label={fr ? "Reperdu" : "Lost"} value={`${proof.summary.lostCount}`} tone={proof.summary.lostCount ? "#C0492E" : "#5E6E86"} />
           </div>
           {proof.hasPrevious && (
             <ul className="m-0 mt-5 flex list-none flex-col gap-2 p-0">
@@ -202,14 +202,14 @@ export default async function ClientDashboard({ params, searchParams }: Dashboar
               : "The page GetPick hosts and maintains for you, off your site, to get cited by AI."}
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            <span className="rounded-full px-3 py-1 text-xs font-black" style={{ backgroundColor: published ? "#123E5C22" : "#8FA0B422", color: published ? "#123E5C" : "#8FA0B4" }}>
+            <span className="rounded-full px-3 py-1 text-xs font-black" style={{ backgroundColor: published ? "#123E5C22" : "#8FA0B422", color: published ? "#123E5C" : "#5E6E86" }}>
               {published ? (fr ? "En ligne" : "Live") : (fr ? "En préparation" : "In preparation")}
             </span>
             <a href={hostedUrl} target="_blank" rel="noreferrer" className="text-sm text-[#123E5C] no-underline">{hostedUrl.replace("https://", "")}</a>
           </div>
         </section>
 
-        <footer className="mt-8 border-t border-[#E4E9F0] pt-6 text-xs text-[#8FA0B4]">
+        <footer className="mt-8 border-t border-[#E4E9F0] pt-6 text-xs text-[#5E6E86]">
           {fr ? "Espace privé — le lien t'est personnel. GetPick, l'agent qui te fait recommander par l'IA." : "Private space — this link is personal to you. GetPick, the agent that gets you recommended by AI."}
         </footer>
       </div>
@@ -221,7 +221,7 @@ function Tile({ label, value, tone }: { label: string; value: string; tone: stri
   return (
     <div className="rounded-xl border border-[#E4E9F0] bg-[#FBFCFD] p-4">
       <div className="text-2xl font-black" style={{ color: tone }}>{value}</div>
-      <div className="mt-1 text-xs uppercase tracking-[0.1em] text-[#8FA0B4]">{label}</div>
+      <div className="mt-1 text-xs uppercase tracking-[0.1em] text-[#5E6E86]">{label}</div>
     </div>
   );
 }

@@ -98,9 +98,11 @@ export async function upsertSubscription(input: {
        email = EXCLUDED.email,
        stripe_customer_id = COALESCE(EXCLUDED.stripe_customer_id, subscriptions.stripe_customer_id),
        stripe_customer_email = COALESCE(EXCLUDED.stripe_customer_email, subscriptions.stripe_customer_email),
-       plan = EXCLUDED.plan,
-       status = EXCLUDED.status,
-       current_period_end = EXCLUDED.current_period_end,
+       plan = CASE WHEN subscriptions.email = '' THEN subscriptions.plan ELSE EXCLUDED.plan END,
+       -- Une session arrivée APRÈS l'événement d'abonnement ne remplace pas le
+       -- vrai statut (« trialing ») par son statut provisoire.
+       status = CASE WHEN subscriptions.email = '' THEN subscriptions.status ELSE EXCLUDED.status END,
+       current_period_end = COALESCE(EXCLUDED.current_period_end, subscriptions.current_period_end),
        updated_at = now()`,
     [
       normalizeEmail(input.email),
@@ -111,6 +113,33 @@ export async function upsertSubscription(input: {
       input.status,
       input.currentPeriodEnd,
     ]
+  );
+}
+
+/**
+ * Mise à jour par un événement d'ABONNEMENT (pas d'email dans l'objet Stripe).
+ * Si la session de paiement n'est pas encore arrivée (Stripe ne garantit pas
+ * l'ordre), la ligne est créée avec un email vide — aucune adresse ne peut y
+ * correspondre — et la session la complétera. L'email n'est jamais écrasé ici.
+ */
+export async function upsertSubscriptionFromSubscriptionEvent(input: {
+  stripeCustomerId: string | null;
+  stripeSubscriptionId: string;
+  plan: EntitlementPlan | null;
+  status: string;
+  currentPeriodEnd: Date | null;
+}) {
+  await pool.query(
+    `INSERT INTO subscriptions
+       (email, stripe_customer_id, stripe_subscription_id, plan, status, current_period_end)
+     VALUES ('', $1, $2, COALESCE($3, 'service'), $4, $5)
+     ON CONFLICT (stripe_subscription_id) DO UPDATE SET
+       stripe_customer_id = COALESCE(EXCLUDED.stripe_customer_id, subscriptions.stripe_customer_id),
+       plan = COALESCE($3, subscriptions.plan),
+       status = EXCLUDED.status,
+       current_period_end = COALESCE(EXCLUDED.current_period_end, subscriptions.current_period_end),
+       updated_at = now()`,
+    [input.stripeCustomerId, input.stripeSubscriptionId, input.plan, input.status, input.currentPeriodEnd]
   );
 }
 

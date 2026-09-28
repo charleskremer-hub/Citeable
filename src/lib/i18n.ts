@@ -1,4 +1,4 @@
-import { BEACHHEAD_TRADE, PLAN_PROMISES, RECHECK_CADENCE, SERVICE_OFFER_COPY, SERVICE_PLAN_PRICE_EUR } from "./plan-promises";
+import { BEACHHEAD_TRADE, PLAN_PROMISES, RECHECK_CADENCE, SERVICE_OFFER_COPY, SERVICE_PLAN_PRICE_EUR, SERVICE_TRIAL_DAYS, SERVICE_TRIAL_LABEL } from "./plan-promises";
 
 export type Locale = "en" | "fr";
 
@@ -99,7 +99,7 @@ export const homeCopy = {
     steps: [
       { num: "1", time: "30 sec", title: "Give us your firm", body: "Your name and your website address. That's the entire setup." },
       { num: "2", time: "2 min", title: "The agent asks the AIs", body: `The real questions your clients ask, sent live at diagnostic time to ${PLAN_PROMISES.free.engineLabel.en}. Never simulated.` },
-      { num: "3", time: "Same day", title: "We do the work off-site", body: "GetPick names the peer cited in your place, then builds and hosts your answer page and places you on the local sources AI trusts — the directories and reviews for your town. You change nothing on your side." },
+      { num: "3", time: "Same day", title: "We do the work off-site", body: "GetPick names the peer cited in your place, then writes and hosts your answer page on those exact questions — with your town, your specialties, the way you work. You change nothing on your side." },
     ],
     // 5. The deliverable
     deliverableEyebrow: "What you get",
@@ -155,27 +155,26 @@ export const homeCopy = {
       {
         name: "Done for you",
         price: `€${SERVICE_PLAN_PRICE_EUR}`,
-        suffix: "/month",
+        suffix: "/month ex VAT",
         note: "GetPick does the work off-site. You touch nothing.",
         badge: "Zero technical",
         features: [
           "GetPick creates and hosts your answer page — the one AI reads and cites — without ever touching your site.",
-          "It places you on the sources AI trusts: directories, reviews, category comparisons.",
-          "It writes the content that gets you cited — ready to publish.",
+          "A dashboard: your AI visibility against your peers, question by question.",
           `${CAPITALISED_CADENCE.en} it re-tests your clients’ real questions and shows the shift: from the peer… to you.`,
-          `€${SERVICE_PLAN_PRICE_EUR}/month, all in. No credits, no agency, no dev. No commitment.`,
+          `${SERVICE_TRIAL_LABEL.en}, all in. No credits, no agency, no dev. No commitment.`,
         ],
-        cta: `Start — €${SERVICE_PLAN_PRICE_EUR}/month`,
+        cta: SERVICE_OFFER_COPY.en.cta,
         href: "service",
         plan: "service",
         highlight: true,
       },
     ],
-    pricingReassurance: "No commitment, cancel anytime.",
+    pricingReassurance: SERVICE_OFFER_COPY.en.trialLine,
     pricingGuarantee: "Refunded on request within 30 days. No questions asked.",
     // 7. TL;DR — dense paragraph for AI readers
     tldrEyebrow: "In short",
-    tldrBody: `GetPick is the GEO agent for service professionals — ${BEACHHEAD_TRADE.en}s first. It gets you recommended by AI assistants like ChatGPT and Gemini, and it does the work off-site: you never touch your own website. Concretely: it sends the real questions your clients ask to the AIs — live, never simulated — and reports whether you or a peer gets named, naming that peer. It then creates and hosts your answer page, places you on the sources AI trusts (directories, reviews, category comparisons), writes the content that gets you cited, and re-tests everything ${RECHECK_CADENCE.en.adverb} so you see the shift from the peer to you. It is built for professionals with no agency budget and no developer: a free diagnostic, then one done-for-you plan at €${SERVICE_PLAN_PRICE_EUR}/month — flat price, no credits, no seats, nothing to install. The paid plan is cancellable at any time and refunded on request within 30 days, no questions asked. GEO agencies charge €2,000 to €20,000 per month for this category of work. ChatGPT ad placements are now open to buy self-serve — current rollout as of 28 July 2026: the United States, the United Kingdom, Canada, Australia, New Zealand, Japan and South Korea, not France, and only on the Free and Go tiers — but those placements sit below the answer and independent research finds the shopping carousel ignores paid: being the organic recommendation is still free, while a sponsored click costs $3-5 and GetPick costs €${SERVICE_PLAN_PRICE_EUR}/month.`,
+    tldrBody: `GetPick is the GEO agent for service professionals — ${BEACHHEAD_TRADE.en}s first. It gets you recommended by AI assistants like ChatGPT and Gemini, and it does the work off-site: you never touch your own website. Concretely: it sends the real questions your clients ask to the AIs — live, never simulated — and reports whether you or a peer gets named, naming that peer. It then writes and hosts your answer page on those exact questions, and re-tests everything ${RECHECK_CADENCE.en.adverb} so you see the shift from the peer to you. It is built for professionals with no agency budget and no developer: a free diagnostic, then one done-for-you plan: ${SERVICE_TRIAL_LABEL.en} — flat price, no credits, no seats, nothing to install. The paid plan is cancellable at any time and refunded on request within 30 days, no questions asked. GEO agencies charge €2,000 to €20,000 per month for this category of work. ChatGPT ad placements are now open to buy self-serve — current rollout as of 28 July 2026: the United States, the United Kingdom, Canada, Australia, New Zealand, Japan and South Korea, not France, and only on the Free and Go tiers — but those placements sit below the answer and independent research finds the shopping carousel ignores paid: being the organic recommendation is still free, while a sponsored click costs $3-5 and GetPick costs €${SERVICE_PLAN_PRICE_EUR}/month.`,
     // 8. Founder
     founderEyebrow: "Who's behind this",
     founderBody: "I'm Charles. I build GetPick and I run every diagnostic myself. No sales team, no support bot: if you have a question, you email me and I answer.",
@@ -254,9 +253,9 @@ export const homeCopy = {
     error: "Un problème est survenu. Réessaie dans un instant.",
     // Refus du gate du champ « site » : un message par code stable de l'API
     // (`error_code`), toujours avec la correction proposée.
-    errorWebsiteLooksLikeEmail: "On dirait une adresse email — indique plutôt l'adresse de ton site, par exemple marque.com.",
-    errorWebsiteCredentials: "Une adresse de site ne contient pas d'identifiants — indique juste ton domaine, par exemple marque.com.",
-    errorWebsiteUnreachable: "Ce site ne répond pas — vérifie l'adresse, par exemple marque.com.",
+    errorWebsiteLooksLikeEmail: "On dirait une adresse email — indique plutôt l'adresse de ton site, par exemple toncabinet.fr.",
+    errorWebsiteCredentials: "Une adresse de site ne contient pas d'identifiants — indique juste ton domaine, par exemple toncabinet.fr.",
+    errorWebsiteUnreachable: "Ce site ne répond pas — vérifie l'adresse, par exemple toncabinet.fr.",
     // Voir la note du bloc EN.
     errorFreeQuotaEmail: "Tu as déjà lancé un diagnostic gratuit avec cet email aujourd'hui. Reviens demain — ou écris à hello@getpick.ai et je le lance pour toi.",
     errorFreeQuotaDomain: "Un diagnostic gratuit a déjà été lancé pour ce site aujourd'hui. Reviens demain — ou écris à hello@getpick.ai et je le lance pour toi.",
@@ -276,7 +275,7 @@ export const homeCopy = {
     steps: [
       { num: "1", time: "30 s", title: "Donne-nous ton cabinet", body: "Ton nom et l'adresse de ton site. C'est toute la configuration." },
       { num: "2", time: "2 min", title: "L'agent interroge les IA", body: `Les vraies questions de tes clients, envoyées en direct au moment du diagnostic à ${PLAN_PROMISES.free.engineLabel.fr}. Jamais simulées.` },
-      { num: "3", time: "Le jour même", title: "On travaille hors de ton site", body: "GetPick nomme le confrère cité à ta place, puis construit et héberge ta page-réponse et te place sur les sources locales que l'IA croit — les annuaires et les avis de ta ville. Tu ne changes rien de ton côté." },
+      { num: "3", time: "Le jour même", title: "On travaille hors de ton site", body: "GetPick nomme le confrère cité à ta place, puis écrit et héberge ta page-réponse sur ces questions exactes — avec ta ville, tes spécialités, ta façon de travailler. Tu ne changes rien de ton côté." },
     ],
     // 5. Le livrable
     deliverableEyebrow: "Le livrable",
@@ -329,27 +328,26 @@ export const homeCopy = {
       {
         name: "Fait pour toi",
         price: `${SERVICE_PLAN_PRICE_EUR} €`,
-        suffix: "/mois",
+        suffix: " HT/mois",
         note: "GetPick travaille hors de ton site. Tu ne touches à rien.",
         badge: "Zéro technique",
         features: [
           "GetPick crée et héberge ta page-réponse, celle que l'IA lit et cite — sans jamais toucher à ton site.",
-          "Il te place sur les sources que l'IA croit : annuaires, avis, comparatifs de ta profession.",
-          "Il rédige le contenu qui te fait citer — prêt à publier.",
+          "Un tableau de bord : ta visibilité dans l'IA face à tes confrères, question par question.",
           `${CAPITALISED_CADENCE.fr}, il re-teste les vraies questions de tes clients et te montre le basculement : du confrère… à toi.`,
-          `${SERVICE_PLAN_PRICE_EUR} €/mois, tout compris. Pas de crédits, pas d'agence, pas de dev. Sans engagement.`,
+          `${SERVICE_TRIAL_LABEL.fr}, tout compris. Pas de crédits, pas d'agence, pas de dev. Sans engagement.`,
         ],
-        cta: `Démarrer — ${SERVICE_PLAN_PRICE_EUR} €/mois`,
+        cta: SERVICE_OFFER_COPY.fr.cta,
         href: "service",
         plan: "service",
         highlight: true,
       },
     ],
-    pricingReassurance: "Sans engagement, résiliable à tout moment.",
+    pricingReassurance: SERVICE_OFFER_COPY.fr.trialLine,
     pricingGuarantee: "Remboursé sur simple demande sous 30 jours. Pas de question.",
     // 7. En bref — paragraphe dense pour les lecteurs IA
     tldrEyebrow: "En bref",
-    tldrBody: `GetPick est l'agent GEO des professionnels de service — les ${BEACHHEAD_TRADE.fr}s d'abord. Il te fait recommander par les assistants IA comme ChatGPT et Gemini, et il fait le travail hors de ton site : tu ne touches jamais à ton propre site. Concrètement : il envoie aux IA les vraies questions que posent tes clients — en direct, jamais simulées — puis te dit si c'est toi ou un confrère qui est nommé, en nommant ce confrère. Il crée et héberge ensuite ta page-réponse, te place sur les sources que l'IA croit (annuaires, avis, comparatifs de ta profession), rédige le contenu qui te fait citer, et re-teste tout ${RECHECK_CADENCE.fr.adverb} pour que tu voies le basculement du confrère vers toi. C'est pensé pour les professionnels sans budget agence et sans développeur : un diagnostic gratuit, puis une seule offre fait-pour-toi à ${SERVICE_PLAN_PRICE_EUR} €/mois — prix fixe, sans crédits, sans sièges, rien à installer. L'offre payante est résiliable à tout moment et remboursée sur simple demande sous 30 jours, sans question. Une agence GEO facture 2 000 à 20 000 € par mois pour cette catégorie de travail. Les placements publicitaires ChatGPT sont désormais ouverts à l'achat en self-serve — diffusion actuelle au 28 juillet 2026 : États-Unis, Royaume-Uni, Canada, Australie, Nouvelle-Zélande, Japon et Corée du Sud, pas la France, et uniquement sur les tiers Free et Go — mais ces placements s'affichent sous la réponse et une recherche indépendante montre que le carrousel shopping les ignore : être la recommandation organique reste gratuit, quand un clic sponsorisé coûte 3-5 $ et que GetPick coûte ${SERVICE_PLAN_PRICE_EUR} €/mois.`,
+    tldrBody: `GetPick est l'agent GEO des professionnels de service — les ${BEACHHEAD_TRADE.fr}s d'abord. Il te fait recommander par les assistants IA comme ChatGPT et Gemini, et il fait le travail hors de ton site : tu ne touches jamais à ton propre site. Concrètement : il envoie aux IA les vraies questions que posent tes clients — en direct, jamais simulées — puis te dit si c'est toi ou un confrère qui est nommé, en nommant ce confrère. Il écrit et héberge ensuite ta page-réponse sur ces questions exactes, et re-teste tout ${RECHECK_CADENCE.fr.adverb} pour que tu voies le basculement du confrère vers toi. C'est pensé pour les professionnels sans budget agence et sans développeur : un diagnostic gratuit, puis une seule offre fait-pour-toi : ${SERVICE_TRIAL_LABEL.fr} — prix fixe, sans crédits, sans sièges, rien à installer. L'offre payante est résiliable à tout moment et remboursée sur simple demande sous 30 jours, sans question. Une agence GEO facture 2 000 à 20 000 € par mois pour cette catégorie de travail. Les placements publicitaires ChatGPT sont désormais ouverts à l'achat en self-serve — diffusion actuelle au 28 juillet 2026 : États-Unis, Royaume-Uni, Canada, Australie, Nouvelle-Zélande, Japon et Corée du Sud, pas la France, et uniquement sur les tiers Free et Go — mais ces placements s'affichent sous la réponse et une recherche indépendante montre que le carrousel shopping les ignore : être la recommandation organique reste gratuit, quand un clic sponsorisé coûte 3-5 $ et que GetPick coûte ${SERVICE_PLAN_PRICE_EUR} €/mois.`,
     // 8. Fondateur
     founderEyebrow: "Qui est derrière",
     founderBody: "Je m'appelle Charles. Je construis GetPick et je fais tourner chaque diagnostic moi-même. Pas d'équipe commerciale, pas de chatbot : une question ? C'est moi qui réponds.",
@@ -360,7 +358,7 @@ export const homeCopy = {
     faqItems: [
       {
         question: "Zéro technique, vraiment ?",
-        answer: "Tu ne modifies pas ton site, tu n'installes rien, tu ne colles rien. GetPick publie hors de ton site, sur les sources que l'IA lit vraiment. Le seul geste qu'on ne fait pas à ta place : un annuaire qui exige ta connexion, ou tes avis clients — là, on te prépare tout, tu valides.",
+        answer: "Tu ne modifies pas ton site, tu n'installes rien, tu ne colles rien. GetPick écrit et héberge ta page-réponse lui-même, puis mesure chaque mois si l'IA te cite.",
       },
       {
         question: "Combien de temps avant que ça bouge ?",
@@ -424,7 +422,7 @@ export const auditCopy = {
     emailUndeliveredBody: "Nothing is lost — the report is on this page. Save the link below, it stays valid.",
     emailUndeliveredLinkLabel: "Direct link to this report",
     proofTitle: "A fix generated from a real signal",
-    reportReassurance: "No commitment, cancel anytime.",
+    reportReassurance: SERVICE_OFFER_COPY.en.trialLine,
     scoreCategoryLine: (score: number, category: string) => `Score ${score}/100 · detected category: ${category}`,
     verdictRivalReplacement: (engine: string, rival: string, prompt: string) => `On “${prompt}”, ${engine} recommends ${rival}. Not you.`,
     verdictRivalAlso: (engine: string, rival: string, prompt: string) => `On “${prompt}”, ${engine} cites you — and also cites ${rival}.`,
@@ -515,7 +513,7 @@ export const auditCopy = {
     emailUndeliveredBody: "Rien n'est perdu : le rapport est sur cette page. Garde le lien ci-dessous, il reste valable.",
     emailUndeliveredLinkLabel: "Lien direct vers ce rapport",
     proofTitle: "Une correction générée à partir d'un vrai signal",
-    reportReassurance: "Sans engagement, résiliable à tout moment.",
+    reportReassurance: SERVICE_OFFER_COPY.fr.trialLine,
     scoreCategoryLine: (score: number, category: string) => `Score ${score}/100 · catégorie détectée : ${category}`,
     verdictRivalReplacement: (engine: string, rival: string, prompt: string) => `Sur « ${prompt} », ${engine} recommande ${rival}. Pas toi.`,
     verdictRivalAlso: (engine: string, rival: string, prompt: string) => `Sur « ${prompt} », ${engine} te cite — et cite aussi ${rival}.`,
@@ -647,7 +645,7 @@ export function brandSentimentView(sentiment: SentimentLike, locale: Locale): Br
     return {
       label,
       shortLabel: copy.sentimentPositive,
-      color: "#CAFF3C",
+      color: "#17705B",
       justification: justification && justification.toLowerCase() !== "not enough signal" ? justification : "",
       guidance: copy.sentimentBodyPositive,
     };
@@ -656,7 +654,7 @@ export function brandSentimentView(sentiment: SentimentLike, locale: Locale): Br
     return {
       label,
       shortLabel: copy.sentimentNeutral,
-      color: "#FFD166",
+      color: "#8A6420",
       justification: justification && justification.toLowerCase() !== "not enough signal" ? justification : "",
       guidance: copy.sentimentBodyNeutral,
     };
@@ -665,7 +663,7 @@ export function brandSentimentView(sentiment: SentimentLike, locale: Locale): Br
     return {
       label,
       shortLabel: copy.sentimentNegative,
-      color: "#FF8F6B",
+      color: "#B04329",
       justification: justification && justification.toLowerCase() !== "not enough signal" ? justification : "",
       guidance: copy.sentimentBodyNegative,
     };
@@ -673,7 +671,7 @@ export function brandSentimentView(sentiment: SentimentLike, locale: Locale): Br
   return {
     label: "not_enough_signal",
     shortLabel: copy.sentimentUnknown,
-    color: "#8E8E9A",
+    color: "#5B6B82",
     justification: "",
     guidance: copy.sentimentBodyUnknown,
   };

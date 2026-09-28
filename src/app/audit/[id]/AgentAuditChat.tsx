@@ -133,13 +133,13 @@ export default function AgentAuditChat({ auditId, brandName, category, locale }:
             {message.role === "assistant" && message.sources?.length ? (
               <div className="mt-4 rounded-xl border border-[#E4E9F0] bg-[#FBFCFD] p-3">
                 <p className="m-0 text-xs font-black uppercase tracking-[0.1em] text-[#123E5C]">{t.sources}</p>
-                <ul className="m-0 mt-2 grid list-none gap-1 p-0 text-xs font-bold leading-5 text-[#BCBCC8]">
+                <ul className="m-0 mt-2 grid list-none gap-1 p-0 text-xs font-bold leading-5 text-[#5B6B82]">
                   {message.sources.map((source) => <li key={source}>{source}</li>)}
                 </ul>
               </div>
             ) : null}
             {message.role === "assistant" && message.engines?.length ? (
-              <p className="m-0 mt-3 text-xs font-bold text-[#8FA0B4]">
+              <p className="m-0 mt-3 text-xs font-bold text-[#5E6E86]">
                 {t.engines}: {message.engines.map((engine) => `${engine.engine} ${engine.ok ? "✓" : "—"}`).join(" · ")}
               </p>
             ) : null}
@@ -147,7 +147,7 @@ export default function AgentAuditChat({ auditId, brandName, category, locale }:
         ))}
 
         {loading ? <p className="m-0 rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-4 text-sm font-black text-[#123E5C]">{t.thinking}</p> : null}
-        {error ? <p className="m-0 rounded-2xl border border-[#FF5F5F]/25 bg-[#FF5F5F]/10 p-4 text-sm font-black text-[#FFB1B1]">{error}</p> : null}
+        {error ? <p className="m-0 rounded-2xl border border-[#C0492E]/25 bg-[#C0492E]/10 p-4 text-sm font-black text-[#B04329]">{error}</p> : null}
       </div>
 
       <form onSubmit={handleSubmit} className="mt-5 flex flex-col gap-3 sm:flex-row">
@@ -156,7 +156,7 @@ export default function AgentAuditChat({ auditId, brandName, category, locale }:
           onChange={(event) => setInput(event.target.value)}
           placeholder={t.placeholder}
           rows={2}
-          className="min-h-20 flex-1 resize-y rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] px-4 py-3 text-sm font-bold leading-6 text-[#132A43] outline-none placeholder:text-[#8FA0B4] focus:border-[#123E5C]/50"
+          className="min-h-20 flex-1 resize-y rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] px-4 py-3 text-sm font-bold leading-6 text-[#132A43] outline-none placeholder:text-[#5E6E86] focus:border-[#123E5C]/50"
         />
         <button type="submit" disabled={loading || !input.trim()} className="rounded-2xl bg-[#123E5C] px-5 py-3 text-sm font-black text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50">
           {t.send}

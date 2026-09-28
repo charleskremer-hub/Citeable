@@ -30,7 +30,7 @@ const FREE_AUDIT_DOMAIN_DAILY_LIMIT = 1;
 // le cache free-Gemini (findFreshFreeGeminiAudit) — sans lui, un re-audit d'un
 // domaine déjà scanné rejouait les anciennes questions. Toujours bumper cette
 // version quand la génération de prompts ou l'inférence de catégorie change.
-const BUYER_PROMPT_SET_VERSION = "niche_local_prompts_v3";
+const BUYER_PROMPT_SET_VERSION = "niche_local_prompts_v4";
 // Modèle ÉPINGLÉ — jamais un alias `…-latest`.
 //
 // Deux raisons, toutes deux MESURÉES le 20/09/2026, pas déduites :
@@ -2470,7 +2470,33 @@ function extractJsonLdText(html: string) {
   return chunks.join(" ");
 }
 
-function extractHomepageSignals(html: string) {
+/**
+ * L'adresse déclarée par le site (schema.org `PostalAddress`), rendue sous la
+ * forme « 75008 Paris » que `inferLocationFromHomepage` lit en priorité.
+ *
+ * Constaté le 28/09 sur excilio.fr : la ville n'existait QUE dans le JSON-LD
+ * (`addressLocality`), que `extractJsonLdText` ne restitue pas. Faute de ville,
+ * les questions tombaient sur « près de chez moi » — et Gemini, sans lieu,
+ * répond avec des cabinets nationaux : le diagnostic local ne mesurait rien.
+ */
+export function extractPostalAddress(html: string): string {
+  const locality = html.match(/"addressLocality"\s*:\s*"([^"]{2,60})"/)?.[1]?.trim();
+  if (!locality) return "";
+  const postal = html.match(/"postalCode"\s*:\s*"(\d{5})"/)?.[1];
+  return postal ? `${postal} ${locality}` : `situé à ${locality}`;
+}
+
+/**
+ * Cabinet « 100 % en ligne » : il ne se choisit PAS par proximité. Lui poser
+ * « quel expert-comptable près de chez moi » l'oppose à des cabinets locaux
+ * qu'il ne vise pas, et le rapport devient faux. On lui pose des questions de
+ * niche (profil + besoin), portée nationale.
+ */
+export function isOnlineServiceFirm(homepageText: string): boolean {
+  return /100\s?%\s*(?:digital|en ligne|online|à distance)|cabinet (?:comptable )?en ligne|expert-comptable en ligne|expertise comptable en ligne|partout en france|online accounting firm/i.test(homepageText);
+}
+
+export function extractHomepageSignals(html: string) {
   const metaDescription = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i)?.[1]
     ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i)?.[1]
     ?? "";
@@ -2484,8 +2510,9 @@ function extractHomepageSignals(html: string) {
     .filter(Boolean)
     .slice(0, 10);
   const jsonLd = extractJsonLdText(html);
+  const address = extractPostalAddress(html);
 
-  return [title, metaDescription, ogDescription, twitterDescription, headings.join(" "), productText.join(" "), jsonLd]
+  return [title, metaDescription, ogDescription, twitterDescription, headings.join(" "), productText.join(" "), jsonLd, address]
     .map(compactContentText)
     .filter(Boolean)
     .join(" ")
@@ -2594,7 +2621,7 @@ const LOCATION_HINTS = [
   "London", "New York", "Los Angeles", "Chicago", "San Francisco", "Austin", "Seattle", "Boston", "Miami", "Toronto",
 ];
 
-function inferLocationFromHomepage(text: string) {
+export function inferLocationFromHomepage(text: string) {
   const normalized = text.replace(/\s+/g, " ");
   // French postal code (5 digits) followed by a city name. Capture only
   // capitalised tokens (handles "Saint-Étienne", "Clermont-Ferrand") and stop
@@ -3915,7 +3942,9 @@ async function generateBuyerIntentPromptsAI(
   const language = preferredLocale ?? detectBuyerQuestionLanguage(homepageText, domain);
   const languageName = language === "fr" ? "French" : "English";
   const context = homepageText.replace(/\s+/g, " ").trim().slice(0, 1500);
-  const isLocal = isLocalServiceCategory(category);
+  const isService = isLocalServiceCategory(category);
+  const isOnline = isService && isOnlineServiceFirm(homepageText);
+  const isLocal = isService && !isOnline;
   const localCity = isLocal ? inferLocationFromHomepage(homepageText) : null;
 
   const instruction = [
@@ -3934,9 +3963,12 @@ async function generateBuyerIntentPromptsAI(
     // pour Away, « coastal California aesthetic » pour Vuori — donc la marque gagnait
     // forcément. C'est un prompt brandé déguisé : pas le nom, mais l'identité.
     `- Write from the CATEGORY, never from this specific business. A shopper who has never heard of ${brandName} must plausibly type each question.`,
-    isLocal
-      ? "- Anchor every question on WHO the buyer is and WHAT they need locally: their client type (freelance, TPE, e-commerçant, restaurateur, profession libérale, SCI, artisan…) and their specific need (création d'entreprise, TVA, paie, bilan, contrôle fiscal, transmission…). Never product criteria like durability, sizing, delivery or materials."
+    isService
+      ? `- Anchor every question on WHO the buyer is and WHAT they need${isLocal ? " locally" : ""}: their client type (freelance, TPE, e-commerçant, restaurateur, profession libérale, SCI, artisan…) and their specific need (création d'entreprise, TVA, paie, bilan, contrôle fiscal, transmission…). Never product criteria like durability, sizing, delivery or materials.`
       : "- Use only buying criteria that several brands in the category could satisfy: general use case, budget, durability, sizing, delivery, materials, comparison with the category leader.",
+    isOnline
+      ? `ONLINE FIRM — this ${category} works remotely, nationwide. Do NOT anchor questions on a city or on proximity ("près de moi", "dans ma région" are BANNED). Every question combines (a) the natural ${languageName} term for a ${category}, (b) "en ligne" / "à distance" when natural, and (c) a specific client niche AND need. Same informational bans as a local firm: no "comment choisir", no "combien coûte", no "est-il obligatoire".`
+      : "",
     "- BANNED: any product feature, material combination, slogan, aesthetic or positioning phrase that reads as lifted from one brand's marketing. If a question could only describe one company, rewrite it broader.",
     `- Do NOT mention "${brandName}" or "${domain}" in any question — these are demand-side questions used to test whether the AI recommends the brand on its own.`,
     `- Write them in natural ${languageName}.`,
@@ -4451,6 +4483,19 @@ export function buildAuditResultEmail(email: string, brandName: string, report: 
       ? `Les questions sont posées en direct à ${answerEngineName} au moment de l'audit, jamais simulées.`
       : `The questions are sent live to ${answerEngineName} at audit time, never simulated.`
   );
+
+  // CE QUE LE CLIENT OBTIENT (28/09/2026) — le résultat, pas la méthode.
+  const lostCount = report.buyerIntentPrompts.filter((prompt) => prompt.available !== false && !prompt.brandMentioned).length;
+  paragraphs.push(
+    fr
+      ? `Avec GetPick : ta page-réponse publiée sous 48 h sur ${lostCount > 1 ? `ces ${lostCount} questions` : "cette question"}, puis ${RECHECK_CADENCE.fr.adverb} tu vois si c'est toi que ${answerEngineName} cite${competitorSignal?.replacement ? `, ou ${competitorSignal.competitor}` : ""}.`
+      : `With GetPick: your answer page published within 48 h on ${lostCount > 1 ? `these ${lostCount} questions` : "this question"}, then ${RECHECK_CADENCE.en.adverb} you see whether ${answerEngineName} names you${competitorSignal?.replacement ? ` or ${competitorSignal.competitor}` : ""}.`
+  );
+  if (report.category === "accounting firm" && fr) {
+    paragraphs.push(
+      `Un client SARL ou SAS, c'est en général 2 000 à 5 000 € d'honoraires par an. Un seul client gagné paie plus de deux ans de GetPick.`
+    );
+  }
 
   const content: EmailContent = {
     lead: fr

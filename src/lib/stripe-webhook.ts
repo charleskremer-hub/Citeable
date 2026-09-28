@@ -1,3 +1,4 @@
+import { SERVICE_PLAN_PRICE_EUR } from "./plan-promises";
 import { createHmac } from "node:crypto";
 
 /**
@@ -107,6 +108,20 @@ export function planFromStripeObject(obj: Record<string, unknown>): EntitlementP
     if (priceMeta === "monitor_9eur" || priceMeta === "agent_19eur" || priceMeta === "service") return priceMeta;
     const byId = item.price?.id ? PLAN_BY_PRICE[item.price.id] : undefined;
     if (byId) return byId;
+    // Dernier filet (28/09/2026) : le prix 69 € a été créé sans métadonnée ni
+    // identifiant connu d'ici. Sans ce repli, le PREMIER client payant aurait
+    // été ignoré (`skipped: incomplete`) — l'argent encaissé, aucun droit ouvert.
+    // Un prix récurrent en EUR au montant exact de l'offre publique EST l'offre.
+    const price = item.price as { unit_amount?: unknown; currency?: unknown; recurring?: unknown } | undefined;
+    if (
+      price &&
+      price.unit_amount === SERVICE_PLAN_PRICE_EUR * 100 &&
+      typeof price.currency === "string" &&
+      price.currency.toLowerCase() === "eur" &&
+      price.recurring
+    ) {
+      return "service";
+    }
   }
   return null;
 }
@@ -124,4 +139,50 @@ export const ENTITLING_STATUSES = new Set(["active", "trialing", "past_due"]);
 
 export function isEntitling(status: string | null | undefined): boolean {
   return ENTITLING_STATUSES.has((status ?? "").trim());
+}
+
+/**
+ * CE QUE LE WEBHOOK ÉCRIT — décision pure, testée (28/09/2026).
+ *
+ * LE DÉFAUT QUE ÇA CORRIGE. L'ancienne route exigeait, sur UN SEUL événement,
+ * l'email ET le plan ET l'abonnement. Or Stripe les répartit :
+ *   - `checkout.session.completed` porte l'email… mais pas les lignes de prix
+ *     (donc pas de plan si la métadonnée manque), et son `status` vaut
+ *     « complete » — qui n'est PAS un statut d'abonnement : le droit écrit
+ *     n'aurait jamais été ouvert ;
+ *   - `customer.subscription.*` porte le prix et le vrai statut (`trialing`,
+ *     `active`…) mais aucun email.
+ * Résultat : chaque événement était ignoré (`skipped: incomplete`) ou écrit
+ * fermé. Le premier client payant n'aurait rien reçu.
+ *
+ * LA RÈGLE. La session écrit la ligne complète (email + abonnement), statut
+ * provisoire `active` (le paiement ou l'essai est acquis), plan « service »
+ * par défaut quand c'est un abonnement — c'est la seule offre vendue. Les
+ * événements d'abonnement METTENT À JOUR la même ligne (clé : l'identifiant
+ * d'abonnement) avec le vrai plan et le vrai statut, sans toucher à l'email.
+ */
+export type WebhookWrite =
+  | { kind: "full"; email: string; subscriptionId: string; plan: EntitlementPlan; status: string }
+  | { kind: "partial"; subscriptionId: string; plan: EntitlementPlan | null; status: string }
+  | { kind: "skip"; reason: string };
+
+export function webhookWriteFor(eventType: string, object: Record<string, unknown>, email: string | null): WebhookWrite {
+  if (eventType === "checkout.session.completed") {
+    const subscriptionId = typeof object.subscription === "string" ? object.subscription : null;
+    if (object.mode !== undefined && object.mode !== "subscription") return { kind: "skip", reason: "not a subscription checkout" };
+    if (!subscriptionId) return { kind: "skip", reason: "no subscription id" };
+    if (!email) return { kind: "skip", reason: "no email" };
+    const plan = planFromStripeObject(object) ?? "service";
+    return { kind: "full", email, subscriptionId, plan, status: "active" };
+  }
+
+  if (eventType.startsWith("customer.subscription.")) {
+    const subscriptionId = typeof object.id === "string" ? object.id : null;
+    if (!subscriptionId) return { kind: "skip", reason: "no subscription id" };
+    const status =
+      eventType === "customer.subscription.deleted" ? "canceled" : typeof object.status === "string" ? object.status : "active";
+    return { kind: "partial", subscriptionId, plan: planFromStripeObject(object), status };
+  }
+
+  return { kind: "skip", reason: `unhandled ${eventType}` };
 }

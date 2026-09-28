@@ -184,7 +184,7 @@ export default function HomeClient({ locale }: HomeClientProps) {
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
                   <h2 className="text-base font-bold tracking-[-0.02em] text-[#132A43] sm:text-lg">{copy.formTitle}</h2>
-                  <p className="mt-0.5 text-xs text-[#8FA0B4] sm:mt-1 sm:text-sm">{copy.formSubtitle}</p>
+                  <p className="mt-0.5 text-xs text-[#5E6E86] sm:mt-1 sm:text-sm">{copy.formSubtitle}</p>
                 </div>
                 <span className="shrink-0 rounded-full bg-[#123E5C] px-2.5 py-1 text-xs font-black text-white">{copy.freeBadge}</span>
               </div>
@@ -245,8 +245,8 @@ export default function HomeClient({ locale }: HomeClientProps) {
                     {status === "loading" ? copy.loadingCta : copy.submitCta}
                   </button>
                   {errorMsg && <p className="m-0 text-sm text-[#C0492E]">{errorMsg}</p>}
-                  <p className="m-0 text-xs leading-5 text-[#8FA0B4]">{copy.formFootnote}</p>
-                  <p className="m-0 text-xs font-bold leading-5 text-[#8FA0B4]">{copy.formBuyerIntentNote}</p>
+                  <p className="m-0 text-xs leading-5 text-[#5E6E86]">{copy.formFootnote}</p>
+                  <p className="m-0 text-xs font-bold leading-5 text-[#5E6E86]">{copy.formBuyerIntentNote}</p>
                 </form>
               )}
             </div>
@@ -272,7 +272,7 @@ export default function HomeClient({ locale }: HomeClientProps) {
                     {copy.demoQuestion}
                   </div>
                   <div className="max-w-[92%] self-start rounded-2xl rounded-bl-md border border-[#E4E9F0] bg-[#EEF2F7] px-4 py-3 text-sm leading-6 text-[#5B6B82]">
-                    <span className="mb-1.5 flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-[#8FA0B4]">
+                    <span className="mb-1.5 flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-[#5E6E86]">
                       <span className="h-1.5 w-1.5 rounded-full bg-[#8FA0B4]" />
                       AI
                     </span>
@@ -281,7 +281,7 @@ export default function HomeClient({ locale }: HomeClientProps) {
                     {copy.demoAnswerAfter}
                   </div>
                 </div>
-                <p className="m-0 mt-4 border-t border-[#E4E9F0] pt-3 text-xs font-bold text-[#8FA0B4]">{copy.demoEyebrow}</p>
+                <p className="m-0 mt-4 border-t border-[#E4E9F0] pt-3 text-xs font-bold text-[#5E6E86]">{copy.demoEyebrow}</p>
               </div>
             </div>
           </div>
@@ -299,7 +299,7 @@ export default function HomeClient({ locale }: HomeClientProps) {
               <div key={step.num} className="bg-[#FFFFFF] p-6">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#123E5C] text-sm font-black text-white">{step.num}</span>
-                  <span className="rounded-full border border-[#E4E9F0] px-2.5 py-1 text-[0.68rem] font-black uppercase tracking-[0.08em] text-[#8FA0B4]">{step.time}</span>
+                  <span className="rounded-full border border-[#E4E9F0] px-2.5 py-1 text-[0.68rem] font-black uppercase tracking-[0.08em] text-[#5E6E86]">{step.time}</span>
                 </div>
                 <p className="m-0 text-lg font-bold leading-6 tracking-[-0.02em] text-[#132A43]">{step.title}</p>
                 <p className="mt-2 text-sm leading-6 text-[#5B6B82]">{step.body}</p>
@@ -316,14 +316,14 @@ export default function HomeClient({ locale }: HomeClientProps) {
               <h2 className="max-w-xl text-[clamp(2rem,5vw,3rem)] leading-[1.02] tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
                 {copy.deliverableTitle}
               </h2>
-              <p className="mt-5 text-sm font-bold leading-6 text-[#8FA0B4]">{copy.reportCaption}</p>
+              <p className="mt-5 text-sm font-bold leading-6 text-[#5E6E86]">{copy.reportCaption}</p>
             </div>
 
             <div className="relative overflow-hidden rounded-[1.6rem] border border-[#E4E9F0] bg-[#FFFFFF] p-5 shadow-2xl shadow-black/5 sm:p-7">
               <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-[#123E5C]/10 blur-3xl" />
               <div className="relative flex flex-col gap-4">
                 <div className="rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-4">
-                  <p className="m-0 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#8FA0B4]">{copy.reportVerdictLabel}</p>
+                  <p className="m-0 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#5E6E86]">{copy.reportVerdictLabel}</p>
                   <p className="mt-2 text-base font-bold leading-6 text-[#132A43]">{copy.reportVerdict}</p>
                 </div>
                 <div className="rounded-2xl border border-[#C0492E]/25 bg-[#C0492E]/[0.06] p-4">
@@ -333,7 +333,7 @@ export default function HomeClient({ locale }: HomeClientProps) {
                 <div className="rounded-2xl border border-[#123E5C]/25 bg-[#123E5C]/[0.06] p-4">
                   <p className="m-0 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[#123E5C]">{copy.reportFixLabel}</p>
                   <p className="mt-2 text-sm font-bold text-[#132A43]">{copy.reportFixTitle}</p>
-                  <p className="mt-2 rounded-xl border border-[#E4E9F0] bg-[#EEF2F7] p-3 font-mono text-[0.8rem] leading-6 text-[#D6E2EC]">
+                  <p className="mt-2 rounded-xl border border-[#E4E9F0] bg-[#EEF2F7] p-3 font-mono text-[0.8rem] leading-6 text-[#5B6B82]">
                     {copy.reportFixBody}
                   </p>
                 </div>
@@ -362,7 +362,7 @@ export default function HomeClient({ locale }: HomeClientProps) {
                 <span className="h-2 w-2 rounded-full bg-[#123E5C] shadow-[0_0_10px_#123E5C]" />
                 <p className="m-0 text-sm font-black tracking-[-0.01em] text-[#132A43]">{copy.monitorDocTitle}</p>
               </div>
-              <span className="rounded-full border border-[#E4E9F0] px-2.5 py-1 text-[0.68rem] font-black uppercase tracking-[0.08em] text-[#8FA0B4]">
+              <span className="rounded-full border border-[#E4E9F0] px-2.5 py-1 text-[0.68rem] font-black uppercase tracking-[0.08em] text-[#5E6E86]">
                 {copy.monitorDocChip}
               </span>
             </div>
@@ -370,7 +370,7 @@ export default function HomeClient({ locale }: HomeClientProps) {
             <div className="grid gap-px bg-[#FBFCFD] sm:grid-cols-3">
               {copy.monitorTiles.map((tile) => (
                 <div key={tile.label} className="bg-[#FFFFFF] px-5 py-5">
-                  <p className="m-0 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[#8FA0B4]">{tile.label}</p>
+                  <p className="m-0 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[#5E6E86]">{tile.label}</p>
                   <p className="mt-1.5 mb-0 text-3xl font-black tracking-[-0.04em] text-[#132A43]" style={{ fontFamily: "var(--font-display)" }}>
                     {tile.value}
                   </p>
@@ -380,7 +380,7 @@ export default function HomeClient({ locale }: HomeClientProps) {
             </div>
 
             <div className="border-t border-[#E4E9F0] px-5 py-4">
-              <div className="mb-2 flex items-baseline justify-between gap-4 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[#8FA0B4]">
+              <div className="mb-2 flex items-baseline justify-between gap-4 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[#5E6E86]">
                 <span>{copy.monitorColQuestion}</span>
                 <span>{copy.monitorColCited}</span>
               </div>
@@ -390,7 +390,7 @@ export default function HomeClient({ locale }: HomeClientProps) {
                     <span className="min-w-0 text-sm leading-6 text-[#5B6B82]">{row.question}</span>
                     <span className="flex shrink-0 items-center gap-2">
                       {row.move ? (
-                        <span className="rounded-md bg-[#FBFCFD] px-2 py-0.5 text-[0.66rem] font-black uppercase tracking-[0.06em] text-[#8FA0B4]">
+                        <span className="rounded-md bg-[#FBFCFD] px-2 py-0.5 text-[0.66rem] font-black uppercase tracking-[0.06em] text-[#5E6E86]">
                           {row.move}
                         </span>
                       ) : null}
@@ -414,7 +414,7 @@ export default function HomeClient({ locale }: HomeClientProps) {
             </p>
           </div>
 
-          <p className="mt-4 text-sm font-bold leading-6 text-[#8FA0B4]">{copy.monitorCaption}</p>
+          <p className="mt-4 text-sm font-bold leading-6 text-[#5E6E86]">{copy.monitorCaption}</p>
         </section>
 
         {/* 6. PRIX ANCRÉ — agence 2 000–20 000 €/mois vs le plan unique fait-pour-toi */}
@@ -443,11 +443,11 @@ export default function HomeClient({ locale }: HomeClientProps) {
                   </span>
                   <p className="mb-3 text-xs font-bold uppercase tracking-[0.1em] text-[#123E5C]">{tier.name}</p>
                   <div className="mb-2 text-4xl tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
-                    {tier.price}<span className="text-base text-[#8FA0B4]">{"suffix" in tier ? tier.suffix : ""}</span>
+                    {tier.price}<span className="text-base text-[#5E6E86]">{"suffix" in tier ? tier.suffix : ""}</span>
                   </div>
                   <p className="mb-3 min-h-10 text-sm text-[#5B6B82]">{tier.note}</p>
                   {tier.plan !== "free" ? (
-                    <p className="m-0 mb-5 rounded-xl border border-[#E4E9F0] bg-[#EEF2F7] px-3 py-2 text-xs font-bold leading-5 text-[#8FA0B4]">
+                    <p className="m-0 mb-5 rounded-xl border border-[#E4E9F0] bg-[#EEF2F7] px-3 py-2 text-xs font-bold leading-5 text-[#5E6E86]">
                       {copy.pricingReassurance}
                     </p>
                   ) : null}
@@ -507,7 +507,7 @@ export default function HomeClient({ locale }: HomeClientProps) {
 
         {/* 9. FAQ — les vraies objections */}
         <section className="mx-auto max-w-5xl border-t border-[#E4E9F0] px-5 py-12 sm:px-6">
-          <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#8FA0B4]">{copy.faqEyebrow}</p>
+          <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-[#5E6E86]">{copy.faqEyebrow}</p>
           <div className="grid gap-4 md:grid-cols-2">
             {copy.faqItems.map((item) => (
               <div key={item.question} className="rounded-2xl border border-[#E4E9F0] bg-[#FBFCFD] p-6">
@@ -571,16 +571,16 @@ export default function HomeClient({ locale }: HomeClientProps) {
       <footer className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 border-t border-[#E4E9F0] px-5 py-8 sm:px-6">
         <div>
           <div className="text-lg tracking-[-0.02em]" style={{ fontFamily: "var(--font-display)" }}>GetPick</div>
-          <p className="m-0 text-sm text-[#8FA0B4]">{copy.footerTagline}</p>
+          <p className="m-0 text-sm text-[#5E6E86]">{copy.footerTagline}</p>
         </div>
         <div className="flex flex-wrap items-center gap-4">
-          <Link href="/study" className="m-0 text-sm text-[#8FA0B4] no-underline hover:text-[#132A43]">
+          <Link href="/study" className="m-0 text-sm text-[#5E6E86] no-underline hover:text-[#132A43]">
             {copy.footerStudy}
           </Link>
-          <Link href="/prospection" className="m-0 text-sm text-[#8FA0B4] no-underline hover:text-[#132A43]">
+          <Link href="/prospection" className="m-0 text-sm text-[#5E6E86] no-underline hover:text-[#132A43]">
             {copy.footerProspection}
           </Link>
-          <p className="m-0 text-sm text-[#8FA0B4]">© {new Date().getFullYear()} GetPick. {copy.rights}</p>
+          <p className="m-0 text-sm text-[#5E6E86]">© {new Date().getFullYear()} GetPick. {copy.rights}</p>
         </div>
       </footer>
     </div>

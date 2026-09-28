@@ -45,7 +45,7 @@ export const metadata: Metadata = {
  * déclaration de chaîne dans ce fichier.
  */
 function Paragraph({ children }: { children: React.ReactNode }) {
-  return <p className="m-0 mt-4 text-[1.02rem] font-medium leading-[1.75] text-[#C7C7D1]">{children}</p>;
+  return <p className="m-0 mt-4 text-[1.02rem] font-medium leading-[1.75] text-[#5B6B82]">{children}</p>;
 }
 
 /**
@@ -114,7 +114,7 @@ export default function StudyPage() {
 
       {/* La même note en français : la page est liée depuis /vs ET /fr/vs. */}
       <section className="mt-14 border-t border-[#E4E9F0] pt-10">
-        <p className="m-0 text-xs font-black uppercase tracking-[0.14em] text-[#8FA0B4]">
+        <p className="m-0 text-xs font-black uppercase tracking-[0.14em] text-[#5E6E86]">
           {studyPageCopy.frenchHeading}
         </p>
 

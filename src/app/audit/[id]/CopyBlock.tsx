@@ -25,7 +25,7 @@ export default function CopyBlock({ label, text, copyLabel, copiedLabel }: Props
   return (
     <div className="rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-4">
       <div className="mb-2 flex items-center justify-between gap-3">
-        <span className="text-[11px] font-black uppercase tracking-[0.1em] text-[#8E9A8F]">{label}</span>
+        <span className="text-[11px] font-black uppercase tracking-[0.1em] text-[#5B6B82]">{label}</span>
         <button
           type="button"
           onClick={onCopy}
@@ -34,7 +34,7 @@ export default function CopyBlock({ label, text, copyLabel, copiedLabel }: Props
           {copied ? copiedLabel : copyLabel}
         </button>
       </div>
-      <p className="m-0 select-all whitespace-pre-wrap text-sm font-bold leading-6 text-[#EDEDE7]">{text}</p>
+      <p className="m-0 select-all whitespace-pre-wrap text-sm font-bold leading-6 text-[#132A43]">{text}</p>
     </div>
   );
 }

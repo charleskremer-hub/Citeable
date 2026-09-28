@@ -3,8 +3,9 @@
 > GetPick is the GEO agent for service professionals, accountants first
 > (formerly Citeable). It gets you recommended by AI assistants like ChatGPT
 > and Gemini and does the work off-site: it names the peer cited in your
-> place, creates and hosts your answer page, places you on the sources AI
-> trusts, and re-tests every month. You never touch your own website.
+> place, writes and hosts your answer page on those exact questions, and
+> re-tests every month. 14 days free, then 69 EUR per month. You never touch
+> your own website.
 
 ## What GetPick is
 
@@ -35,9 +36,7 @@ seat pricing and no setup.
 - An answer page created and hosted by GetPick — the page AI reads and cites
   — built from your real diagnostic, without a single change to your own
   website.
-- Placement on the sources AI trusts for your profession: directories,
-  reviews, category comparisons.
-- The content that gets you cited, written for you.
+- A dashboard of your AI visibility against your peers, question by question.
 - Monthly re-tests of your clients' real questions, so you see the shift from
   the peer to you.
 
@@ -45,9 +44,9 @@ seat pricing and no setup.
 
 - Free diagnostic: 6 buyer questions, checked live on Gemini, no payment, no
   signup.
-- Done for you — 69 EUR per month: 12 buyer questions re-tested monthly on
-  Gemini, the answer page created and hosted for you, placement on the
-  sources AI trusts, and the content written for you. One flat price, all in.
+- Done for you — 14 days free, then 69 EUR per month: 12 buyer questions
+  re-tested monthly on Gemini, the answer page written and hosted for you, and
+  your visibility dashboard. One flat price, all in.
 
 The paid plan is monthly and cancellable at any time. It is refunded on
 request within 30 days, with no questions asked and no justification required:

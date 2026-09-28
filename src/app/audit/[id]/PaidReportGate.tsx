@@ -35,7 +35,7 @@ export default function PaidReportGate({ auditId, isAgentReport, locale }: { aud
             le palier interne du rapport, il nomme l'offre qu'on vend. */}
         {locale === "fr" ? `Ouvrir mon rapport — ${SERVICE_PLAN_PRICE_EUR} € →` : `Open my report — €${SERVICE_PLAN_PRICE_EUR} →`}
       </FunnelCheckoutLink>
-      <p className="m-0 mt-3 text-xs font-bold text-[#8FA0B4]">
+      <p className="m-0 mt-3 text-xs font-bold text-[#5E6E86]">
         {locale === "fr"
           ? "Déjà abonné ? Ouvre ce rapport avec l'adresse de ton abonnement."
           : "Already subscribed? Open this report with your subscription address."}

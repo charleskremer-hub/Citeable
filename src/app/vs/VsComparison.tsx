@@ -11,7 +11,7 @@ import {
 // Tokens visuels repris de src/app/study/page.tsx pour rester cohérent avec la
 // page la plus citée du site (même palette #123E5C / #F5F7FA, mêmes classes H2/P).
 const H2 = "m-0 mt-12 text-[1.75rem] leading-[1.15] tracking-[-0.03em] sm:text-[2rem]";
-const P = "m-0 mt-4 text-[1.02rem] font-medium leading-[1.75] text-[#C7C7D1]";
+const P = "m-0 mt-4 text-[1.02rem] font-medium leading-[1.75] text-[#5B6B82]";
 
 // Composant serveur partagé par les routes /vs (EN) et /fr/vs (FR). Toute la
 // donnée vient de src/lib/vs-comparison.ts ; aucun score de l'étude n'est
@@ -62,7 +62,7 @@ export default function VsComparison({ locale }: { locale: Locale }) {
       <div className="mt-5 overflow-x-auto rounded-2xl border border-[#E4E9F0]">
         <table className="w-full border-collapse text-left text-sm">
           <thead>
-            <tr className="bg-[#FBFCFD] text-xs font-black uppercase tracking-[0.1em] text-[#8FA0B4]">
+            <tr className="bg-[#FBFCFD] text-xs font-black uppercase tracking-[0.1em] text-[#5E6E86]">
               <th className="px-4 py-3">{copy.th.tool}</th>
               <th className="px-4 py-3 whitespace-nowrap">{copy.th.price}</th>
               <th className="px-4 py-3">{copy.th.does}</th>
@@ -74,13 +74,13 @@ export default function VsComparison({ locale }: { locale: Locale }) {
               <tr key={tool.name} className="border-t border-[#E4E9F0] align-top">
                 <td className={`px-4 py-3 font-bold ${tool.isUs ? "text-[#123E5C]" : "text-[#132A43]"}`}>
                   {tool.name}
-                  <span className="block text-xs font-medium text-[#777787]">
+                  <span className="block text-xs font-medium text-[#5B6B82]">
                     {tool.entryPlan[locale]}
                   </span>
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap font-black text-[#132A43]">
                   {formatVsPrice(tool, locale)}
-                  <span className="block text-[0.7rem] font-medium text-[#777787]">
+                  <span className="block text-[0.7rem] font-medium text-[#5B6B82]">
                     {locale === "fr" ? "/mois" : "/mo"}
                     {tool.billing ? ` · ${tool.billing[locale]}` : ""}
                   </span>
@@ -94,11 +94,11 @@ export default function VsComparison({ locale }: { locale: Locale }) {
                   >
                     {tool.sourceLabel}
                   </a>
-                  <span className="block text-[0.7rem] font-medium text-[#777787]">
+                  <span className="block text-[0.7rem] font-medium text-[#5B6B82]">
                     {locale === "fr" ? "relevé 2026-07" : "recorded 2026-07"}
                   </span>
                   {tool.sourceNote ? (
-                    <span className="mt-1 block text-[0.7rem] font-medium italic text-[#777787]">
+                    <span className="mt-1 block text-[0.7rem] font-medium italic text-[#5B6B82]">
                       {tool.sourceNote[locale]}
                     </span>
                   ) : null}
@@ -108,7 +108,7 @@ export default function VsComparison({ locale }: { locale: Locale }) {
           </tbody>
         </table>
       </div>
-      <p className="m-0 mt-3 text-xs font-bold text-[#777787]">{copy.priceNote}</p>
+      <p className="m-0 mt-3 text-xs font-bold text-[#5B6B82]">{copy.priceNote}</p>
 
       <h2 className={H2} style={{ fontFamily: "var(--font-display)" }}>
         {locale === "fr" ? "La preuve" : "The proof"}

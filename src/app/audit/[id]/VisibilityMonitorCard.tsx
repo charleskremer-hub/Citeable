@@ -93,14 +93,14 @@ export function VisibilityMonitorCard({
     <section className="mt-6 overflow-hidden rounded-[1.5rem] border border-[#E4E9F0] bg-[#0E1210] p-4 sm:p-5" data-testid={isDashboard ? "visibility-dashboard-card" : "visibility-monitor-card"}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="m-0 text-xs font-black uppercase tracking-[0.14em] text-[#8E9A8F]">
+          <p className="m-0 text-xs font-black uppercase tracking-[0.14em] text-[#5B6B82]">
             {isDashboard
               ? fr ? "Ton dashboard visibilité IA" : "Your AI visibility dashboard"
               : fr ? "Ta visibilité IA · suivi" : "Your AI visibility · tracking"}
           </p>
           <p className="m-0 mt-1 text-lg font-black text-[#132A43]">{host}</p>
         </div>
-        <span className="rounded-full border border-[#E4E9F0] px-3 py-1 text-xs font-bold text-[#8E9A8F]">
+        <span className="rounded-full border border-[#E4E9F0] px-3 py-1 text-xs font-bold text-[#5B6B82]">
           {engine} · {fr ? "aujourd'hui" : "today"}
         </span>
       </div>
@@ -108,7 +108,7 @@ export function VisibilityMonitorCard({
       <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         {tiles.map((tile) => (
           <div key={tile.label} className="rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-3">
-            <div className="text-[11px] font-bold text-[#8E9A8F]">{tile.label}</div>
+            <div className="text-[11px] font-bold text-[#5B6B82]">{tile.label}</div>
             <div className="mt-1 text-base font-black" style={tile.color ? { color: tile.color } : undefined}>
               {tile.value}
             </div>
@@ -118,11 +118,11 @@ export function VisibilityMonitorCard({
 
       {topCompetitors.length > 0 ? (
         <div className="mt-2.5 flex flex-wrap items-center gap-2 rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-3">
-          <span className="text-[11px] font-bold text-[#8E9A8F]">{fr ? "Cité à ta place :" : "Cited instead of you:"}</span>
+          <span className="text-[11px] font-bold text-[#5B6B82]">{fr ? "Cité à ta place :" : "Cited instead of you:"}</span>
           {topCompetitors.map((competitor) => (
-            <span key={competitor.name} className="rounded-full border border-[#E4E9F0] bg-[#FBFCFD] px-2.5 py-1 text-xs font-black text-[#DFE7DB]">
+            <span key={competitor.name} className="rounded-full border border-[#E4E9F0] bg-[#FBFCFD] px-2.5 py-1 text-xs font-black text-[#5B6B82]">
               {competitor.name}
-              {competitor.count > 1 ? <span className="ml-1 text-[#8E9A8F]">×{competitor.count}</span> : null}
+              {competitor.count > 1 ? <span className="ml-1 text-[#5B6B82]">×{competitor.count}</span> : null}
             </span>
           ))}
         </div>
@@ -131,7 +131,7 @@ export function VisibilityMonitorCard({
       {isDashboard ? (
         <div className="relative mt-3 overflow-hidden rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="text-xs font-bold text-[#8E9A8F]">
+            <div className="text-xs font-bold text-[#5B6B82]">
               {fr ? `Évolution de ton score — ${RECHECK_CADENCE.fr.recheckNoun}` : `Your score over time — ${RECHECK_CADENCE.en.recheckNoun}`}
             </div>
             {deltaText ? (
@@ -150,7 +150,7 @@ export function VisibilityMonitorCard({
               <div className="text-sm font-black text-[#132A43]">
                 {fr ? "Premier point enregistré ✓" : "First data point recorded ✓"}
               </div>
-              <div className="text-xs font-bold text-[#A9B6A3]">
+              <div className="text-xs font-bold text-[#5B6B82]">
                 {fr ? `Ta courbe de tendance apparaît dès le prochain ${RECHECK_CADENCE.fr.recheckNoun}.` : `Your trend line appears at the next ${RECHECK_CADENCE.en.recheckNoun}.`}
               </div>
             </div>
@@ -158,7 +158,7 @@ export function VisibilityMonitorCard({
         </div>
       ) : (
         <div className="relative mt-3 overflow-hidden rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-4">
-          <div className="text-xs font-bold text-[#8E9A8F]">
+          <div className="text-xs font-bold text-[#5B6B82]">
             {fr ? "Évolution de ton score — 8 derniers re-checks" : "Your score over time — last 8 re-checks"}
           </div>
           <svg
@@ -170,14 +170,14 @@ export function VisibilityMonitorCard({
             aria-hidden="true"
           >
             <polyline points="0,48 90,44 180,46 270,37 360,39 450,28 540,31 640,20" fill="none" stroke="#123E5C" strokeWidth="3" />
-            <polyline points="0,56 90,54 180,55 270,51 360,52 450,48 540,49 640,46" fill="none" stroke="#9FB1C6" strokeWidth="2" />
+            <polyline points="0,56 90,54 180,55 270,51 360,52 450,48 540,49 640,46" fill="none" stroke="#5B6B82" strokeWidth="2" />
           </svg>
           <div className="absolute inset-0 grid place-items-center gap-1.5 p-4 text-center">
             <div className="text-xl">🔒</div>
             <div className="text-sm font-black text-[#132A43]">
               {fr ? `Suis ta progression ${RECHECK_CADENCE.fr.adverb}` : `Track your progress ${RECHECK_CADENCE.en.every}`}
             </div>
-            <div className="text-xs font-bold text-[#A9B6A3]">
+            <div className="text-xs font-bold text-[#5B6B82]">
               {fr ? "Le gratuit montre aujourd'hui. Monitor montre la tendance." : "Free shows today. Monitor shows the trend."}
             </div>
           </div>

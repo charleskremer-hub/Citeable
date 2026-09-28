@@ -68,8 +68,8 @@ export const VS_TOOLS: VsToolRow[] = [
     sourceUrl: `${SITE_URL}/`,
     sourceLabel: "getpick.ai",
     does: {
-      en: `Names the peer AI cites instead of you, then creates and hosts your answer page and places you on the sources AI trusts, re-tested ${RECHECK_CADENCE.en.adverb}. Agency work, done off-site — you touch nothing.`,
-      fr: `Nomme le confrère que l'IA cite à ta place, puis crée et héberge ta page-réponse et te place sur les sources que l'IA croit, re-testé ${RECHECK_CADENCE.fr.adverb}. Le travail d'agence, fait hors de ton site — tu ne touches à rien.`,
+      en: `Names the peer AI cites instead of you, then writes and hosts your answer page, re-tested ${RECHECK_CADENCE.en.adverb}. Agency work, done off-site — you touch nothing.`,
+      fr: `Nomme le confrère que l'IA cite à ta place, puis écrit et héberge ta page-réponse, re-testé ${RECHECK_CADENCE.fr.adverb}. Le travail d'agence, fait hors de ton site — tu ne touches à rien.`,
     },
   },
   {

@@ -42,7 +42,7 @@ export default function PublishContent({ locale, actions, contentBlocks, proof, 
   const renderGuide = (file: GuideFile) => {
     const guide = installGuide(file, platform, locale);
     return (
-      <dl className="m-0 mt-2 grid gap-1.5 text-xs font-bold leading-5 text-[#8FA0B4]" data-testid={`install-guide-${file}`} data-generic={guide.generic ? "true" : "false"}>
+      <dl className="m-0 mt-2 grid gap-1.5 text-xs font-bold leading-5 text-[#5E6E86]" data-testid={`install-guide-${file}`} data-generic={guide.generic ? "true" : "false"}>
         <div><dt className="inline text-[#123E5C]">{guideLabels.where} · </dt><dd className="inline">{guide.where}</dd></div>
         <div><dt className="inline text-[#123E5C]">{guideLabels.paste} · </dt><dd className="inline">{guide.paste}</dd></div>
         <div><dt className="inline text-[#123E5C]">{guideLabels.verify} · </dt><dd className="inline">{guide.verify}</dd></div>
@@ -64,7 +64,7 @@ export default function PublishContent({ locale, actions, contentBlocks, proof, 
             <li key={`${action.title}-${index}`} className="rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-4">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-black text-[#123E5C]">{index + 1}.</span>
-                <span className="rounded-full border border-[#E4E9F0] bg-[#FBFCFD] px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#BCBCC8]">
+                <span className="rounded-full border border-[#E4E9F0] bg-[#FBFCFD] px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#5B6B82]">
                   {copy.actionPhase[phase]}
                 </span>
                 <span className="rounded-full border border-[#123E5C]/25 bg-[#123E5C]/10 px-2 py-0.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#123E5C]">
@@ -73,13 +73,13 @@ export default function PublishContent({ locale, actions, contentBlocks, proof, 
               </div>
               <p className="m-0 mt-1.5 text-sm font-black text-[#132A43]">{action.title}</p>
               {action.basedOn?.length ? (
-                <p className="m-0 mt-1.5 text-xs font-bold leading-5 text-[#8FA0B4]">
+                <p className="m-0 mt-1.5 text-xs font-bold leading-5 text-[#5E6E86]">
                   <span className="text-[#123E5C]">{copy.actionWhyFirst} · </span>
                   {copy.actionWhyBecause(action.basedOn)}
                 </p>
               ) : null}
               <p className="m-0 mt-2 text-sm font-bold leading-6 text-[#132A43]">{action.doThis}</p>
-              <p className="m-0 mt-2 text-xs font-bold uppercase tracking-[0.08em] text-[#8FA0B4]">{copy.where} {action.where}</p>
+              <p className="m-0 mt-2 text-xs font-bold uppercase tracking-[0.08em] text-[#5E6E86]">{copy.where} {action.where}</p>
             </li>
           ))}
         </ol>
@@ -90,7 +90,7 @@ export default function PublishContent({ locale, actions, contentBlocks, proof, 
           {contentBlocks.map((block, index) => (
             <div key={`${block.title}-${index}`} className="rounded-2xl border border-[#E4E9F0] bg-[#EEF2F7] p-4">
               <p className="m-0 text-sm font-black text-[#123E5C]">{index + 1}. {block.title}</p>
-              <p className="m-0 mt-1 text-xs font-bold leading-5 text-[#8FA0B4]">{block.gap}</p>
+              <p className="m-0 mt-1 text-xs font-bold leading-5 text-[#5E6E86]">{block.gap}</p>
               <div className="mt-3 grid gap-2.5">
                 <CopyBlock
                   label={fr ? "Réponse FAQ / section de page" : "FAQ answer / page section"}
@@ -139,7 +139,7 @@ export default function PublishContent({ locale, actions, contentBlocks, proof, 
 
           {robotsFix && blockedBots.length ? (
             <div className="mt-4 rounded-2xl border border-[#C0492E]/25 bg-[#C0492E]/[0.06] p-4">
-              <p className="m-0 mb-3 text-sm font-bold leading-6 text-[#F3C7B7]">{copy.techRobotsIntro(blockedBots.join(", "))}</p>
+              <p className="m-0 mb-3 text-sm font-bold leading-6 text-[#B04329]">{copy.techRobotsIntro(blockedBots.join(", "))}</p>
               <CopyBlock label={copy.techRobotsLabel} text={robotsFix} copyLabel={copyLabel} copiedLabel={copiedLabel} />
               {renderGuide("robots")}
             </div>
@@ -148,17 +148,17 @@ export default function PublishContent({ locale, actions, contentBlocks, proof, 
           <div className="mt-4 grid gap-4">
             <div>
               <CopyBlock label={copy.techJsonLdLabel} text={jsonLdSnippet} copyLabel={copyLabel} copiedLabel={copiedLabel} />
-              <p className="m-0 mt-1.5 text-xs font-bold leading-5 text-[#8FA0B4]">{copy.techJsonLdHint}</p>
+              <p className="m-0 mt-1.5 text-xs font-bold leading-5 text-[#5E6E86]">{copy.techJsonLdHint}</p>
               {renderGuide("jsonld")}
             </div>
             <div>
               <CopyBlock label={copy.techLlmsLabel} text={llmsTxt ?? ""} copyLabel={copyLabel} copiedLabel={copiedLabel} />
-              <p className="m-0 mt-1.5 text-xs font-bold leading-5 text-[#8FA0B4]">{copy.techLlmsHint}</p>
+              <p className="m-0 mt-1.5 text-xs font-bold leading-5 text-[#5E6E86]">{copy.techLlmsHint}</p>
               {renderGuide("llms")}
             </div>
           </div>
 
-          <p className="m-0 mt-4 text-xs font-black uppercase tracking-[0.08em] text-[#8FA0B4]">{copy.techRegenNote}</p>
+          <p className="m-0 mt-4 text-xs font-black uppercase tracking-[0.08em] text-[#5E6E86]">{copy.techRegenNote}</p>
         </div>
       ) : null}
 

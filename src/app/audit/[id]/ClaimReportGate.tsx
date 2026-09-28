@@ -75,7 +75,7 @@ export default function ClaimReportGate({ auditId, locale }: ClaimReportGateProp
         </p>
       ) : null}
 
-      <p className="m-0 mt-3 text-xs font-bold text-[#8FA0B4]">
+      <p className="m-0 mt-3 text-xs font-bold text-[#5E6E86]">
         {fr ? "Pas de spam. Ton rapport, et c'est tout." : "No spam. Your report, nothing else."}
       </p>
     </section>

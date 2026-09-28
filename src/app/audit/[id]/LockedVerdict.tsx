@@ -36,7 +36,7 @@ export default function LockedVerdict({
           <p className="m-0 text-xs font-black uppercase tracking-[0.12em] text-[#123E5C]">
             {fr ? `Audit de visibilité IA · ${brandName}` : `AI visibility audit · ${brandName}`}
           </p>
-          <a href={websiteUrl} className="max-w-full truncate text-sm font-bold text-[#8FA0B4] underline decoration-white/10 underline-offset-4">
+          <a href={websiteUrl} className="max-w-full truncate text-sm font-bold text-[#5E6E86] underline decoration-white/10 underline-offset-4">
             {websiteUrl}
           </a>
         </div>
