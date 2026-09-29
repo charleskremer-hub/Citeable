@@ -1,5 +1,6 @@
 import type { Locale } from "@/lib/i18n";
-import type { ServiceValuePlan, SourcesSummary } from "./report-insights";
+import type { BoardRow, ServiceValuePlan, SourcesSummary } from "./report-insights";
+import DashboardMockup from "./DashboardMockup";
 
 /**
  * « Ce que GetPick obtient pour toi » — le résultat avant la méthode :
@@ -12,12 +13,20 @@ export default function ServiceValueBlock({
   engineName,
   brandName,
   locale,
+  rows,
+  cited,
+  total,
+  topRival,
 }: {
   plan: ServiceValuePlan;
   sources: SourcesSummary;
   engineName: string;
   brandName: string;
   locale: Locale;
+  rows: BoardRow[];
+  cited: number;
+  total: number;
+  topRival: { name: string; count: number } | null;
 }) {
   const fr = locale === "fr";
   return (
@@ -30,10 +39,16 @@ export default function ServiceValueBlock({
           <p className="m-0 text-xs font-black uppercase tracking-[0.1em] text-[#123E5C]">
             {fr ? `Les pages que ${engineName} a lues pour répondre` : `The pages ${engineName} read to answer`}
           </p>
-          <ul className="m-0 mt-2 flex list-none flex-wrap gap-2 p-0">
+          <ul className="m-0 mt-3 grid list-none gap-2 p-0">
             {sources.top.map((source) => (
-              <li key={source.domain} className="rounded-full border border-[#E4E9F0] bg-[#F5F7FA] px-3 py-1 text-xs font-black text-[#132A43]">
-                {source.domain} · {source.count}/{sources.groundedCount}
+              <li key={source.domain} className="grid grid-cols-[minmax(0,11rem)_1fr_auto] items-center gap-3">
+                <span className="truncate text-xs font-black text-[#132A43]">{source.domain}</span>
+                <span className="h-2.5 overflow-hidden rounded-full bg-[#E4E9F0]">
+                  <span className="block h-full rounded-full bg-[#123E5C]" style={{ width: `${Math.max(6, (source.count / Math.max(1, sources.groundedCount)) * 100)}%` }} />
+                </span>
+                <span className="text-xs font-black tabular-nums text-[#132A43]">
+                  {source.count}/{sources.groundedCount}
+                </span>
               </li>
             ))}
           </ul>
@@ -61,6 +76,19 @@ export default function ServiceValueBlock({
           </li>
         ))}
       </ol>
+      {rows.length ? (
+        <DashboardMockup
+          brandName={brandName}
+          engineName={engineName}
+          rows={rows}
+          cited={cited}
+          total={total}
+          ownRead={sources.ownDomainReadCount}
+          groundedCount={sources.groundedCount}
+          topRival={topRival}
+          locale={locale}
+        />
+      ) : null}
     </>
   );
 }

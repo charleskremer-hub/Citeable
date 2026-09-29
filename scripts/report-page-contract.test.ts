@@ -47,7 +47,10 @@ const pageSource = stripped("src/app/audit/[id]/page.tsx");
 // page seule.
 const OPEN_REPORT_COMPONENTS = [
   "src/app/audit/[id]/PublishContent.tsx",
-  "src/app/audit/[id]/QuestionList.tsx",
+  "src/app/audit/[id]/QuestionBoard.tsx",
+  "src/app/audit/[id]/ScoreHero.tsx",
+  "src/app/audit/[id]/DashboardMockup.tsx",
+  "src/app/audit/[id]/ServiceValueBlock.tsx",
   "src/app/audit/[id]/VisibilityMonitorCard.tsx",
   "src/app/audit/[id]/AgentAuditChat.tsx",
   "src/app/audit/[id]/CopyBlock.tsx",

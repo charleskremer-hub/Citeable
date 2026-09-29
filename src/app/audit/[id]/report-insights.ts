@@ -539,8 +539,12 @@ export function serviceValuePlan(args: {
       : `Today, on ${q(args.rival.prompt)}, ${args.engineName} recommends ${args.rival.name}. The goal: make it ${args.brandName}.`
     : lost > 0
       ? fr
-        ? `Aujourd'hui, ${args.engineName} ne te cite sur aucune de ces ${lost} question${lost > 1 ? "s" : ""} de clients. L'objectif : devenir sa réponse.`
-        : `Today, ${args.engineName} does not name you on ${lost} of these client questions. The goal: become its answer.`
+        ? lost >= args.questionCount
+          ? `Aujourd'hui, ${args.engineName} ne te cite sur aucune des ${args.questionCount} questions de tes clients. L'objectif : devenir sa réponse.`
+          : `Aujourd'hui, ${args.engineName} ne te cite pas sur ${lost} des ${args.questionCount} questions de tes clients. L'objectif : devenir aussi sa réponse sur ${lost > 1 ? "celles-là" : "celle-là"}.`
+        : lost >= args.questionCount
+          ? `Today, ${args.engineName} names you on none of your clients' ${args.questionCount} questions. The goal: become its answer.`
+          : `Today, ${args.engineName} does not name you on ${lost} of your clients' ${args.questionCount} questions. The goal: become its answer there too.`
       : fr
         ? `${args.engineName} te cite déjà. L'objectif : le rester, chaque mois, face à tes confrères.`
         : `${args.engineName} already names you. The goal: stay there, every month, against your peers.`;
@@ -627,4 +631,48 @@ export function sourcesSummary(questions: BuyerIntentPromptResult[], brandDomain
     .sort((a, b) => b.count - a.count || a.domain.localeCompare(b.domain))
     .slice(0, 6);
   return { groundedCount, top, ownDomainReadCount };
+}
+
+// --- Rapport visuel (29/09, Charles : « pas clair, on ne voit pas les questions »,
+// « c'est triste, il faut que ce soit plus visuel et percutant ») -------------
+
+export type BoardRow = {
+  prompt: string;
+  state: PromptState;
+  rivals: string[];
+  pages: Array<{ domain: string; own: boolean }>;
+};
+
+/** Une ligne par question posée : le verdict, qui est cité, quelles pages ont été lues. Perdues d'abord. */
+export function questionBoardRows(questions: BuyerIntentPromptResult[], brandDomain: string): BoardRow[] {
+  const own = registrable(brandDomain);
+  const rank = (state: PromptState) => (state === "missing" ? 0 : state === "recommended" ? 1 : 2);
+  return questions
+    .map((question) => {
+      const analysis = promptAnalysis(question);
+      const domains = [
+        ...new Set(
+          (question.surfaces ?? [])
+            .filter((surface) => surface.grounded)
+            .flatMap((surface) => (surface.sources ?? []).map((source) => registrable(source.domain)))
+            .filter(Boolean)
+        ),
+      ];
+      const isOwn = (domain: string) => Boolean(own) && (domain === own || domain.endsWith(`.${own}`));
+      const pages = [...domains.filter(isOwn), ...domains.filter((domain) => !isOwn(domain))].slice(0, 5).map((domain) => ({ domain, own: isOwn(domain) }));
+      return { prompt: question.prompt, state: analysis.state, rivals: analysis.competitors.slice(0, 4), pages };
+    })
+    .sort((a, b) => rank(a.state) - rank(b.state));
+}
+
+/** « Qui Gemini cite » : la marque ET ses confrères, au même mètre (questions où chacun est cité). */
+export function citationLeaderboard(args: { brandName: string; brandCount: number; rivals: Array<{ name: string; count: number }>; limit?: number }) {
+  const limit = args.limit ?? 5;
+  const self = { name: args.brandName, count: args.brandCount, self: true };
+  const sorted = [self, ...args.rivals.map((rival) => ({ name: rival.name, count: rival.count, self: false }))].sort(
+    (a, b) => b.count - a.count || Number(b.self) - Number(a.self)
+  );
+  const top = sorted.slice(0, limit);
+  // La marque est TOUJOURS sur le podium affiché, même dernière : c'est sa place qu'on montre.
+  return top.includes(self) ? top : [...top.slice(0, limit - 1), self];
 }

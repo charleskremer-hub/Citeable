@@ -86,7 +86,13 @@ test("rapport — le calendrier ne promet que ce qui est livré, sans geste clie
 test("rapport — sans rival nommable, pas de nom inventé", () => {
   const plan = serviceValuePlan({ ...base, rival: null, topRivals: [] });
   assert.doesNotMatch(plan.objective, /Fiducial/);
-  assert.match(plan.objective, /aucune de ces 3 questions/);
+  assert.match(plan.objective, /ne te cite pas sur 3 des 6 questions/);
+  // 29/09 : « ne te cite sur aucune de ces 1 question » vu en prod (Gendrot, 5/6) — jamais plus.
+  const one = serviceValuePlan({ ...base, rival: null, topRivals: [], lostQuestions: ["q"] });
+  assert.match(one.objective, /ne te cite pas sur 1 des 6 questions/);
+  assert.doesNotMatch(one.objective, /aucune de ces 1/);
+  const all = serviceValuePlan({ ...base, rival: null, topRivals: [], lostQuestions: ["a", "b", "c", "d", "e", "f"] });
+  assert.match(all.objective, /aucune des 6 questions/);
 });
 
 // --- Le paiement ouvre VRAIMENT le droit ------------------------------------
@@ -126,4 +132,13 @@ test("alerte — un paiement sans droit ouvert est signalé comme tel", () => {
   const ok = buildCheckoutAlert({ email: "c@x.fr", plan: "service", status: "x", subscriptionId: "sub_1", skipped: false });
   assert.match(ok.subject, /Nouvelle souscription : c@x\.fr/);
   assert.match(ok.text, /48 h/);
+});
+
+test("paiement — le lien Stripe porte le diagnostic et l'email (le paiement retrouve toujours le cabinet)", async () => {
+  const { checkoutHrefWithContext } = await import("@/lib/checkout-links");
+  const url = new URL(checkoutHrefWithContext("https://buy.stripe.com/abc123", "dcb7e940-4de9-4746-b7ae-30b266b1e771", "contact@cabinet.fr"));
+  assert.equal(url.searchParams.get("client_reference_id"), "dcb7e940-4de9-4746-b7ae-30b266b1e771");
+  assert.equal(url.searchParams.get("prefilled_email"), "contact@cabinet.fr");
+  assert.equal(checkoutHrefWithContext("/fr#pricing", "dcb7e940-4de9-4746-b7ae-30b266b1e771", "a@b.fr"), "/fr#pricing");
+  assert.equal(new URL(checkoutHrefWithContext("https://buy.stripe.com/abc123", "pas-un-id", null)).search, "");
 });

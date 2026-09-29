@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { MONITOR_CHECKOUT_URL, MONITOR_TEST_CHECKOUT_URL, SERVICE_CHECKOUT_URL } from "@/lib/checkout-links";
+import { MONITOR_CHECKOUT_URL, MONITOR_TEST_CHECKOUT_URL, SERVICE_CHECKOUT_URL, checkoutHrefWithContext } from "@/lib/checkout-links";
 
 type FunnelCheckoutLinkProps = {
   auditId: string;
@@ -17,8 +17,12 @@ type FunnelCheckoutLinkProps = {
    * 31/07, et défaut de caisse mesuré le 14/09).
    */
   checkoutConfigured?: boolean;
+  /** Email du diagnostic, pré-rempli sur Stripe (même email ⇒ le paiement retrouve le cabinet). */
+  prefillEmail?: string | null;
   children: ReactNode;
 };
+
+
 
 /**
  * Le plan est déduit de la destination réelle, jamais codé en dur. Depuis le
@@ -53,7 +57,7 @@ function planFromHref(href: string) {
  * with sendBeacon, which is designed to survive page unload. fetch(keepalive) is
  * kept as a fallback for the rare browser without sendBeacon.
  */
-export default function FunnelCheckoutLink({ auditId, href, className, source, checkoutConfigured = true, children }: FunnelCheckoutLinkProps) {
+export default function FunnelCheckoutLink({ auditId, href, className, source, checkoutConfigured = true, prefillEmail, children }: FunnelCheckoutLinkProps) {
   function handleClick() {
     const plan = planFromHref(href);
     const events = [
@@ -93,7 +97,7 @@ export default function FunnelCheckoutLink({ auditId, href, className, source, c
 
   return (
     <a
-      href={href}
+      href={checkoutHrefWithContext(href, auditId, prefillEmail)}
       className={className}
       onClick={handleClick}
       data-ph-capture-attribute-plan={planFromHref(href)}

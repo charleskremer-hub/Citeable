@@ -113,12 +113,19 @@ export async function generateAiSiteAnswers(domainInput: string): Promise<boolea
  * son dernier diagnostic, enregistre le domaine, l'ajoute au projet Vercel,
  * lance l'agent de contenu. Rend le lien d'onboarding (message webmaster), ou null.
  */
-export async function openAiSiteForCustomer(email: string): Promise<{ domain: string; onboardingUrl: string } | null> {
+export async function openAiSiteForCustomer(email: string, auditId?: string | null): Promise<{ domain: string; onboardingUrl: string } | null> {
   await ensureAuditSchema();
-  const audit = await pool.query<{ id: string; website_url: string }>(
-    `SELECT id, website_url FROM audits WHERE lower(email) = lower($1) AND score IS NOT NULL ORDER BY created_at DESC LIMIT 1`,
-    [email]
-  );
+  // D'abord le diagnostic porté par le lien de paiement (client_reference_id) ;
+  // à défaut, le dernier diagnostic fait avec l'email de paiement.
+  const byReference = auditId && /^[0-9a-f-]{36}$/i.test(auditId)
+    ? await pool.query<{ id: string; website_url: string }>(`SELECT id, website_url FROM audits WHERE id = $1 AND score IS NOT NULL`, [auditId])
+    : null;
+  const audit = byReference?.rows[0]
+    ? byReference
+    : await pool.query<{ id: string; website_url: string }>(
+        `SELECT id, website_url FROM audits WHERE lower(email) = lower($1) AND score IS NOT NULL ORDER BY created_at DESC LIMIT 1`,
+        [email]
+      );
   const row = audit.rows[0];
   const domain = row ? normalizeRootDomain(row.website_url) : null;
   if (!row || !domain) return null;

@@ -105,9 +105,10 @@ export async function POST(req: NextRequest) {
     // geste — « connecter ton site » (WordPress en un clic ; repli ai.<cabinet>).
     // Après la réponse à Stripe (génération ~20 s), jamais bloquant.
     const customerEmail = write.email;
+    const referenceAuditId = typeof object.client_reference_id === "string" ? object.client_reference_id : null;
     after(async () => {
       try {
-        const opened = await openAiSiteForCustomer(customerEmail);
+        const opened = await openAiSiteForCustomer(customerEmail, referenceAuditId);
         const welcome = buildGeoWelcomeEmail({ domain: opened?.domain ?? null, onboardingUrl: opened?.onboardingUrl ?? null });
         await sendMail({ to: customerEmail, subject: welcome.subject, text: welcome.text });
       } catch (error) {

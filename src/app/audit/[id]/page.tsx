@@ -20,7 +20,8 @@ import FunnelCheckoutLink from "./FunnelCheckoutLink";
 import { VisibilityMonitorCard } from "./VisibilityMonitorCard";
 import PublishContent from "./PublishContent";
 import ServiceValueBlock from "./ServiceValueBlock";
-import QuestionList from "./QuestionList";
+import QuestionBoard from "./QuestionBoard";
+import ScoreHero from "./ScoreHero";
 import ClaimReportGate from "./ClaimReportGate";
 import LockedVerdict from "./LockedVerdict";
 import PaidReportGate from "./PaidReportGate";
@@ -34,6 +35,8 @@ import {
   promptAnalysis,
   serviceValuePlan,
   sourcesSummary,
+  questionBoardRows,
+  citationLeaderboard,
   rankActionsByImpact,
   scoreColor,
   treatmentProof,
@@ -41,7 +44,6 @@ import {
   uniqueNames,
   verdictCompetitors,
   verdictRival,
-  type PromptState,
 } from "./report-insights";
 
 export const dynamic = "force-dynamic";
@@ -120,7 +122,6 @@ export default async function AuditPage({
 
   const locale = audit.raw_results?.locale ? localeFromUnknown(audit.raw_results.locale) : headerLocale;
   const copy = auditCopy[locale];
-  const fr = locale === "fr";
 
   const failed = audit.raw_results?.status === "failed";
   const icpSegment = audit.raw_results?.icpSegment;
@@ -269,12 +270,8 @@ export default async function AuditPage({
     .filter((point) => point && typeof point.score === "number")
     .map((point) => ({ score: point.score, createdAt: point.createdAt }));
   const monitoringScoreDelta = audit.raw_results?.monitoring?.scoreDelta ?? null;
-  const promptRows = questions.map((question) => ({ question, analysis: promptAnalysis(question) }));
-  const recommendedPromptCount = promptRows.filter((row) => row.analysis.state === "recommended").length;
-  const gapPromptCount = promptRows.filter((row) => row.analysis.state === "missing").length;
-  const checkedPromptCount = promptRows.filter((row) => row.analysis.state !== "unchecked").length;
-  const promptRank = (state: PromptState) => (state === "missing" ? 0 : state === "recommended" ? 1 : 2);
-  const sortedPromptRows = [...promptRows].sort((a, b) => promptRank(a.analysis.state) - promptRank(b.analysis.state));
+  const boardRows = questionBoardRows(questions, auditDomain);
+  const topRival = rankedCompetitors[0] ? { name: rankedCompetitors[0].name, count: rankedCompetitors[0].count } : null;
   const sentiment = brandSentimentView(audit.raw_results?.brandSentiment ?? { label: "not_enough_signal", justification: "not enough signal" }, locale);
   // Sans categoryPerception stocké (anciens audits), on recalcule — le repli
   // rend "not_enough_signal", jamais un verdict inventé.
@@ -384,13 +381,8 @@ export default async function AuditPage({
                       : copy.verdictRivalAlso(answerEngineName, rival.name, rival.prompt)}
                   </p>
                 ) : null}
-                {/* Score et catégorie : des chiffres, pas le fait — ligne secondaire. */}
-                <p className="m-0 text-sm font-bold text-[#5E6E86]">
-                  {copy.scoreCategoryLine(score, displayCategory)}
-                  <span className="ml-2" style={{ color }}>
-                    {brandMentionCount}/{questionCount}
-                  </span>
-                </p>
+                <ScoreHero brandName={audit.brand_name} engineName={answerEngineName} cited={brandMentionCount} total={questionCount} states={questions.map((question) => promptAnalysis(question).state)} topRival={topRival} locale={locale} />
+                <p className="m-0 text-xs font-bold text-[#5E6E86]">{copy.scoreCategoryLine(score, displayCategory)}</p>
                 {isAnswerEngineReport && answerEngine?.realLlmCall ? (
                   <p
                     className="m-0 flex w-fit items-center gap-1.5 text-xs font-black text-[#17705B]"
@@ -462,7 +454,7 @@ export default async function AuditPage({
               })()
             ) : null}
 
-            {complete && !failed ? (
+            {complete && !failed && (audit.raw_results?.brandSentiment?.label ?? "not_enough_signal") !== "not_enough_signal" ? (
               <section
                 className="mt-5 rounded-2xl border p-4"
                 style={{
@@ -493,6 +485,10 @@ export default async function AuditPage({
               </section>
             ) : null}
           </div>
+
+          {complete && !failed && boardRows.length ? (
+            <QuestionBoard rows={boardRows} leaderboard={citationLeaderboard({ brandName: audit.brand_name, brandCount: brandMentionCount, rivals: rankedCompetitors })} engineName={answerEngineName} total={questionCount} locale={locale} />
+          ) : null}
 
           {complete && !failed && isMonitorReport ? (
             <VisibilityMonitorCard
@@ -531,14 +527,14 @@ export default async function AuditPage({
                   <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
                     {copy.publishLockedTitle}
                   </h2>
-                  {valuePlan ? <ServiceValueBlock plan={valuePlan} sources={sourcesSummary(questions, auditDomain)} engineName={answerEngineName} brandName={audit.brand_name} locale={locale} /> : (
+                  {valuePlan ? <ServiceValueBlock plan={valuePlan} sources={sourcesSummary(questions, auditDomain)} engineName={answerEngineName} brandName={audit.brand_name} locale={locale} rows={boardRows} cited={brandMentionCount} total={questionCount} topRival={topRival} /> : (
                     <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#5B6B82]">{copy.publishLockedBody}</p>
                   )}
                   <div className="mt-5">
                     <FunnelCheckoutLink
                       auditId={audit.id} checkoutConfigured={isCheckoutConfigured(SERVICE_CHECKOUT_URL)}
                       href={isCheckoutConfigured(SERVICE_CHECKOUT_URL) ? SERVICE_CHECKOUT_URL : `${locale === "fr" ? "/fr" : "/en"}#pricing`}
-                      source="report_service_offer"
+                      source="report_service_offer" prefillEmail={isAnonymousEmail(audit.email) ? null : audit.email}
                       className="inline-flex rounded-xl bg-[#123E5C] px-5 py-3 text-sm font-black text-white no-underline shadow-2xl shadow-[#123E5C]/20 transition hover:brightness-110"
                     >
                       {copy.publishLockedCta}
@@ -562,27 +558,6 @@ export default async function AuditPage({
             </section>
           ) : null}
 
-          {/* --- BLOC 4 : LES QUESTIONS — la preuve, repliée. ------------------ */}
-          {complete && !failed && !isFreeReport ? (
-            <details className="rounded-[1.5rem] border border-[#E4E9F0] bg-[#FBFCFD] p-5 sm:p-6" data-testid="buyer-intent-prompts">
-              <summary className="cursor-pointer list-item text-xl leading-tight tracking-[-0.03em]" style={{ fontFamily: "var(--font-display)" }}>
-                {isAnswerEngineReport ? copy.questionsTitle(answerEngineName) : copy.webQuestionsTitle}
-                {checkedPromptCount > 0 ? (
-                  <span className="ml-3 rounded-full border border-[#123E5C]/25 bg-[#123E5C]/10 px-3 py-1 align-middle text-xs font-black text-[#123E5C]">
-                    {fr ? `Recommandé sur ${recommendedPromptCount}/${checkedPromptCount}` : `Recommended on ${recommendedPromptCount}/${checkedPromptCount}`}
-                  </span>
-                ) : null}
-              </summary>
-
-              <QuestionList
-                locale={locale}
-                engineName={answerEngineName}
-                isAnswerEngineReport={isAnswerEngineReport}
-                rows={sortedPromptRows}
-                gapCount={gapPromptCount}
-              />
-            </details>
-          ) : null}
         </div>
       </section>
     </main>

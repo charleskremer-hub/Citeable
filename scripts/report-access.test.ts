@@ -203,7 +203,7 @@ test("chaque section de détail reste derrière la porte", () => {
   // hors de la porte.
   const detailMarkers = [
     'data-testid="publish-block"', // le bloc « À publier » (actions + contenus + fichiers)
-    'data-testid="buyer-intent-prompts"', // questions d'achat testées
+    "<QuestionBoard", // questions d'achat testées (ouvertes depuis le 29/09)
     'data-testid="brand-sentiment"', // sentiment
     'data-testid="category-perception"', // perception de catégorie
     "<AgentAuditChat", // chat agent

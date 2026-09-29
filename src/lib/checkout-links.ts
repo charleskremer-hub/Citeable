@@ -64,3 +64,16 @@ export const AGENT_TEST_CHECKOUT_URL = clean(process.env.NEXT_PUBLIC_AGENT_TEST_
  * abime plus la confiance qu'un bouton absent.
  */
 export const isCheckoutConfigured = (url: string): boolean => url.startsWith("https://");
+
+/**
+ * Le lien Stripe porte le diagnostic : `client_reference_id` = l'audit, et
+ * l'email pré-rempli. Sans ça (constaté le 29/09), un paiement fait avec un
+ * autre email ne retrouvait pas le cabinet : pas de fiche, pas de connexion.
+ */
+export function checkoutHrefWithContext(href: string, auditId: string, prefillEmail?: string | null): string {
+  if (!/^https:\/\/(buy|checkout)\.stripe\.com\//.test(href)) return href;
+  const url = new URL(href);
+  if (/^[0-9a-f-]{36}$/i.test(auditId)) url.searchParams.set("client_reference_id", auditId);
+  if (prefillEmail && prefillEmail.includes("@")) url.searchParams.set("prefilled_email", prefillEmail);
+  return url.toString();
+}
