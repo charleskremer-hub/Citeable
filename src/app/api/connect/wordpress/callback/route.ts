@@ -1,7 +1,7 @@
 import { after, NextRequest, NextResponse } from "next/server";
 import { normalizeRootDomain, verifyAiSiteToken } from "@/lib/ai-site";
 import { discoverSite, parseWpCallback, verifyWpCredentials } from "@/lib/wp-connect";
-import { publishAnswersToWordPress, saveWordPressConnection } from "@/lib/cms-connection-store";
+import { notifyCustomerPublished, publishAnswersToWordPress, saveWordPressConnection } from "@/lib/cms-connection-store";
 import { sendFounderAlert } from "@/lib/lead-alert";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +39,7 @@ export async function GET(req: NextRequest) {
   await saveWordPressConnection({ domain, siteUrl: parsed.siteUrl, restUrl, userLogin: parsed.userLogin, password: parsed.password });
   after(async () => {
     const published = await publishAnswersToWordPress(domain);
+    if (published.ok) await notifyCustomerPublished(domain, published.url, published.firstTime);
     await sendFounderAlert(
       `[GetPick] Site connecté : ${domain}${published.ok ? " — page publiée" : " — publication en échec"}`,
       published.ok ? `Page publiée : ${published.url}` : `Échec : ${published.reason}. Relancer via /api/admin/ai-site (publish).`

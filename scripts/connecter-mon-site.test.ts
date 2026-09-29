@@ -141,3 +141,14 @@ test("publication — crée la page, puis la met à jour EN PLACE (jamais de dou
   const recreated = await upsertWpPage("https://a.fr/wp-json/", { login: "u", password: "p" }, { ...page, id: 7 }, fakeFetch({ "https://a.fr/wp-json/wp/v2/pages": { status: 201, body: { id: 43, link: "l2" } } }));
   assert.deepEqual(recreated, { ok: true, id: 43, link: "l2" });
 });
+
+test("mail au cabinet — première publication : le lien, qu'il garde la main, et le rendez-vous du mois", async () => {
+  const { buildPublishedEmail } = await import("@/lib/cms-connection-store");
+  const first = buildPublishedEmail({ domain: "lesbonscomptes.fr", url: "https://lesbonscomptes.fr/questions-frequentes-joue-les-tours/", firstTime: true });
+  assert.match(first.subject, /en ligne sur lesbonscomptes\.fr/);
+  assert.match(first.text, /questions-frequentes-joue-les-tours/);
+  assert.match(first.text, /modifier ou la retirer/);
+  assert.match(first.text, /Dans un mois/);
+  const monthly = buildPublishedEmail({ domain: "lesbonscomptes.fr", url: "u", firstTime: false });
+  assert.match(monthly.subject, /Mise à jour mensuelle/);
+});
