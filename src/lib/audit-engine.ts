@@ -49,7 +49,7 @@ const BUYER_PROMPT_SET_VERSION = "niche_local_prompts_v4";
 // refuse tout alias `…-latest` pour que la variable ne réintroduise pas la faute.
 const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite";
 const DEFAULT_OPENAI_MODEL = ["gpt", "4o", "mini"].join("-");
-const COMPETITOR_EXTRACTION_VERSION = "gemini_grounded_google_search_v7";
+const COMPETITOR_EXTRACTION_VERSION = "gemini_grounded_two_step_v8";
 
 export type AuditTier = "free" | "monitor_9eur" | "agent_19eur" | "agent_49eur";
 export type IcpSegmentKey = "small_brand_ecommerce" | "service_professional" | "local_independent" | "creator_influencer";
@@ -110,6 +110,7 @@ export type BuyerIntentSurfaceResult = {
   /** Les pages lues par le moteur pour cette question — le « où être ». */
   sources?: AnswerSource[];
   searchQueries?: string[];
+  groundingNote?: string;
   surface: string;
   reachable: boolean;
   unavailableReason?: string;
@@ -1186,6 +1187,8 @@ type AnswerEngineAnswer = {
   sources?: AnswerSource[];
   /** Les requêtes que le moteur a réellement tapées dans Google. */
   searchQueries?: string[];
+  /** Pourquoi une réponse n'est PAS ancrée (diagnostic, jamais montré au client). */
+  groundingNote?: string;
   brandSentiment?: BrandSentiment;
   perceivedCategory?: string;
   brandMentioned?: boolean;
@@ -1462,18 +1465,7 @@ export function geminiGroundingSources(body: GeminiGenerateContentResponse): Ans
  */
 export function geminiGroundedBody(prompt: string, grounded: boolean) {
   return {
-    contents: [
-      {
-        role: "user",
-        parts: [
-          {
-            text: grounded
-              ? `Search Google for current, local options before answering, as you would for a real user.\n${prompt}`
-              : prompt,
-          },
-        ],
-      },
-    ],
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
     ...(grounded ? { tools: [{ google_search: {} }] } : {}),
     generationConfig: {
       temperature: 0.2,
@@ -1481,6 +1473,25 @@ export function geminiGroundedBody(prompt: string, grounded: boolean) {
       ...(grounded ? {} : { responseMimeType: "application/json" }),
     },
   };
+}
+
+/**
+ * Deux temps, comme un vrai utilisateur (30/09/2026) : (1) la question posée
+ * TELLE QUELLE, recherche Google activée — c'est la réponse que voit un client ;
+ * (2) une extraction non ancrée des cabinets recommandés dans CETTE réponse.
+ * Constat qui l'impose : avec une consigne « réponds en JSON », le modèle ne
+ * lançait aucune recherche (0 requête, 0 page sur 12 questions en prod).
+ */
+export function geminiExtractionPrompt(question: string, answer: string) {
+  return [
+    "Below is an AI assistant's answer to a buyer's question.",
+    `Buyer question: ${question}`,
+    "List the companies/firms the answer recommends, in the order it presents them.",
+    'Return ONLY valid JSON: {"recommended_brands":["Firm A","Firm B"]}',
+    "If none, return an empty array. Do not add firms that are not in the answer.",
+    "Answer:",
+    answer.slice(0, 6000),
+  ].join("\n");
 }
 
 function openAIAnswerText(body: OpenAIChatCompletionResponse) {
@@ -1803,7 +1814,45 @@ function createGeminiProvider(): AnswerEngineProvider {
       const prompt = answerEnginePrompt(question);
       const url = geminiEndpoint(model);
       let lastError = GEMINI_UNAVAILABLE;
-      let grounded = process.env.GEMINI_GROUNDING !== "off";
+      let groundingNote = "";
+
+      if (process.env.GEMINI_GROUNDING !== "off") {
+        try {
+          const natural = await fetch(url, {
+            method: "POST",
+            headers: geminiHeaders(apiKey),
+            body: JSON.stringify(geminiGroundedBody(question, true)),
+            // Budget : 2 appels par question dans une route à maxDuration 60 s.
+            signal: AbortSignal.timeout(14_000),
+          });
+          const naturalParsed = safeJsonParse<GeminiGenerateContentResponse>(await natural.text(), {});
+          const naturalText = natural.ok ? geminiAnswerText(naturalParsed) : "";
+          if (naturalText) {
+            const evidence = geminiGroundingEvidence(naturalParsed);
+            const extraction = await fetch(url, {
+              method: "POST",
+              headers: geminiHeaders(apiKey),
+              body: JSON.stringify(geminiGroundedBody(geminiExtractionPrompt(question, naturalText), false)),
+              signal: AbortSignal.timeout(8_000),
+            });
+            const extractionParsed = safeJsonParse<GeminiGenerateContentResponse>(await extraction.text(), {});
+            const extracted = parseStructuredBrandResponse(extraction.ok ? geminiAnswerText(extractionParsed) : "");
+            const sources = await resolveGroundingSources(evidence.chunks);
+            return {
+              ...extracted,
+              answer: `recommended_brands: ${extracted.competitorBrands.join(", ")}\n${naturalText}`,
+              grounded: evidence.searched,
+              sources,
+              searchQueries: evidence.queries,
+              groundingNote: evidence.searched ? "" : `no search (finish=${naturalParsed.candidates?.[0]?.finishReason ?? "?"}, metadata=${naturalParsed.candidates?.[0]?.groundingMetadata ? Object.keys(naturalParsed.candidates[0].groundingMetadata).join("+") || "empty" : "absent"})`,
+            };
+          }
+          groundingNote = natural.ok ? "empty grounded answer" : `grounded HTTP ${natural.status}: ${naturalParsed.error?.message ?? ""}`.slice(0, 200);
+        } catch (error) {
+          groundingNote = `grounded call failed: ${error instanceof Error ? error.message : String(error)}`.slice(0, 200);
+        }
+      }
+      const grounded = false;
 
       for (let attempt = 0; attempt < 3; attempt += 1) {
         try {
@@ -1823,20 +1872,9 @@ function createGeminiProvider(): AnswerEngineProvider {
               lastError = `${GEMINI_UNAVAILABLE} reponse tronquee (maxOutputTokens)`;
             } else {
               const answer = geminiAnswerText(parsed);
-              if (answer) {
-                const evidence = geminiGroundingEvidence(parsed);
-                const sources = grounded ? await resolveGroundingSources(evidence.chunks) : [];
-                return { ...parseStructuredBrandResponse(answer), grounded: grounded && evidence.searched, sources, searchQueries: evidence.queries };
-              }
+              if (answer) return { ...parseStructuredBrandResponse(answer), grounded: false, sources: [], searchQueries: [], groundingNote };
               lastError = GEMINI_UNAVAILABLE;
             }
-          } else if (grounded && response.status === 400) {
-            // Outil refusé par ce modèle/cette clé : repli sur l'appel non ancré,
-            // MARQUÉ comme tel (grounded: false) — jamais en silence.
-            grounded = false;
-            lastError = `${GEMINI_UNAVAILABLE} grounding refused: ${parsed.error?.message ?? response.status}`;
-            attempt -= 1;
-            continue;
           } else {
             lastError = parsed.error?.message ? `${GEMINI_UNAVAILABLE} HTTP ${response.status}: ${parsed.error.message}` : `${GEMINI_UNAVAILABLE} HTTP ${response.status}`;
             if (response.status !== 429 && response.status < 500) break;
@@ -4018,6 +4056,7 @@ async function probeAnswerEngine(prompt: string, brandName: string, domain: stri
       grounded: structuredAnswer.grounded ?? false,
       sources: structuredAnswer.sources ?? [],
       searchQueries: structuredAnswer.searchQueries ?? [],
+      groundingNote: structuredAnswer.groundingNote || undefined,
       brandSentiment: structuredAnswer.brandSentiment,
       perceivedCategory: structuredAnswer.perceivedCategory,
       kind: "ai_engine",

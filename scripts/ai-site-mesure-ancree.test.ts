@@ -12,7 +12,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-import { geminiGroundedBody, geminiGroundingEvidence, geminiGroundingSources, resolveGroundingSources } from "@/lib/audit-engine";
+import { geminiExtractionPrompt, geminiGroundedBody, geminiGroundingEvidence, geminiGroundingSources, resolveGroundingSources } from "@/lib/audit-engine";
 import { sourcesSummary } from "@/app/audit/[id]/report-insights";
 import {
   AI_CNAME_TARGET,
@@ -34,8 +34,8 @@ test("mesure — l'appel Gemini est ANCRÉ sur Google Search par défaut", () =>
   const fallback = geminiGroundedBody("q", false) as { tools?: unknown[] };
   assert.equal(fallback.tools, undefined);
   const engine = readFileSync("src/lib/audit-engine.ts", "utf8");
-  assert.match(engine, /JSON\.stringify\(geminiGroundedBody\(prompt, grounded\)\)/, "le fournisseur Gemini utilise le corps ancré");
-  assert.match(engine, /COMPETITOR_EXTRACTION_VERSION = "gemini_grounded_google_search_v7"/, "cache invalidé : la mesure a changé de nature");
+  assert.match(engine, /JSON\.stringify\(geminiGroundedBody\(question, true\)\)/, "la question est posée telle quelle, recherche activée");
+  assert.match(engine, /COMPETITOR_EXTRACTION_VERSION = "gemini_grounded_two_step_v8"/, "cache invalidé : la mesure a changé de nature");
 });
 
 test("mesure — les pages lues sont relevées, dédoublonnées, sans lien de redirection", () => {
@@ -123,8 +123,11 @@ test("ai. — servi avant le système de fichiers, et sans le JSON-LD ni la mesu
 test("mesure — « ancré » exige la preuve d'une recherche (requêtes ou pages), pas seulement l'outil", () => {
   assert.equal(geminiGroundingEvidence({ candidates: [{}] }).searched, false);
   assert.equal(geminiGroundingEvidence({ candidates: [{ groundingMetadata: { webSearchQueries: ["expert-comptable Troyes"] } }] }).searched, true);
-  const body = geminiGroundedBody("q", true) as { contents: Array<{ parts: Array<{ text: string }> }> };
-  assert.match(body.contents[0].parts[0].text, /^Search Google/);
+  const body = geminiGroundedBody("quel expert-comptable à Troyes ?", true) as { contents: Array<{ parts: Array<{ text: string }> }> };
+  assert.equal(body.contents[0].parts[0].text, "quel expert-comptable à Troyes ?", "la question du client, sans consigne JSON");
+  const extraction = geminiExtractionPrompt("q", "Je vous recommande Sadec Akelys et A2N Expertise.");
+  assert.match(extraction, /recommended_brands/);
+  assert.match(extraction, /Sadec Akelys et A2N Expertise/);
 });
 
 test("mesure — pages lues : titre-domaine, URL directe, ou cible du lien de redirection Google", async () => {
