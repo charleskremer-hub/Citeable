@@ -3,10 +3,10 @@
 > GetPick is the GEO agent for service professionals, accountants first
 > (formerly Citeable). It gets you recommended by AI assistants like ChatGPT
 > and Gemini and does the work off-site: it names the peer cited in your
-> place, completes and maintains your Google Business Profile and listings
-> for those exact questions, and re-tests every month with web search. Your
-> only step: add GetPick as a manager of your Google profile. 14 days free,
-> then 69 EUR per month.
+> place, writes the answers to those exact questions and publishes them on
+> your own domain (ai.<your-domain>), and re-tests every month with web search.
+> Your only step: forward one email to your webmaster. 14 days free, then
+> 69 EUR per month.
 
 ## What GetPick is
 
@@ -16,10 +16,10 @@ price, and it does it OFF-SITE: the client changes nothing on their own
 website, installs nothing and pastes nothing. It sends the real questions a
 client asks to AI assistants at diagnostic time — no simulated prompts, no
 cached guesses — and reports whether the AI names you or names a peer
-instead. Then, with manager access to the client's Google Business Profile
-(the client's only step), it completes that profile for the questions clients
-ask, aligns the listings AI assistants read (Bing, Yelp, PagesJaunes), and
-re-tests monthly with web search, showing which pages the AI read.
+instead. Then its GEO agent writes, from the facts on the firm's own website,
+an answer to each question clients ask, publishes it on the firm's own domain
+(ai.<firm-domain>, one DNS line added by the firm's webmaster), and re-tests
+monthly with web search, showing which pages the AI read.
 
 ## Who it is for
 
@@ -35,10 +35,9 @@ seat pricing and no setup.
 - A plain-language verdict: does AI name you, yes or no.
 - The peer AI names in your place — by name.
 - Your share of voice against those peers.
-- Your Google Business Profile completed and maintained for your clients'
-  real questions (services, specialties, area, monthly posts), and your
-  listings aligned (Bing, Yelp, PagesJaunes) — without a single change to your
-  own website.
+- A GEO agent that writes the answer to each of your clients' real questions,
+  from the facts on your own website, and publishes it on ai.<your-domain> —
+  without a single change to your website.
 - A dashboard of your AI visibility against your peers, question by question.
 - Monthly re-tests of your clients' real questions, so you see the shift from
   the peer to you.
@@ -48,8 +47,8 @@ seat pricing and no setup.
 - Free diagnostic: 6 buyer questions, checked live on Gemini, no payment, no
   signup.
 - Done for you — 14 days free, then 69 EUR per month: 12 buyer questions
-  re-tested monthly on Gemini with web search, your Google profile and
-  listings maintained for you, and your visibility dashboard. One flat price, all in.
+  re-tested monthly on Gemini with web search, your answers written and
+  published on your domain, and your visibility dashboard. One flat price, all in.
 
 The paid plan is monthly and cancellable at any time. It is refunded on
 request within 30 days, with no questions asked and no justification required:

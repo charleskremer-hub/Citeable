@@ -1891,6 +1891,29 @@ function createGeminiProvider(): AnswerEngineProvider {
   };
 }
 
+/**
+ * Appel Gemini non ancré, réponse JSON — utilisé par l'agent de contenu
+ * (fiche `ai.<cabinet>`). Rend le texte JSON brut, ou null.
+ */
+export async function geminiGenerateJson(prompt: string, timeoutMs = 25_000): Promise<string | null> {
+  const apiKey = geminiApiKey();
+  if (!apiKey) return null;
+  try {
+    const response = await fetch(geminiEndpoint(currentGeminiModel()), {
+      method: "POST",
+      headers: geminiHeaders(apiKey),
+      body: JSON.stringify({ ...geminiGroundedBody(prompt, false), generationConfig: { temperature: 0.3, maxOutputTokens: 6000, responseMimeType: "application/json" } }),
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    if (!response.ok) return null;
+    const parsed = safeJsonParse<GeminiGenerateContentResponse>(await response.text(), {});
+    if (geminiTruncated(parsed)) return null;
+    return geminiAnswerText(parsed) || null;
+  } catch {
+    return null;
+  }
+}
+
 function createOpenAIProvider(): AnswerEngineProvider {
   const model = currentOpenAIModel();
   const apiKey = openAIApiKey();
@@ -2176,18 +2199,19 @@ function supportingQuestions(prompts: BuyerIntentPromptResult[], supports: (prom
 // mauvais metier, et une consigne adressee AU CLIENT alors que la landing lui
 // jure « zero geste technique ».
 const SERVICE_ACTIONS: Record<"fr" | "en", (ctx: { questionText: string; categoryText: string; compareText: string }) => PlainAction[]> = {
-  // Réécrites le 30/09 pour l'offre « Connecte ta fiche Google » : plus de
+  // Réécrites le 30/09 pour l'offre « agent GEO » (GO Charles) : réponses écrites
+  // depuis le site du cabinet, publiées sur ai.<domaine>. Plus de
   // page-réponse hébergée vendue comme levier principal (voir CHAINE_DE_VALEUR).
   fr: ({ questionText, categoryText, compareText }) => [
     {
-      title: "GetPick complète ta fiche Google pour ces questions",
-      doThis: `GetPick écrit services, spécialités, zone desservie et publications mensuelles pour les questions que tes clients posent à l'IA : ${questionText}. Ton seul geste : nous ajouter comme administrateur de ta fiche.`,
-      where: "Ta fiche Google — celle que lisent Gemini et les réponses IA de Google.",
+      title: "GetPick écrit la réponse aux questions que tu perds",
+      doThis: `GetPick écrit, depuis les faits de ton site, une réponse factuelle à chaque question que tes clients posent à l'IA : ${questionText}.`,
+      where: "Ta fiche ai.<ton domaine>, sur ton propre domaine.",
     },
     {
-      title: "GetPick aligne tes annuaires là où le confrère est cité",
-      doThis: `GetPick met les mêmes informations et les mêmes services (${categoryText}) sur Bing, Yelp et PagesJaunes, les annuaires que lisent ChatGPT et Copilot. ${compareText}`,
-      where: "Bing Places, Yelp, PagesJaunes — tenus à jour par GetPick.",
+      title: "GetPick la publie là où l'IA lit : ton domaine",
+      doThis: `GetPick publie ces réponses sur ai.<ton domaine>, les signale aux moteurs, et te dit quels annuaires l'IA lit dans ta ville (${categoryText}). ${compareText}`,
+      where: "Ton seul geste : transférer un email à ton webmaster.",
     },
     {
       title: "GetPick mesure chaque mois ce que l'IA lit et qui elle cite",
@@ -2197,14 +2221,14 @@ const SERVICE_ACTIONS: Record<"fr" | "en", (ctx: { questionText: string; categor
   ],
   en: ({ questionText, categoryText, compareText }) => [
     {
-      title: "GetPick completes your Google profile for these questions",
-      doThis: `GetPick writes services, specialties, area served and monthly posts for the questions your clients ask AI: ${questionText}. Your only step: add us as a manager of your profile.`,
-      where: "Your Google Business Profile — the one Gemini and Google's AI answers read.",
+      title: "GetPick writes the answer to the questions you lose",
+      doThis: `GetPick writes, from the facts on your site, a factual answer to each question your clients ask AI: ${questionText}.`,
+      where: "Your ai.<your domain> fact sheet, on your own domain.",
     },
     {
-      title: "GetPick aligns your listings where a peer is cited instead of you",
-      doThis: `GetPick puts the same details and services (${categoryText}) on Bing, Yelp and PagesJaunes, the listings ChatGPT and Copilot read. ${compareText}`,
-      where: "Bing Places, Yelp, PagesJaunes — kept up to date by GetPick.",
+      title: "GetPick publishes it where AI reads: your domain",
+      doThis: `GetPick publishes these answers on ai.<your domain>, notifies search engines, and tells you which listings AI reads in your town (${categoryText}). ${compareText}`,
+      where: "Your only step: forward one email to your webmaster.",
     },
     {
       title: "GetPick measures every month what AI reads and who it names",
@@ -4661,8 +4685,8 @@ export function buildAuditResultEmail(email: string, brandName: string, report: 
   const lostCount = report.buyerIntentPrompts.filter((prompt) => prompt.available !== false && !prompt.brandMentioned).length;
   paragraphs.push(
     fr
-      ? `Avec GetPick : ta fiche Google complétée sous 48 h pour ${lostCount > 1 ? `ces ${lostCount} questions` : "cette question"}, puis ${RECHECK_CADENCE.fr.adverb} tu vois si c'est toi que ${answerEngineName} cite${competitorSignal?.replacement ? `, ou ${competitorSignal.competitor}` : ""}.`
-      : `With GetPick: your Google profile completed within 48 h for ${lostCount > 1 ? `these ${lostCount} questions` : "this question"}, then ${RECHECK_CADENCE.en.adverb} you see whether ${answerEngineName} names you${competitorSignal?.replacement ? ` or ${competitorSignal.competitor}` : ""}.`
+      ? `Avec GetPick : notre agent écrit et publie sur ton domaine les réponses à ${lostCount > 1 ? `ces ${lostCount} questions` : "cette question"}, puis ${RECHECK_CADENCE.fr.adverb} tu vois si c'est toi que ${answerEngineName} cite${competitorSignal?.replacement ? `, ou ${competitorSignal.competitor}` : ""}.`
+      : `With GetPick: our agent writes and publishes on your domain the answers to ${lostCount > 1 ? `these ${lostCount} questions` : "this question"}, then ${RECHECK_CADENCE.en.adverb} you see whether ${answerEngineName} names you${competitorSignal?.replacement ? ` or ${competitorSignal.competitor}` : ""}.`
   );
   if (report.category === "accounting firm" && fr) {
     paragraphs.push(

@@ -106,6 +106,8 @@ export async function ensureAuditSchema() {
       indexnow_pinged_at TIMESTAMPTZ
     )
   `);
+  await pool.query(`ALTER TABLE ai_sites ADD COLUMN IF NOT EXISTS content JSONB`);
+  await pool.query(`ALTER TABLE ai_sites ADD COLUMN IF NOT EXISTS content_generated_at TIMESTAMPTZ`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS offsite_presence (
       audit_id UUID NOT NULL REFERENCES audits(id) ON DELETE CASCADE,

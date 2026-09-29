@@ -90,7 +90,12 @@ export async function dohLookup(name: string, type: "NS" | "CNAME", fetchImpl: t
 
 // --- Contenu -----------------------------------------------------------------
 
+export type AiSiteAnswer = { question: string; answer: string };
+
 export type AiSiteFacts = {
+  /** Réponses écrites par l'agent (stockées) — prioritaires sur le gabarit. */
+  answers?: AiSiteAnswer[];
+  services?: string[];
   brandName: string;
   domain: string;
   tradeLabel: string; // « cabinet d'expertise comptable »
@@ -124,16 +129,19 @@ export function aiSiteContent(facts: AiSiteFacts): AiSiteContent {
   const summary = clean(
     `${facts.brandName} est un ${facts.tradeLabel}${where}. ${sentence(facts.description)} Site officiel : ${site}.`
   );
-  const faq = facts.questions.slice(0, 8).map((question) => ({
-    question: clean(question),
-    answer: clean(
-      `${facts.brandName} est un ${facts.tradeLabel}${where}${facts.description ? ` : ${sentence(facts.description).replace(/^./, (c) => c.toLowerCase())}` : "."} Pour un premier contact : ${site}.`
-    ),
-  }));
+  const faq = facts.answers?.length
+    ? facts.answers.slice(0, 10).map((item) => ({ question: clean(item.question), answer: clean(item.answer) }))
+    : facts.questions.slice(0, 8).map((question) => ({
+        question: clean(question),
+        answer: clean(
+          `${facts.brandName} est un ${facts.tradeLabel}${where}${facts.description ? ` : ${sentence(facts.description).replace(/^./, (c) => c.toLowerCase())}` : "."} Pour un premier contact : ${site}.`
+        ),
+      }));
   const factsList = [
     { label: "Nom", value: facts.brandName },
     { label: "Activité", value: facts.tradeLabel },
     ...(facts.city ? [{ label: "Ville", value: facts.city }] : []),
+    ...(facts.services?.length ? [{ label: "Services", value: facts.services.slice(0, 8).join(", ") }] : []),
     { label: "Site officiel", value: site },
   ];
   const jsonLd: Record<string, unknown> = {
@@ -259,4 +267,84 @@ export function webmasterMessage(domain: string): string {
     "",
     "Merci !",
   ].join("\n");
+}
+
+
+// --- Agent de contenu ----------------------------------------------------------
+
+/**
+ * Consigne de l'agent qui écrit les réponses de la fiche `ai.`. Règles dures :
+ * uniquement les faits du site du cabinet (aucune invention : ni chiffre, ni
+ * client, ni tarif) ; pas de superlatif ni de comparaison avec des confrères
+ * (déontologie de la profession) ; si un fait manque, dire comment prendre
+ * contact plutôt que l'inventer.
+ */
+export function aiSiteAnswersPrompt(args: { brandName: string; tradeLabel: string; city: string | null; domain: string; questions: string[]; siteText: string }) {
+  return [
+    `Tu rédiges la fiche d'information officielle de « ${args.brandName} », ${args.tradeLabel}${args.city ? ` à ${args.city}` : ""} (site : https://${args.domain}).`,
+    "Cette fiche est lue par des assistants IA (ChatGPT, Gemini) quand un client pose une question.",
+    "Règles STRICTES :",
+    "- Utilise UNIQUEMENT les faits présents dans le TEXTE DU SITE ci-dessous. N'invente aucun chiffre, client, tarif, délai, label ni spécialité.",
+    "- Pas de superlatif (« meilleur », « leader »), pas de comparaison avec d'autres cabinets.",
+    "- Si le site ne permet pas de répondre précisément, dis ce que le cabinet fait d'après le site et invite à le contacter via son site.",
+    "- Chaque réponse : 60 à 140 mots, en français, factuelle, qui commence par répondre directement à la question en nommant le cabinet et la ville.",
+    'Rends UNIQUEMENT ce JSON : {"summary":"2 phrases","services":["…"],"answers":[{"question":"…","answer":"…"}]}',
+    "Questions (une réponse par question, dans cet ordre) :",
+    ...args.questions.map((question, index) => `${index + 1}. ${question}`),
+    "TEXTE DU SITE :",
+    args.siteText.slice(0, 6000),
+  ].join("\n");
+}
+
+export function parseAiSiteAnswers(raw: string | null): { summary?: string; services: string[]; answers: AiSiteAnswer[] } | null {
+  if (!raw) return null;
+  try {
+    const start = raw.indexOf("{");
+    const end = raw.lastIndexOf("}");
+    const data = JSON.parse(raw.slice(start, end + 1)) as { summary?: unknown; services?: unknown; answers?: unknown };
+    const answers = Array.isArray(data.answers)
+      ? data.answers
+          .map((item) => item as { question?: unknown; answer?: unknown })
+          .filter((item) => typeof item.question === "string" && typeof item.answer === "string" && item.answer.trim().length > 40)
+          .map((item) => ({ question: String(item.question).trim(), answer: String(item.answer).trim() }))
+      : [];
+    const services = Array.isArray(data.services) ? data.services.filter((x): x is string => typeof x === "string" && x.trim().length > 1).slice(0, 10) : [];
+    if (!answers.length) return null;
+    // Garde-fou déontologie : aucune réponse avec superlatif ou comparaison.
+    const clean = answers.filter((item) => !/\b(le meilleur|la meilleure|n°\s?1|numéro un|leader|mieux que)\b/i.test(item.answer));
+    return clean.length ? { summary: typeof data.summary === "string" ? data.summary.trim() : undefined, services, answers: clean } : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Mail de bienvenue (offre agent GEO, 30/09) : le seul geste = transférer au webmaster. */
+export function buildGeoWelcomeEmail(args: { domain: string | null; onboardingUrl: string | null }) {
+  const subject = "Bienvenue chez GetPick — un seul email à transférer";
+  const text = args.domain && args.onboardingUrl
+    ? [
+        "Bonjour,",
+        "",
+        `Merci pour ta confiance. Notre agent écrit déjà les réponses aux questions de tes clients ; elles seront publiées sur ai.${args.domain}, ta fiche pour les assistants IA.`,
+        "",
+        "Ton seul geste : transférer le message ci-dessous à ton webmaster (ou à la personne qui gère ton site). Rien à faire toi-même.",
+        "",
+        "----",
+        webmasterMessage(args.domain),
+        "----",
+        "",
+        `Le suivi en direct et le pas-à-pas par hébergeur : ${args.onboardingUrl}`,
+        "",
+        "Ensuite, chaque mois, on repose les questions de tes clients à l'IA et tu vois quelles pages elle a lues et qui elle cite.",
+        "",
+        "Charles — GetPick",
+      ].join("\n")
+    : [
+        "Bonjour,",
+        "",
+        "Merci pour ta confiance. Réponds simplement à cet email avec l'adresse de ton site : on prépare ta fiche pour les assistants IA et on t'envoie le message à transférer à ton webmaster.",
+        "",
+        "Charles — GetPick",
+      ].join("\n");
+  return { subject, text };
 }

@@ -564,14 +564,14 @@ export function serviceValuePlan(args: {
     {
       when: fr ? "Jour 1" : "Day 1",
       what: fr
-        ? "Tu nous ajoutes comme administrateur de ta fiche Google — 1 minute, rien de technique, comme partager un document."
-        : "You add us as a manager of your Google Business Profile — 1 minute, nothing technical, like sharing a document.",
+        ? `Notre agent GEO écrit, depuis les faits de ton site, la réponse à ${covered === 1 ? "cette question" : `ces ${covered} questions`}${firstQuestion ? `, à commencer par ${q(firstQuestion)}` : ""}.`
+        : `Our GEO agent writes, from the facts on your site, the answer to ${covered === 1 ? "this question" : `these ${covered} questions`}${firstQuestion ? `, starting with ${q(firstQuestion)}` : ""}.`,
     },
     {
       when: fr ? "Sous 48 h" : "Within 48 h",
       what: fr
-        ? `Ta fiche Google complétée pour ${covered === 1 ? "cette question" : `ces ${covered} questions`}${firstQuestion ? `, à commencer par ${q(firstQuestion)}` : ""} : services, spécialités, zone. Puis tes annuaires alignés (Bing, Yelp, PagesJaunes).`
-        : `Your Google profile completed for ${covered === 1 ? "this question" : `these ${covered} questions`}${firstQuestion ? `, starting with ${q(firstQuestion)}` : ""}: services, specialties, area. Then your listings aligned (Bing, Yelp, PagesJaunes).`,
+        ? `Publiées sur ai.${args.brandDomain ?? "toncabinet.fr"}, ta fiche pour les IA — ton seul geste : transférer un email à ton webmaster.`
+        : `Published on ai.${args.brandDomain ?? "yourfirm.com"}, your fact sheet for AI — your only step: forward one email to your webmaster.`,
     },
     {
       when: args.recheckEvery.charAt(0).toUpperCase() + args.recheckEvery.slice(1),

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
 import { AI_SUBDOMAIN, addDomainToVercel, aiSiteToken, normalizeRootDomain } from "@/lib/ai-site";
+import { generateAiSiteAnswers } from "@/lib/ai-site-store";
 
 export const dynamic = "force-dynamic";
 
@@ -38,12 +39,14 @@ export async function POST(req: NextRequest) {
   );
   const host = `${AI_SUBDOMAIN}.${domain}`;
   const vercel = await addDomainToVercel(host);
+  const contentWritten = await generateAiSiteAnswers(domain);
 
   return NextResponse.json({
     ok: true,
     domain,
     host,
     vercel,
+    content_written: contentWritten,
     onboarding_url: `https://www.getpick.ai/brancher/${encodeURIComponent(domain)}?k=${aiSiteToken(domain)}`,
   });
 }

@@ -1,11 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { SIGNATURE_HEADER, isEntitling, verifyStripeSignature, webhookWriteFor } from "@/lib/stripe-webhook";
 import { claimWebhookEvent, ensureSubscriptionSchema, upsertSubscription, upsertSubscriptionFromSubscriptionEvent } from "@/lib/subscriptions";
 import { buildCheckoutAlert, sendFounderAlert } from "@/lib/lead-alert";
-import { buildWelcomeEmail, gbpManagerEmail } from "@/lib/gbp-onboarding";
+import { buildGeoWelcomeEmail } from "@/lib/ai-site";
+import { openAiSiteForCustomer } from "@/lib/ai-site-store";
 import { sendMail } from "@/lib/mailer";
 
 export const dynamic = "force-dynamic";
+// L onboarding GEO (agent de contenu) tourne apres la reponse, via after().
+export const maxDuration = 60;
 
 /**
  * Recepteur des webhooks Stripe. C'est ici, et NULLE PART AILLEURS, qu'un
@@ -98,13 +101,19 @@ export async function POST(req: NextRequest) {
     });
     const alert = buildCheckoutAlert({ email: write.email, plan: write.plan, status: "nouvelle souscription (essai ou payant)", subscriptionId: write.subscriptionId, skipped: false });
     await sendFounderAlert(alert.subject, alert.text);
-    // Le seul geste du client, envoyé tout de suite : nous ajouter à sa fiche Google.
-    try {
-      const welcome = buildWelcomeEmail({ customerEmail: write.email, managerEmail: gbpManagerEmail() });
-      await sendMail({ to: write.email, subject: welcome.subject, text: welcome.text });
-    } catch (error) {
-      console.error("welcome email failed", error instanceof Error ? error.message : error);
-    }
+    // Offre agent GEO (30/09) : on ouvre la fiche ai.<cabinet>, l'agent écrit les
+    // réponses, puis le client reçoit le seul geste — le message pour son webmaster.
+    // Après la réponse à Stripe (génération ~20 s), jamais bloquant.
+    const customerEmail = write.email;
+    after(async () => {
+      try {
+        const opened = await openAiSiteForCustomer(customerEmail);
+        const welcome = buildGeoWelcomeEmail({ domain: opened?.domain ?? null, onboardingUrl: opened?.onboardingUrl ?? null });
+        await sendMail({ to: customerEmail, subject: welcome.subject, text: welcome.text });
+      } catch (error) {
+        console.error("geo onboarding failed", error instanceof Error ? error.message : error);
+      }
+    });
     return NextResponse.json({ ok: true, plan: write.plan, entitled: isEntitling(write.status) });
   }
 
