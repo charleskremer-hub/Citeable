@@ -12,7 +12,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-import { geminiGroundedBody, geminiGroundingSources } from "@/lib/audit-engine";
+import { geminiGroundedBody, geminiGroundingEvidence, geminiGroundingSources, resolveGroundingSources } from "@/lib/audit-engine";
 import { sourcesSummary } from "@/app/audit/[id]/report-insights";
 import {
   AI_CNAME_TARGET,
@@ -35,7 +35,7 @@ test("mesure — l'appel Gemini est ANCRÉ sur Google Search par défaut", () =>
   assert.equal(fallback.tools, undefined);
   const engine = readFileSync("src/lib/audit-engine.ts", "utf8");
   assert.match(engine, /JSON\.stringify\(geminiGroundedBody\(prompt, grounded\)\)/, "le fournisseur Gemini utilise le corps ancré");
-  assert.match(engine, /COMPETITOR_EXTRACTION_VERSION = "gemini_grounded_google_search_v6"/, "cache invalidé : la mesure a changé de nature");
+  assert.match(engine, /COMPETITOR_EXTRACTION_VERSION = "gemini_grounded_google_search_v7"/, "cache invalidé : la mesure a changé de nature");
 });
 
 test("mesure — les pages lues sont relevées, dédoublonnées, sans lien de redirection", () => {
@@ -118,4 +118,27 @@ test("ai. — servi avant le système de fichiers, et sans le JSON-LD ni la mesu
   assert.match(config, /ai\\\\\.\(\?<aidomain>/);
   const layout = readFileSync("src/app/layout.tsx", "utf8");
   assert.match(layout, /isClientAiSite \? null/);
+});
+
+test("mesure — « ancré » exige la preuve d'une recherche (requêtes ou pages), pas seulement l'outil", () => {
+  assert.equal(geminiGroundingEvidence({ candidates: [{}] }).searched, false);
+  assert.equal(geminiGroundingEvidence({ candidates: [{ groundingMetadata: { webSearchQueries: ["expert-comptable Troyes"] } }] }).searched, true);
+  const body = geminiGroundedBody("q", true) as { contents: Array<{ parts: Array<{ text: string }> }> };
+  assert.match(body.contents[0].parts[0].text, /^Search Google/);
+});
+
+test("mesure — pages lues : titre-domaine, URL directe, ou cible du lien de redirection Google", async () => {
+  const fakeFetch = (async (url: string) => ({
+    headers: new Headers({ location: url.endsWith("/a") ? "https://www.pagesjaunes.fr/pros/123" : "https://sadec-akelys.fr/cabinet" }),
+  })) as unknown as typeof fetch;
+  const sources = await resolveGroundingSources(
+    [
+      { title: "fiducial.fr", uri: "https://vertexaisearch.cloud.google.com/grounding-api-redirect/x" },
+      { title: "Sadec Akelys | Expert-comptable Troyes", uri: "https://vertexaisearch.cloud.google.com/grounding-api-redirect/b" },
+      { title: "PagesJaunes", uri: "https://vertexaisearch.cloud.google.com/grounding-api-redirect/a" },
+      { title: "fiducial.fr", uri: "" },
+    ],
+    fakeFetch,
+  );
+  assert.deepEqual(sources.map((source) => source.domain), ["fiducial.fr", "sadec-akelys.fr", "pagesjaunes.fr"]);
 });

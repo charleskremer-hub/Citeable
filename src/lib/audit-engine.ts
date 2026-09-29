@@ -49,7 +49,7 @@ const BUYER_PROMPT_SET_VERSION = "niche_local_prompts_v4";
 // refuse tout alias `…-latest` pour que la variable ne réintroduise pas la faute.
 const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite";
 const DEFAULT_OPENAI_MODEL = ["gpt", "4o", "mini"].join("-");
-const COMPETITOR_EXTRACTION_VERSION = "gemini_grounded_google_search_v6";
+const COMPETITOR_EXTRACTION_VERSION = "gemini_grounded_google_search_v7";
 
 export type AuditTier = "free" | "monitor_9eur" | "agent_19eur" | "agent_49eur";
 export type IcpSegmentKey = "small_brand_ecommerce" | "service_professional" | "local_independent" | "creator_influencer";
@@ -109,6 +109,7 @@ export type BuyerIntentSurfaceResult = {
   grounded?: boolean;
   /** Les pages lues par le moteur pour cette question — le « où être ». */
   sources?: AnswerSource[];
+  searchQueries?: string[];
   surface: string;
   reachable: boolean;
   unavailableReason?: string;
@@ -1183,6 +1184,8 @@ type AnswerEngineAnswer = {
   /** true = réponse ancrée sur une recherche web réelle, comme dans l'app grand public. */
   grounded?: boolean;
   sources?: AnswerSource[];
+  /** Les requêtes que le moteur a réellement tapées dans Google. */
+  searchQueries?: string[];
   brandSentiment?: BrandSentiment;
   perceivedCategory?: string;
   brandMentioned?: boolean;
@@ -1368,17 +1371,77 @@ function geminiAnswerText(body: GeminiGenerateContentResponse) {
  * Search). Le `title` d'un chunk est le domaine de la page ; l'`uri` est un lien
  * de redirection Google, inutile à conserver.
  */
+/**
+ * Preuve qu'une recherche a EU LIEU. `tools: google_search` autorise la
+ * recherche, il ne la force pas : le modèle peut répondre de mémoire. On ne
+ * déclare donc une réponse « ancrée » que si Google renvoie des requêtes de
+ * recherche ou des pages (constat du 30/09 : `grounded: true` sans aucune page).
+ */
+export function geminiGroundingEvidence(body: GeminiGenerateContentResponse) {
+  const queries: string[] = [];
+  const chunks: Array<{ title: string; uri: string }> = [];
+  for (const candidate of body.candidates ?? []) {
+    queries.push(...(candidate.groundingMetadata?.webSearchQueries ?? []).filter(Boolean));
+    for (const chunk of candidate.groundingMetadata?.groundingChunks ?? []) {
+      chunks.push({ title: (chunk.web?.title ?? "").trim(), uri: (chunk.web?.uri ?? "").trim() });
+    }
+  }
+  return { searched: queries.length > 0 || chunks.length > 0, queries: queries.slice(0, 6), chunks };
+}
+
+function domainFromMaybeUrl(value: string): string {
+  const raw = value.trim().toLowerCase().replace(/^www\./, "");
+  if (/^[a-z0-9.-]+\.[a-z]{2,}$/.test(raw)) return raw;
+  try {
+    return new URL(value).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Les pages que Gemini a LUES. Le `title` d'un chunk est souvent le domaine ;
+ * sinon on suit le lien de redirection Google (`vertexaisearch…/grounding-api-
+ * redirect/…`) SANS le télécharger (`redirect: "manual"`) pour lire sa cible.
+ */
+export async function resolveGroundingSources(
+  chunks: Array<{ title: string; uri: string }>,
+  fetchImpl: typeof fetch = fetch,
+): Promise<AnswerSource[]> {
+  const resolved = await Promise.all(
+    chunks.slice(0, 10).map(async (chunk) => {
+      const fromTitle = domainFromMaybeUrl(chunk.title);
+      if (fromTitle) return fromTitle;
+      const fromUri = domainFromMaybeUrl(chunk.uri);
+      if (fromUri && !fromUri.endsWith("vertexaisearch.cloud.google.com")) return fromUri;
+      if (!chunk.uri) return "";
+      try {
+        const response = await fetchImpl(chunk.uri, { method: "GET", redirect: "manual", signal: AbortSignal.timeout(3000) });
+        return domainFromMaybeUrl(response.headers.get("location") ?? "");
+      } catch {
+        return "";
+      }
+    }),
+  );
+  const seen = new Set<string>();
+  const sources: AnswerSource[] = [];
+  for (const domain of resolved) {
+    if (!domain || domain.endsWith("vertexaisearch.cloud.google.com") || seen.has(domain)) continue;
+    seen.add(domain);
+    sources.push({ domain });
+  }
+  return sources.slice(0, 12);
+}
+
+/** Compatibilité : lecture synchrone des seuls titres-domaines. */
 export function geminiGroundingSources(body: GeminiGenerateContentResponse): AnswerSource[] {
   const seen = new Set<string>();
   const sources: AnswerSource[] = [];
-  for (const candidate of body.candidates ?? []) {
-    for (const chunk of candidate.groundingMetadata?.groundingChunks ?? []) {
-      const raw = (chunk.web?.title ?? "").trim().toLowerCase().replace(/^www\./, "");
-      const domain = /^[a-z0-9.-]+\.[a-z]{2,}$/.test(raw) ? raw : "";
-      if (!domain || seen.has(domain)) continue;
-      seen.add(domain);
-      sources.push({ domain });
-    }
+  for (const chunk of geminiGroundingEvidence(body).chunks) {
+    const domain = domainFromMaybeUrl(chunk.title);
+    if (!domain || seen.has(domain)) continue;
+    seen.add(domain);
+    sources.push({ domain });
   }
   return sources.slice(0, 12);
 }
@@ -1399,7 +1462,18 @@ export function geminiGroundingSources(body: GeminiGenerateContentResponse): Ans
  */
 export function geminiGroundedBody(prompt: string, grounded: boolean) {
   return {
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    contents: [
+      {
+        role: "user",
+        parts: [
+          {
+            text: grounded
+              ? `Search Google for current, local options before answering, as you would for a real user.\n${prompt}`
+              : prompt,
+          },
+        ],
+      },
+    ],
     ...(grounded ? { tools: [{ google_search: {} }] } : {}),
     generationConfig: {
       temperature: 0.2,
@@ -1749,7 +1823,11 @@ function createGeminiProvider(): AnswerEngineProvider {
               lastError = `${GEMINI_UNAVAILABLE} reponse tronquee (maxOutputTokens)`;
             } else {
               const answer = geminiAnswerText(parsed);
-              if (answer) return { ...parseStructuredBrandResponse(answer), grounded, sources: grounded ? geminiGroundingSources(parsed) : [] };
+              if (answer) {
+                const evidence = geminiGroundingEvidence(parsed);
+                const sources = grounded ? await resolveGroundingSources(evidence.chunks) : [];
+                return { ...parseStructuredBrandResponse(answer), grounded: grounded && evidence.searched, sources, searchQueries: evidence.queries };
+              }
               lastError = GEMINI_UNAVAILABLE;
             }
           } else if (grounded && response.status === 400) {
@@ -2060,38 +2138,40 @@ function supportingQuestions(prompts: BuyerIntentPromptResult[], supports: (prom
 // mauvais metier, et une consigne adressee AU CLIENT alors que la landing lui
 // jure « zero geste technique ».
 const SERVICE_ACTIONS: Record<"fr" | "en", (ctx: { questionText: string; categoryText: string; compareText: string }) => PlainAction[]> = {
+  // Réécrites le 30/09 pour l'offre « Connecte ta fiche Google » : plus de
+  // page-réponse hébergée vendue comme levier principal (voir CHAINE_DE_VALEUR).
   fr: ({ questionText, categoryText, compareText }) => [
     {
-      title: "GetPick publie la page-réponse qui traite ces questions",
-      doThis: `GetPick écrit et publie, hors de ton site, la page-réponse qui traite les questions que tes clients posent à l'IA : ${questionText}. Tu n'as rien à modifier chez toi.`,
-      where: "Page-réponse hébergée par GetPick, reliée aux annuaires et aux comparatifs du métier.",
+      title: "GetPick complète ta fiche Google pour ces questions",
+      doThis: `GetPick écrit services, spécialités, zone desservie et publications mensuelles pour les questions que tes clients posent à l'IA : ${questionText}. Ton seul geste : nous ajouter comme administrateur de ta fiche.`,
+      where: "Ta fiche Google — celle que lisent Gemini et les réponses IA de Google.",
     },
     {
-      title: "GetPick va chercher les mentions là où le confrère est cité",
-      doThis: `GetPick aligne les annuaires et les fiches du métier (${categoryText}) sur une seule et même description, et publie les comparatifs là où l'audit a vu des confrères cités. ${compareText}`,
-      where: "Annuaires et fiches professionnelles du métier, pages d'avis, comparatifs, fils communautaires.",
+      title: "GetPick aligne tes annuaires là où le confrère est cité",
+      doThis: `GetPick met les mêmes informations et les mêmes services (${categoryText}) sur Bing, Yelp et PagesJaunes, les annuaires que lisent ChatGPT et Copilot. ${compareText}`,
+      where: "Bing Places, Yelp, PagesJaunes — tenus à jour par GetPick.",
     },
     {
-      title: "GetPick construit la preuve là où tu n'es pas cité",
-      doThis: `GetPick publie la preuve — spécialités, zone servie, clients suivis — sur les questions où l'audit ne t'a pas trouvé, puis te montre chaque mois ce qui a basculé.`,
-      where: "Page-réponse, annuaires, comparatifs et pages d'avis maintenus par GetPick.",
+      title: "GetPick mesure chaque mois ce que l'IA lit et qui elle cite",
+      doThis: "GetPick repose les mêmes questions avec recherche web : tu vois les pages lues et qui est cité, toi ou ton confrère — question par question.",
+      where: "Ton tableau de bord GetPick et ton rapport mensuel.",
     },
   ],
   en: ({ questionText, categoryText, compareText }) => [
     {
-      title: "GetPick publishes the answer page that addresses these questions",
-      doThis: `GetPick writes and publishes, off your site, the answer page that addresses what your clients ask AI: ${questionText}. You change nothing on your end.`,
-      where: "Answer page hosted by GetPick, linked to the directories and comparisons of your trade.",
+      title: "GetPick completes your Google profile for these questions",
+      doThis: `GetPick writes services, specialties, area served and monthly posts for the questions your clients ask AI: ${questionText}. Your only step: add us as a manager of your profile.`,
+      where: "Your Google Business Profile — the one Gemini and Google's AI answers read.",
     },
     {
-      title: "GetPick earns the mentions where a peer is cited instead of you",
-      doThis: `GetPick aligns the directories and professional listings for ${categoryText} on one single description, and publishes the comparisons where the audit saw peers cited. ${compareText}`,
-      where: "Trade directories and professional listings, review pages, comparisons, community threads.",
+      title: "GetPick aligns your listings where a peer is cited instead of you",
+      doThis: `GetPick puts the same details and services (${categoryText}) on Bing, Yelp and PagesJaunes, the listings ChatGPT and Copilot read. ${compareText}`,
+      where: "Bing Places, Yelp, PagesJaunes — kept up to date by GetPick.",
     },
     {
-      title: "GetPick builds the proof where you are not cited",
-      doThis: `GetPick publishes the proof — specialities, area served, clients handled — on the questions where the audit did not find you, then shows you every month what moved.`,
-      where: "Answer page, directories, comparisons and review pages maintained by GetPick.",
+      title: "GetPick measures every month what AI reads and who it names",
+      doThis: "GetPick asks the same questions again with web search: you see the pages read and who gets named, you or your peer — question by question.",
+      where: "Your GetPick dashboard and monthly report.",
     },
   ],
 };
@@ -3937,6 +4017,7 @@ async function probeAnswerEngine(prompt: string, brandName: string, domain: stri
       rawAnswerSnippet: structuredAnswer.answer.slice(0, 900),
       grounded: structuredAnswer.grounded ?? false,
       sources: structuredAnswer.sources ?? [],
+      searchQueries: structuredAnswer.searchQueries ?? [],
       brandSentiment: structuredAnswer.brandSentiment,
       perceivedCategory: structuredAnswer.perceivedCategory,
       kind: "ai_engine",
@@ -4541,8 +4622,8 @@ export function buildAuditResultEmail(email: string, brandName: string, report: 
   const lostCount = report.buyerIntentPrompts.filter((prompt) => prompt.available !== false && !prompt.brandMentioned).length;
   paragraphs.push(
     fr
-      ? `Avec GetPick : ta page-réponse publiée sous 48 h sur ${lostCount > 1 ? `ces ${lostCount} questions` : "cette question"}, puis ${RECHECK_CADENCE.fr.adverb} tu vois si c'est toi que ${answerEngineName} cite${competitorSignal?.replacement ? `, ou ${competitorSignal.competitor}` : ""}.`
-      : `With GetPick: your answer page published within 48 h on ${lostCount > 1 ? `these ${lostCount} questions` : "this question"}, then ${RECHECK_CADENCE.en.adverb} you see whether ${answerEngineName} names you${competitorSignal?.replacement ? ` or ${competitorSignal.competitor}` : ""}.`
+      ? `Avec GetPick : ta fiche Google complétée sous 48 h pour ${lostCount > 1 ? `ces ${lostCount} questions` : "cette question"}, puis ${RECHECK_CADENCE.fr.adverb} tu vois si c'est toi que ${answerEngineName} cite${competitorSignal?.replacement ? `, ou ${competitorSignal.competitor}` : ""}.`
+      : `With GetPick: your Google profile completed within 48 h for ${lostCount > 1 ? `these ${lostCount} questions` : "this question"}, then ${RECHECK_CADENCE.en.adverb} you see whether ${answerEngineName} names you${competitorSignal?.replacement ? ` or ${competitorSignal.competitor}` : ""}.`
   );
   if (report.category === "accounting firm" && fr) {
     paragraphs.push(
