@@ -23,7 +23,18 @@ const nextConfig: NextConfig = {
   // redirection que le SDK ne suit pas, et les événements disparaissent en silence.
   skipTrailingSlashRedirect: true,
   async rewrites() {
-    return [
+    return {
+      // Sous-domaine `ai.<cabinet>` (CNAME posé par le client) : servi par
+      // /ai-site/<domaine>/… AVANT le système de fichiers, sinon « / » tomberait
+      // sur la home GetPick. `_next/` exclu : les assets restent servis tels quels.
+      beforeFiles: [
+        {
+          source: "/:path((?!_next/).*)",
+          has: [{ type: "host" as const, value: "ai\\.(?<aidomain>.+)" }],
+          destination: "/ai-site/:aidomain/:path",
+        },
+      ],
+      afterFiles: [
       {
         source: `${POSTHOG_RELAY_PATH}/static/:path*`,
         destination: "https://eu-assets.i.posthog.com/static/:path*",
@@ -36,7 +47,9 @@ const nextConfig: NextConfig = {
         source: `${POSTHOG_RELAY_PATH}/:path*`,
         destination: "https://eu.i.posthog.com/:path*",
       },
-    ];
+      ],
+      fallback: [],
+    };
   },
 };
 

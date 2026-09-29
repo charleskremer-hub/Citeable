@@ -110,6 +110,9 @@ test("chaque corps de requête Gemini est accompagné de l'en-tête x-goog-api-k
     );
 
     for (const index of bodies) {
+      // Exception unique (29/09) : le corps construit par `geminiGroundedBody`
+      // n'est pas un appel — ses SITES D'APPEL sont vérifiés juste après.
+      if (/export function geminiGroundedBody\([^)]*\)\s*\{\s*return\s*\{\s*$/.test(code.slice(Math.max(0, index - 200), index))) continue;
       // Les en-têtes précèdent le corps dans un appel `fetch` ; 1200 caractères
       // couvrent largement l'écart, sans atteindre l'appel voisin.
       const before = code.slice(Math.max(0, index - 1200), index);
@@ -117,6 +120,15 @@ test("chaque corps de requête Gemini est accompagné de l'en-tête x-goog-api-k
         /geminiHeaders\(|["']x-goog-api-key["']\s*:/.test(before),
         `${relative} : un corps de requête Gemini (offset ${index}) n'est précédé d'aucun en-tête x-goog-api-key.`,
       );
+    }
+  }
+});
+
+test("chaque appel construit par geminiGroundedBody porte l'en-tête x-goog-api-key", () => {
+  for (const { relative, code } of SOURCES) {
+    for (const match of code.matchAll(/JSON\.stringify\(geminiGroundedBody\(/g)) {
+      const before = code.slice(Math.max(0, (match.index ?? 0) - 400), match.index);
+      assert.ok(/geminiHeaders\(/.test(before), `${relative} : appel geminiGroundedBody sans en-tête x-goog-api-key.`);
     }
   }
 });

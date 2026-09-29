@@ -186,7 +186,7 @@ export default async function HostedAnswerPage({ params }: HostedAnswerPageProps
         </div>
       </section>
 
-      {assets.competitors.length > 0 && (
+      {copy.competitorsTitle && assets.competitors.length > 0 && (
         <section className="mx-auto max-w-4xl border-b border-[#E4E9F0] px-5 py-10 sm:px-6 sm:py-12">
           <h2 className="text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>{copy.competitorsTitle}</h2>
           <p className="mt-4 max-w-2xl text-base leading-7 text-[#5B6B82]">{copy.competitorsIntro}</p>

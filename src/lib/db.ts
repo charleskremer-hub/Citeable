@@ -97,6 +97,16 @@ export async function ensureAuditSchema() {
   // Présence off-site (brique 2) : statut par source d'annuaire/avis pour un
   // audit. Une ligne par (audit, source) ; l'absence de ligne = 'not_started'.
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS ai_sites (
+      domain TEXT PRIMARY KEY,
+      audit_id UUID NOT NULL REFERENCES audits(id) ON DELETE CASCADE,
+      status TEXT NOT NULL DEFAULT 'pending_dns',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      live_at TIMESTAMPTZ,
+      indexnow_pinged_at TIMESTAMPTZ
+    )
+  `);
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS offsite_presence (
       audit_id UUID NOT NULL REFERENCES audits(id) ON DELETE CASCADE,
       source_key TEXT NOT NULL,

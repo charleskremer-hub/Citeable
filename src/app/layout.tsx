@@ -19,7 +19,11 @@ const dmSans = DM_Sans({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = localeFromHeaders(await headers());
+  const requestHeaders = await headers();
+  const locale = localeFromHeaders(requestHeaders);
+  // Sous-domaine `ai.` d'un cabinet : ce n'est PAS une page GetPick. Ni le JSON-LD
+  // de GetPick (qui dirait aux moteurs « cette page est GetPick »), ni la mesure.
+  const isClientAiSite = (requestHeaders.get("host") ?? "").toLowerCase().startsWith("ai.");
 
   if (locale === "fr") {
     return {
@@ -91,7 +95,11 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const locale = localeFromHeaders(await headers());
+  const requestHeaders = await headers();
+  const locale = localeFromHeaders(requestHeaders);
+  // Sous-domaine `ai.` d'un cabinet : ce n'est PAS une page GetPick. Ni le JSON-LD
+  // de GetPick (qui dirait aux moteurs « cette page est GetPick »), ni la mesure.
+  const isClientAiSite = (requestHeaders.get("host") ?? "").toLowerCase().startsWith("ai.");
 
   return (
     <html
@@ -99,15 +107,17 @@ export default async function RootLayout({
       className={`${dmSerifDisplay.variable} ${dmSans.variable} h-full`}
     >
       <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }}
-        />
+        {isClientAiSite ? null : (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }}
+          />
+        )}
       </head>
       <body className="min-h-full bg-[#F5F7FA] text-[#132A43] antialiased">
         {children}
-        <Analytics />
-        <PostHogInit />
+        {isClientAiSite ? null : <Analytics />}
+        {isClientAiSite ? null : <PostHogInit />}
       </body>
     </html>
   );

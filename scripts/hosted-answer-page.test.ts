@@ -80,11 +80,13 @@ test("hostedAnswerCopy (fr) — copy française, dérivée des faits réels", ()
   assert.equal(copy.faq.length, prompts.length, "une réponse par question d'achat");
   assert.ok(copy.title.includes("Cabinet Durand"), "le titre nomme le client");
   assert.ok(copy.title.includes("Nantes"), "le titre porte l'ancrage local");
-  assert.ok(/Quand un client demande/.test(copy.directAnswer), "réponse directe en français");
+  assert.ok(/Cabinet Durand est un expert-comptable à Nantes/.test(copy.directAnswer), "réponse directe factuelle en français");
+  assert.doesNotMatch(copy.directAnswer, /doit être le nom cité|faire basculer|pourquoi recommander/i, "aucune intention promotionnelle déclarée (29/09)");
   for (const item of copy.faq) {
     assert.ok(item.answer.includes("Cabinet Durand"), "chaque réponse nomme le client");
   }
-  assert.ok(copy.faq[0].answer.includes("Dougs"), "les confrères réellement cités sont nommés");
+  assert.ok(!copy.faq[0].answer.includes("Dougs"), "aucun concurrent nommé sur la fiche du cabinet (29/09)");
+  assert.equal(copy.competitorsIntro, "", "plus de section concurrents");
   // Garde-fou zéro chiffre inventé : la copy ne doit pas introduire de nombre
   // qui n'était pas dans les entrées (description/questions sans chiffre ici).
   const allText = [copy.title, copy.directAnswer, copy.competitorsIntro, ...copy.faq.map((f) => f.answer)].join(" ");
@@ -100,7 +102,7 @@ test("hostedAnswerCopy (en) — bascule anglaise", () => {
     competitors: [],
     prompts: ["best accountant in Nantes"],
   });
-  assert.ok(/When a client asks/.test(copy.directAnswer), "réponse directe en anglais");
+  assert.ok(/Durand & Co is a accounting firm in Nantes|Durand & Co is an? .* in Nantes/.test(copy.directAnswer), "réponse directe factuelle en anglais");
   assert.ok(copy.faq[0].answer.includes("Durand & Co"));
 });
 

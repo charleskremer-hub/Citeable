@@ -52,7 +52,7 @@ export const homeCopy = {
     heroEyebrow: "The agent that gets you recommended by AI",
     heroTitle: `When a client looks for an ${BEACHHEAD_TRADE.en} near them, ChatGPT answers with a name.`,
     heroTitleAccent: "Make it yours.",
-    heroSubtitle: `GetPick builds and maintains your local presence where AI looks for who to recommend in your area. You touch nothing — no code, no site. ${CAPITALISED_CADENCE.en} it shows you who AI cites in your place, and how you climb.`,
+    heroSubtitle: `GetPick builds and maintains your local presence where AI looks for who to recommend in your area. No code, no site rebuild: one guided 2-minute setting. ${CAPITALISED_CADENCE.en} it shows you who AI cites in your place, and how you climb.`,
     formTitle: "Your free diagnostic",
     // « Email optional » était vrai pour LANCER l'audit et faux pour ce qu'on en
     // voit : une fois le gate déployé (`resolveReportAccess`, tier free non
@@ -108,7 +108,7 @@ export const homeCopy = {
     reportVerdict: "Gemini does not name you on 7 of 12 client questions.",
     reportRivalLabel: "Named in your place",
     reportRival: "Cabinet Merisier",
-    reportFixLabel: "Written, hosted and maintained by the agent — you touch nothing",
+    reportFixLabel: "Written, published and maintained by the agent — on your own domain",
     reportFixTitle: "Your answer page, the one AI reads",
     reportFixBody: `“Which ${BEACHHEAD_TRADE.en} for a freelancer in Bordeaux?” — Fees published up front, first appointment within 48 hours, micro-entrepreneurs and small companies handled, 120 freelance clients in the Gironde.`,
     reportCaption: "Illustrative example — your page is written from your real diagnostic.",
@@ -156,10 +156,10 @@ export const homeCopy = {
         name: "Done for you",
         price: `€${SERVICE_PLAN_PRICE_EUR}`,
         suffix: "/month ex VAT",
-        note: "GetPick does the work off-site. You touch nothing.",
+        note: "One guided 2-minute setting. GetPick does the rest.",
         badge: "Zero technical",
         features: [
-          "GetPick creates and hosts your answer page — the one AI reads and cites — without ever touching your site.",
+          "GetPick writes and publishes your AI fact sheet on your own domain (ai.yourfirm.com), with an llms.txt — your website stays as it is.",
           "A dashboard: your AI visibility against your peers, question by question.",
           `${CAPITALISED_CADENCE.en} it re-tests your clients’ real questions and shows the shift: from the peer… to you.`,
           `${SERVICE_TRIAL_LABEL.en}, all in. No credits, no agency, no dev. No commitment.`,
@@ -236,7 +236,7 @@ export const homeCopy = {
     heroEyebrow: "L'agent qui te fait recommander par l'IA",
     heroTitle: `Quand un client cherche un ${BEACHHEAD_TRADE.fr} près de chez lui, ChatGPT répond un nom.`,
     heroTitleAccent: "Fais que ce soit le tien.",
-    heroSubtitle: `GetPick construit et entretient ta présence locale là où l'IA va chercher qui recommander dans ta ville. Tu ne touches à rien — ni code, ni site. ${CAPITALISED_CADENCE.fr}, il te montre qui l'IA cite à ta place, et comment tu remontes.`,
+    heroSubtitle: `GetPick construit et entretient ta présence locale là où l'IA va chercher qui recommander dans ta ville. Ni code, ni refonte de site : un seul réglage de 2 minutes, guidé pas à pas. ${CAPITALISED_CADENCE.fr}, il te montre qui l'IA cite à ta place, et comment tu remontes.`,
     formTitle: "Ton diagnostic gratuit",
     formSubtitle: "Ton cabinet + ton site. Email optionnel — il débloque ton score et le confrère nommé à ta place.",
     freeBadge: "Gratuit",
@@ -271,7 +271,7 @@ export const homeCopy = {
     demoCaption: "Ton cabinet n'est pas dans la réponse. Le client ne verra jamais ton nom — ni tes pubs.",
     // 3. Trois étapes chiffrées
     stepsEyebrow: "Comment ça marche",
-    stepsTitle: "Trois étapes. Tu ne touches jamais à ton site.",
+    stepsTitle: "Trois étapes. Ton site reste tel quel.",
     steps: [
       { num: "1", time: "30 s", title: "Donne-nous ton cabinet", body: "Ton nom et l'adresse de ton site. C'est toute la configuration." },
       { num: "2", time: "2 min", title: "L'agent interroge les IA", body: `Les vraies questions de tes clients, envoyées en direct au moment du diagnostic à ${PLAN_PROMISES.free.engineLabel.fr}. Jamais simulées.` },
@@ -284,8 +284,8 @@ export const homeCopy = {
     reportVerdict: "Gemini ne te nomme pas sur 7 questions de clients sur 12.",
     reportRivalLabel: "Cité à ta place",
     reportRival: "Cabinet Merisier",
-    reportFixLabel: "Écrit, hébergé et entretenu par l'agent — tu ne touches à rien",
-    reportFixTitle: "Ta page-réponse, celle que l'IA lit",
+    reportFixLabel: "Écrit, publié et entretenu par l'agent — sur ton propre domaine",
+    reportFixTitle: "Ta fiche IA, sur ai.toncabinet.fr",
     reportFixBody: `« Quel ${BEACHHEAD_TRADE.fr} pour un freelance à Bordeaux ? » — Honoraires publiés d’avance, premier rendez-vous sous 48 h, micro-entrepreneurs et petites sociétés suivis, 120 clients freelances en Gironde.`,
     reportCaption: "Exemple illustratif — ta page est écrite depuis ton vrai diagnostic.",
     // 5bis. L'ÉCRAN DE MONITORING — voir la note du bloc EN.
@@ -329,10 +329,10 @@ export const homeCopy = {
         name: "Fait pour toi",
         price: `${SERVICE_PLAN_PRICE_EUR} €`,
         suffix: " HT/mois",
-        note: "GetPick travaille hors de ton site. Tu ne touches à rien.",
+        note: "Un réglage guidé de 2 minutes. GetPick fait le reste.",
         badge: "Zéro technique",
         features: [
-          "GetPick crée et héberge ta page-réponse, celle que l'IA lit et cite — sans jamais toucher à ton site.",
+          "GetPick écrit et publie ta fiche IA sur ton propre domaine (ai.toncabinet.fr), avec un llms.txt — ton site reste tel quel.",
           "Un tableau de bord : ta visibilité dans l'IA face à tes confrères, question par question.",
           `${CAPITALISED_CADENCE.fr}, il re-teste les vraies questions de tes clients et te montre le basculement : du confrère… à toi.`,
           `${SERVICE_TRIAL_LABEL.fr}, tout compris. Pas de crédits, pas d'agence, pas de dev. Sans engagement.`,

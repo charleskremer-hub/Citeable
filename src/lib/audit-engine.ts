@@ -49,7 +49,7 @@ const BUYER_PROMPT_SET_VERSION = "niche_local_prompts_v4";
 // refuse tout alias `…-latest` pour que la variable ne réintroduise pas la faute.
 const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite";
 const DEFAULT_OPENAI_MODEL = ["gpt", "4o", "mini"].join("-");
-const COMPETITOR_EXTRACTION_VERSION = "gemini_recommended_brands_sentiment_v5_icp_segments";
+const COMPETITOR_EXTRACTION_VERSION = "gemini_grounded_google_search_v6";
 
 export type AuditTier = "free" | "monitor_9eur" | "agent_19eur" | "agent_49eur";
 export type IcpSegmentKey = "small_brand_ecommerce" | "service_professional" | "local_independent" | "creator_influencer";
@@ -105,6 +105,10 @@ export type PromptResult = {
 };
 
 export type BuyerIntentSurfaceResult = {
+  /** Réponse ancrée sur une recherche web (voir `geminiGroundedBody`). */
+  grounded?: boolean;
+  /** Les pages lues par le moteur pour cette question — le « où être ». */
+  sources?: AnswerSource[];
   surface: string;
   reachable: boolean;
   unavailableReason?: string;
@@ -1170,9 +1174,15 @@ type AnswerEngineQuestionContext = {
   domain: string;
 };
 
+/** Une page que le moteur a LUE pour répondre (recherche web ancrée). */
+export type AnswerSource = { domain: string; title?: string };
+
 type AnswerEngineAnswer = {
   answer: string;
   competitorBrands: string[];
+  /** true = réponse ancrée sur une recherche web réelle, comme dans l'app grand public. */
+  grounded?: boolean;
+  sources?: AnswerSource[];
   brandSentiment?: BrandSentiment;
   perceivedCategory?: string;
   brandMentioned?: boolean;
@@ -1194,6 +1204,11 @@ type GeminiGenerateContentResponse = {
     };
     // "MAX_TOKENS" quand la réponse a été COUPÉE par le budget de sortie.
     finishReason?: string;
+    // Présent quand l'appel est ANCRÉ sur Google Search (outil `google_search`).
+    groundingMetadata?: {
+      webSearchQueries?: string[];
+      groundingChunks?: Array<{ web?: { uri?: string; title?: string } }>;
+    };
   }>;
   error?: {
     code?: number;
@@ -1346,6 +1361,52 @@ function geminiAnswerText(body: GeminiGenerateContentResponse) {
     .filter((text): text is string => Boolean(text?.trim()))
     .join("\n")
     .trim() ?? "";
+}
+
+/**
+ * Les pages que Gemini a LUES pour répondre (métadonnées d'ancrage Google
+ * Search). Le `title` d'un chunk est le domaine de la page ; l'`uri` est un lien
+ * de redirection Google, inutile à conserver.
+ */
+export function geminiGroundingSources(body: GeminiGenerateContentResponse): AnswerSource[] {
+  const seen = new Set<string>();
+  const sources: AnswerSource[] = [];
+  for (const candidate of body.candidates ?? []) {
+    for (const chunk of candidate.groundingMetadata?.groundingChunks ?? []) {
+      const raw = (chunk.web?.title ?? "").trim().toLowerCase().replace(/^www\./, "");
+      const domain = /^[a-z0-9.-]+\.[a-z]{2,}$/.test(raw) ? raw : "";
+      if (!domain || seen.has(domain)) continue;
+      seen.add(domain);
+      sources.push({ domain });
+    }
+  }
+  return sources.slice(0, 12);
+}
+
+/**
+ * CORPS DE REQUÊTE GEMINI — ANCRÉ SUR LE WEB (29/09/2026).
+ *
+ * L'ERREUR QUE ÇA CORRIGE. Jusqu'ici l'audit interrogeait Gemini SANS recherche
+ * web : on mesurait la mémoire du modèle, pas ce qu'un client obtient dans
+ * l'app Gemini ou les AI Overviews, qui cherchent sur Google pour « expert-
+ * comptable à Palaiseau ». Aucune page publiée ne pouvait faire bouger cette
+ * mesure avant un ré-entraînement : la promesse « on te montre le basculement »
+ * était invérifiable par construction. Avec `google_search`, la réponse suit le
+ * web réel, et l'on récupère les pages lues — c'est là qu'il faut être.
+ *
+ * Pas de `responseMimeType` JSON en mode ancré : pas garanti compatible avec
+ * les outils ; le prompt exige le JSON et le parseur est tolérant.
+ */
+export function geminiGroundedBody(prompt: string, grounded: boolean) {
+  return {
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    ...(grounded ? { tools: [{ google_search: {} }] } : {}),
+    generationConfig: {
+      temperature: 0.2,
+      maxOutputTokens: 2048,
+      ...(grounded ? {} : { responseMimeType: "application/json" }),
+    },
+  };
 }
 
 function openAIAnswerText(body: OpenAIChatCompletionResponse) {
@@ -1668,31 +1729,14 @@ function createGeminiProvider(): AnswerEngineProvider {
       const prompt = answerEnginePrompt(question);
       const url = geminiEndpoint(model);
       let lastError = GEMINI_UNAVAILABLE;
+      let grounded = process.env.GEMINI_GROUNDING !== "off";
 
       for (let attempt = 0; attempt < 3; attempt += 1) {
         try {
           const response = await fetch(url, {
             method: "POST",
             headers: geminiHeaders(apiKey),
-            body: JSON.stringify({
-              contents: [
-                {
-                  role: "user",
-                  parts: [{ text: prompt }],
-                },
-              ],
-              generationConfig: {
-                temperature: 0.2,
-                // 700 était un budget de modèle non-« thinking ». Le raisonnement
-                // est facturé et consommé AVANT la réponse : à 700 le JSON revient
-                // coupé et l'appel est perdu. 2048 est la valeur éprouvée au
-                // contrôle du 20/09. Le plafond ne facture rien par lui-même —
-                // seuls les tokens réellement produits sont comptés — il évite des
-                // appels gaspillés.
-                maxOutputTokens: 2048,
-                responseMimeType: "application/json",
-              },
-            }),
+            body: JSON.stringify(geminiGroundedBody(prompt, grounded)),
             signal: AbortSignal.timeout(ANSWER_TIMEOUT_MS),
           });
           const responseText = await response.text();
@@ -1705,9 +1749,16 @@ function createGeminiProvider(): AnswerEngineProvider {
               lastError = `${GEMINI_UNAVAILABLE} reponse tronquee (maxOutputTokens)`;
             } else {
               const answer = geminiAnswerText(parsed);
-              if (answer) return parseStructuredBrandResponse(answer);
+              if (answer) return { ...parseStructuredBrandResponse(answer), grounded, sources: grounded ? geminiGroundingSources(parsed) : [] };
               lastError = GEMINI_UNAVAILABLE;
             }
+          } else if (grounded && response.status === 400) {
+            // Outil refusé par ce modèle/cette clé : repli sur l'appel non ancré,
+            // MARQUÉ comme tel (grounded: false) — jamais en silence.
+            grounded = false;
+            lastError = `${GEMINI_UNAVAILABLE} grounding refused: ${parsed.error?.message ?? response.status}`;
+            attempt -= 1;
+            continue;
           } else {
             lastError = parsed.error?.message ? `${GEMINI_UNAVAILABLE} HTTP ${response.status}: ${parsed.error.message}` : `${GEMINI_UNAVAILABLE} HTTP ${response.status}`;
             if (response.status !== 429 && response.status < 500) break;
@@ -3884,6 +3935,8 @@ async function probeAnswerEngine(prompt: string, brandName: string, domain: stri
       brandMentioned,
       competitors,
       rawAnswerSnippet: structuredAnswer.answer.slice(0, 900),
+      grounded: structuredAnswer.grounded ?? false,
+      sources: structuredAnswer.sources ?? [],
       brandSentiment: structuredAnswer.brandSentiment,
       perceivedCategory: structuredAnswer.perceivedCategory,
       kind: "ai_engine",

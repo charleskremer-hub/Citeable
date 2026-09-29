@@ -526,6 +526,8 @@ export function serviceValuePlan(args: {
   monthlyPriceEur: number;
   recheckEvery: string;
   locale: Locale;
+  /** Domaine racine du cabinet (sans www) — pour nommer SON sous-domaine ai. */
+  brandDomain?: string;
 }): ServiceValuePlan {
   const fr = args.locale === "fr";
   const q = (text: string) => (fr ? `« ${text} »` : `“${text}”`);
@@ -562,13 +564,13 @@ export function serviceValuePlan(args: {
     {
       when: fr ? "Sous 48 h" : "Within 48 h",
       what: fr
-        ? `Ta page-réponse écrite et publiée sur ${covered === 1 ? "cette question" : `ces ${covered} questions`}${firstQuestion ? `, à commencer par ${q(firstQuestion)}` : ""}. Hébergée par GetPick : ton site ne bouge pas.`
-        : `Your answer page written and published on ${covered === 1 ? "this question" : `these ${covered} questions`}${firstQuestion ? `, starting with ${q(firstQuestion)}` : ""}. Hosted by GetPick: your site does not change.`,
+        ? `Ta fiche IA publiée sur ai.${args.brandDomain ?? "toncabinet.fr"}, qui répond à ${covered === 1 ? "cette question" : `ces ${covered} questions`}${firstQuestion ? `, à commencer par ${q(firstQuestion)}` : ""}. Ton seul geste : un réglage DNS de 2 minutes, guidé chez ton hébergeur.`
+        : `Your AI fact sheet published on ai.${args.brandDomain ?? "yourfirm.com"}, answering ${covered === 1 ? "this question" : `these ${covered} questions`}${firstQuestion ? `, starting with ${q(firstQuestion)}` : ""}. Your only step: a guided 2-minute DNS setting.`,
     },
     {
       when: args.recheckEvery.charAt(0).toUpperCase() + args.recheckEvery.slice(1),
       what: fr
-        ? `Les mêmes questions reposées à ${args.engineName}. Tu vois, une par une, qui est cité : toi ou ${args.rival?.name ?? "tes confrères"}.`
+        ? `Les mêmes questions reposées à ${args.engineName}, avec recherche web. Tu vois, une par une, qui est cité — toi ou ${args.rival?.name ?? "tes confrères"} — et si ta fiche a été lue.`
         : `The same questions asked to ${args.engineName} again. You see, one by one, who gets named: you or ${args.rival?.name ?? "your peers"}.`,
     },
     {
@@ -580,4 +582,43 @@ export function serviceValuePlan(args: {
   ];
 
   return { objective, value, steps };
+}
+
+/**
+ * OÙ L'IA A LU POUR RÉPONDRE — agrégé sur les questions du diagnostic.
+ *
+ * C'est la réponse factuelle à « comment être sûr que l'IA ira lire ta page » :
+ * on ne le suppose pas, on relève les pages que le moteur a réellement lues
+ * (recherche ancrée) et l'on compte si le site du cabinet — ou son sous-domaine
+ * `ai.` — en fait partie. Vide si aucune réponse n'était ancrée : on n'affiche
+ * alors rien plutôt qu'un bloc trompeur.
+ */
+export type SourcesSummary = {
+  groundedCount: number;
+  top: Array<{ domain: string; count: number }>;
+  ownDomainReadCount: number;
+};
+
+function registrable(domain: string) {
+  return domain.toLowerCase().replace(/^www\./, "");
+}
+
+export function sourcesSummary(questions: BuyerIntentPromptResult[], brandDomain: string): SourcesSummary {
+  const own = registrable(brandDomain);
+  const counts = new Map<string, number>();
+  let groundedCount = 0;
+  let ownDomainReadCount = 0;
+  for (const question of questions) {
+    const surfaces = (question.surfaces ?? []).filter((surface) => surface.grounded);
+    if (!surfaces.length) continue;
+    groundedCount += 1;
+    const domains = new Set(surfaces.flatMap((surface) => (surface.sources ?? []).map((source) => registrable(source.domain))));
+    if (own && [...domains].some((domain) => domain === own || domain.endsWith(`.${own}`))) ownDomainReadCount += 1;
+    for (const domain of domains) counts.set(domain, (counts.get(domain) ?? 0) + 1);
+  }
+  const top = [...counts.entries()]
+    .map(([domain, count]) => ({ domain, count }))
+    .sort((a, b) => b.count - a.count || a.domain.localeCompare(b.domain))
+    .slice(0, 6);
+  return { groundedCount, top, ownDomainReadCount };
 }

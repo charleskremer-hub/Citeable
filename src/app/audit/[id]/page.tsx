@@ -33,6 +33,7 @@ import {
   priorityGapQuestions,
   promptAnalysis,
   serviceValuePlan,
+  sourcesSummary,
   rankActionsByImpact,
   scoreColor,
   treatmentProof,
@@ -318,6 +319,7 @@ export default async function AuditPage({
         monthlyPriceEur: SERVICE_PLAN_PRICE_EUR,
         recheckEvery: RECHECK_CADENCE[locale === "fr" ? "fr" : "en"].every,
         locale,
+        brandDomain: auditDomain.replace(/^www\./, ""),
       })
     : null;
 
@@ -529,7 +531,7 @@ export default async function AuditPage({
                   <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
                     {copy.publishLockedTitle}
                   </h2>
-                  {valuePlan ? <ServiceValueBlock plan={valuePlan} locale={locale} /> : (
+                  {valuePlan ? <ServiceValueBlock plan={valuePlan} sources={sourcesSummary(questions, auditDomain)} engineName={answerEngineName} brandName={audit.brand_name} locale={locale} /> : (
                     <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#5B6B82]">{copy.publishLockedBody}</p>
                   )}
                   <div className="mt-5">

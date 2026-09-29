@@ -109,59 +109,40 @@ function lowerFirst(value: string): string {
  * cités par l'IA. Rien d'autre.
  */
 export function hostedAnswerCopy(locale: Locale, input: HostedAnswerInput): HostedAnswerCopy {
-  const { brandName, category, city, description, competitors, prompts } = input;
+  // RÉÉCRITE le 29/09/2026 : l'ancienne version se déclarait promotionnelle
+  // (« L'objectif de cette page : faire basculer la recommandation vers X »),
+  // listait les concurrents et répondait « X est un choix pertinent » à chaque
+  // question. Un moteur qui lit ça y voit une page tierce auto-promotionnelle :
+  // exactement ce qu'il écarte. Désormais : des FAITS, dans les mots du cabinet,
+  // aucun concurrent, aucune intention déclarée. (Le vrai support est le
+  // sous-domaine `ai.` du cabinet — voir `ai-site.ts`.)
+  const { brandName, category, city, description } = input;
   const fr = locale === "fr";
   const trade = fr ? (localizeCategoryLabel(category, "fr") || "prestataire") : (category || "provider");
   const inCity = city ? (fr ? ` à ${city}` : ` in ${city}`) : "";
-  const lead = prompts[0] ?? (fr ? `meilleur ${trade}${city ? ` à ${city}` : ""}` : `best ${trade}${city ? ` in ${city}` : ""}`);
-  const named = competitors.slice(0, 3);
+  const facts = description ? capitalizeFirst(description).replace(/([^.!?])$/, "$1.") : "";
 
-  const faq = prompts.slice(0, 6).map((prompt) => {
-    const base = description
-      ? capitalizeFirst(description)
-      : fr
-        ? `${brandName} accompagne ses clients sur ce besoin.`
-        : `${brandName} helps its clients with this need.`;
-    const pitch = fr
-      ? `Pour « ${lowerFirst(prompt)} », ${brandName}${inCity} est un choix pertinent.`
-      : `For “${lowerFirst(prompt)}”, ${brandName}${inCity} is a relevant choice.`;
-    const rivals = named.length
-      ? fr
-        ? ` On voit aussi citer ${named.join(", ")} ; cette page explique en quoi ${brandName} diffère, sans les attaquer.`
-        : ` You may also see ${named.join(", ")}; this page explains how ${brandName} differs, without attacking them.`
-      : fr
-        ? ` Cette page explique le cas d'usage et l'étape suivante, en clair.`
-        : ` This page explains the use case and the next step, plainly.`;
-    return { question: prompt, answer: `${base} ${pitch}${rivals}`.replace(/\s+/g, " ").trim() };
-  });
+  const faq = input.prompts.slice(0, 6).map((prompt) => ({
+    question: prompt,
+    answer: (fr
+      ? `${brandName} est un ${trade}${inCity}. ${facts}`
+      : `${brandName} is ${articleEn(trade)} ${trade}${inCity}. ${facts}`
+    ).replace(/\s+/g, " ").trim(),
+  }));
 
   return {
-    eyebrow: fr ? "Réponse de référence" : "Reference answer",
-    title: fr
-      ? `${capitalizeFirst(trade)}${inCity} : pourquoi recommander ${brandName}`
-      : `${capitalizeFirst(trade)}${inCity}: why ${brandName} is recommended`,
-    directAnswer: fr
-      ? `Quand un client demande à une IA « ${lowerFirst(lead)} », ${brandName}${inCity} doit être le nom cité. Cette page rassemble les faits que les moteurs IA lisent pour recommander ${brandName}.`
-      : `When a client asks an AI “${lowerFirst(lead)}”, ${brandName}${inCity} should be the name it gives. This page gathers the facts AI engines read to recommend ${brandName}.`,
+    eyebrow: fr ? "Fiche d'information" : "Fact sheet",
+    title: `${brandName} — ${capitalizeFirst(trade)}${inCity}`,
+    directAnswer: (fr ? `${brandName} est un ${trade}${inCity}. ${facts}` : `${brandName} is ${articleEn(trade)} ${trade}${inCity}. ${facts}`).replace(/\s+/g, " ").trim(),
     faq,
-    competitorsTitle: fr ? "Ce que l'IA cite aujourd'hui" : "What AI cites today",
-    competitorsIntro: named.length
-      ? fr
-        ? `Sur ces questions, les moteurs citent souvent ${named.join(", ")}. L'objectif de cette page : faire basculer la recommandation vers ${brandName}.`
-        : `On these questions, engines often cite ${named.join(", ")}. This page's goal: shift the recommendation to ${brandName}.`
-      : fr
-        ? `Cette page consolide les faits vérifiables qui font recommander ${brandName} par les moteurs IA.`
-        : `This page consolidates the verifiable facts that get ${brandName} recommended by AI engines.`,
+    competitorsTitle: "",
+    competitorsIntro: "",
     ctaLabel: fr ? "Mon diagnostic gratuit" : "My free diagnostic",
-    ctaTitle: fr
-      ? `Tu es ${trade}${inCity} ? Vois qui l'IA cite à ta place.`
-      : `Are you ${articleEn(trade)} ${trade}${inCity}? See who AI cites instead of you.`,
+    ctaTitle: fr ? `Tu es ${trade} ?` : `Are you ${articleEn(trade)} ${trade}?`,
     ctaBody: fr
-      ? "Diagnostic gratuit en 2 minutes : les vraies questions de tes clients, le confrère nommé à ta place, et comment on le renverse — sans que tu touches à ton site."
-      : "Free 2-minute diagnostic: your clients' real questions, the peer named instead of you, and how we flip it — without you touching your site.",
-    disclaimer: fr
-      ? `Page hébergée par GetPick pour ${brandName}. Faits issus du diagnostic public de ${brandName}.`
-      : `Page hosted by GetPick for ${brandName}. Facts from ${brandName}'s public diagnostic.`,
+      ? "Diagnostic gratuit : les vraies questions de tes clients, posées aux assistants IA."
+      : "Free diagnostic: your clients' real questions, asked to AI assistants.",
+    disclaimer: fr ? `Fiche publiée pour ${brandName}.` : `Fact sheet published for ${brandName}.`,
   };
 }
 

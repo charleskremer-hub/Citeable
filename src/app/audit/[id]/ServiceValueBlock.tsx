@@ -1,18 +1,49 @@
 import type { Locale } from "@/lib/i18n";
-import type { ServiceValuePlan } from "./report-insights";
+import type { ServiceValuePlan, SourcesSummary } from "./report-insights";
 
 /**
  * « Ce que GetPick obtient pour toi » — le résultat avant la méthode :
  * l'objectif sur SA question, la valeur en euros (cabinets comptables,
  * sourcée), puis le calendrier de ce qui est livré. Voir `serviceValuePlan`.
  */
-export default function ServiceValueBlock({ plan, locale }: { plan: ServiceValuePlan; locale: Locale }) {
+export default function ServiceValueBlock({
+  plan,
+  sources,
+  engineName,
+  brandName,
+  locale,
+}: {
+  plan: ServiceValuePlan;
+  sources: SourcesSummary;
+  engineName: string;
+  brandName: string;
+  locale: Locale;
+}) {
   const fr = locale === "fr";
   return (
     <>
       <p className="m-0 mt-4 text-lg font-black leading-7 text-[#132A43]" data-testid="value-objective">
         {plan.objective}
       </p>
+      {sources.groundedCount > 0 && sources.top.length > 0 ? (
+        <div className="mt-4 rounded-2xl border border-[#E4E9F0] bg-white p-4" data-testid="value-sources">
+          <p className="m-0 text-xs font-black uppercase tracking-[0.1em] text-[#123E5C]">
+            {fr ? `Les pages que ${engineName} a lues pour répondre` : `The pages ${engineName} read to answer`}
+          </p>
+          <ul className="m-0 mt-2 flex list-none flex-wrap gap-2 p-0">
+            {sources.top.map((source) => (
+              <li key={source.domain} className="rounded-full border border-[#E4E9F0] bg-[#F5F7FA] px-3 py-1 text-xs font-black text-[#132A43]">
+                {source.domain} · {source.count}/{sources.groundedCount}
+              </li>
+            ))}
+          </ul>
+          <p className="m-0 mt-2 text-sm font-bold leading-6 text-[#5B6B82]">
+            {fr
+              ? `Le site de ${brandName} a été lu sur ${sources.ownDomainReadCount} question${sources.ownDomainReadCount > 1 ? "s" : ""} sur ${sources.groundedCount}. C'est là que GetPick place tes réponses.`
+              : `${brandName}'s site was read on ${sources.ownDomainReadCount} of ${sources.groundedCount} questions. That is where GetPick places your answers.`}
+          </p>
+        </div>
+      ) : null}
       {plan.value ? (
         <div className="mt-4 rounded-2xl border border-[#1F8A70]/30 bg-[#1F8A70]/[0.07] p-4" data-testid="value-euros">
           <p className="m-0 text-sm font-black leading-6 text-[#132A43]">{plan.value.text}</p>

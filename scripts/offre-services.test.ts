@@ -146,7 +146,8 @@ const TOUCHES_THE_CLIENT_SITE = [
   /copier-coller|copy-paste|copy\/paste/i,
   /à coller|prêts? à coller|ready to paste|to paste\b/i,
   /robots\.txt/i,
-  /llms\.txt/i,
+  // `llms.txt` retiré le 29/09 : GetPick le PUBLIE lui-même sur `ai.<cabinet>` —
+  // c'est un livrable nommé, plus un fichier que le client doit poser.
   /schéma FAQ|FAQ schema|JSON-LD/i,
   /plugin|snippet/i,
 ] as const;
