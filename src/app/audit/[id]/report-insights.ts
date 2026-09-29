@@ -562,16 +562,22 @@ export function serviceValuePlan(args: {
   const peers = args.topRivals.slice(0, 3);
   const steps = [
     {
+      when: fr ? "Jour 1" : "Day 1",
+      what: fr
+        ? "Tu nous ajoutes comme administrateur de ta fiche Google — 1 minute, rien de technique, comme partager un document."
+        : "You add us as a manager of your Google Business Profile — 1 minute, nothing technical, like sharing a document.",
+    },
+    {
       when: fr ? "Sous 48 h" : "Within 48 h",
       what: fr
-        ? `Ta fiche IA publiée sur ai.${args.brandDomain ?? "toncabinet.fr"}, qui répond à ${covered === 1 ? "cette question" : `ces ${covered} questions`}${firstQuestion ? `, à commencer par ${q(firstQuestion)}` : ""}. Ton seul geste : un réglage DNS de 2 minutes, guidé chez ton hébergeur.`
-        : `Your AI fact sheet published on ai.${args.brandDomain ?? "yourfirm.com"}, answering ${covered === 1 ? "this question" : `these ${covered} questions`}${firstQuestion ? `, starting with ${q(firstQuestion)}` : ""}. Your only step: a guided 2-minute DNS setting.`,
+        ? `Ta fiche Google complétée pour ${covered === 1 ? "cette question" : `ces ${covered} questions`}${firstQuestion ? `, à commencer par ${q(firstQuestion)}` : ""} : services, spécialités, zone. Puis tes annuaires alignés (Bing, Yelp, PagesJaunes).`
+        : `Your Google profile completed for ${covered === 1 ? "this question" : `these ${covered} questions`}${firstQuestion ? `, starting with ${q(firstQuestion)}` : ""}: services, specialties, area. Then your listings aligned (Bing, Yelp, PagesJaunes).`,
     },
     {
       when: args.recheckEvery.charAt(0).toUpperCase() + args.recheckEvery.slice(1),
       what: fr
-        ? `Les mêmes questions reposées à ${args.engineName}, avec recherche web. Tu vois, une par une, qui est cité — toi ou ${args.rival?.name ?? "tes confrères"} — et si ta fiche a été lue.`
-        : `The same questions asked to ${args.engineName} again. You see, one by one, who gets named: you or ${args.rival?.name ?? "your peers"}.`,
+        ? `Les mêmes questions reposées à ${args.engineName}, avec recherche web. Tu vois, une par une, qui est cité — toi ou ${args.rival?.name ?? "tes confrères"} — et quelles pages l'IA a lues.`
+        : `The same questions asked to ${args.engineName} again, with web search. You see, one by one, who gets named — you or ${args.rival?.name ?? "your peers"} — and which pages AI read.`,
     },
     {
       when: fr ? "En continu" : "Ongoing",

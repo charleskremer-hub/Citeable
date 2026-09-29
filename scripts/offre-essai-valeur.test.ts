@@ -79,7 +79,8 @@ test("rapport — le calendrier ne promet que ce qui est livré, sans geste clie
   assert.match(all, /ces 3 questions/);
   assert.match(all, /Fiducial, In Extenso, Dougs/);
   assert.doesNotMatch(all, /KPMG/, "trois confrères maximum");
-  assert.doesNotMatch(all, /colle|JSON-LD|llms\.txt|robots|annuaire|avis/i);
+  // Annuaires : livrés par GetPick depuis le 29/09 (accès fiche Google) — plus bannis.
+  assert.doesNotMatch(all, /colle|JSON-LD|llms\.txt|robots|DNS/i);
 });
 
 test("rapport — sans rival nommable, pas de nom inventé", () => {

@@ -127,7 +127,7 @@ export function buildCheckoutAlert(args: { email: string | null; plan: string | 
     "",
     args.skipped
       ? "Le webhook n'a pas pu ouvrir le droit. Vérifie la métadonnée getpick_plan=service sur le prix et le Payment Link."
-      : "À faire sous 48 h : publier sa page-réponse (promesse de l'offre).",
+      : "À faire : vérifier l'invitation administrateur sur sa fiche Google, puis compléter la fiche sous 48 h (promesse de l'offre).",
   ].join("\n");
   return { subject, text };
 }

@@ -3,9 +3,10 @@
 > GetPick is the GEO agent for service professionals, accountants first
 > (formerly Citeable). It gets you recommended by AI assistants like ChatGPT
 > and Gemini and does the work off-site: it names the peer cited in your
-> place, writes and hosts your answer page on those exact questions, and
-> re-tests every month. 14 days free, then 69 EUR per month. You never touch
-> your own website.
+> place, completes and maintains your Google Business Profile and listings
+> for those exact questions, and re-tests every month with web search. Your
+> only step: add GetPick as a manager of your Google profile. 14 days free,
+> then 69 EUR per month.
 
 ## What GetPick is
 
@@ -15,9 +16,10 @@ price, and it does it OFF-SITE: the client changes nothing on their own
 website, installs nothing and pastes nothing. It sends the real questions a
 client asks to AI assistants at diagnostic time — no simulated prompts, no
 cached guesses — and reports whether the AI names you or names a peer
-instead. Then it creates and hosts the answer page the AI reads, places you on
-the sources the AI trusts, writes the content that gets you cited, and
-re-tests monthly.
+instead. Then, with manager access to the client's Google Business Profile
+(the client's only step), it completes that profile for the questions clients
+ask, aligns the listings AI assistants read (Bing, Yelp, PagesJaunes), and
+re-tests monthly with web search, showing which pages the AI read.
 
 ## Who it is for
 
@@ -33,9 +35,10 @@ seat pricing and no setup.
 - A plain-language verdict: does AI name you, yes or no.
 - The peer AI names in your place — by name.
 - Your share of voice against those peers.
-- An answer page created and hosted by GetPick — the page AI reads and cites
-  — built from your real diagnostic, without a single change to your own
-  website.
+- Your Google Business Profile completed and maintained for your clients'
+  real questions (services, specialties, area, monthly posts), and your
+  listings aligned (Bing, Yelp, PagesJaunes) — without a single change to your
+  own website.
 - A dashboard of your AI visibility against your peers, question by question.
 - Monthly re-tests of your clients' real questions, so you see the shift from
   the peer to you.
@@ -45,8 +48,8 @@ seat pricing and no setup.
 - Free diagnostic: 6 buyer questions, checked live on Gemini, no payment, no
   signup.
 - Done for you — 14 days free, then 69 EUR per month: 12 buyer questions
-  re-tested monthly on Gemini, the answer page written and hosted for you, and
-  your visibility dashboard. One flat price, all in.
+  re-tested monthly on Gemini with web search, your Google profile and
+  listings maintained for you, and your visibility dashboard. One flat price, all in.
 
 The paid plan is monthly and cancellable at any time. It is refunded on
 request within 30 days, with no questions asked and no justification required:

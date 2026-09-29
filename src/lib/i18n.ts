@@ -52,7 +52,7 @@ export const homeCopy = {
     heroEyebrow: "The agent that gets you recommended by AI",
     heroTitle: `When a client looks for an ${BEACHHEAD_TRADE.en} near them, ChatGPT answers with a name.`,
     heroTitleAccent: "Make it yours.",
-    heroSubtitle: `GetPick builds and maintains your local presence where AI looks for who to recommend in your area. No code, no site rebuild: one guided 2-minute setting. ${CAPITALISED_CADENCE.en} it shows you who AI cites in your place, and how you climb.`,
+    heroSubtitle: `GetPick builds and maintains your local presence where AI looks for who to recommend in your area. Nothing technical: one step, add us to your Google profile — we do the rest. ${CAPITALISED_CADENCE.en} it shows you who AI cites in your place, and how you climb.`,
     formTitle: "Your free diagnostic",
     // « Email optional » était vrai pour LANCER l'audit et faux pour ce qu'on en
     // voit : une fois le gate déployé (`resolveReportAccess`, tier free non
@@ -99,7 +99,7 @@ export const homeCopy = {
     steps: [
       { num: "1", time: "30 sec", title: "Give us your firm", body: "Your name and your website address. That's the entire setup." },
       { num: "2", time: "2 min", title: "The agent asks the AIs", body: `The real questions your clients ask, sent live at diagnostic time to ${PLAN_PROMISES.free.engineLabel.en}. Never simulated.` },
-      { num: "3", time: "Same day", title: "We do the work off-site", body: "GetPick names the peer cited in your place, then writes and hosts your answer page on those exact questions — with your town, your specialties, the way you work. You change nothing on your side." },
+      { num: "3", time: "Same day", title: "We do the work off-site", body: "GetPick names the peer cited in your place. You add us to your Google profile (1 minute); we complete it for those exact questions — town, specialties, the way you work — and align your listings." },
     ],
     // 5. The deliverable
     deliverableEyebrow: "What you get",
@@ -108,7 +108,7 @@ export const homeCopy = {
     reportVerdict: "Gemini does not name you on 7 of 12 client questions.",
     reportRivalLabel: "Named in your place",
     reportRival: "Cabinet Merisier",
-    reportFixLabel: "Written, published and maintained by the agent — on your own domain",
+    reportFixLabel: "Written and maintained by the agent — on your Google profile and listings",
     reportFixTitle: "Your answer page, the one AI reads",
     reportFixBody: `“Which ${BEACHHEAD_TRADE.en} for a freelancer in Bordeaux?” — Fees published up front, first appointment within 48 hours, micro-entrepreneurs and small companies handled, 120 freelance clients in the Gironde.`,
     reportCaption: "Illustrative example — your page is written from your real diagnostic.",
@@ -156,10 +156,10 @@ export const homeCopy = {
         name: "Done for you",
         price: `€${SERVICE_PLAN_PRICE_EUR}`,
         suffix: "/month ex VAT",
-        note: "One guided 2-minute setting. GetPick does the rest.",
+        note: "One step: add us to your Google profile. GetPick does the rest.",
         badge: "Zero technical",
         features: [
-          "GetPick writes and publishes your AI fact sheet on your own domain (ai.yourfirm.com), with an llms.txt — your website stays as it is.",
+          "GetPick completes and maintains your Google Business Profile for your clients' real questions, and aligns your listings (Bing, Yelp, PagesJaunes).",
           "A dashboard: your AI visibility against your peers, question by question.",
           `${CAPITALISED_CADENCE.en} it re-tests your clients’ real questions and shows the shift: from the peer… to you.`,
           `${SERVICE_TRIAL_LABEL.en}, all in. No credits, no agency, no dev. No commitment.`,
@@ -185,7 +185,7 @@ export const homeCopy = {
     faqItems: [
       {
         question: "Zero technical, really?",
-        answer: "You don’t change your site, you don’t install anything, you don’t paste anything. GetPick publishes off-site, on the sources AI actually reads. The one thing we can’t do for you: a directory that requires your own login, or your client reviews — there we prepare everything and you approve.",
+        answer: "You don’t change your site, you don’t install anything, you don’t paste anything. Your only step: add us as a manager of your Google Business Profile, like sharing a document. You stay the owner and can remove us at any time.",
       },
       {
         question: "How long does it take?",
@@ -236,7 +236,7 @@ export const homeCopy = {
     heroEyebrow: "L'agent qui te fait recommander par l'IA",
     heroTitle: `Quand un client cherche un ${BEACHHEAD_TRADE.fr} près de chez lui, ChatGPT répond un nom.`,
     heroTitleAccent: "Fais que ce soit le tien.",
-    heroSubtitle: `GetPick construit et entretient ta présence locale là où l'IA va chercher qui recommander dans ta ville. Ni code, ni refonte de site : un seul réglage de 2 minutes, guidé pas à pas. ${CAPITALISED_CADENCE.fr}, il te montre qui l'IA cite à ta place, et comment tu remontes.`,
+    heroSubtitle: `GetPick construit et entretient ta présence locale là où l'IA va chercher qui recommander dans ta ville. Rien de technique : un seul geste, nous ajouter à ta fiche Google — on fait le reste. ${CAPITALISED_CADENCE.fr}, il te montre qui l'IA cite à ta place, et comment tu remontes.`,
     formTitle: "Ton diagnostic gratuit",
     formSubtitle: "Ton cabinet + ton site. Email optionnel — il débloque ton score et le confrère nommé à ta place.",
     freeBadge: "Gratuit",
@@ -275,7 +275,7 @@ export const homeCopy = {
     steps: [
       { num: "1", time: "30 s", title: "Donne-nous ton cabinet", body: "Ton nom et l'adresse de ton site. C'est toute la configuration." },
       { num: "2", time: "2 min", title: "L'agent interroge les IA", body: `Les vraies questions de tes clients, envoyées en direct au moment du diagnostic à ${PLAN_PROMISES.free.engineLabel.fr}. Jamais simulées.` },
-      { num: "3", time: "Le jour même", title: "On travaille hors de ton site", body: "GetPick nomme le confrère cité à ta place, puis écrit et héberge ta page-réponse sur ces questions exactes — avec ta ville, tes spécialités, ta façon de travailler. Tu ne changes rien de ton côté." },
+      { num: "3", time: "Le jour même", title: "On travaille hors de ton site", body: "GetPick nomme le confrère cité à ta place. Tu nous ajoutes à ta fiche Google (1 minute) ; on la complète pour ces questions exactes — ville, spécialités, façon de travailler — et on aligne tes annuaires." },
     ],
     // 5. Le livrable
     deliverableEyebrow: "Le livrable",
@@ -284,8 +284,8 @@ export const homeCopy = {
     reportVerdict: "Gemini ne te nomme pas sur 7 questions de clients sur 12.",
     reportRivalLabel: "Cité à ta place",
     reportRival: "Cabinet Merisier",
-    reportFixLabel: "Écrit, publié et entretenu par l'agent — sur ton propre domaine",
-    reportFixTitle: "Ta fiche IA, sur ai.toncabinet.fr",
+    reportFixLabel: "Écrit et entretenu par l'agent — sur ta fiche Google et tes annuaires",
+    reportFixTitle: "Ta fiche Google, écrite pour les questions de tes clients",
     reportFixBody: `« Quel ${BEACHHEAD_TRADE.fr} pour un freelance à Bordeaux ? » — Honoraires publiés d’avance, premier rendez-vous sous 48 h, micro-entrepreneurs et petites sociétés suivis, 120 clients freelances en Gironde.`,
     reportCaption: "Exemple illustratif — ta page est écrite depuis ton vrai diagnostic.",
     // 5bis. L'ÉCRAN DE MONITORING — voir la note du bloc EN.
@@ -329,10 +329,10 @@ export const homeCopy = {
         name: "Fait pour toi",
         price: `${SERVICE_PLAN_PRICE_EUR} €`,
         suffix: " HT/mois",
-        note: "Un réglage guidé de 2 minutes. GetPick fait le reste.",
+        note: "Un seul geste : nous ajouter à ta fiche Google. GetPick fait le reste.",
         badge: "Zéro technique",
         features: [
-          "GetPick écrit et publie ta fiche IA sur ton propre domaine (ai.toncabinet.fr), avec un llms.txt — ton site reste tel quel.",
+          "GetPick complète et entretient ta fiche Google pour les vraies questions de tes clients, et aligne tes annuaires (Bing, Yelp, PagesJaunes).",
           "Un tableau de bord : ta visibilité dans l'IA face à tes confrères, question par question.",
           `${CAPITALISED_CADENCE.fr}, il re-teste les vraies questions de tes clients et te montre le basculement : du confrère… à toi.`,
           `${SERVICE_TRIAL_LABEL.fr}, tout compris. Pas de crédits, pas d'agence, pas de dev. Sans engagement.`,
@@ -358,7 +358,7 @@ export const homeCopy = {
     faqItems: [
       {
         question: "Zéro technique, vraiment ?",
-        answer: "Tu ne modifies pas ton site, tu n'installes rien, tu ne colles rien. GetPick écrit et héberge ta page-réponse lui-même, puis mesure chaque mois si l'IA te cite.",
+        answer: "Tu ne modifies pas ton site, tu n'installes rien, tu ne colles rien. Ton seul geste : nous ajouter comme administrateur de ta fiche Google, comme on partage un document. Tu restes propriétaire et tu peux nous retirer à tout moment.",
       },
       {
         question: "Combien de temps avant que ça bouge ?",

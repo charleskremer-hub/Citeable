@@ -39,8 +39,8 @@ export default function ServiceValueBlock({
           </ul>
           <p className="m-0 mt-2 text-sm font-bold leading-6 text-[#5B6B82]">
             {fr
-              ? `Le site de ${brandName} a été lu sur ${sources.ownDomainReadCount} question${sources.ownDomainReadCount > 1 ? "s" : ""} sur ${sources.groundedCount}. C'est là que GetPick place tes réponses.`
-              : `${brandName}'s site was read on ${sources.ownDomainReadCount} of ${sources.groundedCount} questions. That is where GetPick places your answers.`}
+              ? `Le site de ${brandName} a été lu sur ${sources.ownDomainReadCount} question${sources.ownDomainReadCount > 1 ? "s" : ""} sur ${sources.groundedCount}.`
+              : `${brandName}'s site was read on ${sources.ownDomainReadCount} of ${sources.groundedCount} questions.`}
           </p>
         </div>
       ) : null}

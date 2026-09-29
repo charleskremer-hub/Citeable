@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { SIGNATURE_HEADER, isEntitling, verifyStripeSignature, webhookWriteFor } from "@/lib/stripe-webhook";
 import { claimWebhookEvent, ensureSubscriptionSchema, upsertSubscription, upsertSubscriptionFromSubscriptionEvent } from "@/lib/subscriptions";
 import { buildCheckoutAlert, sendFounderAlert } from "@/lib/lead-alert";
+import { buildWelcomeEmail, gbpManagerEmail } from "@/lib/gbp-onboarding";
+import { sendMail } from "@/lib/mailer";
 
 export const dynamic = "force-dynamic";
 
@@ -96,6 +98,13 @@ export async function POST(req: NextRequest) {
     });
     const alert = buildCheckoutAlert({ email: write.email, plan: write.plan, status: "nouvelle souscription (essai ou payant)", subscriptionId: write.subscriptionId, skipped: false });
     await sendFounderAlert(alert.subject, alert.text);
+    // Le seul geste du client, envoyé tout de suite : nous ajouter à sa fiche Google.
+    try {
+      const welcome = buildWelcomeEmail({ customerEmail: write.email, managerEmail: gbpManagerEmail() });
+      await sendMail({ to: write.email, subject: welcome.subject, text: welcome.text });
+    } catch (error) {
+      console.error("welcome email failed", error instanceof Error ? error.message : error);
+    }
     return NextResponse.json({ ok: true, plan: write.plan, entitled: isEntitling(write.status) });
   }
 
