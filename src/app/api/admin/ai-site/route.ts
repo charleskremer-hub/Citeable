@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
 import { AI_SUBDOMAIN, addDomainToVercel, aiSiteToken, normalizeRootDomain } from "@/lib/ai-site";
 import { generateAiSiteAnswers } from "@/lib/ai-site-store";
+import { publishAnswersToWordPress } from "@/lib/cms-connection-store";
 
 export const dynamic = "force-dynamic";
 
@@ -20,9 +21,16 @@ function secretMatches(provided: string | null | undefined, expected: string | u
  * et rend le lien d'onboarding à envoyer au cabinet (un seul geste DNS).
  */
 export async function POST(req: NextRequest) {
-  const body = (await req.json().catch(() => ({}))) as { audit_id?: unknown; domain?: unknown; key?: unknown };
+  const body = (await req.json().catch(() => ({}))) as { audit_id?: unknown; domain?: unknown; key?: unknown; action?: unknown };
   const key = typeof body.key === "string" ? body.key : req.headers.get("x-admin-key");
   if (!secretMatches(key, ADMIN_KEY)) return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+
+  // Republier la page-réponses sur le WordPress connecté (après une mise à jour du contenu).
+  if (body.action === "publish") {
+    const target = typeof body.domain === "string" ? normalizeRootDomain(body.domain) : null;
+    if (!target) return NextResponse.json({ ok: false, error: "domain is required" }, { status: 400 });
+    return NextResponse.json(await publishAnswersToWordPress(target));
+  }
 
   const auditId = typeof body.audit_id === "string" ? body.audit_id.trim() : "";
   const domain = typeof body.domain === "string" ? normalizeRootDomain(body.domain) : null;

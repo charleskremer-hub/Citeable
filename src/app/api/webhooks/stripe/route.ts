@@ -101,8 +101,8 @@ export async function POST(req: NextRequest) {
     });
     const alert = buildCheckoutAlert({ email: write.email, plan: write.plan, status: "nouvelle souscription (essai ou payant)", subscriptionId: write.subscriptionId, skipped: false });
     await sendFounderAlert(alert.subject, alert.text);
-    // Offre agent GEO (30/09) : on ouvre la fiche ai.<cabinet>, l'agent écrit les
-    // réponses, puis le client reçoit le seul geste — le message pour son webmaster.
+    // Offre agent GEO : l'agent écrit les réponses, puis le client reçoit le seul
+    // geste — « connecter ton site » (WordPress en un clic ; repli ai.<cabinet>).
     // Après la réponse à Stripe (génération ~20 s), jamais bloquant.
     const customerEmail = write.email;
     after(async () => {

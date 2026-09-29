@@ -38,7 +38,7 @@ function questionsFor(raw: AuditRawResults | null): string[] {
  * Le contenu du sous-domaine `ai.` d'un cabinet. `null` si le domaine n'est pas
  * confié à GetPick : on ne sert JAMAIS une page pour un domaine non enregistré.
  */
-export async function loadAiSite(domainInput: string): Promise<(AiSiteContent & { domain: string; status: string }) | null> {
+export async function loadAiSite(domainInput: string): Promise<(AiSiteContent & { domain: string; status: string; tradeLabel: string; city: string | null }) | null> {
   const domain = normalizeRootDomain(decodeURIComponent(domainInput));
   if (!domain) return null;
   await ensureAuditSchema();
@@ -51,17 +51,19 @@ export async function loadAiSite(domainInput: string): Promise<(AiSiteContent & 
   const row = result.rows[0];
   if (!row) return null;
   const prompts = (row.raw_results?.buyerIntentPrompts ?? []).map((prompt) => prompt.prompt).filter(Boolean);
+  const tradeLabel = tradeLabelFor(row.raw_results?.category ?? "");
+  const city = cityFromPrompts(prompts);
   const content = aiSiteContent({
     brandName: row.brand_name,
     domain,
-    tradeLabel: tradeLabelFor(row.raw_results?.category ?? ""),
-    city: cityFromPrompts(prompts),
+    tradeLabel,
+    city,
     description: row.content?.summary || descriptionFromAudit(row.raw_results) || "",
     questions: questionsFor(row.raw_results),
     answers: row.content?.answers,
     services: row.content?.services,
   });
-  return { ...content, domain, status: row.status };
+  return { ...content, domain, status: row.status, tradeLabel, city };
 }
 
 /**

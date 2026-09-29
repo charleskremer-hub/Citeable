@@ -318,22 +318,23 @@ export function parseAiSiteAnswers(raw: string | null): { summary?: string; serv
   }
 }
 
-/** Mail de bienvenue (offre agent GEO, 30/09) : le seul geste = transférer au webmaster. */
+/**
+ * Mail de bienvenue (29/09, « comme Delos, sans webmaster ») : UN lien, UN geste —
+ * connecter son site. La page du lien détecte le site : WordPress ⇒ connexion
+ * en un clic ; sinon, repli `ai.<domaine>` (et seulement là, un message webmaster).
+ */
 export function buildGeoWelcomeEmail(args: { domain: string | null; onboardingUrl: string | null }) {
-  const subject = "Bienvenue chez GetPick — un seul email à transférer";
+  const subject = "Bienvenue chez GetPick — connecte ton site (1 minute)";
   const text = args.domain && args.onboardingUrl
     ? [
         "Bonjour,",
         "",
-        `Merci pour ta confiance. Notre agent écrit déjà les réponses aux questions de tes clients ; elles seront publiées sur ai.${args.domain}, ta fiche pour les assistants IA.`,
+        `Merci pour ta confiance. Notre agent GEO écrit déjà, depuis les informations de ${args.domain}, les réponses aux questions que tes clients posent à l'IA.`,
         "",
-        "Ton seul geste : transférer le message ci-dessous à ton webmaster (ou à la personne qui gère ton site). Rien à faire toi-même.",
+        "Ton seul geste, pour qu'il les publie lui-même sur ton site : connecter ton site en un clic.",
+        args.onboardingUrl,
         "",
-        "----",
-        webmasterMessage(args.domain),
-        "----",
-        "",
-        `Le suivi en direct et le pas-à-pas par hébergeur : ${args.onboardingUrl}`,
+        "Sur WordPress : tu te connectes, tu cliques « Approuver », c'est tout. Pas de webmaster, rien à installer, accès révocable à tout moment.",
         "",
         "Ensuite, chaque mois, on repose les questions de tes clients à l'IA et tu vois quelles pages elle a lues et qui elle cite.",
         "",
@@ -342,7 +343,7 @@ export function buildGeoWelcomeEmail(args: { domain: string | null; onboardingUr
     : [
         "Bonjour,",
         "",
-        "Merci pour ta confiance. Réponds simplement à cet email avec l'adresse de ton site : on prépare ta fiche pour les assistants IA et on t'envoie le message à transférer à ton webmaster.",
+        "Merci pour ta confiance. Réponds simplement à cet email avec l'adresse de ton site : on prépare tes réponses et on t'envoie le lien pour connecter ton site en un clic.",
         "",
         "Charles — GetPick",
       ].join("\n");

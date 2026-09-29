@@ -570,8 +570,8 @@ export function serviceValuePlan(args: {
     {
       when: fr ? "Sous 48 h" : "Within 48 h",
       what: fr
-        ? `Publiées sur ai.${args.brandDomain ?? "toncabinet.fr"}, ta fiche pour les IA — ton seul geste : transférer un email à ton webmaster.`
-        : `Published on ai.${args.brandDomain ?? "yourfirm.com"}, your fact sheet for AI — your only step: forward one email to your webmaster.`,
+        ? `Publiées par l'agent sur ${args.brandDomain ?? "ton site"} — ton seul geste : connecter ton site en un clic, sans webmaster.`
+        : `Published by the agent on ${args.brandDomain ?? "your website"} — your only step: connect your site in one click, no webmaster.`,
     },
     {
       when: args.recheckEvery.charAt(0).toUpperCase() + args.recheckEvery.slice(1),

@@ -108,6 +108,25 @@ export async function ensureAuditSchema() {
   `);
   await pool.query(`ALTER TABLE ai_sites ADD COLUMN IF NOT EXISTS content JSONB`);
   await pool.query(`ALTER TABLE ai_sites ADD COLUMN IF NOT EXISTS content_generated_at TIMESTAMPTZ`);
+  // « Connecter mon site » (29/09) : l'agent publie directement sur le WordPress
+  // du cabinet. Secret chiffré (AES-256-GCM), jamais en clair.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS cms_connections (
+      domain TEXT PRIMARY KEY,
+      platform TEXT NOT NULL,
+      site_url TEXT NOT NULL,
+      rest_url TEXT NOT NULL,
+      user_login TEXT NOT NULL,
+      secret_enc TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'connected',
+      page_id INTEGER,
+      page_url TEXT,
+      published_at TIMESTAMPTZ,
+      last_error TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS offsite_presence (
       audit_id UUID NOT NULL REFERENCES audits(id) ON DELETE CASCADE,

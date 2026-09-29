@@ -2199,19 +2199,20 @@ function supportingQuestions(prompts: BuyerIntentPromptResult[], supports: (prom
 // mauvais metier, et une consigne adressee AU CLIENT alors que la landing lui
 // jure « zero geste technique ».
 const SERVICE_ACTIONS: Record<"fr" | "en", (ctx: { questionText: string; categoryText: string; compareText: string }) => PlainAction[]> = {
-  // Réécrites le 30/09 pour l'offre « agent GEO » (GO Charles) : réponses écrites
-  // depuis le site du cabinet, publiées sur ai.<domaine>. Plus de
+  // Réécrites le 30/09 pour l'offre « agent GEO » (GO Charles), puis le 29/09
+  // « comme Delos, sans webmaster » : réponses écrites depuis le site du cabinet,
+  // publiées PAR L'AGENT sur son site connecté en un clic. Plus de
   // page-réponse hébergée vendue comme levier principal (voir CHAINE_DE_VALEUR).
   fr: ({ questionText, categoryText, compareText }) => [
     {
       title: "GetPick écrit la réponse aux questions que tu perds",
       doThis: `GetPick écrit, depuis les faits de ton site, une réponse factuelle à chaque question que tes clients posent à l'IA : ${questionText}.`,
-      where: "Ta fiche ai.<ton domaine>, sur ton propre domaine.",
+      where: "Une page « Questions fréquentes » sur ton propre site.",
     },
     {
-      title: "GetPick la publie là où l'IA lit : ton domaine",
-      doThis: `GetPick publie ces réponses sur ai.<ton domaine>, les signale aux moteurs, et te dit quels annuaires l'IA lit dans ta ville (${categoryText}). ${compareText}`,
-      where: "Ton seul geste : transférer un email à ton webmaster.",
+      title: "GetPick la publie là où l'IA lit : ton site",
+      doThis: `GetPick publie lui-même ces réponses sur ton site, les tient à jour, et te dit quels annuaires l'IA lit dans ta ville (${categoryText}). ${compareText}`,
+      where: "Ton seul geste : connecter ton site en un clic — sans webmaster.",
     },
     {
       title: "GetPick mesure chaque mois ce que l'IA lit et qui elle cite",
@@ -2223,12 +2224,12 @@ const SERVICE_ACTIONS: Record<"fr" | "en", (ctx: { questionText: string; categor
     {
       title: "GetPick writes the answer to the questions you lose",
       doThis: `GetPick writes, from the facts on your site, a factual answer to each question your clients ask AI: ${questionText}.`,
-      where: "Your ai.<your domain> fact sheet, on your own domain.",
+      where: "A « Frequently asked questions » page on your own website.",
     },
     {
-      title: "GetPick publishes it where AI reads: your domain",
-      doThis: `GetPick publishes these answers on ai.<your domain>, notifies search engines, and tells you which listings AI reads in your town (${categoryText}). ${compareText}`,
-      where: "Your only step: forward one email to your webmaster.",
+      title: "GetPick publishes it where AI reads: your website",
+      doThis: `GetPick publishes these answers on your website itself, keeps them up to date, and tells you which listings AI reads in your town (${categoryText}). ${compareText}`,
+      where: "Your only step: connect your site in one click — no webmaster.",
     },
     {
       title: "GetPick measures every month what AI reads and who it names",
