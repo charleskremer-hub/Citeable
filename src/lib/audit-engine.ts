@@ -30,7 +30,7 @@ const FREE_AUDIT_DOMAIN_DAILY_LIMIT = 1;
 // le cache free-Gemini (findFreshFreeGeminiAudit) — sans lui, un re-audit d'un
 // domaine déjà scanné rejouait les anciennes questions. Toujours bumper cette
 // version quand la génération de prompts ou l'inférence de catégorie change.
-const BUYER_PROMPT_SET_VERSION = "niche_local_prompts_v4";
+const BUYER_PROMPT_SET_VERSION = "niche_local_prompts_v5_ville_code_postal";
 // Modèle ÉPINGLÉ — jamais un alias `…-latest`.
 //
 // Deux raisons, toutes deux MESURÉES le 20/09/2026, pas déduites :
@@ -2819,7 +2819,10 @@ export function inferLocationFromHomepage(text: string) {
   // French postal code (5 digits) followed by a city name. Capture only
   // capitalised tokens (handles "Saint-Étienne", "Clermont-Ferrand") and stop
   // at the first lowercase word or punctuation so we don't grab "44000 Nantes - Cabinet".
-  const postalMatch = normalized.match(/\b\d{5}\s+([A-ZÀ-Ÿ][A-Za-zÀ-ÿ']+(?:[ -][A-ZÀ-Ÿ][A-Za-zÀ-ÿ']+)*)/);
+  // Particules des communes composées gardées (« Bourg-en-Bresse », « Joué-lès-Tours ») ;
+  // un espace n'est suivi que derrière un article (« La Rochelle ») — sinon
+  // « 65000 Tarbes Cette page… » donnait la ville « Tarbes Cette ».
+  const postalMatch = normalized.match(/\b\d{5}\s+((?:(?:Le|La|Les)\s)?[A-ZÀ-Ÿ][A-Za-zÀ-ÿ']+(?:-(?:[a-zà-ÿ]{1,4}-)*(?:d'|l')?[A-ZÀ-Ÿa-zà-ÿ][A-Za-zÀ-ÿ']+)*)/);
   const explicitLocationMatch = normalized.match(/(?:based in|located in|situ[eé]e?s?\s+[aà])\s+([A-ZÀ-Ÿ][A-Za-zÀ-ÿ']+(?:[ -][A-ZÀ-Ÿ][A-Za-zÀ-ÿ']+)*)/i);
   // Known-city fallback. NOTE: use "\\b" (word boundary) — a template-literal
   // "\b" is a backspace char (0x08) and never matches real text.
@@ -2930,6 +2933,191 @@ async function inferCategoryAI(brandName: string, domain: string, homepageText: 
   }
 }
 
+/**
+ * VILLE DU CABINET — lue sur l'adresse postale, pas devinée dans la vitrine.
+ *
+ * Mesuré le 29/09 sur les 20 cabinets du lot 1 : la ville n'était juste que
+ * pour 7 sur 19. 9 homes sans ville (adresse en pied de page, sur /contact ou
+ * dans les mentions légales — jamais lus), et des villes FAUSSES : Audit
+ * Conseil (Valence) interrogé sur Rennes, Cabinet SAC (Albi) sur Paris,
+ * Exéko (Bourg-en-Bresse) tronqué en « Bourg ». Sans ville, les questions
+ * tombent sur « près de chez moi » : l'API Gemini n'a aucune position, répond
+ * « précisez votre ville », ne cherche rien — et le rapport affiche quand même
+ * un score. Une ville fausse est pire : on mesure le cabinet contre des
+ * confrères d'une autre ville.
+ *
+ * Règle : code postal trouvé dans l'adresse (JSON-LD, pied de page, contact,
+ * mentions légales), le plus fréquent l'emporte ; la commune vient du
+ * référentiel officiel (geo.api.gouv.fr) — jamais d'une liste de villes
+ * connues cherchée dans le texte.
+ */
+const CONTACT_LINK_PATTERN = /contact|mentions[-_]?l[eé]gales|nous[-_]?trouver|coordonn[eé]es|legal/i;
+
+export function contactPageCandidates(html: string, pageUrl: string, max = 2): string[] {
+  let base: URL;
+  try {
+    base = new URL(pageUrl);
+  } catch {
+    return [];
+  }
+  const host = base.hostname.replace(/^www\./, "");
+  const found: string[] = [];
+  const add = (href: string) => {
+    try {
+      const url = new URL(href, base);
+      url.hash = "";
+      url.search = "";
+      if (url.hostname.replace(/^www\./, "") !== host) return;
+      if (!/^https?:$/.test(url.protocol) || /\.(?:pdf|jpe?g|png|webp|svg|zip)$/i.test(url.pathname)) return;
+      if (url.pathname === base.pathname) return;
+      const key = url.toString();
+      if (!found.includes(key)) found.push(key);
+    } catch {
+      /* lien illisible : ignoré */
+    }
+  };
+  for (const match of html.matchAll(/<a\b[^>]*href=["']([^"'#][^"']*)["'][^>]*>([\s\S]{0,200}?)<\/a>/gi)) {
+    const href = match[1] ?? "";
+    const label = (match[2] ?? "").replace(/<[^>]+>/g, " ");
+    if (CONTACT_LINK_PATTERN.test(href) || /contact|mentions l[eé]gales|nous trouver|coordonn[eé]es/i.test(label)) add(href);
+  }
+  add("/contact");
+  add("/mentions-legales");
+  return found.slice(0, max);
+}
+
+/** Tout le texte visible d'une page, pied de page COMPRIS (c'est là qu'est l'adresse). */
+export function fullPageText(html: string): string {
+  return decodeHtmlEntities(
+    html
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<svg[\s\S]*?<\/svg>/gi, " ")
+      .replace(/<br\s*\/?>/gi, " ")
+      .replace(/<[^>]+>/g, " "),
+  ).replace(/\s+/g, " ").trim();
+}
+
+/** Code postal + ce qui suit (« 01000 - Bourg en Bresse Tél… ») : le référentiel tranche ensuite. */
+const TEXT_AFTER_POSTAL = /\b(\d{5})\s*[-–,]?\s*([A-ZÀ-Ÿ][^\d,;|()<>]{1,40})/g;
+
+/** Nom propre lisible seul, sans référentiel : « Bourg en Bresse », « Joué-lès-Tours », « La Rochelle » — pas « Tarbes Cette ». */
+export function communeNameFromText(raw: string): string {
+  const match = raw.match(/^(?:(?:Le|La|Les|LE|LA|LES)\s)?[A-ZÀ-Ÿ][A-Za-zÀ-ÿ']+(?:-(?:d'|l'|d’|l’)?[A-ZÀ-Ÿ][A-Za-zÀ-ÿ']+|[-\s](?:[a-zà-ÿ]{1,4}[-\s])+(?:d'|l'|d’|l’)?[A-ZÀ-Ÿ][A-Za-zÀ-ÿ']+)*/);
+  return (match?.[0] ?? "").trim();
+}
+
+export type PostalCandidate = { postal: string; commune: string; read: string; score: number };
+
+/**
+ * Les adresses d'un ensemble de pages, classées. `weight` : 1 pour la home,
+ * 2 pour contact / mentions légales (l'adresse du siège y est), 3 pour le JSON-LD.
+ */
+export function postalCandidates(pages: Array<{ html: string; weight: number }>): PostalCandidate[] {
+  const byKey = new Map<string, PostalCandidate & { firstSeen: number }>();
+  let order = 0;
+  const bump = (postal: string, read: string, weight: number) => {
+    const department = Number(postal.slice(0, 2));
+    if (department < 1 || department > 98) return;
+    const commune = communeNameFromText(read);
+    if (!commune) return;
+    const current = byKey.get(postal);
+    if (current) {
+      current.score += weight;
+      if (commune.length > current.commune.length) {
+        current.commune = commune;
+        current.read = read;
+      }
+    } else {
+      byKey.set(postal, { postal, commune, read, score: weight, firstSeen: order++ });
+    }
+  };
+  for (const page of pages) {
+    const ldLocality = page.html.match(/"addressLocality"\s*:\s*"([^"]{2,60})"/)?.[1]?.trim();
+    const ldPostal = page.html.match(/"postalCode"\s*:\s*"(\d{5})"/)?.[1];
+    if (ldLocality && ldPostal) bump(ldPostal, ldLocality, 3);
+    // L'adresse de l'HÉBERGEUR ou de l'agence web (mentions légales, pied de
+    // page) n'est pas celle du cabinet : constaté le 29/09, un cabinet de
+    // Bourg-en-Bresse localisé à « 59100 Roubaix » (OVH). On coupe avant.
+    const text = fullPageText(page.html).split(/h[ée]berg(?:ement|eur|é par|ee par)|site (?:r[ée]alis[ée]|con[çc]u|cr[ée]{1,2}) par|conception (?:du site|web|graphique)|r[ée]alisation du site|webdesign/i)[0] ?? "";
+    for (const match of text.matchAll(TEXT_AFTER_POSTAL)) bump(match[1], match[2], page.weight);
+  }
+  return [...byKey.values()]
+    .sort((a, b) => b.score - a.score || a.firstSeen - b.firstSeen)
+    .map(({ postal, commune, read, score }) => ({ postal, commune, read, score }));
+}
+
+function foldName(value: string) {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[’']/g, "'").replace(/[\s‑–-]+/g, "-");
+}
+
+/**
+ * La commune officielle pour ce code postal : celle dont le nom ouvre le texte
+ * lu après le code (« 01000 Bourg en Bresse » → Bourg-en-Bresse, pas
+ * Saint-Denis-lès-Bourg), ou la seule commune du code.
+ */
+export function pickOfficialCommune(communes: string[], readAfterPostal: string): string | null {
+  if (!communes.length) return null;
+  const read = foldName(readAfterPostal);
+  const matching = communes
+    .filter((name) => {
+      const folded = foldName(name);
+      return read.startsWith(folded) && !/[a-z]/.test(read.charAt(folded.length));
+    })
+    .sort((a, b) => b.length - a.length);
+  if (matching[0]) return matching[0];
+  return communes.length === 1 ? communes[0] : null;
+}
+
+const communeCache = new Map<string, string[]>();
+
+async function officialCommunes(postal: string): Promise<string[] | null> {
+  const cached = communeCache.get(postal);
+  if (cached) return cached;
+  try {
+    const response = await fetch(`https://geo.api.gouv.fr/communes?codePostal=${postal}&fields=nom`, { signal: AbortSignal.timeout(4_000) });
+    if (!response.ok) return null;
+    const names = ((await response.json()) as Array<{ nom?: string }>).map((row) => row.nom ?? "").filter(Boolean);
+    communeCache.set(postal, names);
+    return names;
+  } catch {
+    return null;
+  }
+}
+
+/** « NNNNN Commune », lisible par `inferLocationFromHomepage` — ou "" si aucune adresse. */
+export async function resolveCabinetLocation(html: string, pageUrl: string): Promise<string> {
+  const extra = await Promise.all(
+    contactPageCandidates(html, pageUrl).map(async (url) => {
+      try {
+        const response = await withTimeout(url);
+        return response.ok ? await response.text() : "";
+      } catch {
+        return "";
+      }
+    }),
+  );
+  const candidates = postalCandidates([{ html, weight: 1 }, ...extra.filter(Boolean).map((page) => ({ html: page, weight: 2 }))]);
+  for (const candidate of candidates.slice(0, 3)) {
+    const communes = await officialCommunes(candidate.postal);
+    if (communes === null) return `${candidate.postal} ${candidate.commune}`;
+    const official = pickOfficialCommune(communes, candidate.read);
+    if (official) return `${candidate.postal} ${official}`;
+  }
+  return "";
+}
+
+async function withCabinetLocation(category: string, signals: string, html: string, pageUrl: string): Promise<string> {
+  if (!isLocalServiceCategory(category) || isOnlineServiceFirm(signals)) return signals;
+  // Budget borné : l'audit entier tient en 60 s ; une ville trouvée en plus de 6 s ne vaut pas un audit coupé.
+  const location = await Promise.race([
+    resolveCabinetLocation(html, pageUrl).catch(() => ""),
+    new Promise<string>((resolve) => setTimeout(() => resolve(""), 6_000)),
+  ]);
+  // En TÊTE : `inferLocationFromHomepage` prend le premier « code postal + ville ».
+  return location ? `${location} · ${signals}` : signals;
+}
+
 async function inferCategory(brandName: string, websiteUrl: string, fallbackCheck: AuditCheckResult) {
   const domain = domainFromWebsite(websiteUrl);
   const fallbackText = `${fallbackCheck.detail} ${fallbackCheck.evidence ?? ""}`;
@@ -2948,10 +3136,11 @@ async function inferCategory(brandName: string, websiteUrl: string, fallbackChec
       const fallbackCategory = categoryFromHomepageText(`${brandName} ${domain} ${signals}`, domain);
       const category = categoryLooksLikeTechStack(fallbackCategory, signals) ? "DTC footwear brand" : fallbackCategory;
 
-      if (!isGenericCategory(category)) return { category, homepageText: signals, platform };
+      const pageUrl = response.url || normalizeWebsiteUrl(websiteUrl);
+      if (!isGenericCategory(category)) return { category, homepageText: await withCabinetLocation(category, signals, html, pageUrl), platform };
 
       const secondPassCategory = categoryFromHomepageText(`${brandName} ${domain} ${signals} ${fallbackText}`, domain);
-      if (!isGenericCategory(secondPassCategory)) return { category: secondPassCategory, homepageText: signals, platform };
+      if (!isGenericCategory(secondPassCategory)) return { category: secondPassCategory, homepageText: await withCabinetLocation(secondPassCategory, signals, html, pageUrl), platform };
     }
   } catch (error) {
     console.log(`[getpick] category homepage fetch failed: ${error instanceof Error ? error.message : "Unknown error"}`);
