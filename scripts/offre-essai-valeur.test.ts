@@ -142,3 +142,23 @@ test("paiement — le lien Stripe porte le diagnostic et l'email (le paiement re
   assert.equal(checkoutHrefWithContext("/fr#pricing", "dcb7e940-4de9-4746-b7ae-30b266b1e771", "a@b.fr"), "/fr#pricing");
   assert.equal(new URL(checkoutHrefWithContext("https://buy.stripe.com/abc123", "pas-un-id", null)).search, "");
 });
+
+test("stripe test — un abonnement de TEST est marqué internal_test_ (hors MRR), le reste du parcours est identique", async () => {
+  const { markTestWrite } = await import("@/lib/stripe-webhook");
+  assert.deepEqual(markTestWrite({ kind: "full", email: "a@b.fr", subscriptionId: "sub_123", plan: "service", status: "active" }), { kind: "full", email: "a@b.fr", subscriptionId: "internal_test_sub_123", plan: "service", status: "active" });
+  assert.equal(markTestWrite({ kind: "partial", subscriptionId: "internal_test_sub_1" }).subscriptionId, "internal_test_sub_1");
+  assert.deepEqual(markTestWrite({ kind: "skip", reason: "x" } as { kind: string; subscriptionId?: string; reason: string }), { kind: "skip", reason: "x" });
+});
+
+test("classement — rang, ex æquo, hors classement", async () => {
+  const { citationRanking, rankLabel } = await import("@/app/audit/[id]/report-insights");
+  const gendrot = citationRanking({ brandName: "Gendrot", brandCount: 5, rivals: [{ name: "Aufiges", count: 4 }, { name: "Sodeva", count: 3 }, { name: "Ecge", count: 2 }, { name: "Juster", count: 1 }] });
+  assert.deepEqual([gendrot.rank, gendrot.tied, gendrot.cabinets], [1, false, 5]);
+  const third = citationRanking({ brandName: "X", brandCount: 2, rivals: [{ name: "A", count: 4 }, { name: "B", count: 3 }, { name: "C", count: 2 }] });
+  assert.deepEqual([third.rank, third.tied, third.cabinets], [3, true, 4]);
+  const absent = citationRanking({ brandName: "X", brandCount: 0, rivals: [{ name: "A", count: 4 }] });
+  assert.equal(absent.rank, null);
+  assert.equal(rankLabel(1, "fr"), "1er");
+  assert.equal(rankLabel(3, "fr"), "3e");
+  assert.equal(rankLabel(2, "en"), "2nd");
+});

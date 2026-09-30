@@ -9,19 +9,14 @@ import type { BoardRow } from "./report-insights";
  */
 export default function QuestionBoard({
   rows,
-  leaderboard,
   engineName,
-  total,
   locale,
 }: {
   rows: BoardRow[];
-  leaderboard: Array<{ name: string; count: number; self: boolean }>;
   engineName: string;
-  total: number;
   locale: Locale;
 }) {
   const fr = locale === "fr";
-  const max = Math.max(1, total);
 
   return (
     <section className="rounded-[1.5rem] border border-[#E4E9F0] bg-white p-5 shadow-xl shadow-black/5 sm:p-7" data-testid="buyer-intent-prompts">
@@ -36,32 +31,6 @@ export default function QuestionBoard({
           ? "Posées telles quelles, comme un client, avec recherche Google. Ton nom n'est jamais dans la question."
           : "Asked as-is, like a client, with Google search. Your name is never in the question."}
       </p>
-
-      {leaderboard.length > 1 ? (
-        <div className="mt-5 rounded-2xl bg-[#F5F7FA] p-4" data-testid="citation-leaderboard">
-          <p className="m-0 text-xs font-black uppercase tracking-[0.12em] text-[#5E6E86]">
-            {fr ? `Qui ${engineName} cite` : `Who ${engineName} names`}
-          </p>
-          <ul className="m-0 mt-3 grid list-none gap-2 p-0">
-            {leaderboard.map((entry) => (
-              <li key={entry.name} className="grid grid-cols-[minmax(0,9rem)_1fr_auto] items-center gap-3 sm:grid-cols-[minmax(0,12rem)_1fr_auto]">
-                <span className={`truncate text-sm font-black ${entry.self ? "text-[#17705B]" : "text-[#132A43]"}`}>
-                  {entry.self ? (fr ? `${entry.name} (toi)` : `${entry.name} (you)`) : entry.name}
-                </span>
-                <span className="h-3 overflow-hidden rounded-full bg-[#E4E9F0]">
-                  <span
-                    className="block h-full rounded-full"
-                    style={{ width: `${Math.max(4, (entry.count / max) * 100)}%`, background: entry.self ? "#1F8A70" : "#123E5C" }}
-                  />
-                </span>
-                <span className="text-sm font-black tabular-nums text-[#132A43]">
-                  {entry.count}/{total}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
 
       <ol className="m-0 mt-5 grid list-none gap-3 p-0">
         {rows.map((row, index) => {

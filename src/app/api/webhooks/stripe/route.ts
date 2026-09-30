@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse, after } from "next/server";
-import { SIGNATURE_HEADER, isEntitling, verifyStripeSignature, webhookWriteFor } from "@/lib/stripe-webhook";
+import { SIGNATURE_HEADER, isEntitling, markTestWrite, verifyStripeSignature, webhookWriteFor } from "@/lib/stripe-webhook";
 import { claimWebhookEvent, ensureSubscriptionSchema, upsertSubscription, upsertSubscriptionFromSubscriptionEvent } from "@/lib/subscriptions";
 import { buildCheckoutAlert, sendFounderAlert } from "@/lib/lead-alert";
 import { buildGeoWelcomeEmail } from "@/lib/ai-site";
@@ -31,14 +31,26 @@ export const maxDuration = 60;
  */
 export async function POST(req: NextRequest) {
   const secret = (process.env.STRIPE_WEBHOOK_SECRET ?? "").trim();
-  if (!secret) {
+  // Secret du webhook Stripe en MODE TEST (paiements de test, carte 4242) :
+  // mêmes effets, abonnement marqué `internal_test_` (hors MRR).
+  const testSecret = (process.env.STRIPE_WEBHOOK_SECRET_TEST ?? "").trim();
+  if (!secret && !testSecret) {
     return NextResponse.json({ error: "Webhook secret not configured" }, { status: 503 });
   }
 
   // Corps BRUT, jamais reserialise : JSON.parse + JSON.stringify reordonne les
   // cles et la signature ne tombe plus jamais juste.
   const rawBody = await req.text();
-  const verdict = verifyStripeSignature(rawBody, req.headers.get(SIGNATURE_HEADER), secret);
+  const signature = req.headers.get(SIGNATURE_HEADER);
+  let verdict = secret ? verifyStripeSignature(rawBody, signature, secret) : verifyStripeSignature(rawBody, signature, testSecret);
+  let isTest = !secret;
+  if (!verdict.ok && secret && testSecret) {
+    const testVerdict = verifyStripeSignature(rawBody, signature, testSecret);
+    if (testVerdict.ok) {
+      verdict = testVerdict;
+      isTest = true;
+    }
+  }
   if (!verdict.ok) {
     return NextResponse.json({ error: "Invalid signature", reason: verdict.reason }, { status: 400 });
   }
@@ -77,14 +89,16 @@ export async function POST(req: NextRequest) {
   }
 
   const email = emailFrom(object);
-  const write = webhookWriteFor(eventType, object, email);
+  const baseWrite = webhookWriteFor(eventType, object, email);
+  const write = isTest ? markTestWrite(baseWrite) : baseWrite;
+  const alertPrefix = isTest ? "[TEST] " : "";
 
   if (write.kind === "skip") {
     // Une session de paiement qu'on ne sait pas rattacher = de l'argent sans
     // droit : le fondateur doit le voir le jour même.
     if (eventType === "checkout.session.completed") {
       const alert = buildCheckoutAlert({ email, plan: null, status: String(object.status ?? "?"), subscriptionId: null, skipped: true });
-      await sendFounderAlert(alert.subject, alert.text);
+      await sendFounderAlert(`${alertPrefix}${alert.subject}`, alert.text);
     }
     return NextResponse.json({ ok: true, skipped: write.reason });
   }
@@ -100,7 +114,7 @@ export async function POST(req: NextRequest) {
       currentPeriodEnd: periodEndFrom(object),
     });
     const alert = buildCheckoutAlert({ email: write.email, plan: write.plan, status: "nouvelle souscription (essai ou payant)", subscriptionId: write.subscriptionId, skipped: false });
-    await sendFounderAlert(alert.subject, alert.text);
+    await sendFounderAlert(`${alertPrefix}${alert.subject}`, alert.text);
     // Offre agent GEO : l'agent écrit les réponses, puis le client reçoit le seul
     // geste — « connecter ton site » (WordPress en un clic ; repli ai.<cabinet>).
     // Après la réponse à Stripe (génération ~20 s), jamais bloquant.

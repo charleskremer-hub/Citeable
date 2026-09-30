@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { MONITOR_CHECKOUT_URL, MONITOR_TEST_CHECKOUT_URL, SERVICE_CHECKOUT_URL, checkoutHrefWithContext } from "@/lib/checkout-links";
+import { MONITOR_CHECKOUT_URL, MONITOR_TEST_CHECKOUT_URL, SERVICE_CHECKOUT_URL, SERVICE_TEST_CHECKOUT_URL, checkoutHrefWithContext } from "@/lib/checkout-links";
 
 type FunnelCheckoutLinkProps = {
   auditId: string;
@@ -38,7 +38,7 @@ type FunnelCheckoutLinkProps = {
  */
 function planFromHref(href: string) {
   if (!href) return "none";
-  if (href === SERVICE_CHECKOUT_URL) return "service_69eur";
+  if (href === SERVICE_CHECKOUT_URL || (SERVICE_TEST_CHECKOUT_URL && href === SERVICE_TEST_CHECKOUT_URL)) return "service_69eur";
   if (href === MONITOR_CHECKOUT_URL || href === MONITOR_TEST_CHECKOUT_URL) return "monitor_9eur";
   return "agent_19eur";
 }

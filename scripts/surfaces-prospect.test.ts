@@ -208,7 +208,8 @@ test("caisse — le CTA du rapport n'émet `checkout_opened` que si une caisse e
 
   const pageSource = strippedSource("src", "app", "audit", "[id]", "page.tsx");
   assert.ok(
-    pageSource.includes("checkoutConfigured={isCheckoutConfigured(SERVICE_CHECKOUT_URL)}"),
+    // 30/09 : la caisse est `checkoutUrl` — la vraie, ou celle de TEST pour un visiteur interne.
+    /checkoutConfigured=\{isCheckoutConfigured\((SERVICE_CHECKOUT_URL|checkoutUrl)\)\}/.test(pageSource) && pageSource.includes(": SERVICE_CHECKOUT_URL;"),
     "la page doit transmettre l'état réel de la caisse, jamais une valeur en dur"
   );
 });

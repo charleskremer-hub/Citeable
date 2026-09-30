@@ -51,6 +51,8 @@ const clean = (value: string | undefined): string => (value ?? "").trim();
  * deploiement.
  */
 export const SERVICE_CHECKOUT_URL = clean(process.env.NEXT_PUBLIC_SERVICE_CHECKOUT_URL);
+/** Même offre, Payment Link du MODE TEST Stripe (carte 4242) — servi aux seuls visiteurs internes (cookie gp_internal). */
+export const SERVICE_TEST_CHECKOUT_URL = clean(process.env.NEXT_PUBLIC_SERVICE_TEST_CHECKOUT_URL);
 
 export const MONITOR_CHECKOUT_URL = clean(process.env.NEXT_PUBLIC_MONITOR_CHECKOUT_URL);
 export const AGENT_CHECKOUT_URL = clean(process.env.NEXT_PUBLIC_AGENT_CHECKOUT_URL);

@@ -48,7 +48,8 @@ export function cityFromPrompts(prompts: string[]): string | null {
   const counts = new Map<string, number>();
   // NB: pas de `\b` avant « à » — `\b` est ASCII, « à » n'est pas un caractère de
   // mot ASCII, donc `\bà` ne matche jamais. On ancre sur début/espace/parenthèse.
-  const re = /(?:^|[\s(])(?:à|a|in)\s+([A-ZÀ-Ÿ][A-Za-zÀ-ÿ']+(?:[ -][A-ZÀ-Ÿ][A-Za-zÀ-ÿ']+)*)/g;
+  // Communes composées gardées entières : « Bourg-en-Bresse », « Joué-lès-Tours » (29/09).
+  const re = /(?:^|[\s(])(?:à|a|in)\s+([A-ZÀ-Ÿ][A-Za-zÀ-ÿ']+(?:-(?:[a-zà-ÿ]{1,4}-)*[A-ZÀ-Ÿ][A-Za-zÀ-ÿ']+| [A-ZÀ-Ÿ][A-Za-zÀ-ÿ']+)*)/g;
   const stop = new Set(["Ta", "Toi", "Ma", "Me", "My", "Your", "You"]);
   for (const prompt of prompts) {
     for (const match of prompt.matchAll(re)) {

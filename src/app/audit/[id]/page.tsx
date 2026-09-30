@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { SERVICE_CHECKOUT_URL, isCheckoutConfigured } from "@/lib/checkout-links";
+import { SERVICE_CHECKOUT_URL, SERVICE_TEST_CHECKOUT_URL, isCheckoutConfigured } from "@/lib/checkout-links";
+import { requestTrafficClass } from "@/lib/traffic-filter";
 import { RECHECK_CADENCE, SERVICE_PLAN_PRICE_EUR } from "@/lib/plan-promises";
 import { ensureAuditSchema, pool } from "@/lib/db";
 import { recordReportLinkOpened } from "@/lib/funnel";
@@ -12,6 +13,7 @@ import { AUDIT_SHARE_TOKEN_PARAM, auditShareTokenState, verifyAuditShareToken } 
 import { resolveReportAccess } from "@/lib/report-access";
 import { hasActiveSubscriptionForAudit } from "@/lib/subscriptions";
 import LocaleLang from "@/app/LocaleLang";
+import { cityFromPrompts } from "@/lib/hosted-answer-page";
 import AuditPoller from "./AuditPoller";
 import EmailDeliveryNotice from "./EmailDeliveryNotice";
 import ReportViewBeacon from "./ReportViewBeacon";
@@ -37,6 +39,8 @@ import {
   sourcesSummary,
   questionBoardRows,
   citationLeaderboard,
+  citationRanking,
+  rankLabel,
   rankActionsByImpact,
   scoreColor,
   treatmentProof,
@@ -272,6 +276,10 @@ export default async function AuditPage({
   const monitoringScoreDelta = audit.raw_results?.monitoring?.scoreDelta ?? null;
   const boardRows = questionBoardRows(questions, auditDomain);
   const topRival = rankedCompetitors[0] ? { name: rankedCompetitors[0].name, count: rankedCompetitors[0].count } : null;
+  const ranking = citationRanking({ brandName: audit.brand_name, brandCount: brandMentionCount, rivals: rankedCompetitors });
+  // Visiteur interne (cookie gp_internal) : la caisse de TEST Stripe si elle est configurée — E2E sans vraie carte.
+  const checkoutUrl = requestTrafficClass(await headers()).trafficClass === "internal" && isCheckoutConfigured(SERVICE_TEST_CHECKOUT_URL) ? SERVICE_TEST_CHECKOUT_URL : SERVICE_CHECKOUT_URL;
+  const rankText = ranking.rank ? `${rankLabel(ranking.rank, locale)} / ${ranking.cabinets}` : locale === "fr" ? "hors classement" : "not ranked";
   const sentiment = brandSentimentView(audit.raw_results?.brandSentiment ?? { label: "not_enough_signal", justification: "not enough signal" }, locale);
   // Sans categoryPerception stocké (anciens audits), on recalcule — le repli
   // rend "not_enough_signal", jamais un verdict inventé.
@@ -381,7 +389,7 @@ export default async function AuditPage({
                       : copy.verdictRivalAlso(answerEngineName, rival.name, rival.prompt)}
                   </p>
                 ) : null}
-                <ScoreHero brandName={audit.brand_name} engineName={answerEngineName} cited={brandMentionCount} total={questionCount} states={questions.map((question) => promptAnalysis(question).state)} topRival={topRival} locale={locale} />
+                <ScoreHero brandName={audit.brand_name} engineName={answerEngineName} city={cityFromPrompts(questions.map((question) => question.prompt))} rank={ranking.rank} tied={ranking.tied} cabinets={ranking.cabinets} podium={citationLeaderboard({ brandName: audit.brand_name, brandCount: brandMentionCount, rivals: rankedCompetitors, limit: 4 })} cited={brandMentionCount} total={questionCount} states={questions.map((question) => promptAnalysis(question).state)} locale={locale} />
                 <p className="m-0 text-xs font-bold text-[#5E6E86]">{copy.scoreCategoryLine(score, displayCategory)}</p>
                 {isAnswerEngineReport && answerEngine?.realLlmCall ? (
                   <p
@@ -487,7 +495,7 @@ export default async function AuditPage({
           </div>
 
           {complete && !failed && boardRows.length ? (
-            <QuestionBoard rows={boardRows} leaderboard={citationLeaderboard({ brandName: audit.brand_name, brandCount: brandMentionCount, rivals: rankedCompetitors })} engineName={answerEngineName} total={questionCount} locale={locale} />
+            <QuestionBoard rows={boardRows} engineName={answerEngineName} locale={locale} />
           ) : null}
 
           {complete && !failed && isMonitorReport ? (
@@ -527,13 +535,13 @@ export default async function AuditPage({
                   <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
                     {copy.publishLockedTitle}
                   </h2>
-                  {valuePlan ? <ServiceValueBlock plan={valuePlan} sources={sourcesSummary(questions, auditDomain)} engineName={answerEngineName} brandName={audit.brand_name} locale={locale} rows={boardRows} cited={brandMentionCount} total={questionCount} topRival={topRival} /> : (
+                  {valuePlan ? <ServiceValueBlock plan={valuePlan} sources={sourcesSummary(questions, auditDomain)} engineName={answerEngineName} brandName={audit.brand_name} locale={locale} rows={boardRows} cited={brandMentionCount} total={questionCount} topRival={topRival} rankText={rankText} /> : (
                     <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#5B6B82]">{copy.publishLockedBody}</p>
                   )}
                   <div className="mt-5">
                     <FunnelCheckoutLink
-                      auditId={audit.id} checkoutConfigured={isCheckoutConfigured(SERVICE_CHECKOUT_URL)}
-                      href={isCheckoutConfigured(SERVICE_CHECKOUT_URL) ? SERVICE_CHECKOUT_URL : `${locale === "fr" ? "/fr" : "/en"}#pricing`}
+                      auditId={audit.id} checkoutConfigured={isCheckoutConfigured(checkoutUrl)}
+                      href={isCheckoutConfigured(checkoutUrl) ? checkoutUrl : `${locale === "fr" ? "/fr" : "/en"}#pricing`}
                       source="report_service_offer" prefillEmail={isAnonymousEmail(audit.email) ? null : audit.email}
                       className="inline-flex rounded-xl bg-[#123E5C] px-5 py-3 text-sm font-black text-white no-underline shadow-2xl shadow-[#123E5C]/20 transition hover:brightness-110"
                     >

@@ -13,9 +13,8 @@ export default function DashboardMockup({
   rows,
   cited,
   total,
-  ownRead,
-  groundedCount,
   topRival,
+  rankText,
   locale,
 }: {
   brandName: string;
@@ -23,9 +22,8 @@ export default function DashboardMockup({
   rows: BoardRow[];
   cited: number;
   total: number;
-  ownRead: number;
-  groundedCount: number;
   topRival: { name: string; count: number } | null;
+  rankText: string;
   locale: Locale;
 }) {
   const fr = locale === "fr";
@@ -37,8 +35,8 @@ export default function DashboardMockup({
   const x = (i: number) => 70 + (i * (width - 110)) / 3;
   const y = (value: number) => height - 26 - (value / Math.max(1, total)) * (height - 46);
   const tiles = [
+    { label: fr ? `Ton rang dans ${engineName}` : `Your rank in ${engineName}`, value: rankText, tone: "#123E5C" },
     { label: fr ? `Cité par ${engineName}` : `Named by ${engineName}`, value: `${cited}/${total}`, tone: "#17705B" },
-    { label: fr ? "Ton site lu par l'IA" : "Your site read by AI", value: `${ownRead}/${groundedCount || total}`, tone: "#123E5C" },
     { label: fr ? "Confrère n°1" : "Top peer", value: topRival ? `${topRival.name} · ${topRival.count}/${total}` : "—", tone: "#B04329" },
   ];
 
@@ -62,7 +60,7 @@ export default function DashboardMockup({
             </span>
           </div>
 
-          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
             {tiles.map((tile) => (
               <div key={tile.label} className="rounded-xl border border-[#E4E9F0] bg-[#FBFCFD] px-3 py-2.5">
                 <p className="m-0 text-[0.6875rem] font-black uppercase tracking-[0.08em] text-[#5E6E86]">{tile.label}</p>

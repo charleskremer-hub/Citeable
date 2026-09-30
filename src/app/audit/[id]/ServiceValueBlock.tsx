@@ -17,6 +17,7 @@ export default function ServiceValueBlock({
   cited,
   total,
   topRival,
+  rankText,
 }: {
   plan: ServiceValuePlan;
   sources: SourcesSummary;
@@ -27,6 +28,7 @@ export default function ServiceValueBlock({
   cited: number;
   total: number;
   topRival: { name: string; count: number } | null;
+  rankText: string;
 }) {
   const fr = locale === "fr";
   return (
@@ -83,9 +85,8 @@ export default function ServiceValueBlock({
           rows={rows}
           cited={cited}
           total={total}
-          ownRead={sources.ownDomainReadCount}
-          groundedCount={sources.groundedCount}
           topRival={topRival}
+          rankText={rankText}
           locale={locale}
         />
       ) : null}

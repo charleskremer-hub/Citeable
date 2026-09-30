@@ -186,3 +186,14 @@ export function webhookWriteFor(eventType: string, object: Record<string, unknow
 
   return { kind: "skip", reason: `unhandled ${eventType}` };
 }
+
+/**
+ * MODE TEST STRIPE (30/09, Charles : « Stripe permet des paiements tests ») :
+ * un événement signé par le secret du webhook de TEST ouvre le parcours complet
+ * (droit, fiche, mail de bienvenue) mais l'abonnement est préfixé `internal_test_`
+ * — exclu du MRR comme tout `internal_%`, et reconnaissable d'un coup d'œil.
+ */
+export function markTestWrite<T extends { kind: string; subscriptionId?: string }>(write: T): T {
+  if (write.kind === "skip" || !write.subscriptionId || write.subscriptionId.startsWith("internal_test_")) return write;
+  return { ...write, subscriptionId: `internal_test_${write.subscriptionId}` };
+}

@@ -676,3 +676,23 @@ export function citationLeaderboard(args: { brandName: string; brandCount: numbe
   // La marque est TOUJOURS sur le podium affiché, même dernière : c'est sa place qu'on montre.
   return top.includes(self) ? top : [...top.slice(0, limit - 1), self];
 }
+
+/**
+ * LE CLASSEMENT (30/09, Charles : « mieux vaut le classement par rapport aux
+ * concurrents que savoir si le cabinet remonte »). Rang = 1 + nombre de cabinets
+ * cités STRICTEMENT plus souvent ; ex æquo signalé. Absent (0 citation) ⇒ rang null.
+ */
+export function citationRanking(args: { brandName: string; brandCount: number; rivals: Array<{ name: string; count: number }> }) {
+  const field = args.rivals.filter((rival) => rival.count > 0);
+  const cabinets = field.length + (args.brandCount > 0 ? 1 : 0);
+  if (args.brandCount <= 0) return { rank: null as number | null, tied: false, cabinets, ahead: field.slice(0, 3) };
+  const ahead = field.filter((rival) => rival.count > args.brandCount);
+  const tied = field.some((rival) => rival.count === args.brandCount);
+  return { rank: ahead.length + 1, tied, cabinets, ahead: ahead.slice(0, 3) };
+}
+
+export function rankLabel(rank: number, locale: Locale) {
+  if (locale === "fr") return rank === 1 ? "1er" : `${rank}e`;
+  const suffix = rank % 10 === 1 && rank % 100 !== 11 ? "st" : rank % 10 === 2 && rank % 100 !== 12 ? "nd" : rank % 10 === 3 && rank % 100 !== 13 ? "rd" : "th";
+  return `${rank}${suffix}`;
+}
