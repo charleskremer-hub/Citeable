@@ -163,3 +163,20 @@ test("détection — apex muet, www répond (6 cabinets sur 19 du lot 1, 30/09)"
   );
   assert.equal(site.kind, "wordpress");
 });
+
+test("rapport (inspiré Pinniq, 30/09) — besoin client et place dans la réponse", async () => {
+  const { questionNeed, brandPositionInAnswer, needsSummary } = await import("@/app/audit/[id]/report-insights");
+  assert.equal(questionNeed("Quel expert-comptable à Palaiseau pour la création d'une société civile immobilière ?"), "SCI & immobilier");
+  assert.equal(questionNeed("Quel cabinet à Palaiseau pour gérer la paie de mes salariés ?"), "Paie & social");
+  assert.equal(questionNeed("Un expert-comptable à Palaiseau spécialisé professions libérales ?"), "Professions libérales");
+  assert.equal(questionNeed("Où trouver un expert-comptable à Palaiseau pour la création d'entreprise ?"), "Création & reprise");
+  const snippet = "recommended_brands: Cabinet GFE (Gestion Financière Externalisée - Réseau Cabex, Cabinet Bonnet & Pascot, Cabinet Broc (Gendrot & Associés, Sodeva Audit, Aufiges\nPour la création…";
+  assert.deepEqual(brandPositionInAnswer(snippet, "Gendrot"), { rank: 3, of: 5 });
+  assert.deepEqual(brandPositionInAnswer("recommended_brands: Gendrot Expertise Conseil\nOui.", "Gendrot"), { rank: 1, of: 1 });
+  assert.equal(brandPositionInAnswer("pas de liste", "Gendrot"), null);
+  const summary = needsSummary([
+    { prompt: "a", state: "missing", rivals: [], pages: [], need: "Paie & social", position: null },
+    { prompt: "b", state: "recommended", rivals: [], pages: [], need: "SCI & immobilier", position: null },
+  ]);
+  assert.equal(summary[0].need, "Paie & social", "les angles morts d'abord");
+});

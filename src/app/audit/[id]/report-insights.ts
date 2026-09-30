@@ -641,10 +641,66 @@ export type BoardRow = {
   state: PromptState;
   rivals: string[];
   pages: Array<{ domain: string; own: boolean }>;
+  /** Le besoin client derrière la question (« Création », « Paie »…). */
+  need: string;
+  /** Place du cabinet dans la liste que l'IA a donnée, et longueur de la liste. */
+  position: { rank: number; of: number } | null;
 };
 
+// --- Inspiré de Pinniq Legal (30/09) : la visibilité PAR BESOIN client et la
+// PROÉMINENCE (1er nommé ≠ 4e nommé). Deux lectures que le cabinet comprend. ----
+
+const NEEDS: Array<[RegExp, string]> = [
+  [/\bSCI\b|immobili|LMNP|patrimoine/i, "SCI & immobilier"],
+  [/cr[ée]ation|cr[ée]er|lancer|d[ée]marr|micro-?entreprise|auto-?entrepreneur|reprise|installer/i, "Création & reprise"],
+  [/paie|salari|social|bulletin/i, "Paie & social"],
+  [/lib[ée]ral|m[ée]dic|sant[ée]|avocat|kin[ée]|infirmi|pharmac/i, "Professions libérales"],
+  [/artisan|commer[çc]|restaura|BTP|b[âa]timent|h[ôo]tel/i, "Artisans & commerçants"],
+  [/association/i, "Associations"],
+  [/start-?up|lev[ée]e de fonds|innovation/i, "Start-up"],
+  [/e-?commerce|boutique en ligne/i, "E-commerce"],
+  [/agricul|viticul|exploitation/i, "Agriculture"],
+  [/bilan|fiscal|TVA|imp[ôo]t|liasse|comptes annuels|PME|TPE/i, "Bilan & fiscalité"],
+];
+
+export function questionNeed(prompt: string): string {
+  return NEEDS.find(([re]) => re.test(prompt))?.[1] ?? "Autre besoin";
+}
+
+function foldName(value: string) {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+/**
+ * Place du cabinet dans la liste de cabinets que l'IA a nommés (ligne
+ * `recommended_brands:` de l'extraction, dans l'ordre de la réponse).
+ */
+export function brandPositionInAnswer(snippet: string | undefined, brandName: string): { rank: number; of: number } | null {
+  const line = (snippet ?? "").split("\n")[0] ?? "";
+  if (!/^recommended_brands:/i.test(line)) return null;
+  const items = line.replace(/^recommended_brands:\s*/i, "").split(/,\s+(?=[A-ZÀ-Ÿ0-9])/).map((item) => item.trim()).filter(Boolean);
+  if (!items.length) return null;
+  const brand = foldName(brandName).replace(/^(cabinet|sarl|sas|selarl)\s+/, "");
+  if (!brand) return null;
+  const index = items.findIndex((item) => foldName(item).includes(brand));
+  return index >= 0 ? { rank: index + 1, of: items.length } : null;
+}
+
+/** Points forts / angles morts : chaque besoin client, cité ou non. */
+export function needsSummary(rows: BoardRow[]): Array<{ need: string; cited: number; total: number }> {
+  const byNeed = new Map<string, { cited: number; total: number }>();
+  for (const row of rows) {
+    if (row.state === "unchecked") continue;
+    const entry = byNeed.get(row.need) ?? { cited: 0, total: 0 };
+    entry.total += 1;
+    if (row.state === "recommended") entry.cited += 1;
+    byNeed.set(row.need, entry);
+  }
+  return [...byNeed.entries()].map(([need, value]) => ({ need, ...value })).sort((a, b) => a.cited / a.total - b.cited / b.total || b.total - a.total);
+}
+
 /** Une ligne par question posée : le verdict, qui est cité, quelles pages ont été lues. Perdues d'abord. */
-export function questionBoardRows(questions: BuyerIntentPromptResult[], brandDomain: string): BoardRow[] {
+export function questionBoardRows(questions: BuyerIntentPromptResult[], brandDomain: string, brandName = ""): BoardRow[] {
   const own = registrable(brandDomain);
   const rank = (state: PromptState) => (state === "missing" ? 0 : state === "recommended" ? 1 : 2);
   return questions
@@ -660,7 +716,9 @@ export function questionBoardRows(questions: BuyerIntentPromptResult[], brandDom
       ];
       const isOwn = (domain: string) => Boolean(own) && (domain === own || domain.endsWith(`.${own}`));
       const pages = [...domains.filter(isOwn), ...domains.filter((domain) => !isOwn(domain))].slice(0, 5).map((domain) => ({ domain, own: isOwn(domain) }));
-      return { prompt: question.prompt, state: analysis.state, rivals: analysis.competitors.slice(0, 4), pages };
+      const aiSurface = (question.surfaces ?? []).find((surface) => surface.kind === "ai_engine");
+      const position = analysis.state === "recommended" && brandName ? brandPositionInAnswer(aiSurface?.rawAnswerSnippet, brandName) : null;
+      return { prompt: question.prompt, state: analysis.state, rivals: analysis.competitors.slice(0, 4), pages, need: questionNeed(question.prompt), position };
     })
     .sort((a, b) => rank(a.state) - rank(b.state));
 }

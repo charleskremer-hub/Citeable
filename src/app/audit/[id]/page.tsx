@@ -274,7 +274,7 @@ export default async function AuditPage({
     .filter((point) => point && typeof point.score === "number")
     .map((point) => ({ score: point.score, createdAt: point.createdAt }));
   const monitoringScoreDelta = audit.raw_results?.monitoring?.scoreDelta ?? null;
-  const boardRows = questionBoardRows(questions, auditDomain);
+  const boardRows = questionBoardRows(questions, auditDomain, audit.brand_name);
   const topRival = rankedCompetitors[0] ? { name: rankedCompetitors[0].name, count: rankedCompetitors[0].count } : null;
   const ranking = citationRanking({ brandName: audit.brand_name, brandCount: brandMentionCount, rivals: rankedCompetitors });
   // Visiteur interne (cookie gp_internal) : la caisse de TEST Stripe si elle est configurée — E2E sans vraie carte.
