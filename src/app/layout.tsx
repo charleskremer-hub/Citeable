@@ -85,7 +85,7 @@ const STRUCTURED_DATA = {
       name: "Done for you",
       price: String(SERVICE_PLAN_PRICE_EUR),
       priceCurrency: "EUR",
-      description: `12 buyer questions, ${RECHECK_CADENCE.en.adjective} re-testing, answer page created and hosted for you, placement on the sources AI trusts. Nothing to install.`,
+      description: `12 buyer questions, re-tested ${RECHECK_CADENCE.en.adverb} on Gemini with web search, your answers written and published on your own website (one-click connection), and your visibility dashboard. Nothing to install.`,
     },
   ],
 } as const;
