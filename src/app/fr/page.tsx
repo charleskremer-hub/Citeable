@@ -16,7 +16,7 @@ import { BEACHHEAD_TRADE } from "@/lib/plan-promises";
  */
 export const metadata: Metadata = {
   title: `GetPick — L'agent qui fait recommander les ${BEACHHEAD_TRADE.fr}s par l'IA`,
-  description: `Quand un client cherche un ${BEACHHEAD_TRADE.fr}, ChatGPT répond un nom. GetPick construit et entretient ta présence là où l'IA va chercher qui recommander — hors de ton site, zéro technique. Diagnostic gratuit en 2 minutes.`,
+  description: `Quand un client cherche un ${BEACHHEAD_TRADE.fr}, l'IA répond un nom. GetPick écrit sur ton site les réponses que l'IA lit — un clic pour le connecter, sans webmaster. Diagnostic gratuit en 2 minutes.`,
 };
 
 export default function FrenchHome() {

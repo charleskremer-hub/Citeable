@@ -50,7 +50,7 @@ export const homeCopy = {
     navCompare: "Compare",
     // 1. HERO — pain + transformation
     heroEyebrow: "The agent that gets you recommended by AI",
-    heroTitle: `When a client looks for an ${BEACHHEAD_TRADE.en} near them, ChatGPT answers with a name.`,
+    heroTitle: `When a client looks for an ${BEACHHEAD_TRADE.en} near them, AI answers with a name.`,
     heroTitleAccent: "Make it yours.",
     heroSubtitle: `GetPick builds and maintains your local presence where AI looks for who to recommend in your area. Nothing technical: you connect your site in one click, our agent writes your answers and publishes them on it — no webmaster. ${CAPITALISED_CADENCE.en} it shows you who AI cites in your place, and how you climb.`,
     formTitle: "Your free diagnostic",
@@ -95,7 +95,7 @@ export const homeCopy = {
     demoCaption: "Your firm isn't in the answer. The client never sees your name — and never sees your ads either.",
     // 3. Three numbered steps
     stepsEyebrow: "How it works",
-    stepsTitle: "Three steps. You never touch your site.",
+    stepsTitle: "Three steps. One click from you.",
     steps: [
       { num: "1", time: "30 sec", title: "Give us your firm", body: "Your name and your website address. That's the entire setup." },
       { num: "2", time: "2 min", title: "The agent asks the AIs", body: `The real questions your clients ask, sent live at diagnostic time to ${PLAN_PROMISES.free.engineLabel.en}. Never simulated.` },
@@ -161,7 +161,7 @@ export const homeCopy = {
         features: [
           "Our GEO agent writes the answer to each of your clients' real questions, from the facts on your site, and publishes it on your website itself — where AI reads it.",
           "A dashboard: your AI visibility against your peers, question by question.",
-          `${CAPITALISED_CADENCE.en} it re-tests your clients’ real questions and shows the shift: from the peer… to you.`,
+          `${CAPITALISED_CADENCE.en} it re-tests your clients’ real questions and shows you who AI cites — you or a peer.`,
           `${SERVICE_TRIAL_LABEL.en}, all in. No credits, no agency, no dev. No commitment.`,
         ],
         cta: SERVICE_OFFER_COPY.en.cta,
@@ -174,7 +174,7 @@ export const homeCopy = {
     pricingGuarantee: "Refunded on request within 30 days. No questions asked.",
     // 7. TL;DR — dense paragraph for AI readers
     tldrEyebrow: "In short",
-    tldrBody: `GetPick is the GEO agent for service professionals — ${BEACHHEAD_TRADE.en}s first. It gets you recommended by AI assistants like ChatGPT and Gemini, and it does the work off-site: you never touch your own website. Concretely: it sends the real questions your clients ask to the AIs — live, never simulated — and reports whether you or a peer gets named, naming that peer. It then writes and hosts your answer page on those exact questions, and re-tests everything ${RECHECK_CADENCE.en.adverb} so you see the shift from the peer to you. It is built for professionals with no agency budget and no developer: a free diagnostic, then one done-for-you plan: ${SERVICE_TRIAL_LABEL.en} — flat price, no credits, no seats, nothing to install. The paid plan is cancellable at any time and refunded on request within 30 days, no questions asked. GEO agencies charge €2,000 to €20,000 per month for this category of work. ChatGPT ad placements are now open to buy self-serve — current rollout as of 28 July 2026: the United States, the United Kingdom, Canada, Australia, New Zealand, Japan and South Korea, not France, and only on the Free and Go tiers — but those placements sit below the answer and independent research finds the shopping carousel ignores paid: being the organic recommendation is still free, while a sponsored click costs $3-5 and GetPick costs €${SERVICE_PLAN_PRICE_EUR}/month.`,
+    tldrBody: `GetPick is the GEO agent for service professionals — ${BEACHHEAD_TRADE.en}s first. It works to get you recommended by AI assistants, and you never call a webmaster: you connect your WordPress site in one click. Concretely: it sends the real questions your clients ask to Gemini with Google Search on — live, never simulated — and reports whether you or a peer gets named, naming that peer. It then writes the answers to those exact questions on your own site, and re-tests everything ${RECHECK_CADENCE.en.adverb} so you see who AI cites, you or the peer. It is built for professionals with no agency budget and no developer: a free diagnostic, then one done-for-you plan: ${SERVICE_TRIAL_LABEL.en} — flat price, no credits, no seats, nothing to install. The paid plan is cancellable at any time and refunded on request within 30 days, no questions asked. GEO agencies charge €2,000 to €20,000 per month for this category of work. ChatGPT ad placements are now open to buy self-serve — current rollout as of 28 July 2026: the United States, the United Kingdom, Canada, Australia, New Zealand, Japan and South Korea, not France, and only on the Free and Go tiers — but those placements sit below the answer and independent research finds the shopping carousel ignores paid: being the organic recommendation is still free, while a sponsored click costs $3-5 and GetPick costs €${SERVICE_PLAN_PRICE_EUR}/month.`,
     // 8. Founder
     founderEyebrow: "Who's behind this",
     founderBody: "I'm Charles. I build GetPick and I run every diagnostic myself. No sales team, no support bot: if you have a question, you email me and I answer.",
@@ -189,7 +189,7 @@ export const homeCopy = {
       },
       {
         question: "How long does it take?",
-        answer: "An AI recommendation moves in weeks, not in one click. First movements within 2 to 4 weeks, and you see each re-test.",
+        answer: "An AI recommendation moves in weeks, not in one click. We promise no timeline we have not measured: you see every re-test, question by question, and you can cancel any month.",
       },
       {
         question: "AI answers change all the time — what's the point?",
@@ -201,7 +201,7 @@ export const homeCopy = {
       },
       {
         question: "Is it simulated or real?",
-        answer: "Real. Every check is a real question sent live to ChatGPT or Gemini at diagnostic time. No simulated prompts, no cached guesses, no modelled estimates. If an engine is unavailable, the report says so instead of inventing data.",
+        answer: "Real. Every check is a real question sent live to Gemini, with Google Search on, at diagnostic time. No simulated prompts, no cached guesses, no modelled estimates. If an engine is unavailable, the report says so instead of inventing data.",
       },
       {
         question: "Which questions do you test?",
@@ -224,7 +224,7 @@ export const homeCopy = {
     closingTitle: "Every day, AI gives a client a name in your area.",
     closingBody: "Right now it might not be yours. Two minutes tells you for sure — and the agent starts working on it.",
     closingCta: "Get picked →",
-    footerTagline: `The agent that gets ${BEACHHEAD_TRADE.en}s recommended by ChatGPT and Gemini. Off-site, zero technical.`,
+    footerTagline: `The agent that gets ${BEACHHEAD_TRADE.en}s recommended by AI. One click to connect your site.`,
     rights: "All rights reserved.",
     footerProspection: "Outbound policy",
     footerStudy: "Our 21-brand study: why we withdrew the numbers",
@@ -234,7 +234,7 @@ export const homeCopy = {
     navCompare: "Comparatif",
     // 1. HERO — douleur + transformation
     heroEyebrow: "L'agent qui te fait recommander par l'IA",
-    heroTitle: `Quand un client cherche un ${BEACHHEAD_TRADE.fr} près de chez lui, ChatGPT répond un nom.`,
+    heroTitle: `Quand un client cherche un ${BEACHHEAD_TRADE.fr} près de chez lui, l'IA répond un nom.`,
     heroTitleAccent: "Fais que ce soit le tien.",
     heroSubtitle: `GetPick construit et entretient ta présence locale là où l'IA va chercher qui recommander dans ta ville. Rien de technique : tu connectes ton site en un clic, notre agent écrit tes réponses et les y publie — sans webmaster. ${CAPITALISED_CADENCE.fr}, il te montre qui l'IA cite à ta place, et comment tu remontes.`,
     formTitle: "Ton diagnostic gratuit",
@@ -271,7 +271,7 @@ export const homeCopy = {
     demoCaption: "Ton cabinet n'est pas dans la réponse. Le client ne verra jamais ton nom — ni tes pubs.",
     // 3. Trois étapes chiffrées
     stepsEyebrow: "Comment ça marche",
-    stepsTitle: "Trois étapes. Ton site reste tel quel.",
+    stepsTitle: "Trois étapes. Un seul clic de ta part.",
     steps: [
       { num: "1", time: "30 s", title: "Donne-nous ton cabinet", body: "Ton nom et l'adresse de ton site. C'est toute la configuration." },
       { num: "2", time: "2 min", title: "L'agent interroge les IA", body: `Les vraies questions de tes clients, envoyées en direct au moment du diagnostic à ${PLAN_PROMISES.free.engineLabel.fr}. Jamais simulées.` },
@@ -334,7 +334,7 @@ export const homeCopy = {
         features: [
           "Notre agent GEO écrit la réponse à chaque vraie question de tes clients, depuis les faits de ton site, et la publie lui-même sur ton site — là où l'IA la lit.",
           "Un tableau de bord : ta visibilité dans l'IA face à tes confrères, question par question.",
-          `${CAPITALISED_CADENCE.fr}, il re-teste les vraies questions de tes clients et te montre le basculement : du confrère… à toi.`,
+          `${CAPITALISED_CADENCE.fr}, il re-teste les vraies questions de tes clients et te montre qui l'IA cite — toi ou un confrère.`,
           `${SERVICE_TRIAL_LABEL.fr}, tout compris. Pas de crédits, pas d'agence, pas de dev. Sans engagement.`,
         ],
         cta: SERVICE_OFFER_COPY.fr.cta,
@@ -347,7 +347,7 @@ export const homeCopy = {
     pricingGuarantee: "Remboursé sur simple demande sous 30 jours. Pas de question.",
     // 7. En bref — paragraphe dense pour les lecteurs IA
     tldrEyebrow: "En bref",
-    tldrBody: `GetPick est l'agent GEO des professionnels de service — les ${BEACHHEAD_TRADE.fr}s d'abord. Il te fait recommander par les assistants IA comme ChatGPT et Gemini, et il fait le travail hors de ton site : tu ne touches jamais à ton propre site. Concrètement : il envoie aux IA les vraies questions que posent tes clients — en direct, jamais simulées — puis te dit si c'est toi ou un confrère qui est nommé, en nommant ce confrère. Il écrit et héberge ensuite ta page-réponse sur ces questions exactes, et re-teste tout ${RECHECK_CADENCE.fr.adverb} pour que tu voies le basculement du confrère vers toi. C'est pensé pour les professionnels sans budget agence et sans développeur : un diagnostic gratuit, puis une seule offre fait-pour-toi : ${SERVICE_TRIAL_LABEL.fr} — prix fixe, sans crédits, sans sièges, rien à installer. L'offre payante est résiliable à tout moment et remboursée sur simple demande sous 30 jours, sans question. Une agence GEO facture 2 000 à 20 000 € par mois pour cette catégorie de travail. Les placements publicitaires ChatGPT sont désormais ouverts à l'achat en self-serve — diffusion actuelle au 28 juillet 2026 : États-Unis, Royaume-Uni, Canada, Australie, Nouvelle-Zélande, Japon et Corée du Sud, pas la France, et uniquement sur les tiers Free et Go — mais ces placements s'affichent sous la réponse et une recherche indépendante montre que le carrousel shopping les ignore : être la recommandation organique reste gratuit, quand un clic sponsorisé coûte 3-5 $ et que GetPick coûte ${SERVICE_PLAN_PRICE_EUR} €/mois.`,
+    tldrBody: `GetPick est l'agent GEO des professionnels de service — les ${BEACHHEAD_TRADE.fr}s d'abord. Il travaille à te faire recommander par les assistants IA, et tu n'appelles jamais de webmaster : tu connectes ton site WordPress en un clic. Concrètement : il envoie à Gemini, recherche Google activée, les vraies questions que posent tes clients — en direct, jamais simulées — puis te dit si c'est toi ou un confrère qui est nommé, en nommant ce confrère. Il écrit ensuite sur ton propre site les réponses à ces questions exactes, et re-teste tout ${RECHECK_CADENCE.fr.adverb} pour que tu voies qui l'IA cite, toi ou le confrère. C'est pensé pour les professionnels sans budget agence et sans développeur : un diagnostic gratuit, puis une seule offre fait-pour-toi : ${SERVICE_TRIAL_LABEL.fr} — prix fixe, sans crédits, sans sièges, rien à installer. L'offre payante est résiliable à tout moment et remboursée sur simple demande sous 30 jours, sans question. Une agence GEO facture 2 000 à 20 000 € par mois pour cette catégorie de travail. Les placements publicitaires ChatGPT sont désormais ouverts à l'achat en self-serve — diffusion actuelle au 28 juillet 2026 : États-Unis, Royaume-Uni, Canada, Australie, Nouvelle-Zélande, Japon et Corée du Sud, pas la France, et uniquement sur les tiers Free et Go — mais ces placements s'affichent sous la réponse et une recherche indépendante montre que le carrousel shopping les ignore : être la recommandation organique reste gratuit, quand un clic sponsorisé coûte 3-5 $ et que GetPick coûte ${SERVICE_PLAN_PRICE_EUR} €/mois.`,
     // 8. Fondateur
     founderEyebrow: "Qui est derrière",
     founderBody: "Je m'appelle Charles. Je construis GetPick et je fais tourner chaque diagnostic moi-même. Pas d'équipe commerciale, pas de chatbot : une question ? C'est moi qui réponds.",
@@ -362,7 +362,7 @@ export const homeCopy = {
       },
       {
         question: "Combien de temps avant que ça bouge ?",
-        answer: "Une reco d'IA se déplace en semaines, pas en un clic. Premiers mouvements sous 2 à 4 semaines, et tu vois chaque re-test.",
+        answer: "Une reco d'IA se déplace en semaines, pas en un clic. On ne promet aucun délai qu'on n'a pas mesuré : tu vois chaque re-test, question par question, et tu peux arrêter chaque mois.",
       },
       {
         question: "Les réponses IA changent tout le temps, à quoi bon ?",
@@ -374,7 +374,7 @@ export const homeCopy = {
       },
       {
         question: "C'est simulé ou c'est réel ?",
-        answer: "Réel. Chaque vérification est une vraie question envoyée en direct à ChatGPT ou Gemini au moment du diagnostic. Pas de prompts simulés, pas de réponses en cache, pas d'estimations modélisées. Si un moteur est indisponible, le rapport le dit au lieu d'inventer.",
+        answer: "Réel. Chaque vérification est une vraie question envoyée en direct à Gemini, recherche Google activée, au moment du diagnostic. Pas de prompts simulés, pas de réponses en cache, pas d'estimations modélisées. Si un moteur est indisponible, le rapport le dit au lieu d'inventer.",
       },
       {
         question: "Quelles questions testez-vous ?",
@@ -397,7 +397,7 @@ export const homeCopy = {
     closingTitle: "Chaque jour, l'IA donne un nom à un client de ton secteur.",
     closingBody: "En ce moment, ce n'est peut-être pas le tien. Deux minutes pour en avoir le cœur net — et l'agent s'y met.",
     closingCta: "Lancer mon audit gratuit →",
-    footerTagline: `L'agent qui fait recommander les ${BEACHHEAD_TRADE.fr}s par ChatGPT et Gemini. Hors site, zéro technique.`,
+    footerTagline: `L'agent qui fait recommander les ${BEACHHEAD_TRADE.fr}s par l'IA. Un clic pour connecter ton site.`,
     rights: "Tous droits réservés.",
     footerProspection: "Politique de prospection",
     footerStudy: "Notre étude 21 marques : pourquoi on a retiré les chiffres",

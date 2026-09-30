@@ -40,8 +40,8 @@ seat pricing and no setup.
   from the facts on your own website, and publishes it on your website
   itself — you connect it in one click, no webmaster.
 - A dashboard of your AI visibility against your peers, question by question.
-- Monthly re-tests of your clients' real questions, so you see the shift from
-  the peer to you.
+- Monthly re-tests of your clients' real questions, so you see who AI cites:
+  you or the peer.
 
 ## Pricing
 

@@ -28,13 +28,13 @@ export async function generateMetadata(): Promise<Metadata> {
   if (locale === "fr") {
     return {
       title: `GetPick — L'agent qui fait recommander les ${BEACHHEAD_TRADE.fr}s par l'IA`,
-      description: `Quand un client cherche un ${BEACHHEAD_TRADE.fr}, ChatGPT répond un nom. GetPick construit et entretient ta présence là où l'IA va chercher qui recommander — hors de ton site, zéro technique. Diagnostic gratuit en 2 minutes.`,
+      description: `Quand un client cherche un ${BEACHHEAD_TRADE.fr}, l'IA répond un nom. GetPick écrit sur ton site les réponses que l'IA lit — un clic pour le connecter, sans webmaster. Diagnostic gratuit en 2 minutes.`,
     };
   }
 
   return {
     title: `GetPick — The agent that gets ${BEACHHEAD_TRADE.en}s recommended by AI`,
-    description: `When a client looks for an ${BEACHHEAD_TRADE.en}, ChatGPT answers with a name. GetPick builds and maintains your presence where AI looks for who to recommend — off-site, zero technical. Free diagnostic in 2 minutes.`,
+    description: `When a client looks for an ${BEACHHEAD_TRADE.en}, AI answers with a name. GetPick writes the answers AI reads on your own site — one click to connect it, no webmaster. Free diagnostic in 2 minutes.`,
   };
 }
 
@@ -57,7 +57,7 @@ const STRUCTURED_DATA = {
   applicationSubCategory: "GEO agent (AI visibility / AEO)",
   operatingSystem: "Web",
   description:
-    `GetPick is the GEO agent for service professionals, ${BEACHHEAD_TRADE.en}s first. It gets you recommended by AI assistants like ChatGPT and Gemini and does the work off-site: it sends your clients' real questions to the AIs live, names the peer cited in your place, then creates and hosts your answer page, places you on the sources AI trusts, and re-tests ${RECHECK_CADENCE.en.adverb}. You never touch your own website. The work a GEO agency charges 2,000-20,000 EUR/month for, at one flat price.`,
+    `GetPick is the GEO agent for service professionals, ${BEACHHEAD_TRADE.en}s first. It works to get you recommended by AI assistants: it sends your clients' real questions live to Gemini with Google Search on, names the peer cited in your place, then writes the answers on your own site once you connect it in one click, and re-tests ${RECHECK_CADENCE.en.adverb}. No webmaster needed. The work a GEO agency charges 2,000-20,000 EUR/month for, at one flat price.`,
   audience: {
     "@type": "Audience",
     audienceType: "Service professionals and small firms (accountants, lawyers, consultants, trades)",

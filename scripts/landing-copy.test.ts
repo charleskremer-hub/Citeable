@@ -346,8 +346,8 @@ test("AC4 — parité FR/EN : les deux TL;DR portent le même nombre de phrases"
 //   - « 30 days », « never simulated », l'ancrage agence : INCHANGÉS, ce sont
 //     les affirmations qui survivent au pivot et qu'il faut continuer de tenir.
 const AC4_EXISTING_CLAIMS = {
-  en: ["€2,000 to €20,000", `€${SERVICE_PLAN_PRICE_EUR}/month`, "30 days", "never simulated", "off-site"],
-  fr: ["2 000 à 20 000", `${SERVICE_PLAN_PRICE_EUR} €/mois`, "30 jours", "jamais simulées", "hors de ton site"],
+  en: ["€2,000 to €20,000", `€${SERVICE_PLAN_PRICE_EUR}/month`, "30 days", "never simulated", "WordPress"],
+  fr: ["2 000 à 20 000", `${SERVICE_PLAN_PRICE_EUR} €/mois`, "30 jours", "jamais simulées", "WordPress"],
 } as const;
 
 for (const locale of LOCALES) {
