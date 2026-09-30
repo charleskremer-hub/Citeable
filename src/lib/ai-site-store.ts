@@ -1,5 +1,5 @@
 import { ensureAuditSchema, pool } from "@/lib/db";
-import { descriptionFromAudit, extractHomepageSignals, geminiGenerateJson, type AuditRawResults } from "@/lib/audit-engine";
+import { descriptionFromAudit, extractHomepageSignals, fetchWithHostFallback, geminiGenerateJson, type AuditRawResults } from "@/lib/audit-engine";
 import { localizeCategoryLabel } from "@/lib/i18n";
 import { cityFromPrompts } from "@/lib/hosted-answer-page";
 import {
@@ -84,8 +84,8 @@ export async function generateAiSiteAnswers(domainInput: string): Promise<boolea
   if (!row) return false;
   let siteText = "";
   try {
-    const response = await fetch(`https://${domain}`, { signal: AbortSignal.timeout(8000), headers: { "User-Agent": "Mozilla/5.0 (GetPick fiche IA)" } });
-    if (response.ok) siteText = extractHomepageSignals(await response.text());
+    const { response } = await fetchWithHostFallback(`https://${domain}/`);
+    if (response?.ok) siteText = extractHomepageSignals(await response.text());
   } catch {
     siteText = "";
   }

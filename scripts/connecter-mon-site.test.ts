@@ -152,3 +152,14 @@ test("mail au cabinet — première publication : le lien, qu'il garde la main, 
   const monthly = buildPublishedEmail({ domain: "lesbonscomptes.fr", url: "u", firstTime: false });
   assert.match(monthly.subject, /Mise à jour mensuelle/);
 });
+
+test("détection — apex muet, www répond (6 cabinets sur 19 du lot 1, 30/09)", async () => {
+  const site = await discoverSite(
+    "sofrac-troyes.fr",
+    fakeFetch({
+      "https://www.sofrac-troyes.fr/": { body: `<link rel="https://api.w.org/" href="https://www.sofrac-troyes.fr/wp-json/">` },
+      "https://www.sofrac-troyes.fr/wp-json/": { body: { authentication: { "application-passwords": { endpoints: { authorization: "https://www.sofrac-troyes.fr/wp-admin/authorize-application.php" } } } } },
+    })
+  );
+  assert.equal(site.kind, "wordpress");
+});

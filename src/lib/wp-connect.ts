@@ -70,17 +70,23 @@ export function authorizeUrlFromRestIndex(index: unknown): string | null {
 }
 
 export async function discoverSite(domain: string, fetchImpl: FetchImpl = fetch): Promise<SiteDiscovery> {
-  const start = `https://${domain}/`;
   let html = "";
-  let siteUrl = start;
-  try {
-    const response = await fetchImpl(start, { headers: { "User-Agent": UA }, redirect: "follow", signal: AbortSignal.timeout(8000) });
-    if (!response.ok) return { kind: "unreachable", siteUrl };
-    siteUrl = response.url || start;
-    html = await response.text();
-  } catch {
-    return { kind: "unreachable", siteUrl };
+  let siteUrl = `https://${domain}/`;
+  let reached = false;
+  // Apex puis www : beaucoup de sites de cabinets ne répondent que sur une des deux (30/09).
+  for (const start of [`https://${domain}/`, `https://www.${domain}/`]) {
+    try {
+      const response = await fetchImpl(start, { headers: { "User-Agent": UA }, redirect: "follow", signal: AbortSignal.timeout(8000) });
+      if (!response.ok) continue;
+      siteUrl = response.url || start;
+      html = await response.text();
+      reached = true;
+      break;
+    } catch {
+      /* variante suivante */
+    }
   }
+  if (!reached) return { kind: "unreachable", siteUrl };
   if (/static\.wixstatic\.com|content="Wix\.com/i.test(html)) return { kind: "wix", siteUrl };
   const restUrl = wpRestUrlFromHtml(html, siteUrl);
   if (!restUrl) return { kind: "other", siteUrl };

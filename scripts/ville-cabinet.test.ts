@@ -69,3 +69,11 @@ test("ville composée lue en entier sur la home (« Bourg-en-Bresse », pas « B
   assert.equal(inferLocationFromHomepage("37300 Joué-lès-Tours"), "Joué-lès-Tours");
   assert.equal(inferLocationFromHomepage("17000 La Rochelle"), "La Rochelle");
 });
+
+test("catégorie — toutes les variantes comptables ramenées au cabinet (30/09 : « accounting services » ⇒ questions nationales interdites)", async () => {
+  const { canonicalCategory } = await import("@/lib/audit-engine");
+  for (const raw of ["accounting services", "online accounting services", "Accounting firm", "bookkeeping", "cabinet d'expertise comptable"]) {
+    assert.equal(canonicalCategory(raw), "accounting firm", raw);
+  }
+  assert.equal(canonicalCategory("fashion jewelry"), "fashion jewelry");
+});

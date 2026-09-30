@@ -30,7 +30,7 @@ const FREE_AUDIT_DOMAIN_DAILY_LIMIT = 1;
 // le cache free-Gemini (findFreshFreeGeminiAudit) — sans lui, un re-audit d'un
 // domaine déjà scanné rejouait les anciennes questions. Toujours bumper cette
 // version quand la génération de prompts ou l'inférence de catégorie change.
-const BUYER_PROMPT_SET_VERSION = "niche_local_prompts_v5_ville_code_postal";
+const BUYER_PROMPT_SET_VERSION = "niche_local_prompts_v6_www_categorie";
 // Modèle ÉPINGLÉ — jamais un alias `…-latest`.
 //
 // Deux raisons, toutes deux MESURÉES le 20/09/2026, pas déduites :
@@ -3119,7 +3119,24 @@ async function withCabinetLocation(category: string, signals: string, html: stri
   return location ? `${location} · ${signals}` : signals;
 }
 
+/**
+ * Toutes les variantes « comptables » renvoyées par l'IA (« accounting services »,
+ * « online accounting services », « bookkeeping »…) ramenées à la catégorie ICP
+ * « accounting firm ». Constaté le 30/09 : 5 cabinets classés « accounting
+ * services » recevaient des questions génériques nationales (« tarif moyen »,
+ * « comment choisir ») — les questions INTERDITES pour un cabinet local.
+ * Le caractère « en ligne » reste porté par `isOnlineServiceFirm`.
+ */
+export function canonicalCategory(category: string): string {
+  return /\baccount|bookkeep|comptab|expert[-\s]?compt/i.test(category) ? "accounting firm" : category;
+}
+
 async function inferCategory(brandName: string, websiteUrl: string, fallbackCheck: AuditCheckResult) {
+  const inferred = await inferCategoryRaw(brandName, websiteUrl, fallbackCheck);
+  return { ...inferred, category: canonicalCategory(inferred.category) };
+}
+
+async function inferCategoryRaw(brandName: string, websiteUrl: string, fallbackCheck: AuditCheckResult) {
   const domain = domainFromWebsite(websiteUrl);
   const fallbackText = `${fallbackCheck.detail} ${fallbackCheck.evidence ?? ""}`;
   let signals = "";
@@ -3128,7 +3145,13 @@ async function inferCategory(brandName: string, websiteUrl: string, fallbackChec
   let platform: DetectedPlatform = "inconnu";
 
   try {
-    const response = await withTimeout(normalizeWebsiteUrl(websiteUrl));
+    // Apex OU www : mesuré le 30/09, 6 cabinets sur 19 du lot 1 ne répondent
+    // QUE sur www (apex : connexion coupée ou certificat faux). Sans bascule, la
+    // catégorie venait de l'IA à l'aveugle — VENCEA classé « bijoux fantaisie »,
+    // Fiaud-Laporte « alimentation » — et le rapport était faux de bout en bout.
+    const fetched = await fetchWithHostFallback(normalizeWebsiteUrl(websiteUrl));
+    const response = fetched.response;
+    if (!response) throw new Error(fetched.error ?? "site injoignable");
 
     if (response.ok) {
       const html = await response.text();
@@ -4082,7 +4105,9 @@ async function checkSearchVisibility(brandName: string, domain: string): Promise
   };
 }
 async function checkSchemaMarkup(websiteUrl: string): Promise<AuditCheckResult> {
-  const response = await withTimeout(normalizeWebsiteUrl(websiteUrl));
+  const fetched = await fetchWithHostFallback(normalizeWebsiteUrl(websiteUrl));
+  if (!fetched.response) throw new Error(fetched.error ?? "site injoignable");
+  const response = fetched.response;
 
   if (!response.ok) {
     return {
