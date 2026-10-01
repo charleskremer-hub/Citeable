@@ -30,7 +30,7 @@ const FREE_AUDIT_DOMAIN_DAILY_LIMIT = 1;
 // le cache free-Gemini (findFreshFreeGeminiAudit) — sans lui, un re-audit d'un
 // domaine déjà scanné rejouait les anciennes questions. Toujours bumper cette
 // version quand la génération de prompts ou l'inférence de catégorie change.
-const BUYER_PROMPT_SET_VERSION = "niche_local_prompts_v6_www_categorie";
+const BUYER_PROMPT_SET_VERSION = "niche_local_prompts_v7_entites_html";
 // Modèle ÉPINGLÉ — jamais un alias `…-latest`.
 //
 // Deux raisons, toutes deux MESURÉES le 20/09/2026, pas déduites :
@@ -2601,13 +2601,36 @@ function stripNonContentHtml(html: string) {
     .replace(/<(?:nav|footer|header|aside)[^>]*>[\s\S]*?<\/(?:nav|footer|header|aside)>/gi, " ");
 }
 
-function decodeHtmlEntities(value: string) {
+/** Entités nommées des gabarits de cabinets (« Expert comptable &agrave; Belfort »). */
+const NAMED_ENTITIES: Record<string, string> = {
+  agrave: "à", acirc: "â", auml: "ä", ccedil: "ç", eacute: "é", egrave: "è", ecirc: "ê", euml: "ë",
+  icirc: "î", iuml: "ï", ocirc: "ô", ouml: "ö", ugrave: "ù", ucirc: "û", uuml: "ü", oelig: "œ",
+  Agrave: "À", Acirc: "Â", Ccedil: "Ç", Eacute: "É", Egrave: "È", Ecirc: "Ê", Icirc: "Î", Ocirc: "Ô", Ucirc: "Û", OElig: "Œ",
+  rsquo: "’", lsquo: "‘", laquo: "«", raquo: "»", hellip: "…", euro: "€", deg: "°",
+};
+
+/**
+ * 01/10 : « 90000&#160;Belfort », « Expert comptable &agrave; Belfort » —
+ * les gabarits Les Echos Publishing encodent espaces et accents. Non décodés,
+ * le code postal n'était plus suivi d'un nom : VENCEA et Mon Espace Compta
+ * sortaient SANS VILLE (questions nationales, audits invalides).
+ */
+export function decodeHtmlEntities(value: string) {
   return value
-    .replace(/&amp;/gi, "&")
     .replace(/&quot;/gi, '"')
     .replace(/&#39;|&apos;/gi, "'")
     .replace(/&nbsp;/gi, " ")
-    .replace(/&mdash;|&ndash;/gi, "-");
+    .replace(/&mdash;|&ndash;/gi, "-")
+    .replace(/&#(\d{2,6});/g, (_, code: string) => safeCodePoint(Number(code)))
+    .replace(/&#x([0-9a-f]{2,5});/gi, (_, code: string) => safeCodePoint(parseInt(code, 16)))
+    .replace(/&([a-z]{2,6});/gi, (entity: string, name: string) => NAMED_ENTITIES[name] ?? entity)
+    .replace(/&amp;/gi, "&")
+    .replace(/\u00a0/g, " ");
+}
+
+function safeCodePoint(code: number) {
+  if (!Number.isFinite(code) || code < 32 || code > 0x10ffff) return " ";
+  return code === 160 ? " " : String.fromCodePoint(code);
 }
 
 function compactContentText(value: string) {
@@ -2722,6 +2745,9 @@ function cleanCategoryText(value: string) {
 export function categoryFromHomepageText(text: string, domain: string) {
   const lower = text.toLowerCase();
   const phraseRules: Array<[RegExp, string]> = [
+    // Un site qui se dit « expert-comptable » EST un cabinet comptable, quels que
+    // soient les autres mots de la page (règle placée en tête le 01/10).
+    [/expert[-\s]?comptables?|expertise comptable|cabinet comptable/, "accounting firm"],
     [/\bbombas\b|\bsocks?\b|chaussettes?|hosiery|merino socks?|compression socks?|dress socks?|ankle socks?|crew socks?/, "socks and apparel"],
     [/\bosprey\b|backpacks?|rucksacks?|daypacks?|travel packs?|hiking packs?|outdoor gear|hydration packs?|luggage|packfinder|trekking/, "backpacks and outdoor gear"],
     [/\ballbirds\b|sustainable sneakers?|eco-?friendly shoes?|wool shoes?|tree runners?|running shoes?|walking shoes?|sneakers?|footwear|chaussures?/, "DTC footwear brand"],
@@ -2731,7 +2757,9 @@ export function categoryFromHomepageText(text: string, domain: string) {
     [/mattress(?:es)?|bedding|\bduvet\b|\bpillows?\b|\bliterie\b/, "mattress and bedding brand"],
     [/apparel|clothing|fashion|garments?|menswear|womenswear/, "fashion brand"],
     [/skin care|skincare|beauty|cosmetics/, "beauty brand"],
-    [/coffee|tea|beverage|drinks?|snacks?|food & beverage|food and beverage/, "food & beverage"],
+    // Bornes de mot : « Châteauroux » contient « tea » — Fiaud-Laporte, cabinet
+    // comptable de Saint-Maur, sortait « food & beverage » (01/10).
+    [/\bcoffee\b|\bteas?\b|beverages?|\bdrinks?\b|\bsnacks?\b|food & beverage|food and beverage/, "food & beverage"],
     [/plombier|plumbing|leak repair|chauffagiste/, "plumber"],
     [/[ée]lectricien|electrician|electrical contractor/, "electrician"],
     [/dentiste|dental|orthodont/, "dentist"],
