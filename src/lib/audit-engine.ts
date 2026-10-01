@@ -11,7 +11,7 @@ import { isWebSearchConfigured, runWebSearch } from "./web-search";
 import { isMailConfigured, sendMail } from "./mailer";
 import { renderEmail, quoted, type EmailContent } from "./email-template";
 import { verdictCompetitors } from "./competitor-floor";
-import { ANONYMOUS_EMAIL_DOMAIN } from "./anonymous-email";
+import { ANONYMOUS_EMAIL_DOMAIN, isAnonymousEmail } from "./anonymous-email";
 import { entitlementForEmail } from "./subscriptions";
 import { trafficClassOrUnknown, type TrafficClass } from "./traffic-filter";
 import { resolveBuyerIntentPromptSet, loadPromptSetForAudit, persistPromptSetAfterAudit, detectPromptSetAnomaly, findMonitoredBrandId, loadStoredPromptSet, saveStoredPromptSet, type StoredPromptSet } from "./stored-prompts";
@@ -5406,6 +5406,64 @@ export async function createCachedFreeAuditForLead(args: {
 }
 
 /**
+ * ENVOI DU RAPPORT APRÈS RÉCLAMATION (bug prod du 01/10/2026, audit
+ * 9591fb6e). Un audit lancé ANONYMEMENT tente son envoi en fin de run vers
+ * `anon-…@anonymous.citeable.invalid` : supprimé (normal), MAIS le verrou
+ * `emailSendStartedAt` est posé et `emailError = "Suppressed: internal/test
+ * domain."` reste en base. Quand le visiteur donne ensuite son adresse via
+ * /api/claim-audit, la route ne faisait que rattacher l'email : aucun envoi,
+ * et la page affichait « On n'a pas réussi à t'envoyer ce rapport » avec
+ * l'erreur de l'adresse anonyme. Le demandeur ne recevait jamais rien.
+ *
+ * Ici : on relâche le verrou hérité du run anonyme (jamais si le rapport est
+ * déjà parti), on envoie à la vraie adresse, on écrit le vrai résultat, et on
+ * programme la séquence J+1/J+3 (qui n'avait pas pu l'être en anonyme).
+ * Le garde anti-doublon reste celui de `claimEmailDelivery`
+ * (adresse + domaine + étape + jour).
+ */
+export async function deliverClaimedAuditEmail(auditId: string): Promise<{ sent: boolean; error?: string }> {
+  const rowResult = await pool.query<AuditRow>(`SELECT * FROM audits WHERE id = $1`, [auditId]);
+  const row = rowResult.rows[0];
+
+  if (!row) return { sent: false, error: "Audit not found." };
+  if (isAnonymousEmail(row.email)) return { sent: false, error: "Audit has no real recipient yet." };
+  if (row.score === null || row.score === undefined) {
+    // Run encore en cours : l'envoi de fin de run partira vers l'adresse
+    // réclamée (runQueuedAudit relit `audits.email`).
+    return { sent: false, error: "Audit not completed yet; email will be sent at completion." };
+  }
+  if (row.raw_results?.emailSent === true) return { sent: true };
+
+  await pool.query(
+    `UPDATE audits
+     SET raw_results = (COALESCE(raw_results, '{}'::jsonb) - 'emailSendStartedAt' - 'emailError') || '{"emailSent": false}'::jsonb
+     WHERE id = $1`,
+    [auditId]
+  );
+
+  const report = reportFromRow(row);
+  const locale = (row.raw_results?.locale ?? "fr") as Locale;
+  const emailResult = await sendAuditEmail(row.email, row.brand_name, row.website_url, report, locale);
+
+  await pool.query(
+    `UPDATE audits
+     SET raw_results = COALESCE(raw_results, '{}'::jsonb) || $2::jsonb
+     WHERE id = $1`,
+    [auditId, { emailSent: emailResult.sent, emailError: emailResult.error ?? null }]
+  );
+
+  if (emailResult.sent) {
+    try {
+      await schedulePostAuditSequence(auditId);
+    } catch (error) {
+      console.error(`[getpick] post-audit sequence scheduling failed for claimed audit ${auditId}`, error);
+    }
+  }
+
+  return emailResult;
+}
+
+/**
  * Le nom du moteur, tel qu'un humain le lit.
  *
  * Le repli valait `"AI"`, ce qui produisait dans un email « AI recommande
@@ -6230,7 +6288,19 @@ export async function runAudit(args: RunAuditParams): Promise<AuditReport> {
     promptSet,
     promptSetSource,
   };
-  const emailResult = await sendAuditEmail(args.email, args.brandName, args.websiteUrl, reportWithoutEmail, auditLocale);
+  // Relire l'adresse AU MOMENT de l'envoi : un audit anonyme peut avoir été
+  // réclamé (/api/claim-audit) pendant le run. `args.email` serait encore
+  // l'adresse .invalid — envoi supprimé, demandeur jamais servi.
+  let recipientEmail = args.email;
+  if (args.auditId) {
+    try {
+      const current = await pool.query<{ email: string }>(`SELECT email FROM audits WHERE id = $1`, [args.auditId]);
+      if (current.rows[0]?.email) recipientEmail = current.rows[0].email;
+    } catch {
+      // base momentanément indisponible : on garde l'adresse du lancement
+    }
+  }
+  const emailResult = await sendAuditEmail(recipientEmail, args.brandName, args.websiteUrl, reportWithoutEmail, auditLocale);
 
   return {
     ...reportWithoutEmail,

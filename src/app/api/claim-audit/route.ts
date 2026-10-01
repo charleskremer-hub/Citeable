@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureAuditSchema, pool } from "@/lib/db";
-import { isAnonymousEmail } from "@/lib/audit-engine";
+import { deliverClaimedAuditEmail, isAnonymousEmail } from "@/lib/audit-engine";
 import { recordFunnelEvent } from "@/lib/funnel";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 /**
  * Rattache un email à un audit lancé anonymement.
@@ -30,7 +31,13 @@ export async function POST(req: NextRequest) {
     if (!audit) return NextResponse.json({ error: "Audit not found." }, { status: 404 });
 
     // Audit déjà nominatif : on ne l'écrase pas, on répond OK pour rester idempotent.
+    // MÊME adresse redonnée : on (re)tente l'envoi si le rapport n'est jamais
+    // parti — c'est le rattrapage des audits réclamés avant le fix du 01/10.
     if (!isAnonymousEmail(audit.email)) {
+      if (audit.email.trim().toLowerCase() === email) {
+        const delivery = await deliverClaimedAuditEmail(auditId);
+        return NextResponse.json({ ok: true, already_claimed: true, email_sent: delivery.sent, email_error: delivery.error ?? null }, { status: 200 });
+      }
       return NextResponse.json({ ok: true, already_claimed: true }, { status: 200 });
     }
 
@@ -53,7 +60,15 @@ export async function POST(req: NextRequest) {
       dedupeKey: `email_captured:${auditId}`,
     });
 
-    return NextResponse.json({ ok: true, already_claimed: false }, { status: 200 });
+    // Le rapport part MAINTENANT vers l'adresse donnée. Sans ça, seul le run
+    // anonyme avait tenté un envoi (vers une adresse .invalid, supprimé) et le
+    // demandeur ne recevait jamais rien.
+    const delivery = await deliverClaimedAuditEmail(auditId);
+    if (!delivery.sent) {
+      console.error(`[getpick] claimed audit ${auditId}: report email not sent — ${delivery.error}`);
+    }
+
+    return NextResponse.json({ ok: true, already_claimed: false, email_sent: delivery.sent, email_error: delivery.error ?? null }, { status: 200 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not claim this audit.";
     return NextResponse.json({ error: message }, { status: 400 });
