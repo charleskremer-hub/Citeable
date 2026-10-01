@@ -11,7 +11,7 @@ import { NextResponse } from "next/server";
 // Lien de réservation « 15 minute meeting » de Charles sur Gumdrop/Supercal
 // (01/10). NE PAS remettre info.gumdrop.ai/calendly : c'est la page
 // d'inscription Supercal, pas un agenda.
-export const RDV_TARGET = "https://gumdrop.ai/charleskremer/15";
+export const RDV_TARGET = "https://gumdrop.ai/charlesgetpick/15";
 
 export function GET() {
   return NextResponse.redirect(RDV_TARGET, 307);
