@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ensureAuditSchema, pool } from "@/lib/db";
+import { pool } from "@/lib/db";
 import { localeFromUnknown } from "@/lib/i18n";
 
 /**
@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const robots = { index: false, follow: false };
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return { title: "GetPick", robots };
   try {
-    await ensureAuditSchema();
+    // Pas de migration ici : lecture seule, la page s'en charge (bug 01/10).
     const row = (await pool.query<{ brand_name: string; locale: string | null }>(`SELECT brand_name, raw_results->>'locale' AS locale FROM audits WHERE id = $1`, [id])).rows[0];
     if (!row) return { title: "GetPick", robots };
     const fr = localeFromUnknown(row.locale ?? "fr") === "fr";

@@ -54,7 +54,34 @@ async function createIndexIfNotExists(sql: string) {
   }
 }
 
-export async function ensureAuditSchema() {
+/**
+ * MIGRATIONS : UNE FOIS PAR INSTANCE, JAMAIS EN CONCURRENCE (bug prod 01/10/2026).
+ *
+ * `ensureAuditSchema` était rejouée à CHAQUE requête (≈ 40 requêtes DDL). Le 01/10, le
+ * titre du rapport (`generateMetadata`) l'a appelée EN PARALLÈLE du rendu de la
+ * page : deux salves de CREATE/ALTER concurrentes → erreurs Postgres aléatoires
+ * (« tuple concurrently updated »…) → ~23 % de 500 mesurés sur /audit/[id].
+ * Désormais : une promesse unique par instance ; en cas d'échec elle est
+ * oubliée pour que la requête suivante retente.
+ */
+let schemaReady: Promise<void> | null = null;
+
+export function ensureAuditSchema(): Promise<void> {
+  if (!schemaReady) {
+    schemaReady = runAuditSchemaMigrations().catch((error) => {
+      schemaReady = null;
+      throw error;
+    });
+  }
+  return schemaReady;
+}
+
+/** Tests uniquement : oublie la migration mémorisée pour pouvoir la rejouer. */
+export function resetAuditSchemaForTests() {
+  schemaReady = null;
+}
+
+async function runAuditSchemaMigrations() {
   await pool.query(`CREATE EXTENSION IF NOT EXISTS pgcrypto`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS email_captures (

@@ -43,7 +43,12 @@ class FakePool {
 
 mock.module(pgUrl, { namedExports: { Pool: FakePool } });
 
-const { ensureAuditSchema } = await import("@/lib/db");
+const { ensureAuditSchema: ensureAuditSchemaOnce, resetAuditSchemaForTests } = await import("@/lib/db");
+// Chaque scénario rejoue la migration : on oublie la mémorisation par instance.
+const ensureAuditSchema = () => {
+  resetAuditSchemaForTests();
+  return ensureAuditSchemaOnce();
+};
 
 function reset() {
   executed.length = 0;

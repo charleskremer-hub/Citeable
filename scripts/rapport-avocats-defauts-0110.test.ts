@@ -92,3 +92,12 @@ test("llms.txt — une page HTML servie en 200 (soft 404) n'est pas un llms.txt"
   assert.equal(isRealLlmsTxt("   \n"), false);
   assert.equal(isRealLlmsTxt(null), false);
 });
+
+test("Migrations : une seule fois par instance, jamais depuis le titre du rapport (500 aléatoires du 01/10)", () => {
+  const db = readFileSync(resolve(import.meta.dirname, "../src/lib/db.ts"), "utf8");
+  assert.match(db, /let schemaReady: Promise<void> \| null = null;/);
+  assert.match(db, /if \(!schemaReady\)/);
+  assert.match(db, /schemaReady = null;\s*throw error;/, "un échec doit pouvoir être retenté");
+  const meta = readFileSync(resolve(import.meta.dirname, "../src/app/audit/[id]/report-metadata.ts"), "utf8");
+  assert.doesNotMatch(meta, /ensureAuditSchema\(/);
+});
