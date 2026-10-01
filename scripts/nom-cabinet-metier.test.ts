@@ -30,3 +30,15 @@ test("un nom reduit a des mots de metier ne matche rien", () => {
   assert.equal(professionalCoreName("Cabinet"), "");
   assert.equal(isAuditedBrandName("Cabinet d'avocats", "Avocats Associés", "x-avocats.fr"), false);
 });
+
+import { categoryFromHomepageText } from "../src/lib/audit-engine";
+
+test("categorie : un site d'avocats qui cite un expert-comptable reste un cabinet d'avocats", () => {
+  const jm = "Cabinet d'avocats droit du travail Bordeaux. Nos avocats vous accompagnent. Avocat en droit social, avocats associés. En lien avec votre expert-comptable.";
+  assert.equal(categoryFromHomepageText(jm, "jm-avocats.com"), "law firm");
+});
+
+test("categorie : un expert-comptable qui cite un avocat partenaire reste comptable", () => {
+  const ec = "Cabinet d'expertise comptable à Lyon. Votre expert-comptable pour TPE. Experts-comptables associés, en lien avec votre avocat.";
+  assert.equal(categoryFromHomepageText(ec, "cabinet-ec.fr"), "accounting firm");
+});

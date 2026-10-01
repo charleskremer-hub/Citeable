@@ -106,3 +106,16 @@ test("sans contre-verification, une seule plateforme (rapports d'avant inchanges
   const rows = questionBoardRows([{ prompt: "q ?", available: true, brandMentioned: false, competitors: [], surfaces: [surface({ kind: "ai_engine", engine: "Gemini" })] }] as never, "x.fr", "X");
   assert.equal(platformCoverage(rows, "Gemini").length, 1);
 });
+
+test("un 429 est reessaye une fois avant d'abandonner", async () => {
+  process.env.OPENAI_API_KEY = "test";
+  let calls = 0;
+  const fakeFetch = (async () => {
+    calls += 1;
+    return calls === 1 ? new Response("{}", { status: 429 }) : new Response(JSON.stringify(responsesBody), { status: 200 });
+  }) as unknown as typeof fetch;
+  const provider = createChatGPTSearchProvider(fakeFetch, async () => '{"recommended_brands":["Cabinet Merisier"]}');
+  const answer = await provider.ask("q ?", { brandName: "X", domain: "x.fr" });
+  assert.equal(calls, 2);
+  assert.ok(!("error" in answer));
+});

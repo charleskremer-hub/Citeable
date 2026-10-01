@@ -30,7 +30,7 @@ const FREE_AUDIT_DOMAIN_DAILY_LIMIT = 1;
 // le cache free-Gemini (findFreshFreeGeminiAudit) — sans lui, un re-audit d'un
 // domaine déjà scanné rejouait les anciennes questions. Toujours bumper cette
 // version quand la génération de prompts ou l'inférence de catégorie change.
-const BUYER_PROMPT_SET_VERSION = "niche_local_prompts_v7_entites_html";
+const BUYER_PROMPT_SET_VERSION = "niche_local_prompts_v8_avocat_majorite";
 // Modèle ÉPINGLÉ — jamais un alias `…-latest`.
 //
 // Deux raisons, toutes deux MESURÉES le 20/09/2026, pas déduites :
@@ -2075,12 +2075,21 @@ export function createChatGPTSearchProvider(fetchImpl: typeof fetch = fetch, ext
     negativeLabel: "ChatGPT ne te cite pas",
     async ask(question: string) {
       if (!apiKey) throw new Error(OPENAI_UNAVAILABLE);
-      const response = await fetchImpl("https://api.openai.com/v1/responses", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify(chatGPTSearchBody(model, question)),
-        signal: AbortSignal.timeout(CHATGPT_SEARCH_TIMEOUT_MS),
-      });
+      // Un 429 est réessayé UNE fois (01/10 : lot de 28 diagnostics avocats
+      // lancés en rafale, 33 contre-vérifications perdues sur 429 alors que le
+      // compte avait du crédit — plafond de débit, pas de solde).
+      const call = () =>
+        fetchImpl("https://api.openai.com/v1/responses", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify(chatGPTSearchBody(model, question)),
+          signal: AbortSignal.timeout(CHATGPT_SEARCH_TIMEOUT_MS),
+        });
+      let response = await call();
+      if (response.status === 429) {
+        await delay(1_500 + Math.floor(Math.random() * 1_500));
+        response = await call();
+      }
       const parsed = safeJsonParse<OpenAIResponsesOutput>(await response.text(), {});
       if (!response.ok) {
         return { error: response.status === 429 ? "rate_limit" : "openai_error", status: response.status, message: (parsed.error?.message ?? `HTTP ${response.status}`).slice(0, 200) };
@@ -2854,6 +2863,13 @@ function cleanCategoryText(value: string) {
  *  reseau : les trois `<title>` mesures en production sont des fixtures. */
 export function categoryFromHomepageText(text: string, domain: string) {
   const lower = text.toLowerCase();
+  // Avocat vs expert-comptable (01/10) : la règle comptable est en tête, mais un
+  // cabinet d'avocats cite souvent « expert-comptable » (partenaires, clients).
+  // Mesuré : jm-avocats.com, 38 « avocat(s) » pour 1 « expert-comptable »,
+  // classé comptable. On tranche à la MAJORITÉ quand les deux métiers sont cités.
+  const lawyerHits = (lower.match(/\bavocat(?:e)?s?\b/g) ?? []).length;
+  const accountantHits = (lower.match(/expert[-\s]?comptables?|expertise comptable|cabinet comptable/g) ?? []).length;
+  if (lawyerHits > 0 && lawyerHits > accountantHits * 2) return "law firm";
   const phraseRules: Array<[RegExp, string]> = [
     // Un site qui se dit « expert-comptable » EST un cabinet comptable, quels que
     // soient les autres mots de la page (règle placée en tête le 01/10).
@@ -4712,7 +4728,7 @@ async function probeBuyerIntentPrompts(prompts: string[], brandName: string, dom
         : probeSupplementarySearch(prompt, brandName, domain)
     ),
     crossCheck
-      ? mapWithConcurrency(prompts, 12, async (prompt): Promise<BuyerIntentSurfaceResult> => ({ ...(await probeAnswerEngine(prompt, brandName, domain, crossCheck)), kind: "cross_check" }))
+      ? mapWithConcurrency(prompts, PROMPT_CONCURRENCY, async (prompt): Promise<BuyerIntentSurfaceResult> => ({ ...(await probeAnswerEngine(prompt, brandName, domain, crossCheck)), kind: "cross_check" }))
       : Promise.resolve([] as BuyerIntentSurfaceResult[]),
   ]);
 
