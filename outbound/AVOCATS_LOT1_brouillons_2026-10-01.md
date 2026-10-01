@@ -28,7 +28,7 @@ En un clic, sans webmaster, GetPick publie sur votre site les réponses à ces q
 Charles — GetPick
 hello@getpick.ai
 
-Vous ne souhaitez plus recevoir ce type de message ? Répondez « stop ».
+GetPick est un service de KINZE SAS, 30 rue Juliette Lamber, 75017 Paris. Pourquoi ce message et vos droits : getpick.ai/prospection. Pour ne plus rien recevoir, répondez « stop ».
 ```
 
 
@@ -57,7 +57,7 @@ En un clic, sans webmaster, GetPick publie sur votre site les réponses à ces q
 Charles — GetPick
 hello@getpick.ai
 
-Vous ne souhaitez plus recevoir ce type de message ? Répondez « stop ».
+GetPick est un service de KINZE SAS, 30 rue Juliette Lamber, 75017 Paris. Pourquoi ce message et vos droits : getpick.ai/prospection. Pour ne plus rien recevoir, répondez « stop ».
 ```
 
 
@@ -86,7 +86,7 @@ En un clic, sans webmaster, GetPick publie sur votre site les réponses à ces q
 Charles — GetPick
 hello@getpick.ai
 
-Vous ne souhaitez plus recevoir ce type de message ? Répondez « stop ».
+GetPick est un service de KINZE SAS, 30 rue Juliette Lamber, 75017 Paris. Pourquoi ce message et vos droits : getpick.ai/prospection. Pour ne plus rien recevoir, répondez « stop ».
 ```
 
 
@@ -115,7 +115,7 @@ En un clic, sans webmaster, GetPick publie sur votre site les réponses à ces q
 Charles — GetPick
 hello@getpick.ai
 
-Vous ne souhaitez plus recevoir ce type de message ? Répondez « stop ».
+GetPick est un service de KINZE SAS, 30 rue Juliette Lamber, 75017 Paris. Pourquoi ce message et vos droits : getpick.ai/prospection. Pour ne plus rien recevoir, répondez « stop ».
 ```
 
 
@@ -144,7 +144,7 @@ En un clic, sans webmaster, GetPick publie sur votre site les réponses à ces q
 Charles — GetPick
 hello@getpick.ai
 
-Vous ne souhaitez plus recevoir ce type de message ? Répondez « stop ».
+GetPick est un service de KINZE SAS, 30 rue Juliette Lamber, 75017 Paris. Pourquoi ce message et vos droits : getpick.ai/prospection. Pour ne plus rien recevoir, répondez « stop ».
 ```
 
 
@@ -173,7 +173,7 @@ En un clic, sans webmaster, GetPick publie sur votre site les réponses à ces q
 Charles — GetPick
 hello@getpick.ai
 
-Vous ne souhaitez plus recevoir ce type de message ? Répondez « stop ».
+GetPick est un service de KINZE SAS, 30 rue Juliette Lamber, 75017 Paris. Pourquoi ce message et vos droits : getpick.ai/prospection. Pour ne plus rien recevoir, répondez « stop ».
 ```
 
 
@@ -202,7 +202,7 @@ En un clic, sans webmaster, GetPick publie sur votre site les réponses à ces q
 Charles — GetPick
 hello@getpick.ai
 
-Vous ne souhaitez plus recevoir ce type de message ? Répondez « stop ».
+GetPick est un service de KINZE SAS, 30 rue Juliette Lamber, 75017 Paris. Pourquoi ce message et vos droits : getpick.ai/prospection. Pour ne plus rien recevoir, répondez « stop ».
 ```
 
 
@@ -231,7 +231,7 @@ En un clic, sans webmaster, GetPick publie sur votre site les réponses à ces q
 Charles — GetPick
 hello@getpick.ai
 
-Vous ne souhaitez plus recevoir ce type de message ? Répondez « stop ».
+GetPick est un service de KINZE SAS, 30 rue Juliette Lamber, 75017 Paris. Pourquoi ce message et vos droits : getpick.ai/prospection. Pour ne plus rien recevoir, répondez « stop ».
 ```
 
 
@@ -260,7 +260,7 @@ En un clic, sans webmaster, GetPick publie sur votre site les réponses à ces q
 Charles — GetPick
 hello@getpick.ai
 
-Vous ne souhaitez plus recevoir ce type de message ? Répondez « stop ».
+GetPick est un service de KINZE SAS, 30 rue Juliette Lamber, 75017 Paris. Pourquoi ce message et vos droits : getpick.ai/prospection. Pour ne plus rien recevoir, répondez « stop ».
 ```
 
 
@@ -289,7 +289,7 @@ En un clic, sans webmaster, GetPick publie sur votre site les réponses à ces q
 Charles — GetPick
 hello@getpick.ai
 
-Vous ne souhaitez plus recevoir ce type de message ? Répondez « stop ».
+GetPick est un service de KINZE SAS, 30 rue Juliette Lamber, 75017 Paris. Pourquoi ce message et vos droits : getpick.ai/prospection. Pour ne plus rien recevoir, répondez « stop ».
 ```
 
 
@@ -318,7 +318,7 @@ En un clic, sans webmaster, GetPick publie sur votre site les réponses à ces q
 Charles — GetPick
 hello@getpick.ai
 
-Vous ne souhaitez plus recevoir ce type de message ? Répondez « stop ».
+GetPick est un service de KINZE SAS, 30 rue Juliette Lamber, 75017 Paris. Pourquoi ce message et vos droits : getpick.ai/prospection. Pour ne plus rien recevoir, répondez « stop ».
 ```
 
 
@@ -347,7 +347,7 @@ GetPick écrit les réponses à ces questions à partir des seules informations 
 Charles — GetPick
 hello@getpick.ai
 
-Vous ne souhaitez plus recevoir ce type de message ? Répondez « stop ».
+GetPick est un service de KINZE SAS, 30 rue Juliette Lamber, 75017 Paris. Pourquoi ce message et vos droits : getpick.ai/prospection. Pour ne plus rien recevoir, répondez « stop ».
 ```
 
 
@@ -378,7 +378,7 @@ GetPick écrit les réponses à ces questions à partir des seules informations 
 Charles — GetPick
 hello@getpick.ai
 
-Vous ne souhaitez plus recevoir ce type de message ? Répondez « stop ».
+GetPick est un service de KINZE SAS, 30 rue Juliette Lamber, 75017 Paris. Pourquoi ce message et vos droits : getpick.ai/prospection. Pour ne plus rien recevoir, répondez « stop ».
 ```
 
 
@@ -407,7 +407,7 @@ GetPick écrit les réponses à ces questions à partir des seules informations 
 Charles — GetPick
 hello@getpick.ai
 
-Vous ne souhaitez plus recevoir ce type de message ? Répondez « stop ».
+GetPick est un service de KINZE SAS, 30 rue Juliette Lamber, 75017 Paris. Pourquoi ce message et vos droits : getpick.ai/prospection. Pour ne plus rien recevoir, répondez « stop ».
 ```
 
 
@@ -436,7 +436,7 @@ GetPick écrit les réponses à ces questions à partir des seules informations 
 Charles — GetPick
 hello@getpick.ai
 
-Vous ne souhaitez plus recevoir ce type de message ? Répondez « stop ».
+GetPick est un service de KINZE SAS, 30 rue Juliette Lamber, 75017 Paris. Pourquoi ce message et vos droits : getpick.ai/prospection. Pour ne plus rien recevoir, répondez « stop ».
 ```
 
 
@@ -465,7 +465,7 @@ GetPick écrit les réponses à ces questions à partir des seules informations 
 Charles — GetPick
 hello@getpick.ai
 
-Vous ne souhaitez plus recevoir ce type de message ? Répondez « stop ».
+GetPick est un service de KINZE SAS, 30 rue Juliette Lamber, 75017 Paris. Pourquoi ce message et vos droits : getpick.ai/prospection. Pour ne plus rien recevoir, répondez « stop ».
 ```
 
 
@@ -494,7 +494,7 @@ GetPick écrit les réponses à ces questions à partir des seules informations 
 Charles — GetPick
 hello@getpick.ai
 
-Vous ne souhaitez plus recevoir ce type de message ? Répondez « stop ».
+GetPick est un service de KINZE SAS, 30 rue Juliette Lamber, 75017 Paris. Pourquoi ce message et vos droits : getpick.ai/prospection. Pour ne plus rien recevoir, répondez « stop ».
 ```
 
 
@@ -523,7 +523,7 @@ GetPick écrit les réponses à ces questions à partir des seules informations 
 Charles — GetPick
 hello@getpick.ai
 
-Vous ne souhaitez plus recevoir ce type de message ? Répondez « stop ».
+GetPick est un service de KINZE SAS, 30 rue Juliette Lamber, 75017 Paris. Pourquoi ce message et vos droits : getpick.ai/prospection. Pour ne plus rien recevoir, répondez « stop ».
 ```
 
 
@@ -552,7 +552,7 @@ GetPick écrit les réponses à ces questions à partir des seules informations 
 Charles — GetPick
 hello@getpick.ai
 
-Vous ne souhaitez plus recevoir ce type de message ? Répondez « stop ».
+GetPick est un service de KINZE SAS, 30 rue Juliette Lamber, 75017 Paris. Pourquoi ce message et vos droits : getpick.ai/prospection. Pour ne plus rien recevoir, répondez « stop ».
 ```
 
 
@@ -581,7 +581,7 @@ GetPick écrit les réponses à ces questions à partir des seules informations 
 Charles — GetPick
 hello@getpick.ai
 
-Vous ne souhaitez plus recevoir ce type de message ? Répondez « stop ».
+GetPick est un service de KINZE SAS, 30 rue Juliette Lamber, 75017 Paris. Pourquoi ce message et vos droits : getpick.ai/prospection. Pour ne plus rien recevoir, répondez « stop ».
 ```
 
 
@@ -610,5 +610,5 @@ GetPick écrit les réponses à ces questions à partir des seules informations 
 Charles — GetPick
 hello@getpick.ai
 
-Vous ne souhaitez plus recevoir ce type de message ? Répondez « stop ».
+GetPick est un service de KINZE SAS, 30 rue Juliette Lamber, 75017 Paris. Pourquoi ce message et vos droits : getpick.ai/prospection. Pour ne plus rien recevoir, répondez « stop ».
 ```

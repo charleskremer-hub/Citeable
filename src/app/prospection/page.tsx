@@ -35,59 +35,59 @@ export const dynamic = "force-dynamic";
 const LEGAL_ENTITY = {
   name: "KINZE SAS",
   postalAddress: "30 rue Juliette Lamber, 75017 Paris",
-  contactEmail: "charles@freegetpick.com",
+  contactEmail: "hello@getpick.ai",
 };
 
-const LAST_UPDATED = "2026-07-28";
+const LAST_UPDATED = "2026-10-01";
 
 const COPY = {
   fr: {
     title: "Politique de prospection",
     metaTitle: "Politique de prospection — GetPick",
     metaDescription:
-      "D'où vient votre adresse, à quel titre nous vous écrivons, ce que nous conservons et comment vous y opposer en un clic.",
+      "D'où vient votre adresse, à quel titre nous vous écrivons, ce que nous conservons et comment vous y opposer d'un mot.",
     intro:
       "Vous avez reçu un email de notre part et vous voulez savoir pourquoi. Cette page répond à la question sans détour : d'où vient votre adresse, à quel titre nous vous écrivons, ce que nous gardons, et comment nous faire arrêter.",
     sections: [
       {
         heading: "Pourquoi vous avez reçu ce message",
         body: [
-          "Nous écrivons à des marques dont un test public montre qu'un assistant IA recommande un concurrent nommé à leur place sur des questions d'achat de leur catégorie. Le message vous est adressé en votre qualité professionnelle, à une adresse professionnelle, sur un sujet qui relève de votre fonction.",
+          "Nous écrivons à des professionnels — cabinets d'avocats, cabinets d'expertise comptable — dont un test public montre qu'un assistant IA (ChatGPT, Gemini) recommande un confrère nommé à leur place sur des questions que posent leurs futurs clients. Le message vous est adressé en votre qualité professionnelle, à une adresse professionnelle, sur un sujet qui relève de votre activité.",
           "Nous n'écrivons pas à des adresses personnelles, et nous n'achetons aucun fichier.",
         ],
       },
       {
         heading: "D'où vient votre adresse",
         body: [
-          "De sources publiques, et uniquement d'elles : la page contact ou les mentions légales de votre propre site, un annuaire ou un registre de certification auquel votre marque adhère, ou une publication professionnelle. La source exacte et la date de collecte de chaque adresse sont enregistrées dans notre registre de prospection — si vous nous les demandez, nous vous répondons avec l'URL précise.",
+          "De sources publiques, et uniquement d'elles : la page contact ou les mentions légales de votre propre site, ou l'annuaire de votre ordre professionnel. La page d'où provient votre adresse et la date de collecte sont consignées dans notre registre de prospection — si vous nous les demandez, nous vous répondons avec l'URL précise. Nous privilégions l'adresse générale du cabinet (contact@…) quand elle existe.",
           "Nous ne devinons pas d'adresses à partir d'un modèle du type prénom.nom@domaine.",
         ],
       },
       {
         heading: "Ce que nous conservons",
         body: [
-          "Votre adresse professionnelle, le nom de votre marque et son domaine, le nom du contact quand il est publié, la source et la date de collecte, la base légale, et l'historique des messages envoyés et de leurs retours (envoyé, ouvert, cliqué, répondu, en erreur).",
+          "Votre adresse professionnelle, le nom de votre cabinet et son domaine, le nom du contact quand il est publié, la source et la date de collecte, la base légale, la date des messages envoyés et vos éventuelles réponses.",
           "Nous ne conservons pas le corps intégral de vos réponses : seul un extrait est journalisé, le message complet reste dans la boîte mail.",
         ],
       },
       {
         heading: "Sur quelle base légale",
         body: [
-          "L'intérêt légitime (article 6.1.f du RGPD), dans le cadre d'une prospection entre professionnels. Cette base suppose une mise en balance : notre intérêt à vous présenter un constat vérifiable sur votre visibilité, contre votre droit à ne pas être sollicité. C'est cette page, le lien de désinscription présent dans chaque message et le traitement immédiat de toute opposition qui font pencher la balance — et si elle ne penche pas pour vous, un clic suffit.",
+          "L'intérêt légitime (article 6.1.f du RGPD), dans le cadre d'une prospection entre professionnels. Cette base suppose une mise en balance : notre intérêt à vous présenter un constat vérifiable sur votre visibilité, contre votre droit à ne pas être sollicité. C'est cette page, le moyen d'opposition rappelé dans chaque message et le traitement immédiat de toute opposition qui font pencher la balance — et si elle ne penche pas pour vous, un mot suffit.",
         ],
       },
       {
         heading: "Combien de temps",
         body: [
-          "Trois ans à compter du dernier contact, conformément à la recommandation de la CNIL pour la prospection B2B. L'échéance est calculée automatiquement à chaque envoi, elle n'est pas tenue à la main.",
+          "Trois ans au plus à compter du dernier contact, conformément à la recommandation de la CNIL pour la prospection B2B. Sans réponse de votre part, nous ne vous relançons pas plus d'une fois.",
           "Une opposition, en revanche, est conservée sans limite de durée : c'est la seule façon de garantir qu'un sourcing futur ne vous recontacte pas. Nous gardons l'adresse pour ne plus jamais vous écrire, pas pour vous écrire.",
         ],
       },
       {
         heading: "Comment vous y opposer",
         body: [
-          "Le lien de désinscription en bas de chaque message suffit — il est traité automatiquement, sans réponse à rédiger ni justification à donner. Vous pouvez aussi répondre au message ou écrire à l'adresse ci-dessous en demandant l'arrêt.",
-          "Dans les deux cas, votre adresse est inscrite immédiatement sur notre liste d'opposition, interrogée avant chaque envoi. Il n'y a pas de délai de grâce pendant lequel un message resterait en file.",
+          "Répondez « stop » au message, ou écrivez à l'adresse ci-dessous : aucune justification à donner.",
+          "Votre adresse est alors inscrite sur notre liste d'opposition, consultée avant tout nouvel envoi, et vous ne recevez plus rien de notre part.",
         ],
       },
       {
@@ -99,7 +99,7 @@ const COPY = {
       {
         heading: "Qui d'autre voit ces données",
         body: [
-          "Nos prestataires techniques, chacun pour une seule fonction : Instantly (envoi des séquences d'email), Neon (base de données), Vercel (hébergement du site), Resend (emails transactionnels : rapports d'audit et relances), PostHog (mesure d'audience, sur son instance européenne, via notre propre domaine).",
+          "Nos prestataires techniques, chacun pour une seule fonction : Google (messagerie d'envoi), Resend (acheminement des emails), Neon (base de données), Vercel (hébergement du site), PostHog (mesure d'audience, sur son instance européenne, via notre propre domaine).",
           "Nous ne vendons, ne louons et n'échangeons aucune donnée de prospection.",
         ],
       },
@@ -112,49 +112,49 @@ const COPY = {
     title: "Outbound policy",
     metaTitle: "Outbound policy — GetPick",
     metaDescription:
-      "Where your address came from, why we wrote to you, what we keep, and how to opt out in one click.",
+      "Where your address came from, why we wrote to you, what we keep, and how to opt out with a single word.",
     intro:
       "You got an email from us and you want to know why. This page answers it plainly: where your address came from, on what grounds we wrote to you, what we keep, and how to make it stop.",
     sections: [
       {
         heading: "Why you received this message",
         body: [
-          "We write to brands where a public test shows an AI assistant recommending a named competitor in their place, on buying questions in their own category. The message is addressed to you in your professional capacity, at a professional address, about a subject within your role.",
+          "We write to professionals — law firms, accounting firms — where a public test shows an AI assistant (ChatGPT, Gemini) recommending a named peer in their place, on questions their future clients ask. The message is addressed to you in your professional capacity, at a professional address, about a subject within your role.",
           "We do not write to personal addresses, and we buy no lists.",
         ],
       },
       {
         heading: "Where your address came from",
         body: [
-          "Public sources, and only those: the contact page or legal notice of your own site, a directory or certification register your brand belongs to, or a trade publication. The exact source and collection date of every address are stored in our outbound register — ask us and we will reply with the precise URL.",
+          "Public sources, and only those: the contact page or legal notice of your own site, or your professional order's directory. The page your address came from and the collection date are stored in our outbound register — ask us and we will reply with the precise URL. We prefer the firm's general address (contact@…) when there is one.",
           "We do not guess addresses from a firstname.lastname@domain pattern.",
         ],
       },
       {
         heading: "What we keep",
         body: [
-          "Your professional address, your brand name and domain, the contact name where it is published, the source and date of collection, the legal basis, and the history of messages sent and what came back (sent, opened, clicked, replied, bounced).",
+          "Your professional address, your firm's name and domain, the contact name where it is published, the source and date of collection, the legal basis, and the dates of messages sent and any replies.",
           "We do not keep the full body of your replies: only a snippet is logged, the complete message stays in the mailbox.",
         ],
       },
       {
         heading: "On what legal basis",
         body: [
-          "Legitimate interest (GDPR article 6(1)(f)), in a business-to-business context. That basis requires a balancing test: our interest in showing you a verifiable finding about your visibility, against your right not to be contacted. This page, the unsubscribe link in every message, and immediate handling of any objection are what tip the balance — and if it does not tip your way, one click is enough.",
+          "Legitimate interest (GDPR article 6(1)(f)), in a business-to-business context. That basis requires a balancing test: our interest in showing you a verifiable finding about your visibility, against your right not to be contacted. This page, the opt-out reminder in every message, and immediate handling of any objection are what tip the balance — and if it does not tip your way, one word is enough.",
         ],
       },
       {
         heading: "For how long",
         body: [
-          "Three years from the last contact, following the French data protection authority's guidance for B2B outbound. The expiry is computed automatically on every send; it is not maintained by hand.",
+          "Three years at most from the last contact, following the French data protection authority's guidance for B2B outbound. Without a reply, we follow up no more than once.",
           "An objection, by contrast, is kept indefinitely: it is the only way to guarantee a future sourcing run will not reach you again. We keep the address in order never to write to you, not in order to write to you.",
         ],
       },
       {
         heading: "How to opt out",
         body: [
-          "The unsubscribe link at the bottom of every message is enough — it is processed automatically, with no reply to write and no reason to give. You can also reply to the message, or write to the address below asking us to stop.",
-          "Either way, your address goes straight onto our suppression list, which is checked before every send. There is no grace period during which a queued message could still go out.",
+          "Reply “stop” to the message, or write to the address below: no reason to give.",
+          "Your address then goes onto our suppression list, which is checked before any new send, and you hear nothing more from us.",
         ],
       },
       {
@@ -166,7 +166,7 @@ const COPY = {
       {
         heading: "Who else sees this data",
         body: [
-          "Our technical providers, each for a single function: Instantly (email sequence sending), Neon (database), Vercel (site hosting), Resend (transactional email: audit reports and follow-ups), PostHog (product analytics, on its European instance, proxied through our own domain).",
+          "Our technical providers, each for a single function: Google (sending mailbox), Resend (email delivery), Neon (database), Vercel (site hosting), PostHog (product analytics, on its European instance, proxied through our own domain).",
           "We do not sell, rent or trade any outbound data.",
         ],
       },
