@@ -45,10 +45,10 @@ seat pricing and no setup.
 
 ## Pricing
 
-- Free diagnostic: 6 buyer questions, checked live on Gemini, no payment, no
+- Free diagnostic: 6 buyer questions, checked live on Gemini and ChatGPT (web search), no payment, no
   signup.
 - Done for you — 14 days free, then 69 EUR per month: 12 buyer questions
-  re-tested monthly on Gemini with web search, your answers written and
+  re-tested monthly on Gemini and ChatGPT with web search, your answers written and
   published on your website, and your visibility dashboard. One flat price, all in.
 
 The paid plan is monthly and cancellable at any time. It is refunded on

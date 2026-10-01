@@ -678,6 +678,14 @@ export function platformCoverage(rows: BoardRow[], primaryEngine: string): Array
 // PROÉMINENCE (1er nommé ≠ 4e nommé). Deux lectures que le cabinet comprend. ----
 
 const NEEDS: Array<[RegExp, string]> = [
+  // Avocats (01/10) — EN TÊTE : « divorce avec biens immobiliers » est un besoin
+  // famille, pas « SCI & immobilier » ; « droit social » n'est pas la paie.
+  [/divorc|s[ée]paration|garde (?:des|d'|de l)|pension alimentaire|droit de la famille|affaires familiales|r[ée]gime matrimonial|enfants? lors/i, "Famille & divorce"],
+  [/licenci|prud.?hom|rupture conventionnelle|harc[eè]lement|droit du travail|droit social|heures suppl|contentieux salari|employeur/i, "Travail & prud'hommes"],
+  [/p[ée]nal|garde [àa] vue|plainte|comparution|correctionnel/i, "Pénal"],
+  [/\bbail\b|baux|loyer|expulsion|copropri[ée]t[ée]|locataire|propri[ée]taire bailleur/i, "Immobilier & baux"],
+  [/succession|h[ée]ritage|testament|donation/i, "Succession & patrimoine"],
+  [/accident|dommage corporel|indemnisation|victime/i, "Dommage corporel"],
   [/\bSCI\b|immobili|LMNP|patrimoine/i, "SCI & immobilier"],
   [/cr[ée]ation|cr[ée]er|lancer|d[ée]marr|micro-?entreprise|auto-?entrepreneur|reprise|installer/i, "Création & reprise"],
   [/paie|salari|social|bulletin/i, "Paie & social"],

@@ -6,6 +6,7 @@ import LocaleLang from "./LocaleLang";
 import { landingAnswerPages } from "@/lib/answer-pages";
 import { SERVICE_CHECKOUT_URL, isCheckoutConfigured } from "@/lib/checkout-links";
 import { homeCopy, type Locale } from "@/lib/i18n";
+import { avocatsCopy } from "@/lib/landing-avocats";
 import { BEACHHEAD_TRADE } from "@/lib/plan-promises";
 
 const inputStyle = {
@@ -22,6 +23,8 @@ const inputStyle = {
 
 type HomeClientProps = {
   locale: Locale;
+  /** Page métier (test avocats du 01/10) : même parcours, textes du métier. */
+  variant?: "avocats";
 };
 
 /**
@@ -53,8 +56,11 @@ function trackCheckoutOpened(plan: "service", href: string, locale: Locale) {
   }
 }
 
-export default function HomeClient({ locale }: HomeClientProps) {
-  const copy = homeCopy[locale];
+export default function HomeClient({ locale, variant }: HomeClientProps) {
+  const copy = variant === "avocats" ? avocatsCopy : homeCopy[locale];
+  // Segment du test, attaché à chaque événement du formulaire pour comparer
+  // avocats et expert-comptables sur le même entonnoir.
+  const landing = variant ?? "home";
   const resourcePages = landingAnswerPages(locale);
   const [email, setEmail] = useState("");
   const [brandName, setBrandName] = useState("");
@@ -66,7 +72,7 @@ export default function HomeClient({ locale }: HomeClientProps) {
   function trackFormStarted(field: "brand_name" | "website_url" | "email") {
     if (formStartedRef.current) return;
     formStartedRef.current = true;
-    window.posthog?.capture("audit_form_started", { source: "hero_cta", field, locale });
+    window.posthog?.capture("audit_form_started", { landing, source: "hero_cta", field, locale });
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -74,7 +80,7 @@ export default function HomeClient({ locale }: HomeClientProps) {
     // L'email n'est plus requis pour lancer l'audit : c'était le frein d'entrée
     // du funnel. Il est demandé sur le rapport, une fois le verdict montré.
     if (!brandName.trim() || !websiteUrl.trim()) {
-      window.posthog?.capture("audit_validation_blocked", {
+      window.posthog?.capture("audit_validation_blocked", { landing,
         source: "hero_cta",
         missing_brand: !brandName.trim(),
         missing_website: !websiteUrl.trim(),
@@ -83,7 +89,7 @@ export default function HomeClient({ locale }: HomeClientProps) {
       return;
     }
 
-    window.posthog?.capture("audit_submit_clicked", {
+    window.posthog?.capture("audit_submit_clicked", { landing,
       source: "hero_cta",
       has_email: Boolean(email.trim()),
       locale,
@@ -117,16 +123,16 @@ export default function HomeClient({ locale }: HomeClientProps) {
         };
         const errorCode = typeof data.error_code === "string" ? data.error_code : "";
 
-        window.posthog?.capture("audit_submit_failed", { source: "hero_cta", locale });
+        window.posthog?.capture("audit_submit_failed", { landing, source: "hero_cta", locale });
         setStatus("error");
         setErrorMsg(gateMessages[errorCode] ?? copy.error);
         return;
       }
 
-      window.posthog?.capture("audit_requested", { source: "hero_cta", brand_name: brandName, audit_id: data.audit_id, locale });
+      window.posthog?.capture("audit_requested", { landing, source: "hero_cta", brand_name: brandName, audit_id: data.audit_id, locale });
       window.location.assign(redirectUrl);
     } catch {
-      window.posthog?.capture("audit_submit_failed", { source: "hero_cta", locale });
+      window.posthog?.capture("audit_submit_failed", { landing, source: "hero_cta", locale });
       setStatus("error");
       setErrorMsg(copy.error);
     }
@@ -520,7 +526,9 @@ export default function HomeClient({ locale }: HomeClientProps) {
           </div>
         </section>
 
-        {/* Guides IA — pages answer-ready (SEO/GEO interne) */}
+        {/* Guides IA — spécifiques expert-comptable : absents de la page avocats. */}
+        {variant ? null : (
+          <>
         <section className="mx-auto max-w-5xl border-t border-[#E4E9F0] px-5 py-14 sm:px-6 sm:py-20">
           <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
             <div>
@@ -547,6 +555,9 @@ export default function HomeClient({ locale }: HomeClientProps) {
           </div>
         </section>
 
+          </>
+        )}
+
         {/* 10. CLÔTURE — aversion à la perte + CTA vers le formulaire */}
         <section className="mx-auto max-w-5xl px-5 pb-16 sm:px-6 sm:pb-20">
           <div className="relative overflow-hidden rounded-[1.8rem] border border-[#123E5C]/30 bg-[#123E5C]/[0.07] p-7 sm:p-10">
@@ -558,7 +569,7 @@ export default function HomeClient({ locale }: HomeClientProps) {
               <p className="mt-4 max-w-xl text-base leading-7 text-[#5B6B82] sm:text-lg">{copy.closingBody}</p>
               <a
                 href="#audit"
-                onClick={() => window.posthog?.capture("audit_cta_clicked", { plan: "free", source: "closing_cta", locale })}
+                onClick={() => window.posthog?.capture("audit_cta_clicked", { landing, plan: "free", source: "closing_cta", locale })}
                 className="mt-6 inline-flex rounded-xl bg-[#123E5C] px-6 py-3.5 text-base font-black text-white no-underline transition hover:brightness-110"
               >
                 {copy.closingCta}

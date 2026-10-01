@@ -123,12 +123,20 @@ test("moteurs — chaque tier publie exactement le moteur de ANSWER_ENGINE_BY_TI
   for (const tier of PUBLISHED_TIERS) {
     const served = byTier[tier];
     assert.ok(served, `ANSWER_ENGINE_BY_TIER doit couvrir le tier ${tier}`);
+    // 01/10 : quand le moteur principal est Gemini, ChatGPT (recherche web) est
+    // interrogé en contre-vérification sur chaque question — il est donc publié.
+    const expected = served === "gemini" ? ["gemini", "openai"] : [served];
     assert.deepEqual(
       [...ANSWER_ENGINE_KEYS_BY_TIER[tier]],
-      [served],
+      expected,
       `${tier}: plan-promises publie [${ANSWER_ENGINE_KEYS_BY_TIER[tier].join(", ")}] alors que le moteur d'audit interroge ${served}`
     );
   }
+});
+
+test("moteurs — la contre-vérification ChatGPT existe bien derrière Gemini", () => {
+  const engine = readFileSync("src/lib/audit-engine.ts", "utf8");
+  assert.match(engine, /answerEngine\?\.engine === "Gemini" && chatGPTCrossCheckEnabled\(\) \? createChatGPTSearchProvider\(\)/);
 });
 
 test("moteurs — aucun moteur publié n'est désactivé dans le moteur d'audit", () => {

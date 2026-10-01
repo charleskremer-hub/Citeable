@@ -286,6 +286,7 @@ export function aiSiteAnswersPrompt(args: { brandName: string; tradeLabel: strin
     "Règles STRICTES :",
     "- Utilise UNIQUEMENT les faits présents dans le TEXTE DU SITE ci-dessous. N'invente aucun chiffre, client, tarif, délai, label ni spécialité.",
     "- Pas de superlatif (« meilleur », « leader »), pas de comparaison avec d'autres cabinets.",
+    "- Aucune promesse de résultat (« vous gagnerez », « succès garanti », « taux de réussite ») : interdite aux avocats et trompeuse pour tous.",
     "- Si le site ne permet pas de répondre précisément, dis ce que le cabinet fait d'après le site et invite à le contacter via son site.",
     "- Chaque réponse : 60 à 140 mots, en français, factuelle, qui commence par répondre directement à la question en nommant le cabinet et la ville.",
     'Rends UNIQUEMENT ce JSON : {"summary":"2 phrases","services":["…"],"answers":[{"question":"…","answer":"…"}]}',
@@ -311,7 +312,7 @@ export function parseAiSiteAnswers(raw: string | null): { summary?: string; serv
     const services = Array.isArray(data.services) ? data.services.filter((x): x is string => typeof x === "string" && x.trim().length > 1).slice(0, 10) : [];
     if (!answers.length) return null;
     // Garde-fou déontologie : aucune réponse avec superlatif ou comparaison.
-    const clean = answers.filter((item) => !/\b(le meilleur|la meilleure|n°\s?1|numéro un|leader|mieux que)\b/i.test(item.answer));
+    const clean = answers.filter((item) => !/\b(le meilleur|la meilleure|n°\s?1|numéro un|leader|mieux que|succès garanti|résultat garanti|taux de (?:réussite|succès)|vous gagnerez)\b/i.test(item.answer));
     return clean.length ? { summary: typeof data.summary === "string" ? data.summary.trim() : undefined, services, answers: clean } : null;
   } catch {
     return null;

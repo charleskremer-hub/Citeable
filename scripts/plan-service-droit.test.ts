@@ -80,8 +80,8 @@ test("droit — `service` sert exactement ce que les surfaces publiques promette
     llmsTxtFlat.includes(`${questions} buyer questions`),
     `llms.txt publie un compte de questions que le tier servi (${tier}) ne sert pas`
   );
-  // La page vend Gemini et une cadence mensuelle : le tier servi doit les tenir.
-  assert.deepEqual(ANSWER_ENGINE_KEYS_BY_TIER[tier], ["gemini"], "le tier servi doit interroger le moteur publié");
+  // La page vend Gemini et ChatGPT, et une cadence mensuelle : le tier servi doit les tenir.
+  assert.deepEqual(ANSWER_ENGINE_KEYS_BY_TIER[tier], ["gemini", "openai"], "le tier servi doit interroger les moteurs publiés (Gemini + contre-vérification ChatGPT)");
   assert.equal(RECHECK_INTERVAL_DAYS, 30, "la cadence publiée est mensuelle");
 });
 

@@ -111,8 +111,8 @@ export const ENABLED_ANSWER_ENGINE_KEYS: readonly AnswerEngineKey[] = ["gemini",
  * (« Gemini », « Gemini et ChatGPT », « Gemini and ChatGPT ») suivent seuls.
  */
 export const ANSWER_ENGINE_KEYS_BY_TIER: Record<PlanTier, readonly AnswerEngineKey[]> = {
-  free: ["gemini"],
-  monitor_9eur: ["gemini"],
+  free: ["gemini", "openai"],
+  monitor_9eur: ["gemini", "openai"],
   agent_19eur: ["openai"],
 };
 
