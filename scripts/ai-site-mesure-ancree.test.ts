@@ -35,7 +35,7 @@ test("mesure — l'appel Gemini est ANCRÉ sur Google Search par défaut", () =>
   assert.equal(fallback.tools, undefined);
   const engine = readFileSync("src/lib/audit-engine.ts", "utf8");
   assert.match(engine, /JSON\.stringify\(geminiGroundedBody\(question, true\)\)/, "la question est posée telle quelle, recherche activée");
-  assert.match(engine, /COMPETITOR_EXTRACTION_VERSION = "gemini_grounded_two_step_v(8|9_chatgpt_crosscheck)"/, "cache invalidé : la mesure a changé de nature");
+  assert.match(engine, /COMPETITOR_EXTRACTION_VERSION = "gemini_grounded_two_step_v(8|9_chatgpt_crosscheck|10_nom_metier)"/, "cache invalidé : la mesure a changé de nature");
 });
 
 test("mesure — les pages lues sont relevées, dédoublonnées, sans lien de redirection", () => {

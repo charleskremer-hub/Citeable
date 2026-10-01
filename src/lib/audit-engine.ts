@@ -49,7 +49,7 @@ const BUYER_PROMPT_SET_VERSION = "niche_local_prompts_v7_entites_html";
 // refuse tout alias `…-latest` pour que la variable ne réintroduise pas la faute.
 const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite";
 const DEFAULT_OPENAI_MODEL = ["gpt", "4o", "mini"].join("-");
-const COMPETITOR_EXTRACTION_VERSION = "gemini_grounded_two_step_v9_chatgpt_crosscheck";
+const COMPETITOR_EXTRACTION_VERSION = "gemini_grounded_two_step_v10_nom_metier";
 
 export type AuditTier = "free" | "monitor_9eur" | "agent_19eur" | "agent_49eur";
 export type IcpSegmentKey = "small_brand_ecommerce" | "service_professional" | "local_independent" | "creator_influencer";
@@ -2217,6 +2217,9 @@ export function mentionsBrandOrDomain(text: string, brandName: string, domain: s
   const rootName = normalizeCompetitorName(brandName.replace(COMPANY_SUFFIXES, " "));
   if (rootName.length >= 4 && rootName.toLowerCase() !== brandName.toLowerCase() && includesWholeWord(text, rootName)) return true;
 
+  const core = professionalCoreName(brandName);
+  if (core && includesWholeWord(text, core)) return true;
+
   const domainName = displayNameFromDomain(domain);
   return domainName.length >= 4 && includesWholeWord(text, domainName);
 }
@@ -3623,6 +3626,17 @@ function generateBuyerIntentPrompts(brandName: string, websiteUrl: string, categ
 }
 
 const COMPANY_SUFFIXES = /\b(?:Inc|LLC|Ltd|Limited|GmbH|SAS|SA|AG|BV|Corp|Corporation|Company|Co|Labs|Technologies|Technology|Systems|Software|AI|API)\b\.?/g;
+// Mots de MÉTIER et de forme juridique des professions de service (01/10). Le
+// cabinet saisit « Pierre Lebrun Avocat », l'IA écrit « Cabinet Pierre Lebrun » :
+// mesuré en prod (audit 9cb5f131), compté « pas cité » alors qu'il l'était. On
+// compare donc les noms une fois ces mots retirés des deux côtés.
+const PROFESSION_WORDS = /(?:^|\s)(?:cabinet|avocat(?:e)?s?|ma[iî]tre|me|selarl|selas|scp|sarl|aarpi|sel|expert(?:s)?[-\s]comptables?|expertise comptable|notaires?|office notarial|[ée]tude|(?:&\s*)?associ[ée]e?s?|d'|de|du)(?=\s|$)/gi;
+
+/** Nom du cabinet sans mots de métier ni forme juridique — ou "" s'il ne reste rien de distinctif. */
+export function professionalCoreName(value: string) {
+  const core = value.replace(/[’]/g, "'").replace(PROFESSION_WORDS, " ").replace(PROFESSION_WORDS, " ").replace(/\s+/g, " ").trim();
+  return core.length >= 4 && core.toLowerCase() !== value.trim().toLowerCase() ? core : "";
+}
 const NON_COMPETITOR_NAMES = new Set([
   "AI", "API", "B2B", "B2C", "ChatGPT", "Bing", "Bing Trade", "LinkedIn", "Wikipedia", "YouTube", "GitHub", "EU", "US", "UK", "GDPR", "SEO", "JSON", "HTTP", "HTML", "Python", "Java", "C++", "JavaScript", "TypeScript", "Digital Product Passport", "Agentic Commerce", "Agent Wallet", "Brave", "Brave Search", "Yahoo", "Yahoo Search", "Yahoo Scout", "Search", "Search Results", "All", "Images", "Videos", "Maps", "News", "Shopping", "Flights", "Travel", "Tools", "Settings", "Home", "Mail", "Finance", "Sports", "Weather", "Help", "Sign In", "Ask", "Support", "Guide", "Overview", "Field Notes", "Market Leader", "Checkout", "Google's UCP", "Stripe MPP", "AP2", "Visa TAP", "Operator", "Gemini Shopping", "The", "This", "It", "How", "Where", "Whether", "Explore", "Creating", "Loading", "Past", "More", "Anytime", "More Anytime Past", "Industry Leaders",
   "Pour", "Voici", "Who", "Ma", "Recommendation", "Brand", "Lifestyle", "Street", "Travelers", "Here", "For", "Customer", "Client", "Question", "Answer", "Brands", "Products", "Examples", "Options", "Recommendation Honnete", "Honest Recommendation",
@@ -3681,6 +3695,8 @@ function brandIdentityKeys(brandName: string, domain: string) {
 
   addKey(brandName);
   addKey(brandName.replace(COMPANY_SUFFIXES, " "));
+  const core = professionalCoreName(brandName);
+  if (core) addKey(core);
 
   const bare = domain.replace(/^www\./i, "").toLowerCase();
   if (bare) {
@@ -3783,6 +3799,8 @@ export function isAuditedBrandName(name: string, brandName: string, domain: stri
 
   const keys = brandIdentityKeys(brandName, domain);
   if (keys.has(normalized)) return true;
+  const candidateCore = professionalCoreName(name);
+  if (candidateCore && keys.has(normalizeCompetitorName(candidateCore).toLowerCase())) return true;
   if (domainVariants(domain).some((variant) => normalized === variant || normalized.includes(variant))) return true;
   if (isBrandWritingVariant(compactBrandKey(normalized), brandName, domain)) return true;
 
