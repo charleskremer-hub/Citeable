@@ -208,6 +208,10 @@ export const homeCopy = {
         answer: `Only the questions a client actually types before choosing — “best ${BEACHHEAD_TRADE.en} for a freelancer in Bordeaux”, not “reviews of your firm”. Questions that carry your own name almost always return a mention and inflate the score. We test whether AI names you when nobody handed it your name first.`,
       },
       {
+        question: "How is your score out of 100 calculated?",
+        answer: "No black box. 75%: the share of your clients' real questions where AI names you — without anyone feeding it your name. 25%: your AI-readable foundations — your firm found in web search, a site AI crawlers can read, public notability. A firm AI names on no question can't score above 25. Next to the score, the report gives your rank against peers and the position AI names you at (1st, 3rd…).",
+      },
+      {
         question: "Does it work in French and English?",
         answer: "Yes. Diagnostics, pages and reports come in both languages, and the questions are asked in the language your clients actually use.",
       },
@@ -379,6 +383,10 @@ export const homeCopy = {
       {
         question: "Quelles questions testez-vous ?",
         answer: `Uniquement celles qu'un client tape avant de choisir — « meilleur ${BEACHHEAD_TRADE.fr} pour un freelance à Bordeaux », jamais « avis sur ton cabinet ». Les questions qui portent ton propre nom renvoient presque toujours une mention et gonflent le score. On teste si l'IA te nomme quand personne ne lui a soufflé ton nom.`,
+      },
+      {
+        question: "Comment est calculé ton score sur 100 ?",
+        answer: "Sans boîte noire. 75 % : la part des vraies questions de tes clients où l'IA te nomme — sans qu'on lui ait soufflé ton nom. 25 % : tes fondations lisibles par l'IA — ton cabinet trouvé en recherche web, ton site lisible par les robots des IA, ta notoriété publique. Un cabinet que l'IA ne nomme sur aucune question ne dépasse pas 25. À côté du score, le rapport te donne ta place face à tes confrères et le rang auquel l'IA te cite (1er, 3e…).",
       },
       {
         question: "Ça marche en français et en anglais ?",
