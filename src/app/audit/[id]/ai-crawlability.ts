@@ -99,10 +99,5 @@ export async function checkAiCrawlability(websiteUrl: string): Promise<{
   };
 }
 
-/** Un llms.txt réel est du texte/markdown, pas une page HTML servie en 200. */
-export function isRealLlmsTxt(text: string | null): boolean {
-  if (text === null) return false;
-  const head = text.trimStart().slice(0, 200).toLowerCase();
-  if (!head) return false;
-  return !(head.startsWith("<!doctype") || head.startsWith("<html") || head.startsWith("<"));
-}
+export { isRealLlmsTxt } from "@/lib/llms-txt";
+import { isRealLlmsTxt } from "@/lib/llms-txt";

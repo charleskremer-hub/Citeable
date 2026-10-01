@@ -23,6 +23,7 @@
  */
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import type { AiSiteContent } from "@/lib/ai-site";
+import { isRealLlmsTxt } from "@/lib/llms-txt";
 
 /** Identifiant fixe de l'application GetPick côté WordPress (UUID exigé par WP). */
 export const GETPICK_WP_APP_ID = "5f0c9a3e-2b7d-4c61-9e84-8a1d3f6b2c47";
@@ -277,5 +278,72 @@ export async function upsertWpPage(
     return typeof saved.id === "number" ? { ok: true, id: saved.id, link: saved.link ?? "", ...kept } : { ok: false, reason: "no_id" };
   } catch (error) {
     return { ok: false, reason: error instanceof Error ? error.message : "network" };
+  }
+}
+
+// --- llms.txt à la RACINE du site (GO Charles 01/10/2026) -----------------------
+//
+// L'API REST de WordPress ne permet pas d'écrire un fichier à la racine. Seule
+// voie sans webmaster : installer, via la connexion déjà approuvée par le
+// cabinet, l'extension GRATUITE de l'annuaire officiel « Website LLMs.txt »
+// (40 000 installations, note 94/100, maintenue — vérifié le 01/10/2026), qui
+// génère /llms.txt depuis les pages publiées et le régénère à chaque mise à
+// jour de contenu. Règles :
+//  - jamais si le site sert DÉJÀ un vrai llms.txt (Yoast, AIOSEO, Rank Math ou
+//    autre le font parfois) : on ne crée pas de conflit ;
+//  - annoncé au cabinet AVANT qu'il approuve (/brancher) et dans le mail ;
+//  - échec (compte non administrateur, multisite, DISALLOW_FILE_MODS) = statut
+//    écrit, jamais bloquant pour la publication de la page.
+export const LLMS_TXT_PLUGIN_SLUG = "website-llms-txt";
+
+export type LlmsTxtSetup =
+  | { status: "already_present" }
+  | { status: "activated"; plugin: string }
+  | { status: "no_permission"; detail: string }
+  | { status: "failed"; detail: string };
+
+/** Le site sert-il un vrai llms.txt à sa racine ? */
+export async function siteServesLlmsTxt(siteUrl: string, fetchImpl: FetchImpl = fetch): Promise<boolean> {
+  try {
+    const response = await fetchImpl(new URL("/llms.txt", siteUrl).toString(), { headers: { "User-Agent": UA }, redirect: "follow", signal: AbortSignal.timeout(8000) });
+    if (!response.ok) return false;
+    return isRealLlmsTxt(await response.text());
+  } catch {
+    return false;
+  }
+}
+
+export async function ensureLlmsTxtPlugin(
+  restUrl: string,
+  siteUrl: string,
+  creds: { login: string; password: string },
+  fetchImpl: FetchImpl = fetch
+): Promise<LlmsTxtSetup> {
+  if (await siteServesLlmsTxt(siteUrl, fetchImpl)) return { status: "already_present" };
+  const headers = { Authorization: basicAuth(creds.login, creds.password), "Content-Type": "application/json", "User-Agent": UA, Accept: "application/json" };
+  const sep = restUrl.includes("rest_route") ? "&" : "?";
+  const denied = (status: number) => status === 401 || status === 403;
+  try {
+    // Déjà installée (désactivée) ? On l'active, on ne la réinstalle pas.
+    const list = await fetchImpl(`${wpEndpoint(restUrl, "wp/v2/plugins")}${sep}search=${LLMS_TXT_PLUGIN_SLUG}`, { headers, signal: AbortSignal.timeout(15000) });
+    if (denied(list.status)) return { status: "no_permission", detail: `list_http_${list.status}` };
+    const installed = list.ok ? ((await list.json()) as Array<{ plugin?: string; status?: string }>).find((item) => item.plugin?.startsWith(`${LLMS_TXT_PLUGIN_SLUG}/`)) : undefined;
+    if (installed?.plugin) {
+      if (installed.status === "active") return { status: "activated", plugin: installed.plugin };
+      const activate = await fetchImpl(wpEndpoint(restUrl, `wp/v2/plugins/${installed.plugin}`), { method: "POST", headers, body: JSON.stringify({ status: "active" }), signal: AbortSignal.timeout(20000) });
+      if (denied(activate.status)) return { status: "no_permission", detail: `activate_http_${activate.status}` };
+      return activate.ok ? { status: "activated", plugin: installed.plugin } : { status: "failed", detail: `activate_http_${activate.status}` };
+    }
+    // Installation depuis l'annuaire officiel wordpress.org, activée d'emblée.
+    const install = await fetchImpl(wpEndpoint(restUrl, "wp/v2/plugins"), { method: "POST", headers, body: JSON.stringify({ slug: LLMS_TXT_PLUGIN_SLUG, status: "active" }), signal: AbortSignal.timeout(45000) });
+    if (denied(install.status)) return { status: "no_permission", detail: `install_http_${install.status}` };
+    if (!install.ok) {
+      const body = (await install.json().catch(() => ({}))) as { code?: string };
+      return { status: "failed", detail: `install_http_${install.status}${body.code ? `_${body.code}` : ""}` };
+    }
+    const saved = (await install.json()) as { plugin?: string };
+    return { status: "activated", plugin: saved.plugin ?? LLMS_TXT_PLUGIN_SLUG };
+  } catch (error) {
+    return { status: "failed", detail: error instanceof Error ? error.message : "network" };
   }
 }

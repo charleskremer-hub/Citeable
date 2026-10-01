@@ -127,6 +127,8 @@ export async function ensureAuditSchema() {
       updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
     )
   `);
+  // llms.txt à la racine du site connecté (01/10/2026) : already_present | activated | live | no_permission | failed:<détail>.
+  await pool.query(`ALTER TABLE cms_connections ADD COLUMN IF NOT EXISTS llms_txt_status TEXT`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS offsite_presence (
       audit_id UUID NOT NULL REFERENCES audits(id) ON DELETE CASCADE,

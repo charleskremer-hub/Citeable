@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
   await saveWordPressConnection({ domain, siteUrl: parsed.siteUrl, restUrl, userLogin: parsed.userLogin, password: parsed.password });
   after(async () => {
     const published = await publishAnswersToWordPress(domain);
-    if (published.ok) await notifyCustomerPublished(domain, published.url, published.firstTime);
+    if (published.ok) await notifyCustomerPublished(domain, published.url, published.firstTime, published.llmsTxt);
     await sendFounderAlert(
       `[GetPick] Site connecté : ${domain}${published.ok ? " — page publiée" : " — publication en échec"}`,
       published.ok ? `Page publiée : ${published.url}` : `Échec : ${published.reason}. Relancer via /api/admin/ai-site (publish).`

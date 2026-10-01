@@ -70,7 +70,7 @@ export default async function BrancherPage({
         <h1 className="mt-2 text-3xl font-black leading-tight">Connecte {domain} à ton agent GEO</h1>
         <p className="mt-3 text-base leading-7 text-[#5B6B82]">
           Tu te connectes à ton WordPress, tu cliques « Approuver ». Ensuite l&apos;agent publie lui-même, sur ton site, les réponses aux
-          questions que tes clients posent à l&apos;IA — et les tient à jour chaque mois. Rien à installer, rien à transmettre.
+          questions que tes clients posent à l&apos;IA — et les tient à jour chaque mois. Rien à installer de ton côté, rien à transmettre.
         </p>
         {error ? <p className="mt-4 rounded-xl border border-[#B04329] bg-white p-3 text-sm font-bold text-[#B04329]">{error}</p> : null}
         <a
@@ -81,6 +81,7 @@ export default async function BrancherPage({
         </a>
         <ul className="mt-8 grid gap-2 text-sm leading-6 text-[#5E6E86]">
           <li>· Une seule page ajoutée : « Questions fréquentes », écrite à partir des informations de ton site. Aucune autre page touchée.</li>
+          <li>· Si ton site n&apos;a pas encore de fichier llms.txt (la fiche que lisent ChatGPT, Claude et Perplexity), l&apos;agent active l&apos;extension gratuite « Website LLMs.txt » de l&apos;annuaire WordPress — désactivable en un clic.</li>
           <li>· Accès révocable à tout moment (WordPress → Profil → Mots de passe d&apos;application).</li>
           <li>· Pas de mention de GetPick sur ton site, aucun confrère cité.</li>
         </ul>
