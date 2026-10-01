@@ -1,5 +1,6 @@
 import type { Locale } from "@/lib/i18n";
 import { rankLabel, type PromptState } from "./report-insights";
+import type { EngineRow } from "./two-engines";
 
 type Entry = { name: string; count: number; self: boolean };
 
@@ -21,6 +22,8 @@ export default function ScoreHero({
   cited,
   total,
   states,
+  engineRows,
+  plural = false,
   locale,
 }: {
   brandName: string;
@@ -33,6 +36,9 @@ export default function ScoreHero({
   cited: number;
   total: number;
   states: PromptState[];
+  /** Deux moteurs (01/10) : une ligne de cases par moteur, et `total` compte les RÉPONSES. */
+  engineRows?: EngineRow[];
+  plural?: boolean;
   locale: Locale;
 }) {
   const fr = locale === "fr";
@@ -40,11 +46,11 @@ export default function ScoreHero({
   const medal = rank === 1 ? "#E0B25A" : rank === 2 ? "#C9D3DE" : rank === 3 ? "#D29A6A" : rank ? "#4CC3A3" : "#FF8F6B";
   const headline = rank
     ? fr
-      ? `${where}${engineName} classe ${brandName} ${rankLabel(rank, locale)}${tied ? " ex æquo" : ""} sur ${cabinets} cabinet${cabinets > 1 ? "s" : ""}.`
-      : `${where}${engineName} ranks ${brandName} ${rankLabel(rank, locale)}${tied ? " (tied)" : ""} out of ${cabinets} firm${cabinets > 1 ? "s" : ""}.`
+      ? `${where}${engineName} ${plural ? "classent" : "classe"} ${brandName} ${rankLabel(rank, locale)}${tied ? " ex æquo" : ""} sur ${cabinets} cabinet${cabinets > 1 ? "s" : ""}.`
+      : `${where}${engineName} ${plural ? "rank" : "ranks"} ${brandName} ${rankLabel(rank, locale)}${tied ? " (tied)" : ""} out of ${cabinets} firm${cabinets > 1 ? "s" : ""}.`
     : fr
-      ? `${where}${engineName} cite ${cabinets} cabinet${cabinets > 1 ? "s" : ""} — pas ${brandName}.`
-      : `${where}${engineName} names ${cabinets} firm${cabinets > 1 ? "s" : ""} — not ${brandName}.`;
+      ? `${where}${engineName} ${plural ? "citent" : "cite"} ${cabinets} cabinet${cabinets > 1 ? "s" : ""} — pas ${brandName}.`
+      : `${where}${engineName} ${plural ? "name" : "names"} ${cabinets} firm${cabinets > 1 ? "s" : ""} — not ${brandName}.`;
   const max = Math.max(1, total);
 
   return (
@@ -62,7 +68,9 @@ export default function ScoreHero({
 
       <div className="min-w-0">
         <p className="m-0 text-[0.6875rem] font-black uppercase tracking-[0.14em] text-white/70">
-          {fr ? `Le classement de ${engineName}, interrogé comme un client` : `${engineName}'s ranking, asked like a client`}
+          {plural
+            ? fr ? `Le classement de ${engineName}, interrogés comme un client` : `The ${engineName} ranking, asked like a client`
+            : fr ? `Le classement de ${engineName}, interrogé comme un client` : `${engineName}'s ranking, asked like a client`}
         </p>
         <p className="m-0 mt-2 text-[1.5rem] leading-[1.12] tracking-[-0.02em] text-white" style={{ fontFamily: "var(--font-display)" }}>
           {headline}
@@ -87,22 +95,31 @@ export default function ScoreHero({
           ))}
         </ol>
 
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-bold text-white/75">
-            {fr ? `Cité sur ${cited} question${cited > 1 ? "s" : ""} sur ${total} :` : `Named on ${cited} of ${total} questions:`}
-          </span>
-          <ul className="m-0 flex list-none gap-1 p-0">
-            {states.map((state, index) => (
-              <li
-                key={index}
-                className="grid h-6 w-6 place-items-center rounded-md text-xs font-black"
-                style={{ background: state === "recommended" ? "#4CC3A3" : state === "missing" ? "#FF8F6B" : "rgba(255,255,255,0.18)", color: "#0E1A27" }}
-              >
-                {state === "recommended" ? "✓" : state === "missing" ? "✗" : "·"}
-              </li>
-            ))}
-          </ul>
-        </div>
+        {plural ? (
+          <p className="m-0 mt-2 text-[0.6875rem] font-bold text-white/60" data-testid="hero-unit">
+            {fr ? `Compté sur ${total} réponses : chaque question posée à chaque IA.` : `Counted over ${total} answers: each question asked to each AI.`}
+          </p>
+        ) : null}
+        {(engineRows?.length ? engineRows : [{ engine: "", cited, checked: total, states }]).map((row) => (
+          <div key={row.engine || "single"} className="mt-3 flex flex-wrap items-center gap-2" data-testid={row.engine ? `hero-engine-${row.engine}` : undefined}>
+            <span className="text-xs font-bold text-white/75">
+              {row.engine
+                ? fr ? `${row.engine} te cite sur ${row.cited}/${row.checked} :` : `${row.engine} names you on ${row.cited}/${row.checked}:`
+                : fr ? `Cité sur ${cited} question${cited > 1 ? "s" : ""} sur ${total} :` : `Named on ${cited} of ${total} questions:`}
+            </span>
+            <ul className="m-0 flex list-none gap-1 p-0">
+              {row.states.map((state, index) => (
+                <li
+                  key={index}
+                  className="grid h-6 w-6 place-items-center rounded-md text-xs font-black"
+                  style={{ background: state === "recommended" ? "#4CC3A3" : state === "missing" ? "#FF8F6B" : "rgba(255,255,255,0.18)", color: "#0E1A27" }}
+                >
+                  {state === "recommended" ? "✓" : state === "missing" ? "✗" : "·"}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </div>
     </div>
   );

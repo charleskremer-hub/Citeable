@@ -10,6 +10,7 @@ import type { BoardRow } from "./report-insights";
 export default function DashboardMockup({
   brandName,
   engineName,
+  rankEngineName,
   rows,
   cited,
   total,
@@ -19,6 +20,8 @@ export default function DashboardMockup({
 }: {
   brandName: string;
   engineName: string;
+  /** Moteurs du classement (« ChatGPT et Gemini ») quand il compte les deux. */
+  rankEngineName?: string;
   rows: BoardRow[];
   cited: number;
   total: number;
@@ -35,7 +38,7 @@ export default function DashboardMockup({
   const x = (i: number) => 70 + (i * (width - 110)) / 3;
   const y = (value: number) => height - 26 - (value / Math.max(1, total)) * (height - 46);
   const tiles = [
-    { label: fr ? `Ton rang dans ${engineName}` : `Your rank in ${engineName}`, value: rankText, tone: "#123E5C" },
+    { label: fr ? `Ton rang dans ${rankEngineName ?? engineName}` : `Your rank in ${rankEngineName ?? engineName}`, value: rankText, tone: "#123E5C" },
     { label: fr ? `Cité par ${engineName}` : `Named by ${engineName}`, value: `${cited}/${total}`, tone: "#17705B" },
     { label: fr ? "Confrère n°1" : "Top peer", value: topRival ? `${topRival.name} · ${topRival.count}/${total}` : "—", tone: "#B04329" },
   ];

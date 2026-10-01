@@ -24,6 +24,7 @@ import PublishContent from "./PublishContent";
 import ServiceValueBlock from "./ServiceValueBlock";
 import AiReadabilityBlock from "./AiReadabilityBlock";
 import { aiReadabilityItems } from "./ai-readability";
+import { twoEngineHeadline, twoEngineView } from "./two-engines";
 import QuestionBoard from "./QuestionBoard";
 import ScoreHero from "./ScoreHero";
 import ClaimReportGate from "./ClaimReportGate";
@@ -146,6 +147,8 @@ export default async function AuditPage({
   const brandMentionCount = complete ? questions.filter((question) => question.brandMentioned).length : 0;
   const answerEngine = audit.raw_results?.answerEngine;
   const answerEngineName = answerEngine?.engine ?? questions.flatMap((question) => question.surfaces).find((surface) => surface.kind === "ai_engine")?.engine ?? "Gemini";
+  // Deux moteurs (01/10) : quand ChatGPT a répondu, le haut du rapport parle des DEUX (voir two-engines.ts).
+  const engines2 = twoEngineView(questions, { primaryEngine: answerEngineName, isSelf, locale: locale === "fr" ? "fr" : "en" });
   const isAnswerEngineReport = questions.some((question) => question.surfaces.some((surface) => surface.kind === "ai_engine"));
   const isAgentReport = audit.raw_results?.auditTier === "agent_19eur" || audit.raw_results?.auditTier === "agent_49eur";
   const isMonitorReport = audit.raw_results?.auditTier === "monitor_9eur";
@@ -179,7 +182,7 @@ export default async function AuditPage({
   // --- RAPPORT VERROUILLÉ : le verdict tient en trois blocs, puis la porte. ---
   if (reportAccess.locked) {
     const lostQuestions = lostBuyerQuestions(questions);
-    const headline = lockedVerdictHeadline({
+    const headline = engines2 ? twoEngineHeadline(engines2, { brandName: audit.brand_name, questionCount, locale: locale === "fr" ? "fr" : "en" }) : lockedVerdictHeadline({
       brandName: audit.brand_name,
       engineName: answerEngineName,
       questionCount,
@@ -250,7 +253,9 @@ export default async function AuditPage({
   const color = scoreColor(score);
   const lostQuestions = complete && !failed ? lostBuyerQuestions(questions) : [];
   // LE VERDICT : même phrase, même plancher que le rapport verrouillé.
-  const verdictHeadline = complete && !failed
+  const verdictHeadline = complete && !failed && engines2
+    ? twoEngineHeadline(engines2, { brandName: audit.brand_name, questionCount, locale: locale === "fr" ? "fr" : "en" })
+    : complete && !failed
     ? lockedVerdictHeadline({
         brandName: audit.brand_name,
         engineName: answerEngineName,
@@ -280,7 +285,9 @@ export default async function AuditPage({
   const monitoringScoreDelta = audit.raw_results?.monitoring?.scoreDelta ?? null;
   const boardRows = questionBoardRows(questions, auditDomain, audit.brand_name);
   const topRival = rankedCompetitors[0] ? { name: rankedCompetitors[0].name, count: rankedCompetitors[0].count } : null;
-  const ranking = citationRanking({ brandName: audit.brand_name, brandCount: brandMentionCount, rivals: rankedCompetitors });
+  const ranking = engines2
+    ? citationRanking({ brandName: audit.brand_name, brandCount: engines2.brandCount, rivals: engines2.rivals })
+    : citationRanking({ brandName: audit.brand_name, brandCount: brandMentionCount, rivals: rankedCompetitors });
   // Visiteur interne (cookie gp_internal) : la caisse de TEST Stripe si elle est configurée — E2E sans vraie carte.
   const checkoutUrl = requestTrafficClass(await headers()).trafficClass === "internal" && isCheckoutConfigured(SERVICE_TEST_CHECKOUT_URL) ? SERVICE_TEST_CHECKOUT_URL : SERVICE_CHECKOUT_URL;
   const rankText = ranking.rank ? `${rankLabel(ranking.rank, locale)} / ${ranking.cabinets}` : locale === "fr" ? "hors classement" : "not ranked";
@@ -394,7 +401,7 @@ export default async function AuditPage({
                       : copy.verdictRivalAlso(answerEngineName, rival.name, rival.prompt)}
                   </p>
                 ) : null}
-                <ScoreHero brandName={audit.brand_name} engineName={answerEngineName} city={cityFromPrompts(questions.map((question) => question.prompt))} rank={ranking.rank} tied={ranking.tied} cabinets={ranking.cabinets} podium={citationLeaderboard({ brandName: audit.brand_name, brandCount: brandMentionCount, rivals: rankedCompetitors, limit: 4 })} cited={brandMentionCount} total={questionCount} states={questions.map((question) => promptAnalysis(question).state)} locale={locale} />
+                <ScoreHero brandName={audit.brand_name} engineName={engines2?.label ?? answerEngineName} plural={Boolean(engines2)} city={cityFromPrompts(questions.map((question) => question.prompt))} rank={ranking.rank} tied={ranking.tied} cabinets={ranking.cabinets} podium={engines2 ? citationLeaderboard({ brandName: audit.brand_name, brandCount: engines2.brandCount, rivals: engines2.rivals, limit: 4 }) : citationLeaderboard({ brandName: audit.brand_name, brandCount: brandMentionCount, rivals: rankedCompetitors, limit: 4 })} cited={brandMentionCount} total={engines2?.totalAnswers ?? questionCount} states={questions.map((question) => promptAnalysis(question).state)} engineRows={engines2?.engines} locale={locale} />
                 <p className="m-0 text-xs font-bold text-[#5E6E86]">{copy.scoreCategoryLine(score, displayCategory)}</p>
                 {isAnswerEngineReport && answerEngine?.realLlmCall ? (
                   <p
@@ -541,7 +548,7 @@ export default async function AuditPage({
                     {copy.publishLockedTitle}
                   </h2>
                   {aiReadability.length ? <AiReadabilityBlock items={aiReadability} brandName={audit.brand_name} locale={locale === "fr" ? "fr" : "en"} /> : null}
-                  {valuePlan ? <ServiceValueBlock plan={valuePlan} sources={sourcesSummary(questions, auditDomain)} engineName={answerEngineName} brandName={audit.brand_name} locale={locale} rows={boardRows} cited={brandMentionCount} total={questionCount} topRival={topRival} rankText={rankText} /> : (
+                  {valuePlan ? <ServiceValueBlock plan={valuePlan} sources={sourcesSummary(questions, auditDomain)} engineName={answerEngineName} brandName={audit.brand_name} locale={locale} rows={boardRows} cited={brandMentionCount} total={questionCount} topRival={topRival} rankText={rankText} rankEngineName={engines2?.label} /> : (
                     <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#5B6B82]">{copy.publishLockedBody}</p>
                   )}
                   <div className="mt-5">

@@ -18,6 +18,7 @@ export default function ServiceValueBlock({
   total,
   topRival,
   rankText,
+  rankEngineName,
 }: {
   plan: ServiceValuePlan;
   sources: SourcesSummary;
@@ -29,6 +30,7 @@ export default function ServiceValueBlock({
   total: number;
   topRival: { name: string; count: number } | null;
   rankText: string;
+  rankEngineName?: string;
 }) {
   const fr = locale === "fr";
   return (
@@ -87,6 +89,7 @@ export default function ServiceValueBlock({
           total={total}
           topRival={topRival}
           rankText={rankText}
+          rankEngineName={rankEngineName}
           locale={locale}
         />
       ) : null}
