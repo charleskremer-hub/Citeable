@@ -8,9 +8,10 @@ import { NextResponse } from "next/server";
  * confiance). La cible peut changer sans toucher aux emails déjà envoyés.
  * Redirection temporaire (307) pour ne jamais être mise en cache comme définitive.
  */
-// info.gumdrop.ai/calendly est la page d'INSCRIPTION Supercal, pas un agenda :
-// en attendant le lien de réservation de Charles, le prospect écrit directement.
-export const RDV_TARGET = "mailto:hello@getpick.ai?subject=15%20minutes%20pour%20en%20parler";
+// Lien de réservation « 15 minute meeting » de Charles sur Gumdrop/Supercal
+// (01/10). NE PAS remettre info.gumdrop.ai/calendly : c'est la page
+// d'inscription Supercal, pas un agenda.
+export const RDV_TARGET = "https://gumdrop.ai/charleskremer/15";
 
 export function GET() {
   return NextResponse.redirect(RDV_TARGET, 307);
