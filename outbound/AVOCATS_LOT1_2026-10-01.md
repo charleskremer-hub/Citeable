@@ -10,29 +10,52 @@ GO Charles 01/10. Deuxième métier testé à côté des expert-comptables, mêm
 - **Mesure à 3 semaines, vs le lot expert-comptable de même taille** : taux de réponse, rapports ouverts, emails capturés, essais démarrés. PostHog : `landing=avocats`.
 - **Contacts** : à enrichir au moment de l'envoi (étape Hunter du pipeline) — non compilés ici. Vouvoiement (usage de la profession).
 - **Ordre d'envoi (Charles, 01/10)** : WordPress connectable en 1 clic D'ABORD (GetPick publie lui-même page + JSON-LD sur leur domaine : promesse « zéro geste » vraie de bout en bout), puis WordPress verrouillé, puis le reste. Colonne « Site » calculée par `outbound/prioriser-wordpress.ts` (même détection que le bouton « Connecter mon site ») — à relancer sur chaque nouveau lot.
-- **Envoi** : NON lancé. Attend le GO de Charles (envoi au nom de Charles).
+- **Envoi** : à la main depuis hello@getpick.ai (GO Charles 01/10, pas d'Instantly), signé « Charles — GetPick ».
 
-## Modèle d'email
+## Modèles d'email (v2 — 01/10, 16 h 40)
+
+Changements vs v1 : signature sans nom de famille, envoi depuis hello@getpick.ai, lien de RDV 15 min, nombre de questions réel par cabinet, promesse alignée sur ce que le produit livre selon le site (colonne « Site »). Rien de promis qui ne soit livré : pas de résultat garanti, pas de délai.
+
+Champs : {Nom} · {IA} et {confrères} = colonne « Accroche » · {question} = colonne « Question » · {n} = dénominateur de la colonne de l'IA citée · {lien rapport} = colonne « Rapport ».
+
+### A — Site « WordPress · 1 clic » ou « WordPress · verrouillé » (12 cabinets, à envoyer en premier)
 
 ```
-Objet : ChatGPT recommande {confrère} à vos futurs clients
+Objet : {IA} recommande {confrère n°1} à vos futurs clients
 
 Maître {Nom},
 
 J'ai posé à {IA} la question qu'un client tape avant de choisir son avocat :
 « {question} »
 
-{IA} recommande {confrères}. Votre cabinet n'apparaît pas dans la réponse.
+{IA} répond : {confrères}. Votre cabinet n'est pas dans la réponse.
 
-J'ai testé 6 questions de ce type sur votre ville et vos domaines : le détail, question par question, est ici → {lien rapport}
+J'ai posé {n} questions de ce type sur votre ville et vos domaines. Le détail, question par question, avec les sites que l'IA a lus pour répondre : {lien rapport}
 
-GetPick écrit sur votre propre site, à partir de ses seuls faits, les réponses que ces assistants lisent — sans superlatif ni promesse de résultat — et re-teste chaque mois. 14 jours gratuits, puis 69 € HT/mois, sans engagement.
+Votre site est sous WordPress : en un clic, sans webmaster, GetPick y publie les réponses à ces questions, écrites à partir des seules informations de votre site, avec les données structurées et le fichier llms.txt que ces assistants lisent. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
 
-Charles Kremer — GetPick
+14 jours gratuits, puis 69 € HT/mois, sans engagement. 15 minutes pour en parler : getpick.ai/rdv
+
+Charles — GetPick
 hello@getpick.ai
 
 Vous ne souhaitez plus recevoir ce type de message ? Répondez « stop ».
 ```
+
+### B — Autre site (Wix, autre CMS : 11 cabinets)
+
+Même email, en remplaçant le paragraphe « Votre site est sous WordPress… » par :
+
+```
+GetPick écrit les réponses à ces questions à partir des seules informations de votre site, les publie là où ces assistants les lisent, et vous dit précisément quoi ajouter sur votre site. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
+```
+
+### Règles d'envoi
+
+- Depuis **hello@getpick.ai**, un par un, 10 à 15 par jour maximum (délivrabilité d'une boîte neuve).
+- Ordre : le tableau ci-dessous, de haut en bas (WordPress d'abord).
+- Ne pas envoyer aux cabinets déjà cités sur la majorité des questions (pas de douleur) : Majeli Avocat (Gemini 3/6, ChatGPT 4/5), Poussier Avocat (4/6, 3/4) — à garder comme références.
+- Le lien rapport demande l'email du cabinet pour afficher le détail : le rapport part alors par email automatiquement (bug corrigé le 01/10).
 
 ## Prospects (23)
 
