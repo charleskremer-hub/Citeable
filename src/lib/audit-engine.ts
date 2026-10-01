@@ -49,7 +49,8 @@ const BUYER_PROMPT_SET_VERSION = "niche_local_prompts_v8_avocat_majorite";
 // refuse tout alias `…-latest` pour que la variable ne réintroduise pas la faute.
 const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite";
 const DEFAULT_OPENAI_MODEL = ["gpt", "4o", "mini"].join("-");
-const COMPETITOR_EXTRACTION_VERSION = "gemini_grounded_two_step_v11_nom_compose";
+// v12 (01/10/2026) : noms accentués et « Maître X » acceptés — voir looksLikeCompetitorName.
+const COMPETITOR_EXTRACTION_VERSION = "gemini_grounded_two_step_v12_noms_accentues";
 
 export type AuditTier = "free" | "monitor_9eur" | "agent_19eur" | "agent_49eur";
 export type IcpSegmentKey = "small_brand_ecommerce" | "service_professional" | "local_independent" | "creator_influencer";
@@ -3695,7 +3696,16 @@ function looksLikeCompetitorName(name: string, brandName: string, domain: string
   if (/\b(?:best|top|which|compare|alternative|vendor|tool|platform|solution|overview|search|result|http|www|guide|support|article|blog|press|news|learn|report|definition|meaning)\b/i.test(normalized)) return false;
   if (/^[A-Z]{2,6}$/.test(normalized) && !/[aeiou]/i.test(normalized)) return false;
 
-  return /^[A-Z][A-Za-z0-9&.+'-]*(?:\s+[A-Z][A-Za-z0-9&.+'-]*){0,3}$/.test(normalized);
+  // Lettres UNICODE, pas ASCII (bug 01/10/2026, audit 9591fb6e) : la classe
+  // [A-Za-z] rejetait tout nom accentué — « Maître Brett Le Meur », « Clémentine
+  // Vendé », « Société Fiduciaire » — donc la plupart des avocats cités par
+  // ChatGPT disparaissaient du rapport (« ChatGPT ne te cite pas » sans nommer
+  // personne). Petits mots de liaison français admis en minuscules
+  // (« Cabinet de Maître X »), jamais en tête ; jusqu'à 5 mots pour
+  // « Cabinet Maître Prénom Nom Nom ».
+  const word = String.raw`[\p{Lu}\p{N}][\p{L}\p{N}&.+'’-]*`;
+  const particle = String.raw`(?:de|du|des|la|le|les|et|d'|l'|d’|l’|von|van)`;
+  return new RegExp(`^${word}(?:\\s+(?:${particle}\\s+)?${word}){0,4}$`, "u").test(normalized);
 }
 
 // Identité de la marque auditée : nom saisi, nom sans suffixe légal (Ltd, Inc, SAS…)

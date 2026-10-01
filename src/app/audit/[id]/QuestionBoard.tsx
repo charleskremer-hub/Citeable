@@ -55,6 +55,13 @@ export default function QuestionBoard({
                     ? fr ? `${item.engine} ne te nomme sur aucune question` : `${item.engine} names you on no question`
                     : fr ? `questions où ${item.engine} te nomme` : `questions where ${item.engine} names you`}
                 </p>
+                {item.asked > item.checked ? (
+                  <p className="m-0 mt-1 text-xs font-bold text-[#5E6E86]" data-testid="platform-unchecked-note">
+                    {fr
+                      ? `${item.asked - item.checked} question${item.asked - item.checked > 1 ? "s" : ""} non vérifiée${item.asked - item.checked > 1 ? "s" : ""} : ${item.engine} n'a pas répondu à temps.`
+                      : `${item.asked - item.checked} question${item.asked - item.checked > 1 ? "s" : ""} not checked: ${item.engine} did not answer in time.`}
+                  </p>
+                ) : null}
               </div>
             );
           })}
@@ -161,6 +168,11 @@ export default function QuestionBoard({
                       ))
                     : null}
                 </div>
+              ) : null}
+              {row.crossCheck && row.crossCheck.state === "unchecked" ? (
+                <p className="m-0 mt-2 text-xs font-bold text-[#5E6E86]" data-testid="cross-check-unchecked">
+                  {fr ? `${row.crossCheck.engine} : non vérifié sur cette question (pas de réponse à temps).` : `${row.crossCheck.engine}: not checked on this question (no answer in time).`}
+                </p>
               ) : null}
               {row.pages.length ? (
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">

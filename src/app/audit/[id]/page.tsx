@@ -107,6 +107,8 @@ function StatusPill({ failed, complete, locale }: { failed: boolean; complete: b
   );
 }
 
+export { generateMetadata } from "./report-metadata";
+
 export default async function AuditPage({
   params,
   searchParams,

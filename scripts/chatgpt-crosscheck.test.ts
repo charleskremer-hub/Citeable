@@ -96,8 +96,8 @@ test("le rapport lit la contre-verification sans toucher au verdict Gemini", () 
   assert.equal(sci.crossCheck?.state, "recommended");
   assert.deepEqual(sci.crossCheck?.position, { rank: 1, of: 2 });
   assert.deepEqual(platformCoverage(rows, "Gemini"), [
-    { engine: "Gemini", cited: 1, checked: 2 },
-    { engine: "ChatGPT", cited: 1, checked: 1 },
+    { engine: "Gemini", cited: 1, checked: 2, asked: 2 },
+    { engine: "ChatGPT", cited: 1, checked: 1, asked: 2 },
   ]);
   assert.equal(crossCheckFor({ prompt: "q", available: true, brandMentioned: false, competitors: [], surfaces: [] }), null);
 });

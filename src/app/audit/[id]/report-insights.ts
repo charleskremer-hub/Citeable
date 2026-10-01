@@ -666,11 +666,15 @@ export function crossCheckFor(question: BuyerIntentPromptResult, brandName = "")
  * Couverture par plateforme (Pinniq Legal : « 4/4 platforms »). Une ligne par
  * moteur réellement interrogé : questions où il te nomme / questions vérifiées.
  */
-export function platformCoverage(rows: BoardRow[], primaryEngine: string): Array<{ engine: string; cited: number; checked: number }> {
+export function platformCoverage(rows: BoardRow[], primaryEngine: string): Array<{ engine: string; cited: number; checked: number; asked: number }> {
   const primary = rows.filter((row) => row.state !== "unchecked");
-  const out = [{ engine: primaryEngine, cited: primary.filter((row) => row.state === "recommended").length, checked: primary.length }];
-  const cross = rows.map((row) => row.crossCheck).filter((item): item is CrossCheck => Boolean(item) && item!.state !== "unchecked");
-  if (cross.length) out.push({ engine: cross[0].engine, cited: cross.filter((item) => item.state === "recommended").length, checked: cross.length });
+  const out = [{ engine: primaryEngine, cited: primary.filter((row) => row.state === "recommended").length, checked: primary.length, asked: rows.length }];
+  const crossAll = rows.map((row) => row.crossCheck).filter((item): item is CrossCheck => Boolean(item));
+  const cross = crossAll.filter((item) => item.state !== "unchecked");
+  // `asked` : questions où ce moteur a été INTERROGÉ, réponse obtenue ou non.
+  // Sans lui, « 0/3 » sous « Les 4 questions » se lisait comme une erreur de
+  // calcul (audit 9591fb6e, 01/10 : 1 appel ChatGPT en échec fournisseur).
+  if (cross.length) out.push({ engine: cross[0].engine, cited: cross.filter((item) => item.state === "recommended").length, checked: cross.length, asked: crossAll.length });
   return out;
 }
 
@@ -682,14 +686,16 @@ const NEEDS: Array<[RegExp, string]> = [
   // famille, pas « SCI & immobilier » ; « droit social » n'est pas la paie.
   [/divorc|s[ée]paration|garde (?:des|d'|de l)|pension alimentaire|droit de la famille|affaires familiales|r[ée]gime matrimonial|enfants? lors/i, "Famille & divorce"],
   [/licenci|prud.?hom|rupture conventionnelle|harc[eè]lement|droit du travail|droit social|heures suppl|contentieux salari|employeur/i, "Travail & prud'hommes"],
-  [/p[ée]nal|garde [àa] vue|plainte|comparution|correctionnel/i, "Pénal"],
+  [/p[ée]nal|garde [àa] vue|plainte|comparution|correctionnel|infraction|d[ée]lit|pr[ée]venu|mise? en examen|poursuivi|casier judiciaire|d[ée]fense p[ée]nale/i, "Pénal"],
   [/\bbail\b|baux|loyer|expulsion|copropri[ée]t[ée]|locataire|propri[ée]taire bailleur/i, "Immobilier & baux"],
   [/succession|h[ée]ritage|testament|donation/i, "Succession & patrimoine"],
   [/accident|dommage corporel|indemnisation|victime/i, "Dommage corporel"],
   [/\bSCI\b|immobili|LMNP|patrimoine/i, "SCI & immobilier"],
   [/cr[ée]ation|cr[ée]er|lancer|d[ée]marr|micro-?entreprise|auto-?entrepreneur|reprise|installer/i, "Création & reprise"],
   [/paie|salari|social|bulletin/i, "Paie & social"],
-  [/lib[ée]ral|m[ée]dic|sant[ée]|avocat|kin[ée]|infirmi|pharmac/i, "Professions libérales"],
+  // « avocat » retiré (01/10) : dans un audit de cabinet d'avocats, CHAQUE question
+  // contient « avocat » (le prestataire cherché), ce n'est pas le profil du client.
+  [/profession(?:s)? lib[ée]ral|m[ée]decin|m[ée]dical|sant[ée]|kin[ée]|infirmi|pharmac|pour (?:un|une|les) avocats?/i, "Professions libérales"],
   [/artisan|commer[çc]|restaura|BTP|b[âa]timent|h[ôo]tel/i, "Artisans & commerçants"],
   [/association/i, "Associations"],
   [/start-?up|lev[ée]e de fonds|innovation/i, "Start-up"],
