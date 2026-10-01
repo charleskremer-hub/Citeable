@@ -84,3 +84,11 @@ test("WordPress — la page publiée porte le JSON-LD, au bon type de métier, s
   assert.equal((page.content.match(/<\/script>/g) ?? []).length, 1, "une seule fermeture : la description ne peut pas casser la balise");
   assert.ok(jsonLdScript({ a: "</script>" }).includes("\\u003c/script>"));
 });
+
+import { isRealLlmsTxt } from "@/app/audit/[id]/ai-crawlability";
+test("llms.txt — une page HTML servie en 200 (soft 404) n'est pas un llms.txt", () => {
+  assert.equal(isRealLlmsTxt("# www.cabinet-r-p-avocats.fr\n\n## Pages\n- [Droit](https://x)"), true);
+  assert.equal(isRealLlmsTxt("<!DOCTYPE html><html><body>Page introuvable</body></html>"), false);
+  assert.equal(isRealLlmsTxt("   \n"), false);
+  assert.equal(isRealLlmsTxt(null), false);
+});

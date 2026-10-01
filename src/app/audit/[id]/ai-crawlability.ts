@@ -92,7 +92,17 @@ export async function checkAiCrawlability(websiteUrl: string): Promise<{
   return {
     state: blocked.length ? "blocked" : "ok",
     blocked,
-    llmsFound: llms.text !== null,
+    // Soft 404 : beaucoup de CMS servent leur page HTML en 200 sur /llms.txt.
+    // Ce n'est pas un llms.txt — on ne le compte pas « en place ».
+    llmsFound: isRealLlmsTxt(llms.text),
     resolvedHost: robots.host ?? llms.host,
   };
+}
+
+/** Un llms.txt réel est du texte/markdown, pas une page HTML servie en 200. */
+export function isRealLlmsTxt(text: string | null): boolean {
+  if (text === null) return false;
+  const head = text.trimStart().slice(0, 200).toLowerCase();
+  if (!head) return false;
+  return !(head.startsWith("<!doctype") || head.startsWith("<html") || head.startsWith("<"));
 }
