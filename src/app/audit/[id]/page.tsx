@@ -22,6 +22,8 @@ import FunnelCheckoutLink from "./FunnelCheckoutLink";
 import { VisibilityMonitorCard } from "./VisibilityMonitorCard";
 import PublishContent from "./PublishContent";
 import ServiceValueBlock from "./ServiceValueBlock";
+import AiReadabilityBlock from "./AiReadabilityBlock";
+import { aiReadabilityItems } from "./ai-readability";
 import QuestionBoard from "./QuestionBoard";
 import ScoreHero from "./ScoreHero";
 import ClaimReportGate from "./ClaimReportGate";
@@ -289,6 +291,7 @@ export default async function AuditPage({
     audit.raw_results?.categoryPerception ?? categoryPerceptionFromPrompts(questions, audit.raw_results?.category ?? "");
 
   const aiCrawl = complete && !failed ? await checkAiCrawlability(audit.website_url) : null;
+  const aiReadability = aiCrawl ? aiReadabilityItems({ llmsFound: aiCrawl.llmsFound, structuredDataFound: audit.raw_results?.structuredDataFound ?? null, crawlState: aiCrawl.state, blocked: aiCrawl.blocked }, locale === "fr" ? "fr" : "en") : [];
 
   // Fichiers machine : TIERS PAYANTS SEULEMENT. Le tier gratuit ne les calcule
   // même pas — aucun contenu de fichier machine n'existe dans son HTML.
@@ -537,6 +540,7 @@ export default async function AuditPage({
                   <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
                     {copy.publishLockedTitle}
                   </h2>
+                  {aiReadability.length ? <AiReadabilityBlock items={aiReadability} brandName={audit.brand_name} locale={locale === "fr" ? "fr" : "en"} /> : null}
                   {valuePlan ? <ServiceValueBlock plan={valuePlan} sources={sourcesSummary(questions, auditDomain)} engineName={answerEngineName} brandName={audit.brand_name} locale={locale} rows={boardRows} cited={brandMentionCount} total={questionCount} topRival={topRival} rankText={rankText} /> : (
                     <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#5B6B82]">{copy.publishLockedBody}</p>
                   )}

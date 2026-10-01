@@ -225,6 +225,11 @@ function slugify(text: string) {
 
 export type WpAnswerPage = { title: string; slug: string; content: string };
 
+/** `<script type="application/ld+json">` sûr : `</` neutralisé pour ne jamais fermer la balise. */
+export function jsonLdScript(jsonLd: Record<string, unknown>): string {
+  return `<script type="application/ld+json">${JSON.stringify(jsonLd).replace(/</g, "\\u003c")}</script>`;
+}
+
 /**
  * La page publiée sur le site du cabinet : les questions de ses clients, une
  * réponse factuelle chacune, en HTML simple (lisible par tout thème, par les
@@ -237,6 +242,12 @@ export function wpAnswerPage(site: AiSiteContent, args: { tradeLabel: string; ci
   const body = [
     `<p>${escapeHtml(site.summary)}</p>`,
     ...site.faq.map((item) => `<h2>${escapeHtml(item.question)}</h2>\n<p>${escapeHtml(item.answer)}</p>`),
+    // Données structurées (01/10/2026) : la page publiée sur le site du cabinet
+    // portait le texte mais AUCUN JSON-LD — les moteurs devaient deviner métier,
+    // ville et questions. WordPress conserve ce bloc pour un compte qui a
+    // `unfiltered_html` (administrateur) ; sinon il est retiré à l'enregistrement,
+    // et `upsertWpPage` le dit (`jsonLdKept`), sans casser la page.
+    jsonLdScript(site.jsonLd),
   ].join("\n\n");
   return { title, slug, content: body };
 }
@@ -247,7 +258,7 @@ export async function upsertWpPage(
   creds: { login: string; password: string },
   page: WpAnswerPage & { id?: number | null },
   fetchImpl: FetchImpl = fetch
-): Promise<{ ok: true; id: number; link: string } | { ok: false; reason: string }> {
+): Promise<{ ok: true; id: number; link: string; jsonLdKept?: boolean } | { ok: false; reason: string }> {
   const target = page.id ? wpEndpoint(restUrl, `wp/v2/pages/${page.id}`) : wpEndpoint(restUrl, "wp/v2/pages");
   try {
     const response = await fetchImpl(target, {
@@ -259,8 +270,11 @@ export async function upsertWpPage(
     // Page supprimée par le cabinet entre-temps : on la recrée, une seule fois.
     if (page.id && response.status === 404) return upsertWpPage(restUrl, creds, { ...page, id: null }, fetchImpl);
     if (!response.ok) return { ok: false, reason: `http_${response.status}` };
-    const saved = (await response.json()) as { id?: number; link?: string };
-    return typeof saved.id === "number" ? { ok: true, id: saved.id, link: saved.link ?? "" } : { ok: false, reason: "no_id" };
+    const saved = (await response.json()) as { id?: number; link?: string; content?: { rendered?: string; raw?: string } };
+    const stored = `${saved.content?.raw ?? ""}${saved.content?.rendered ?? ""}`;
+    // Inconnu (réponse sans `content`) = clé absente, jamais un faux « retiré ».
+    const kept = saved.content && page.content.includes("application/ld+json") ? { jsonLdKept: /application\/ld\+json/.test(stored) } : {};
+    return typeof saved.id === "number" ? { ok: true, id: saved.id, link: saved.link ?? "", ...kept } : { ok: false, reason: "no_id" };
   } catch (error) {
     return { ok: false, reason: error instanceof Error ? error.message : "network" };
   }

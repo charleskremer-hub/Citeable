@@ -59,3 +59,28 @@ test("Titre du rapport : propre au cabinet, dans la langue du rapport, noindex",
   assert.match(page, /ta visibilité dans l'IA · GetPick/);
   assert.match(page, /index: false/);
 });
+
+import { aiReadabilityItems, aiReadabilityScore } from "@/app/audit/[id]/ai-readability";
+import { jsonLdScript, wpAnswerPage } from "@/lib/wp-connect";
+import { aiSiteContent, schemaTypeForTrade } from "@/lib/ai-site";
+
+test("Lisibilité IA — mesuré honnêtement : site injoignable = non mesuré, jamais un faux ✗", () => {
+  const down = aiReadabilityItems({ llmsFound: false, structuredDataFound: null, crawlState: "unreachable", blocked: [] }, "fr");
+  assert.deepEqual(aiReadabilityScore(down), { ok: 0, measured: 0 });
+  const blocked = aiReadabilityItems({ llmsFound: false, structuredDataFound: true, crawlState: "blocked", blocked: ["GPTBot"] }, "fr");
+  assert.deepEqual(aiReadabilityScore(blocked), { ok: 1, measured: 3 });
+  assert.match(blocked.find((item) => item.key === "ai_crawlers")!.why, /GPTBot/);
+  assert.ok(!JSON.stringify(blocked).includes("ai-catalog"), "ai-catalog.json n'est pas promis : sans effet sur une citation");
+});
+
+test("WordPress — la page publiée porte le JSON-LD, au bon type de métier, sans fermeture de balise injectable", () => {
+  const site = aiSiteContent({ brandName: "Cabinet Test", domain: "test-avocat.fr", tradeLabel: "cabinet d'avocats", city: "Nantes", description: "Droit pénal </script><b>x", questions: ["Quel avocat pénaliste à Nantes ?"] });
+  assert.equal(schemaTypeForTrade("cabinet d'avocats"), "LegalService");
+  assert.equal(schemaTypeForTrade("cabinet d'expertise comptable"), "AccountingService");
+  const page = wpAnswerPage(site, { tradeLabel: "cabinet d'avocats", city: "Nantes" });
+  assert.match(page.content, /<script type="application\/ld\+json">/);
+  assert.match(page.content, /"LegalService"/);
+  assert.match(page.content, /"FAQPage"/);
+  assert.equal((page.content.match(/<\/script>/g) ?? []).length, 1, "une seule fermeture : la description ne peut pas casser la balise");
+  assert.ok(jsonLdScript({ a: "</script>" }).includes("\\u003c/script>"));
+});

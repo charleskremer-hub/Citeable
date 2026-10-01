@@ -123,6 +123,19 @@ function sentence(text: string) {
   return /[.!?]$/.test(value) ? value : `${value}.`;
 }
 
+/**
+ * Type schema.org du cabinet, selon le métier. Bug 01/10/2026 : la fiche
+ * déclarait `AccountingService` pour TOUS les cabinets — un cabinet d'avocats se
+ * présentait aux moteurs comme un cabinet comptable.
+ */
+export function schemaTypeForTrade(tradeLabel: string): string {
+  const trade = tradeLabel.toLowerCase();
+  if (/avocat|juridique|droit/.test(trade)) return "LegalService";
+  if (/notaire/.test(trade)) return "Notary";
+  if (/comptab|expert-compta|expertise compta/.test(trade)) return "AccountingService";
+  return "ProfessionalService";
+}
+
 export function aiSiteContent(facts: AiSiteFacts): AiSiteContent {
   const where = facts.city ? ` à ${facts.city}` : "";
   const site = `https://${facts.domain}`;
@@ -148,7 +161,7 @@ export function aiSiteContent(facts: AiSiteFacts): AiSiteContent {
     "@context": "https://schema.org",
     "@graph": [
       {
-        "@type": "AccountingService",
+        "@type": schemaTypeForTrade(facts.tradeLabel),
         name: facts.brandName,
         url: site,
         description: clean(facts.description) || undefined,
