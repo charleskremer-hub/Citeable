@@ -18,7 +18,7 @@ Changements vs v1 : signature sans nom de famille, envoi depuis hello@getpick.ai
 
 Champs : {Nom} · {IA} et {confrères} = colonne « Accroche » · {question} = colonne « Question » · {n} = dénominateur de la colonne de l'IA citée · {lien rapport} = colonne « Rapport ».
 
-### A — Site « WordPress · 1 clic » ou « WordPress · verrouillé » (12 cabinets, à envoyer en premier)
+### A — Site « WordPress · 1 clic » ou « WordPress · verrouillé » (11 cabinets après exclusion, à envoyer en premier)
 
 ```
 Objet : {IA} recommande {confrère n°1} à vos futurs clients
@@ -42,7 +42,7 @@ hello@getpick.ai
 Vous ne souhaitez plus recevoir ce type de message ? Répondez « stop ».
 ```
 
-### B — Autre site (Wix, autre CMS : 11 cabinets)
+### B — Autre site (Wix, autre CMS : 10 cabinets après exclusion)
 
 Même email, en remplaçant le paragraphe « Votre site est sous WordPress… » par :
 
