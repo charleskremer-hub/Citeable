@@ -33,7 +33,7 @@ export const dynamic = "force-dynamic";
  * art. 13), mais il le serait pour des mentions légales complètes.
  */
 const LEGAL_ENTITY = {
-  name: "KINZE SAS",
+  name: "KINZE SAS (RCS Paris 845 010 248)",
   postalAddress: "30 rue Juliette Lamber, 75017 Paris",
   contactEmail: "hello@getpick.ai",
 };

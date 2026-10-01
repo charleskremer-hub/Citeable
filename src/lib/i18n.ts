@@ -231,6 +231,7 @@ export const homeCopy = {
     footerTagline: `The agent that gets ${BEACHHEAD_TRADE.en}s recommended by AI. One click to connect your site.`,
     rights: "All rights reserved.",
     footerProspection: "Outbound policy",
+    footerLegal: "Legal notice",
     footerStudy: "Our 21-brand study: why we withdrew the numbers",
   },
   fr: {
@@ -408,6 +409,7 @@ export const homeCopy = {
     footerTagline: `L'agent qui fait recommander les ${BEACHHEAD_TRADE.fr}s par l'IA. Un clic pour connecter ton site.`,
     rights: "Tous droits réservés.",
     footerProspection: "Politique de prospection",
+    footerLegal: "Mentions légales",
     footerStudy: "Notre étude 21 marques : pourquoi on a retiré les chiffres",
   },
 } as const;

@@ -591,6 +591,9 @@ export default function HomeClient({ locale, variant }: HomeClientProps) {
           <Link href="/prospection" className="m-0 text-sm text-[#5E6E86] no-underline hover:text-[#132A43]">
             {copy.footerProspection}
           </Link>
+          <Link href="/mentions-legales" className="m-0 text-sm text-[#5E6E86] no-underline hover:text-[#132A43]">
+            {copy.footerLegal}
+          </Link>
           <p className="m-0 text-sm text-[#5E6E86]">© {new Date().getFullYear()} GetPick. {copy.rights}</p>
         </div>
       </footer>

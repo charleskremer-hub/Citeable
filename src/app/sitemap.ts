@@ -97,6 +97,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "yearly" as const,
       priority: 0.3,
     },
+    {
+      url: `${siteUrl}/mentions-legales`,
+      lastModified: now,
+      changeFrequency: "yearly" as const,
+      priority: 0.1,
+    },
     ...answerPages.map((page) => ({
       url: `${siteUrl}/${page.locale}/${page.slug}`,
       lastModified: now,
