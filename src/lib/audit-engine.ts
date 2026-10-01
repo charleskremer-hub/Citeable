@@ -49,7 +49,7 @@ const BUYER_PROMPT_SET_VERSION = "niche_local_prompts_v8_avocat_majorite";
 // refuse tout alias `…-latest` pour que la variable ne réintroduise pas la faute.
 const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite";
 const DEFAULT_OPENAI_MODEL = ["gpt", "4o", "mini"].join("-");
-const COMPETITOR_EXTRACTION_VERSION = "gemini_grounded_two_step_v10_nom_metier";
+const COMPETITOR_EXTRACTION_VERSION = "gemini_grounded_two_step_v11_nom_compose";
 
 export type AuditTier = "free" | "monitor_9eur" | "agent_19eur" | "agent_49eur";
 export type IcpSegmentKey = "small_brand_ecommerce" | "service_professional" | "local_independent" | "creator_influencer";
@@ -3815,8 +3815,18 @@ export function isAuditedBrandName(name: string, brandName: string, domain: stri
 
   const keys = brandIdentityKeys(brandName, domain);
   if (keys.has(normalized)) return true;
-  const candidateCore = professionalCoreName(name);
-  if (candidateCore && keys.has(normalizeCompetitorName(candidateCore).toLowerCase())) return true;
+  const candidateCore = professionalCoreName(name) || name;
+  if (keys.has(normalizeCompetitorName(candidateCore).toLowerCase())) return true;
+  // « Cabinet Drai Attal » pour « Pascale Drai-Attal Avocat » / avocats-drai-attal.com
+  // (mesuré en prod, audit 5d06d7bb) : le cœur du nom cité (≥ 2 mots) est
+  // contenu dans le nom saisi ou dans le domaine. Deux mots minimum : un seul
+  // prénom ou nom commun (« Cabinet Martin ») ne suffit pas à conclure.
+  const words = (value: string) => value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").split(/[^a-z0-9]+/).filter((word) => word.length >= 2);
+  const coreWords = words(professionalCoreName(name) || "");
+  if (coreWords.length >= 2) {
+    const own = new Set([...words(brandName), ...words(displayNameFromDomain(domain))]);
+    if (coreWords.every((word) => own.has(word))) return true;
+  }
   if (domainVariants(domain).some((variant) => normalized === variant || normalized.includes(variant))) return true;
   if (isBrandWritingVariant(compactBrandKey(normalized), brandName, domain)) return true;
 

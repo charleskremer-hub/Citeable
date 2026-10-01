@@ -42,3 +42,10 @@ test("categorie : un expert-comptable qui cite un avocat partenaire reste compta
   const ec = "Cabinet d'expertise comptable à Lyon. Votre expert-comptable pour TPE. Experts-comptables associés, en lien avec votre avocat.";
   assert.equal(categoryFromHomepageText(ec, "cabinet-ec.fr"), "accounting firm");
 });
+
+test("le cas Drai-Attal : « Cabinet Drai Attal » = « Pascale Drai-Attal Avocat »", () => {
+  assert.ok(isAuditedBrandName("Cabinet Drai Attal", "Pascale Drai-Attal Avocat", "avocats-drai-attal.com"));
+  assert.ok(isAuditedBrandName("Cabinet Drai-Attal", "Pascale Drai-Attal Avocat", "avocats-drai-attal.com"));
+  assert.equal(isAuditedBrandName("Cabinet Pascale", "Pascale Drai-Attal Avocat", "avocats-drai-attal.com"), false, "un seul mot ne suffit pas");
+  assert.equal(isAuditedBrandName("Cabinet Valiance Avocats", "Pascale Drai-Attal Avocat", "avocats-drai-attal.com"), false);
+});
