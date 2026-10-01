@@ -21,7 +21,7 @@ ChatGPT répond : Cabinet Majeli. Votre cabinet n'est pas dans la réponse.
 
 J'ai posé 6 questions de ce type sur votre ville et vos domaines. Le détail, question par question, avec les sites que l'IA a lus pour répondre : https://www.getpick.ai/audit/2a16d875-a3c2-43c2-bb7a-7a148b17bb58
 
-Votre site est sous WordPress : en un clic, sans webmaster, GetPick y publie les réponses à ces questions, écrites à partir des seules informations de votre site, avec les données structurées et le fichier llms.txt que ces assistants lisent. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
+En un clic, sans webmaster, GetPick publie sur votre site les réponses à ces questions, écrites à partir des seules informations de votre site, avec les données structurées et le fichier llms.txt que ces assistants lisent. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
 
 14 jours gratuits, puis 69 € HT/mois, sans engagement. 15 minutes pour en parler : getpick.ai/rdv
 
@@ -50,7 +50,7 @@ ChatGPT répond : Howard Avocats. Votre cabinet n'est pas dans la réponse.
 
 J'ai posé 6 questions de ce type sur votre ville et vos domaines. Le détail, question par question, avec les sites que l'IA a lus pour répondre : https://www.getpick.ai/audit/9dedaa4e-9e11-47eb-a8f4-abf77350549b
 
-Votre site est sous WordPress : en un clic, sans webmaster, GetPick y publie les réponses à ces questions, écrites à partir des seules informations de votre site, avec les données structurées et le fichier llms.txt que ces assistants lisent. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
+En un clic, sans webmaster, GetPick publie sur votre site les réponses à ces questions, écrites à partir des seules informations de votre site, avec les données structurées et le fichier llms.txt que ces assistants lisent. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
 
 14 jours gratuits, puis 69 € HT/mois, sans engagement. 15 minutes pour en parler : getpick.ai/rdv
 
@@ -79,7 +79,7 @@ ChatGPT répond : Cabinet Drai Attal et Cabinet Del Vecchio-Zinsch. Votre cabine
 
 J'ai posé 5 questions de ce type sur votre ville et vos domaines. Le détail, question par question, avec les sites que l'IA a lus pour répondre : https://www.getpick.ai/audit/aaaad022-2717-49c5-a8c4-7fc4f27adaec
 
-Votre site est sous WordPress : en un clic, sans webmaster, GetPick y publie les réponses à ces questions, écrites à partir des seules informations de votre site, avec les données structurées et le fichier llms.txt que ces assistants lisent. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
+En un clic, sans webmaster, GetPick publie sur votre site les réponses à ces questions, écrites à partir des seules informations de votre site, avec les données structurées et le fichier llms.txt que ces assistants lisent. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
 
 14 jours gratuits, puis 69 € HT/mois, sans engagement. 15 minutes pour en parler : getpick.ai/rdv
 
@@ -108,7 +108,7 @@ ChatGPT répond : Cabinet Drai Attal et Cabinet Guiol Avocat. Votre cabinet n'es
 
 J'ai posé 3 questions de ce type sur votre ville et vos domaines. Le détail, question par question, avec les sites que l'IA a lus pour répondre : https://www.getpick.ai/audit/c75c05d0-4669-432a-a69e-951f8eac8b43
 
-Votre site est sous WordPress : en un clic, sans webmaster, GetPick y publie les réponses à ces questions, écrites à partir des seules informations de votre site, avec les données structurées et le fichier llms.txt que ces assistants lisent. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
+En un clic, sans webmaster, GetPick publie sur votre site les réponses à ces questions, écrites à partir des seules informations de votre site, avec les données structurées et le fichier llms.txt que ces assistants lisent. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
 
 14 jours gratuits, puis 69 € HT/mois, sans engagement. 15 minutes pour en parler : getpick.ai/rdv
 
@@ -137,7 +137,7 @@ ChatGPT répond : Cabinet Drai Attal. Votre cabinet n'est pas dans la réponse.
 
 J'ai posé 4 questions de ce type sur votre ville et vos domaines. Le détail, question par question, avec les sites que l'IA a lus pour répondre : https://www.getpick.ai/audit/605684dc-ac94-41b1-887d-8564207d0ed4
 
-Votre site est sous WordPress : en un clic, sans webmaster, GetPick y publie les réponses à ces questions, écrites à partir des seules informations de votre site, avec les données structurées et le fichier llms.txt que ces assistants lisent. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
+En un clic, sans webmaster, GetPick publie sur votre site les réponses à ces questions, écrites à partir des seules informations de votre site, avec les données structurées et le fichier llms.txt que ces assistants lisent. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
 
 14 jours gratuits, puis 69 € HT/mois, sans engagement. 15 minutes pour en parler : getpick.ai/rdv
 
@@ -166,7 +166,7 @@ ChatGPT répond : Cabinet Trois et Cabinet Jebbouri. Votre cabinet n'est pas dan
 
 J'ai posé 4 questions de ce type sur votre ville et vos domaines. Le détail, question par question, avec les sites que l'IA a lus pour répondre : https://www.getpick.ai/audit/0ca64ae4-0a85-435a-8507-e0ff8e8949a4
 
-Votre site est sous WordPress : en un clic, sans webmaster, GetPick y publie les réponses à ces questions, écrites à partir des seules informations de votre site, avec les données structurées et le fichier llms.txt que ces assistants lisent. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
+En un clic, sans webmaster, GetPick publie sur votre site les réponses à ces questions, écrites à partir des seules informations de votre site, avec les données structurées et le fichier llms.txt que ces assistants lisent. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
 
 14 jours gratuits, puis 69 € HT/mois, sans engagement. 15 minutes pour en parler : getpick.ai/rdv
 
@@ -195,7 +195,7 @@ ChatGPT répond : Cabinet Majeli et Nautilus Avocats. Votre cabinet n'est pas da
 
 J'ai posé 5 questions de ce type sur votre ville et vos domaines. Le détail, question par question, avec les sites que l'IA a lus pour répondre : https://www.getpick.ai/audit/dffc474f-b185-41b5-a958-8a2880442edb
 
-Votre site est sous WordPress : en un clic, sans webmaster, GetPick y publie les réponses à ces questions, écrites à partir des seules informations de votre site, avec les données structurées et le fichier llms.txt que ces assistants lisent. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
+En un clic, sans webmaster, GetPick publie sur votre site les réponses à ces questions, écrites à partir des seules informations de votre site, avec les données structurées et le fichier llms.txt que ces assistants lisent. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
 
 14 jours gratuits, puis 69 € HT/mois, sans engagement. 15 minutes pour en parler : getpick.ai/rdv
 
@@ -224,7 +224,7 @@ ChatGPT répond : Nicol Fideurope Lyon SELAFA et Dahan Avocats. Votre cabinet n'
 
 J'ai posé 5 questions de ce type sur votre ville et vos domaines. Le détail, question par question, avec les sites que l'IA a lus pour répondre : https://www.getpick.ai/audit/e3f5c873-5bad-4351-831e-f2b6bdcd6f8f
 
-Votre site est sous WordPress : en un clic, sans webmaster, GetPick y publie les réponses à ces questions, écrites à partir des seules informations de votre site, avec les données structurées et le fichier llms.txt que ces assistants lisent. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
+En un clic, sans webmaster, GetPick publie sur votre site les réponses à ces questions, écrites à partir des seules informations de votre site, avec les données structurées et le fichier llms.txt que ces assistants lisent. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
 
 14 jours gratuits, puis 69 € HT/mois, sans engagement. 15 minutes pour en parler : getpick.ai/rdv
 
@@ -253,7 +253,7 @@ ChatGPT répond : JM Avocats. Votre cabinet n'est pas dans la réponse.
 
 J'ai posé 5 questions de ce type sur votre ville et vos domaines. Le détail, question par question, avec les sites que l'IA a lus pour répondre : https://www.getpick.ai/audit/2c9232d8-bec9-4cc9-87f5-d09284f24ad9
 
-Votre site est sous WordPress : en un clic, sans webmaster, GetPick y publie les réponses à ces questions, écrites à partir des seules informations de votre site, avec les données structurées et le fichier llms.txt que ces assistants lisent. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
+En un clic, sans webmaster, GetPick publie sur votre site les réponses à ces questions, écrites à partir des seules informations de votre site, avec les données structurées et le fichier llms.txt que ces assistants lisent. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
 
 14 jours gratuits, puis 69 € HT/mois, sans engagement. 15 minutes pour en parler : getpick.ai/rdv
 
@@ -282,7 +282,7 @@ ChatGPT répond : YAD Avocats et JM Avocats. Votre cabinet n'est pas dans la ré
 
 J'ai posé 5 questions de ce type sur votre ville et vos domaines. Le détail, question par question, avec les sites que l'IA a lus pour répondre : https://www.getpick.ai/audit/e79c2435-0fbb-4a7f-afd6-0d297eb3ad3c
 
-Votre site est sous WordPress : en un clic, sans webmaster, GetPick y publie les réponses à ces questions, écrites à partir des seules informations de votre site, avec les données structurées et le fichier llms.txt que ces assistants lisent. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
+En un clic, sans webmaster, GetPick publie sur votre site les réponses à ces questions, écrites à partir des seules informations de votre site, avec les données structurées et le fichier llms.txt que ces assistants lisent. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
 
 14 jours gratuits, puis 69 € HT/mois, sans engagement. 15 minutes pour en parler : getpick.ai/rdv
 
@@ -311,7 +311,7 @@ ChatGPT répond : YAD Avocats et Ellipse Avocats. Votre cabinet n'est pas dans l
 
 J'ai posé 4 questions de ce type sur votre ville et vos domaines. Le détail, question par question, avec les sites que l'IA a lus pour répondre : https://www.getpick.ai/audit/b60e6b7f-ee10-4a25-9bdd-d5243130829a
 
-Votre site est sous WordPress : en un clic, sans webmaster, GetPick y publie les réponses à ces questions, écrites à partir des seules informations de votre site, avec les données structurées et le fichier llms.txt que ces assistants lisent. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
+En un clic, sans webmaster, GetPick publie sur votre site les réponses à ces questions, écrites à partir des seules informations de votre site, avec les données structurées et le fichier llms.txt que ces assistants lisent. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
 
 14 jours gratuits, puis 69 € HT/mois, sans engagement. 15 minutes pour en parler : getpick.ai/rdv
 

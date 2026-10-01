@@ -14,7 +14,7 @@ GO Charles 01/10. Deuxième métier testé à côté des expert-comptables, mêm
 
 ## Modèles d'email (v2 — 01/10, 16 h 40)
 
-Changements vs v1 : signature sans nom de famille, envoi depuis hello@getpick.ai, lien de RDV 15 min, nombre de questions réel par cabinet, promesse alignée sur ce que le produit livre selon le site (colonne « Site »). Rien de promis qui ne soit livré : pas de résultat garanti, pas de délai.
+Changements vs v1 : signature sans nom de famille, envoi depuis hello@getpick.ai, lien de RDV 15 min, nombre de questions réel par cabinet, promesse alignée sur ce que le produit livre selon le site (colonne « Site »). Rien de promis qui ne soit livré : pas de résultat garanti, pas de délai. Le mail ne dit jamais au cabinet que son site est sous WordPress (Charles, 01/10) : la promesse « en un clic » suffit.
 
 Champs : {Nom} · {IA} et {confrères} = colonne « Accroche » · {question} = colonne « Question » · {n} = dénominateur de la colonne de l'IA citée · {lien rapport} = colonne « Rapport ».
 
@@ -32,7 +32,7 @@ J'ai posé à {IA} la question qu'un client tape avant de choisir son avocat :
 
 J'ai posé {n} questions de ce type sur votre ville et vos domaines. Le détail, question par question, avec les sites que l'IA a lus pour répondre : {lien rapport}
 
-Votre site est sous WordPress : en un clic, sans webmaster, GetPick y publie les réponses à ces questions, écrites à partir des seules informations de votre site, avec les données structurées et le fichier llms.txt que ces assistants lisent. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
+En un clic, sans webmaster, GetPick publie sur votre site les réponses à ces questions, écrites à partir des seules informations de votre site, avec les données structurées et le fichier llms.txt que ces assistants lisent. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
 
 14 jours gratuits, puis 69 € HT/mois, sans engagement. 15 minutes pour en parler : getpick.ai/rdv
 
@@ -44,7 +44,7 @@ Vous ne souhaitez plus recevoir ce type de message ? Répondez « stop ».
 
 ### B — Autre site (Wix, autre CMS : 10 cabinets après exclusion)
 
-Même email, en remplaçant le paragraphe « Votre site est sous WordPress… » par :
+Même email, en remplaçant le paragraphe « En un clic, sans webmaster… » par :
 
 ```
 GetPick écrit les réponses à ces questions à partir des seules informations de votre site, les publie là où ces assistants les lisent, et vous dit précisément quoi ajouter sur votre site. Chaque mois, les mêmes questions sont reposées et vous voyez qui est cité, vous ou vos confrères.
