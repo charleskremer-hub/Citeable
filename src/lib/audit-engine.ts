@@ -49,7 +49,7 @@ const BUYER_PROMPT_SET_VERSION = "niche_local_prompts_v7_entites_html";
 // refuse tout alias `…-latest` pour que la variable ne réintroduise pas la faute.
 const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite";
 const DEFAULT_OPENAI_MODEL = ["gpt", "4o", "mini"].join("-");
-const COMPETITOR_EXTRACTION_VERSION = "gemini_grounded_two_step_v8";
+const COMPETITOR_EXTRACTION_VERSION = "gemini_grounded_two_step_v9_chatgpt_crosscheck";
 
 export type AuditTier = "free" | "monitor_9eur" | "agent_19eur" | "agent_49eur";
 export type IcpSegmentKey = "small_brand_ecommerce" | "service_professional" | "local_independent" | "creator_influencer";
@@ -119,7 +119,13 @@ export type BuyerIntentSurfaceResult = {
   rawAnswerSnippet: string;
   brandSentiment?: BrandSentiment;
   perceivedCategory?: string;
-  kind?: "ai_engine" | "supplementary" | "locked";
+  /**
+   * `cross_check` (01/10, inspiré de Pinniq Legal) : un DEUXIÈME moteur — ChatGPT
+   * avec recherche web — posé sur la même question. Il ne touche ni le verdict ni
+   * le score (portés par la surface `ai_engine`, comparables d'un mois à l'autre) ;
+   * il montre au cabinet la réponse de l'IA que ses clients utilisent le plus.
+   */
+  kind?: "ai_engine" | "supplementary" | "locked" | "cross_check";
   status?: "checked" | "not_connected" | "locked" | "failed";
   engine?: string;
   model?: string;
@@ -1995,6 +2001,105 @@ function createOpenAIProvider(): AnswerEngineProvider {
   };
 }
 
+type OpenAIResponsesOutput = {
+  output?: Array<{
+    type?: string;
+    action?: { query?: string };
+    content?: Array<{
+      type?: string;
+      text?: string;
+      annotations?: Array<{ type?: string; url?: string; title?: string }>;
+    }>;
+  }>;
+  error?: { message?: string } | null;
+};
+
+/** Texte de la réponse + pages citées + requêtes tapées, lus dans une réponse `/v1/responses`. */
+export function openAIResponsesEvidence(body: OpenAIResponsesOutput) {
+  const texts: string[] = [];
+  const urls: string[] = [];
+  const queries: string[] = [];
+  for (const item of body.output ?? []) {
+    if (item.type === "web_search_call" && item.action?.query) queries.push(item.action.query);
+    if (item.type !== "message") continue;
+    for (const part of item.content ?? []) {
+      if (part.type === "output_text" && part.text?.trim()) texts.push(part.text.trim());
+      for (const note of part.annotations ?? []) if (note.type === "url_citation" && note.url) urls.push(note.url);
+    }
+  }
+  const seen = new Set<string>();
+  const sources: AnswerSource[] = [];
+  for (const url of urls) {
+    const domain = domainFromMaybeUrl(url);
+    if (!domain || seen.has(domain)) continue;
+    seen.add(domain);
+    sources.push({ domain });
+  }
+  return { text: texts.join("\n").trim(), sources: sources.slice(0, 12), queries, searched: queries.length > 0 || urls.length > 0 };
+}
+
+/** Corps de la requête ChatGPT : la question telle quelle, recherche web activée, ancrée en France. */
+export function chatGPTSearchBody(model: string, question: string) {
+  return {
+    model,
+    input: question,
+    tools: [{ type: "web_search", user_location: { type: "approximate", country: "FR" } }],
+    max_output_tokens: 900,
+  };
+}
+
+export const CHATGPT_SEARCH_TIMEOUT_MS = 20_000;
+
+export function chatGPTCrossCheckEnabled() {
+  return process.env.CHATGPT_CROSSCHECK !== "off" && Boolean(openAIApiKey());
+}
+
+/**
+ * ChatGPT AVEC RECHERCHE WEB (API Responses, outil `web_search`) — ce que voit un
+ * client dans l'app quand il demande un expert-comptable dans sa ville. Le
+ * fournisseur `openai` historique (chat/completions, sans recherche) répond de
+ * mémoire et ne vaut rien pour une question locale.
+ *
+ * L'extraction des cabinets nommés passe par le MÊME extracteur que Gemini : deux
+ * moteurs, une seule règle de lecture, des listes comparables.
+ */
+export function createChatGPTSearchProvider(fetchImpl: typeof fetch = fetch, extract: (prompt: string) => Promise<string | null> = (prompt) => geminiGenerateJson(prompt, 8_000)): AnswerEngineProvider {
+  const model = process.env.CHATGPT_SEARCH_MODEL?.trim() || "gpt-4.1-mini";
+  const apiKey = openAIApiKey();
+  return {
+    engine: "ChatGPT",
+    model,
+    configured: Boolean(apiKey),
+    unavailableMessage: OPENAI_UNAVAILABLE,
+    positiveLabel: "ChatGPT te recommande",
+    negativeLabel: "ChatGPT ne te cite pas",
+    async ask(question: string) {
+      if (!apiKey) throw new Error(OPENAI_UNAVAILABLE);
+      const response = await fetchImpl("https://api.openai.com/v1/responses", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify(chatGPTSearchBody(model, question)),
+        signal: AbortSignal.timeout(CHATGPT_SEARCH_TIMEOUT_MS),
+      });
+      const parsed = safeJsonParse<OpenAIResponsesOutput>(await response.text(), {});
+      if (!response.ok) {
+        return { error: response.status === 429 ? "rate_limit" : "openai_error", status: response.status, message: (parsed.error?.message ?? `HTTP ${response.status}`).slice(0, 200) };
+      }
+      const evidence = openAIResponsesEvidence(parsed);
+      if (!evidence.text) return { error: "openai_error", status: response.status, message: "empty answer" };
+      const extracted = parseStructuredBrandResponse((await extract(geminiExtractionPrompt(question, evidence.text))) ?? "");
+      return {
+        ...extracted,
+        answer: `recommended_brands: ${extracted.competitorBrands.join(", ")}\n${evidence.text}`,
+        grounded: evidence.searched,
+        sources: evidence.sources,
+        searchQueries: evidence.queries,
+        model,
+      };
+    },
+  };
+}
+
 function providerForKey(key: AnswerEngineProviderKey): AnswerEngineProvider | null {
   const config = ANSWER_ENGINE_PROVIDER_CONFIGS[key];
 
@@ -2478,6 +2583,8 @@ export function extractSourceCitationReports(prompts: BuyerIntentPromptResult[])
   for (const prompt of prompts) {
     for (const surface of prompt.surfaces) {
       if (!surface.reachable || !surface.rawAnswerSnippet) continue;
+      // La contre-vérification ChatGPT n'alimente pas le suivi mensuel (comparabilité).
+      if (surface.kind === "cross_check") continue;
 
       for (const domain of extractDomains(surface.rawAnswerSnippet)) {
         const current = sourceMap.get(domain) ?? { prompts: new Set<string>(), examples: [], mentions: 0 };
@@ -4575,11 +4682,21 @@ async function probeBuyerIntentPrompts(prompts: string[], brandName: string, dom
   //
   // La borne existe pour ne pas troquer un dépassement de budget contre un
   // throttling Gemini : on ne lance jamais 12 appels d'un coup.
-  const surfaces = await mapWithConcurrency(prompts, PROMPT_CONCURRENCY, (prompt) =>
-    answerEngine
-      ? probeAnswerEngine(prompt, brandName, domain, answerEngine)
-      : probeSupplementarySearch(prompt, brandName, domain)
-  );
+  // Contre-vérification ChatGPT (recherche web) — lancée EN MÊME TEMPS que le
+  // moteur principal, toutes les questions de front (≤ 12) : elle ajoute ~20 s
+  // une seule fois au lieu de s'ajouter à chaque vague. Seulement quand le moteur
+  // principal est Gemini (les tiers ChatGPT ont déjà ChatGPT en principal).
+  const crossCheck = answerEngine?.engine === "Gemini" && chatGPTCrossCheckEnabled() ? createChatGPTSearchProvider() : null;
+  const [surfaces, crossSurfaces] = await Promise.all([
+    mapWithConcurrency(prompts, PROMPT_CONCURRENCY, (prompt) =>
+      answerEngine
+        ? probeAnswerEngine(prompt, brandName, domain, answerEngine)
+        : probeSupplementarySearch(prompt, brandName, domain)
+    ),
+    crossCheck
+      ? mapWithConcurrency(prompts, 12, async (prompt): Promise<BuyerIntentSurfaceResult> => ({ ...(await probeAnswerEngine(prompt, brandName, domain, crossCheck)), kind: "cross_check" }))
+      : Promise.resolve([] as BuyerIntentSurfaceResult[]),
+  ]);
 
   // L'ordre et la règle d'arrêt sont ceux d'avant, à l'identique : on parcourt
   // les résultats DANS L'ORDRE DES QUESTIONS et on s'arrête au premier sondage
@@ -4596,7 +4713,7 @@ async function probeBuyerIntentPrompts(prompts: string[], brandName: string, dom
       available: checkedSurfaces.length > 0,
       brandMentioned: checkedSurfaces.some((surface) => surface.brandMentioned),
       competitors,
-      surfaces: answerEngine ? [searchSurface] : [searchSurface, lockedProEngineSurface()],
+      surfaces: answerEngine ? (crossSurfaces[index] ? [searchSurface, crossSurfaces[index]] : [searchSurface]) : [searchSurface, lockedProEngineSurface()],
     });
 
     if (answerEngine && searchSurface.status !== "checked") break;

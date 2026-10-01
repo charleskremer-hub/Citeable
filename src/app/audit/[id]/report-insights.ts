@@ -645,7 +645,34 @@ export type BoardRow = {
   need: string;
   /** Place du cabinet dans la liste que l'IA a donnée, et longueur de la liste. */
   position: { rank: number; of: number } | null;
+  /** Contre-vérification ChatGPT (recherche web) sur la même question — null si non posée. */
+  crossCheck?: CrossCheck | null;
 };
+
+export type CrossCheck = { engine: string; state: PromptState; rivals: string[]; position: { rank: number; of: number } | null };
+
+/** Lecture de la surface `cross_check` d'une question (ChatGPT avec recherche web). */
+export function crossCheckFor(question: BuyerIntentPromptResult, brandName = ""): CrossCheck | null {
+  const surface = (question.surfaces ?? []).find((item) => item.kind === "cross_check");
+  if (!surface) return null;
+  const engine = surface.engine ?? "ChatGPT";
+  if (surface.status !== "checked") return { engine, state: "unchecked", rivals: [], position: null };
+  const state: PromptState = surface.brandMentioned ? "recommended" : "missing";
+  const position = state === "recommended" && brandName ? brandPositionInAnswer(surface.rawAnswerSnippet, brandName) : null;
+  return { engine, state, rivals: surface.competitors.slice(0, 4), position };
+}
+
+/**
+ * Couverture par plateforme (Pinniq Legal : « 4/4 platforms »). Une ligne par
+ * moteur réellement interrogé : questions où il te nomme / questions vérifiées.
+ */
+export function platformCoverage(rows: BoardRow[], primaryEngine: string): Array<{ engine: string; cited: number; checked: number }> {
+  const primary = rows.filter((row) => row.state !== "unchecked");
+  const out = [{ engine: primaryEngine, cited: primary.filter((row) => row.state === "recommended").length, checked: primary.length }];
+  const cross = rows.map((row) => row.crossCheck).filter((item): item is CrossCheck => Boolean(item) && item!.state !== "unchecked");
+  if (cross.length) out.push({ engine: cross[0].engine, cited: cross.filter((item) => item.state === "recommended").length, checked: cross.length });
+  return out;
+}
 
 // --- Inspiré de Pinniq Legal (30/09) : la visibilité PAR BESOIN client et la
 // PROÉMINENCE (1er nommé ≠ 4e nommé). Deux lectures que le cabinet comprend. ----
@@ -718,7 +745,7 @@ export function questionBoardRows(questions: BuyerIntentPromptResult[], brandDom
       const pages = [...domains.filter(isOwn), ...domains.filter((domain) => !isOwn(domain))].slice(0, 5).map((domain) => ({ domain, own: isOwn(domain) }));
       const aiSurface = (question.surfaces ?? []).find((surface) => surface.kind === "ai_engine");
       const position = analysis.state === "recommended" && brandName ? brandPositionInAnswer(aiSurface?.rawAnswerSnippet, brandName) : null;
-      return { prompt: question.prompt, state: analysis.state, rivals: analysis.competitors.slice(0, 4), pages, need: questionNeed(question.prompt), position };
+      return { prompt: question.prompt, state: analysis.state, rivals: analysis.competitors.slice(0, 4), pages, need: questionNeed(question.prompt), position, crossCheck: crossCheckFor(question, brandName) };
     })
     .sort((a, b) => rank(a.state) - rank(b.state));
 }
