@@ -109,3 +109,37 @@ test("les index UNIQUES ne sont PAS couverts : leur 23505 peut venir des donnée
 
   await assert.rejects(ensureAuditSchema(), /could not create unique index/);
 });
+
+test("premier démarrage après un changement : DROP + CREATE puis empreinte posée en commentaire (bug prod 02/10)", async () => {
+  reset();
+  // La doublure renvoie zéro ligne à la lecture d'empreinte : rien n'est encore marqué.
+  await ensureAuditSchema();
+  assert.ok(executed.some((s) => /DROP INDEX IF EXISTS audit_email_delivery_one_step_per_prospect_idx/.test(s)));
+  assert.ok(executed.some((s) => /COMMENT ON INDEX audit_email_delivery_one_step_per_prospect_idx IS 'getpick:/.test(s)));
+  assert.ok(executed.some((s) => /COMMENT ON CONSTRAINT audit_funnel_events_event_name_check/.test(s)));
+});
+
+test("une VRAIE violation d'unicité (données) sur un index unique remonte, une course de catalogue non", async () => {
+  reset();
+  failNextMatching = {
+    pattern: /CREATE UNIQUE INDEX IF NOT EXISTS audit_email_delivery_one_day_per_prospect_idx/,
+    error: Object.assign(pgError("23505", 'duplicate key value violates unique constraint "pg_class_relname_nsp_index"'), { constraint: "pg_class_relname_nsp_index" }),
+  };
+  await assert.doesNotReject(ensureAuditSchema());
+
+  reset();
+  failNextMatching = {
+    pattern: /CREATE UNIQUE INDEX IF NOT EXISTS audit_email_delivery_one_day_per_prospect_idx/,
+    error: Object.assign(pgError("23505", 'could not create unique index "audit_email_delivery_one_day_per_prospect_idx"'), { constraint: "audit_email_delivery_one_day_per_prospect_idx" }),
+  };
+  await assert.rejects(ensureAuditSchema());
+});
+
+test("« constraint already exists » (42710) laissée par l'instance voisine est tolérée", async () => {
+  reset();
+  failNextMatching = {
+    pattern: /ADD CONSTRAINT audit_funnel_events_event_name_check/,
+    error: pgError("42710", 'constraint "audit_funnel_events_event_name_check" for relation "audit_funnel_events" already exists'),
+  };
+  await assert.doesNotReject(ensureAuditSchema());
+});

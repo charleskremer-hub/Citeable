@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { Pool } from "pg";
 import { CLASSIFIED_TRAFFIC_CLASSES_PREDICATE_SQL } from "./traffic-filter";
 import { RECHECK_INTERVAL_DAYS } from "./plan-promises";
@@ -50,6 +51,62 @@ async function createIndexIfNotExists(sql: string) {
     await pool.query(sql);
   } catch (error) {
     if (CONCURRENT_DDL_RACE_CODES.has((error as { code?: string })?.code ?? "")) return;
+    throw error;
+  }
+}
+
+/**
+ * DDL « remplacer si la définition a changé » — sans course entre instances
+ * (bug prod 02/10/2026 : 7 rapports /audit/[id] sur 15 en 500 quand plusieurs
+ * lambdas démarrent à froid dans la même seconde).
+ *
+ * Chaque objet porte en commentaire l'empreinte de sa définition. Si elle est
+ * déjà là, on ne touche à rien : en régime normal, aucun DROP n'est rejoué. Au
+ * premier démarrage après un changement de définition, plusieurs instances
+ * peuvent encore remplacer l'objet ensemble ; on n'avale alors QUE les erreurs
+ * de catalogue de cette course — jamais une violation d'unicité due aux données.
+ */
+function ddlFingerprint(sql: string) {
+  return `getpick:${createHash("sha1").update(sql).digest("hex").slice(0, 12)}`;
+}
+
+function isCatalogRace(error: unknown) {
+  const e = error as { code?: string; constraint?: string; message?: string };
+  if (e?.code === "23505") return e.constraint === "pg_class_relname_nsp_index"; // course de catalogue, pas des données
+  if (e?.code === "42P07" || e?.code === "42710") return true; // relation / objet déjà créé par l'instance voisine
+  return /tuple concurrently (updated|deleted)/.test(e?.message ?? "");
+}
+
+async function replaceIndexIfChanged(name: string, createSql: string) {
+  const fingerprint = ddlFingerprint(createSql);
+  const { rows } = await pool.query<{ comment: string | null }>(
+    `SELECT obj_description(to_regclass($1), 'pg_class') AS comment WHERE to_regclass($1) IS NOT NULL`,
+    [name]
+  );
+  if (rows[0]?.comment === fingerprint) return;
+  try {
+    await pool.query(`DROP INDEX IF EXISTS ${name}`);
+    await pool.query(createSql);
+    await pool.query(`COMMENT ON INDEX ${name} IS '${fingerprint}'`);
+  } catch (error) {
+    if (isCatalogRace(error)) return;
+    throw error;
+  }
+}
+
+async function replaceConstraintIfChanged(table: string, name: string, definition: string) {
+  const fingerprint = ddlFingerprint(definition);
+  const { rows } = await pool.query<{ comment: string | null }>(
+    `SELECT obj_description(oid, 'pg_constraint') AS comment FROM pg_constraint WHERE conname = $1 AND conrelid = to_regclass($2)`,
+    [name, table]
+  );
+  if (rows[0]?.comment === fingerprint) return;
+  try {
+    await pool.query(`ALTER TABLE ${table} DROP CONSTRAINT IF EXISTS ${name}`);
+    await pool.query(`ALTER TABLE ${table} ADD CONSTRAINT ${name} ${definition}`);
+    await pool.query(`COMMENT ON CONSTRAINT ${name} ON ${table} IS '${fingerprint}'`);
+  } catch (error) {
+    if (isCatalogRace(error)) return;
     throw error;
   }
 }
@@ -240,13 +297,22 @@ async function runAuditSchemaMigrations() {
   //
   // DROP + CREATE obligatoire, jamais `IF NOT EXISTS` seul : un index deja
   // present ne verrait pas son predicat mis a jour, et la migration passerait
-  // en silence en laissant le defaut en place.
-  await pool.query(`DROP INDEX IF EXISTS audit_email_delivery_one_step_per_prospect_idx`);
-  await pool.query(`DROP INDEX IF EXISTS audit_email_delivery_one_day_per_prospect_idx`);
-  await pool.query(`DROP INDEX IF EXISTS audit_email_delivery_one_brand_step_day_idx`);
-  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS audit_email_delivery_one_step_per_prospect_idx ON audit_email_delivery_log (email, step) WHERE status IN ('claimed', 'sent', 'failed') AND audience = 'prospect' AND step <> 'audit_result'`);
-  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS audit_email_delivery_one_day_per_prospect_idx ON audit_email_delivery_log (email, send_day) WHERE status IN ('claimed', 'sent', 'failed') AND step <> 'audit_result'`);
-  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS audit_email_delivery_one_brand_step_day_idx ON audit_email_delivery_log (brand_domain, step, send_day) WHERE brand_domain IS NOT NULL AND status IN ('claimed', 'sent', 'failed') AND step <> 'audit_result'`);
+  // en silence en laissant le defaut en place. MAIS seulement quand la
+  // definition a change (empreinte en commentaire) : rejouer DROP + CREATE a
+  // chaque demarrage d'instance faisait courir les lambdas les unes contre les
+  // autres (500 sur /audit/[id], 02/10) et ouvrait une fenetre sans dedup.
+  await replaceIndexIfChanged(
+    "audit_email_delivery_one_step_per_prospect_idx",
+    `CREATE UNIQUE INDEX IF NOT EXISTS audit_email_delivery_one_step_per_prospect_idx ON audit_email_delivery_log (email, step) WHERE status IN ('claimed', 'sent', 'failed') AND audience = 'prospect' AND step <> 'audit_result'`
+  );
+  await replaceIndexIfChanged(
+    "audit_email_delivery_one_day_per_prospect_idx",
+    `CREATE UNIQUE INDEX IF NOT EXISTS audit_email_delivery_one_day_per_prospect_idx ON audit_email_delivery_log (email, send_day) WHERE status IN ('claimed', 'sent', 'failed') AND step <> 'audit_result'`
+  );
+  await replaceIndexIfChanged(
+    "audit_email_delivery_one_brand_step_day_idx",
+    `CREATE UNIQUE INDEX IF NOT EXISTS audit_email_delivery_one_brand_step_day_idx ON audit_email_delivery_log (brand_domain, step, send_day) WHERE brand_domain IS NOT NULL AND status IN ('claimed', 'sent', 'failed') AND step <> 'audit_result'`
+  );
   // LA REGLE PROPRE AU DIAGNOSTIC DEMANDE. `brand_domain IS NOT NULL` reprend
   // le predicat de l'index de marque : une ligne sans domaine lisible n'est
   // dedupliquee par aucun de ces index — c'est assume, le plafond quotidien de
@@ -347,13 +413,13 @@ async function runAuditSchemaMigrations() {
   // ne se voit pas au type-check, il se voit en production sous la forme d'une
   // violation de contrainte sur l'INSERT. Le `DROP … IF EXISTS` juste au-dessus
   // fait que la migration est appliquée par le simple déploiement : chaque
-  // `ensureAuditSchema` recrée la contrainte à jour.
-  await pool.query(`ALTER TABLE audit_funnel_events DROP CONSTRAINT IF EXISTS audit_funnel_events_event_name_check`);
-  await pool.query(`
-    ALTER TABLE audit_funnel_events
-    ADD CONSTRAINT audit_funnel_events_event_name_check
-    CHECK (event_name IN ('audit_started', 'audit_completed', 'report_viewed', 'report_link_opened', 'email_captured', 'teaser_cta_click', 'checkout_opened', 'followup_1_sent', 'followup_2_sent', 'followup_click'))
-  `);
+  // `ensureAuditSchema` recrée la contrainte à jour — uniquement quand la liste
+  // a changé (empreinte en commentaire), pour ne pas faire courir les instances.
+  await replaceConstraintIfChanged(
+    "audit_funnel_events",
+    "audit_funnel_events_event_name_check",
+    `CHECK (event_name IN ('audit_started', 'audit_completed', 'report_viewed', 'report_link_opened', 'email_captured', 'teaser_cta_click', 'checkout_opened', 'followup_1_sent', 'followup_2_sent', 'followup_click'))`
+  );
   await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS audit_funnel_events_created_idx ON audit_funnel_events (created_at DESC)`);
   await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS audit_funnel_events_name_created_idx ON audit_funnel_events (event_name, created_at DESC)`);
   await createIndexIfNotExists(`CREATE INDEX IF NOT EXISTS audit_funnel_events_audit_idx ON audit_funnel_events (audit_id, created_at DESC)`);
