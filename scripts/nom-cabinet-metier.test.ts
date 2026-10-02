@@ -49,3 +49,9 @@ test("le cas Drai-Attal : « Cabinet Drai Attal » = « Pascale Drai-Attal Avoca
   assert.equal(isAuditedBrandName("Cabinet Pascale", "Pascale Drai-Attal Avocat", "avocats-drai-attal.com"), false, "un seul mot ne suffit pas");
   assert.equal(isAuditedBrandName("Cabinet Valiance Avocats", "Pascale Drai-Attal Avocat", "avocats-drai-attal.com"), false);
 });
+
+test("le cas JM (02/10) : « Cabinet JM Avocats » = « JM Avocats », pas un confrere", () => {
+  assert.ok(isAuditedBrandName("Cabinet JM Avocats", "JM Avocats", "jm-avocats.com"));
+  assert.equal(isAuditedBrandName("Cabinet Arriuberge", "JM Avocats", "jm-avocats.com"), false);
+  assert.equal(isAuditedBrandName("YAD Avocats", "JM Avocats", "jm-avocats.com"), false);
+});

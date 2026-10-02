@@ -3846,6 +3846,11 @@ export function isAuditedBrandName(name: string, brandName: string, domain: stri
   if (keys.has(normalized)) return true;
   const candidateCore = professionalCoreName(name) || name;
   if (keys.has(normalizeCompetitorName(candidateCore).toLowerCase())) return true;
+  // « Cabinet JM Avocats » pour « JM Avocats » (audit 9fb55508, 02/10) : le cœur
+  // « JM » est trop court pour la règle ci-dessus ; on retire alors seulement le
+  // préfixe de forme (Cabinet, Maître, Me, SELARL…) et on compare au nom saisi.
+  const withoutPrefix = name.replace(/^\s*(?:(?:cabinet|ma[iî]tre|me|selarl|selas|scp|sarl|aarpi)\s+(?:d['’]\s*|de\s+)?)+/i, "");
+  if (withoutPrefix !== name && keys.has(normalizeCompetitorName(withoutPrefix).toLowerCase())) return true;
   // « Cabinet Drai Attal » pour « Pascale Drai-Attal Avocat » / avocats-drai-attal.com
   // (mesuré en prod, audit 5d06d7bb) : le cœur du nom cité (≥ 2 mots) est
   // contenu dans le nom saisi ou dans le domaine. Deux mots minimum : un seul
