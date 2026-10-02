@@ -109,3 +109,33 @@ test("les index UNIQUES ne sont PAS couverts : leur 23505 peut venir des donnée
 
   await assert.rejects(ensureAuditSchema(), /could not create unique index/);
 });
+
+test("la migration est tenue sous un verrou consultatif partagé par toutes les instances (bug prod 02/10)", async () => {
+  // Instance avec une vraie session : le verrou doit encadrer TOUT le DDL.
+  const log: string[] = [];
+  const db = await import("@/lib/db");
+  const pool = db.pool as unknown as { connect?: unknown; query: (t: string) => Promise<unknown> };
+  const originalQuery = pool.query.bind(pool);
+  pool.query = async (text: string) => {
+    log.push(text);
+    return originalQuery(text);
+  };
+  pool.connect = async () => ({
+    query: async (text: string) => {
+      log.push(text);
+      return { rows: [], rowCount: 0 };
+    },
+    release: () => log.push("RELEASE"),
+  });
+  try {
+    db.resetAuditSchemaForTests();
+    await db.ensureAuditSchema();
+    assert.match(log[0], /pg_advisory_lock/);
+    const unlock = log.findIndex((t) => /pg_advisory_unlock/.test(t));
+    assert.ok(unlock > 1, "le déverrouillage vient après le DDL");
+    assert.ok(log.slice(1, unlock).some((t) => /CREATE TABLE IF NOT EXISTS audits/.test(t)));
+    assert.equal(log.at(-1), "RELEASE");
+  } finally {
+    delete pool.connect;
+  }
+});
