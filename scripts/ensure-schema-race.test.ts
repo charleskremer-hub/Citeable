@@ -143,3 +143,18 @@ test("« constraint already exists » (42710) laissée par l'instance voisine es
   };
   await assert.doesNotReject(ensureAuditSchema());
 });
+
+test("objet supprimé par l'instance voisine pendant le remplacement (42P01 / 42704) : toléré (prod 02/10)", async () => {
+  reset();
+  failNextMatching = {
+    pattern: /COMMENT ON INDEX audit_email_delivery_one_brand_step_day_idx/,
+    error: pgError("42P01", 'relation "audit_email_delivery_one_brand_step_day_idx" does not exist'),
+  };
+  await assert.doesNotReject(ensureAuditSchema());
+  reset();
+  failNextMatching = {
+    pattern: /COMMENT ON CONSTRAINT audit_funnel_events_event_name_check/,
+    error: pgError("42704", 'constraint "audit_funnel_events_event_name_check" for table "audit_funnel_events" does not exist'),
+  };
+  await assert.doesNotReject(ensureAuditSchema());
+});

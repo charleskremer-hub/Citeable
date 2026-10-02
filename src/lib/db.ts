@@ -74,6 +74,10 @@ function isCatalogRace(error: unknown) {
   const e = error as { code?: string; constraint?: string; message?: string };
   if (e?.code === "23505") return e.constraint === "pg_class_relname_nsp_index"; // course de catalogue, pas des données
   if (e?.code === "42P07" || e?.code === "42710") return true; // relation / objet déjà créé par l'instance voisine
+  // Objet supprimé par l'instance voisine entre notre CREATE et notre COMMENT (ou
+  // notre DROP de contrainte) : elle le recrée et pose l'empreinte elle-même.
+  // Vu en prod le 02/10 au premier déploiement (4 rapports sur 47 en 500).
+  if (e?.code === "42P01" || e?.code === "42704") return true;
   return /tuple concurrently (updated|deleted)/.test(e?.message ?? "");
 }
 
