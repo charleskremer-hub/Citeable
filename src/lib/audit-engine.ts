@@ -3241,12 +3241,30 @@ async function officialCommunes(postal: string): Promise<string[] | null> {
   }
 }
 
+const CONTACT_PAGE_TIMEOUT_MS = 3_000;
+
+/**
+ * Repli SANS réseau : l'adresse lue sur la home seule (« 90000 Belfort »).
+ * 02/10 : Mon Espace Compta, adresse en clair dans le pied de page, est encore
+ * sorti sans ville en prod — le budget de 6 s a expiré sur les pages contact
+ * d'un hébergement lent, et l'adresse DÉJÀ lue sur la home était jetée.
+ */
+export function homeLocationFallback(html: string): string {
+  const first = postalCandidates([{ html, weight: 1 }])[0];
+  return first ? `${first.postal} ${first.commune}` : "";
+}
+
 /** « NNNNN Commune », lisible par `inferLocationFromHomepage` — ou "" si aucune adresse. */
 export async function resolveCabinetLocation(html: string, pageUrl: string): Promise<string> {
   const extra = await Promise.all(
     contactPageCandidates(html, pageUrl).map(async (url) => {
       try {
-        const response = await withTimeout(url);
+        // 3 s par page : les pages contact se lisent en parallèle et doivent tenir
+        // dans le budget de 6 s de `withCabinetLocation` (géo-API comprise).
+        const response = await fetch(url, {
+          headers: { "User-Agent": USER_AGENT, Accept: "text/html,application/xhtml+xml" },
+          signal: AbortSignal.timeout(CONTACT_PAGE_TIMEOUT_MS),
+        });
         return response.ok ? await response.text() : "";
       } catch {
         return "";
@@ -3266,9 +3284,10 @@ export async function resolveCabinetLocation(html: string, pageUrl: string): Pro
 async function withCabinetLocation(category: string, signals: string, html: string, pageUrl: string): Promise<string> {
   if (!isLocalServiceCategory(category) || isOnlineServiceFirm(signals)) return signals;
   // Budget borné : l'audit entier tient en 60 s ; une ville trouvée en plus de 6 s ne vaut pas un audit coupé.
+  const fallback = homeLocationFallback(html);
   const location = await Promise.race([
-    resolveCabinetLocation(html, pageUrl).catch(() => ""),
-    new Promise<string>((resolve) => setTimeout(() => resolve(""), 6_000)),
+    resolveCabinetLocation(html, pageUrl).then((found) => found || fallback, () => fallback),
+    new Promise<string>((resolve) => setTimeout(() => resolve(fallback), 6_000)),
   ]);
   // En TÊTE : `inferLocationFromHomepage` prend le premier « code postal + ville ».
   return location ? `${location} · ${signals}` : signals;

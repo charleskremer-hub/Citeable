@@ -40,3 +40,9 @@ test("« Châteauroux » ne fait pas d'un cabinet comptable une marque de thé",
 test("un site qui se dit expert-comptable reste un cabinet comptable", () => {
   assert.equal(categoryFromHomepageText("VENCEA Expertise Comptable — bijoux de famille, patrimoine", "vencea.fr"), "accounting firm");
 });
+
+test("budget dépassé : l'adresse lue sur la home reste la ville (Mon Espace Compta, 02/10)", async () => {
+  const { homeLocationFallback } = await import("@/lib/audit-engine");
+  assert.equal(homeLocationFallback(MEC_FOOTER), "90000 Belfort");
+  assert.equal(homeLocationFallback("<p>Aucune adresse ici</p>"), "");
+});
