@@ -88,7 +88,7 @@ GetPick écrit les réponses à ces questions à partir des seules informations 
 ## Écartés
 
 - Lejeune-Brachet (Nantes), Huber (Lille), Parafiniuk (Lille) : déjà cités sur presque toutes les questions — pas de douleur ; à garder comme références de marché.
-- JM Avocats (Bordeaux) : classé comptable (bug corrigé, commit 63d6aa4) — à rediagnostiquer demain.
+- JM Avocats (Bordeaux) : rediagnostiqué le 02/10 (catégorie avocat OK) — cité 4/6 par Gemini et 4/6 par ChatGPT : peu de douleur, écarté comme Huber et Parafiniuk.
 - Camille Lenoble (Bordeaux) : questions hors de son activité (cabinet en ligne) — accroche non crédible.
 - Emmanuelle Olliéric (Nantes) : site injoignable.
 
