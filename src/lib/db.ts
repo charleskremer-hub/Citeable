@@ -66,46 +66,9 @@ async function createIndexIfNotExists(sql: string) {
  */
 let schemaReady: Promise<void> | null = null;
 
-/**
- * MIGRATIONS : UNE SEULE INSTANCE À LA FOIS, TOUTES INSTANCES CONFONDUES (bug prod 02/10/2026).
- *
- * La promesse ci-dessus ne sérialise qu'À L'INTÉRIEUR d'une instance. Quand
- * plusieurs lambdas démarrent à froid dans la même seconde — un scanner de
- * messagerie qui ouvre tous les liens d'un lot de prospection, plusieurs
- * prospects qui cliquent —, chacune rejoue ses `DROP INDEX` / `CREATE UNIQUE
- * INDEX` / `DROP CONSTRAINT` / `ADD CONSTRAINT` en même temps que les autres :
- * 23505 sur `pg_class_relname_nsp_index`, 42710 « constraint already exists »
- * → la page /audit/[id] répond 500 au prospect. Mesuré le 02/10 : 7 rapports
- * sur 15 en 500 sous 15 requêtes simultanées.
- *
- * Un verrou consultatif Postgres, tenu par une connexion dédiée pendant toute
- * la migration, fait attendre les autres instances : elles rejouent ensuite des
- * DDL idempotents sur un schéma déjà à jour, sans course.
- */
-const SCHEMA_MIGRATION_LOCK_KEY = 7_340_215_002; // constante arbitraire propre à GetPick
-
-async function runAuditSchemaMigrationsLocked() {
-  // Les doublures de `pg.Pool` des tests n'exposent que `query` : sans
-  // `connect`, il n'y a pas de session où tenir un verrou, on migre directement.
-  if (typeof (pool as { connect?: unknown }).connect !== "function") {
-    return runAuditSchemaMigrations();
-  }
-  const client = await pool.connect();
-  try {
-    await client.query(`SELECT pg_advisory_lock($1)`, [SCHEMA_MIGRATION_LOCK_KEY]);
-    try {
-      await runAuditSchemaMigrations();
-    } finally {
-      await client.query(`SELECT pg_advisory_unlock($1)`, [SCHEMA_MIGRATION_LOCK_KEY]);
-    }
-  } finally {
-    client.release();
-  }
-}
-
 export function ensureAuditSchema(): Promise<void> {
   if (!schemaReady) {
-    schemaReady = runAuditSchemaMigrationsLocked().catch((error) => {
+    schemaReady = runAuditSchemaMigrations().catch((error) => {
       schemaReady = null;
       throw error;
     });
