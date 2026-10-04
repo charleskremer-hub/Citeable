@@ -30,7 +30,7 @@ const FREE_AUDIT_DOMAIN_DAILY_LIMIT = 1;
 // le cache free-Gemini (findFreshFreeGeminiAudit) — sans lui, un re-audit d'un
 // domaine déjà scanné rejouait les anciennes questions. Toujours bumper cette
 // version quand la génération de prompts ou l'inférence de catégorie change.
-const BUYER_PROMPT_SET_VERSION = "niche_local_prompts_v8_avocat_majorite";
+const BUYER_PROMPT_SET_VERSION = "niche_local_prompts_v9_homonymes_departement";
 // Modèle ÉPINGLÉ — jamais un alias `…-latest`.
 //
 // Deux raisons, toutes deux MESURÉES le 20/09/2026, pas déduites :
@@ -2978,7 +2978,9 @@ export function inferLocationFromHomepage(text: string) {
   // Particules des communes composées gardées (« Bourg-en-Bresse », « Joué-lès-Tours ») ;
   // un espace n'est suivi que derrière un article (« La Rochelle ») — sinon
   // « 65000 Tarbes Cette page… » donnait la ville « Tarbes Cette ».
-  const postalMatch = normalized.match(/\b\d{5}\s+((?:(?:Le|La|Les)\s)?[A-ZÀ-Ÿ][A-Za-zÀ-ÿ']+(?:-(?:[a-zà-ÿ]{1,4}-)*(?:d'|l')?[A-ZÀ-Ÿa-zà-ÿ][A-Za-zÀ-ÿ']+)*)/);
+  // Une précision de département (« 36250 Saint-Maur (Indre) ») est gardée : elle
+  // lève l'homonymie avec une commune plus connue (voir `departmentSuffixNeeded`).
+  const postalMatch = normalized.match(/\b\d{5}\s+((?:(?:Le|La|Les)\s)?[A-ZÀ-Ÿ][A-Za-zÀ-ÿ']+(?:-(?:[a-zà-ÿ]{1,4}-)*(?:d'|l')?[A-ZÀ-Ÿa-zà-ÿ][A-Za-zÀ-ÿ']+)*(?: \([A-ZÀ-Ÿ][A-Za-zÀ-ÿ' -]{2,30}\))?)/);
   const explicitLocationMatch = normalized.match(/(?:based in|located in|situ[eé]e?s?\s+[aà])\s+([A-ZÀ-Ÿ][A-Za-zÀ-ÿ']+(?:[ -][A-ZÀ-Ÿ][A-Za-zÀ-ÿ']+)*)/i);
   // Known-city fallback. NOTE: use "\\b" (word boundary) — a template-literal
   // "\b" is a backspace char (0x08) and never matches real text.
@@ -3254,6 +3256,45 @@ export function homeLocationFallback(html: string): string {
   return first ? `${first.postal} ${first.commune}` : "";
 }
 
+type CommuneRow = { nom: string; code?: string; population?: number; departement?: { nom?: string } };
+
+/**
+ * HOMONYMES (défaut du 02–04/10 : Fiaud-Laporte, Saint-Maur (Indre, 3 537 hab.),
+ * mesuré sur Saint-Maur-des-Fossés (94, 76 572 hab.) — 6/6 réponses et tous les
+ * confrères dans le Val-de-Marne). Une question « à Saint-Maur » est lue par
+ * l'IA comme la commune la plus connue. On précise donc le département quand :
+ *  - une autre commune porte EXACTEMENT le même nom et pèse au moins autant ;
+ *  - ou une commune « Nom-… » pèse plus de 5 fois la nôtre.
+ * Pure : la décision se teste sans réseau.
+ */
+export function departmentSuffixNeeded(self: CommuneRow, candidates: CommuneRow[]): boolean {
+  const own = foldName(self.nom);
+  const ownPop = self.population ?? 0;
+  return candidates.some((other) => {
+    if (other.code && self.code && other.code === self.code) return false;
+    const name = foldName(other.nom);
+    const pop = other.population ?? 0;
+    if (name === own) return pop >= ownPop && Boolean(other.code !== self.code);
+    return name.startsWith(`${own}-`) && pop > 5 * Math.max(ownPop, 1);
+  });
+}
+
+/** « Saint-Maur (Indre) » si la commune a un homonyme plus connu, sinon le nom tel quel. Ne bloque jamais : 3 s, repli sur le nom. */
+async function disambiguatedCommune(postal: string, commune: string): Promise<string> {
+  try {
+    const signal = AbortSignal.timeout(3_000);
+    const [selfRows, homonyms] = await Promise.all([
+      fetch(`https://geo.api.gouv.fr/communes?codePostal=${postal}&fields=nom,code,population,departement`, { signal }).then((r) => (r.ok ? (r.json() as Promise<CommuneRow[]>) : [])),
+      fetch(`https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(commune)}&fields=nom,code,population&boost=population&limit=10`, { signal }).then((r) => (r.ok ? (r.json() as Promise<CommuneRow[]>) : [])),
+    ]);
+    const self = selfRows.find((row) => foldName(row.nom) === foldName(commune));
+    if (!self?.departement?.nom) return commune;
+    return departmentSuffixNeeded(self, homonyms) ? `${commune} (${self.departement.nom})` : commune;
+  } catch {
+    return commune;
+  }
+}
+
 /** « NNNNN Commune », lisible par `inferLocationFromHomepage` — ou "" si aucune adresse. */
 export async function resolveCabinetLocation(html: string, pageUrl: string): Promise<string> {
   const extra = await Promise.all(
@@ -3276,7 +3317,7 @@ export async function resolveCabinetLocation(html: string, pageUrl: string): Pro
     const communes = await officialCommunes(candidate.postal);
     if (communes === null) return `${candidate.postal} ${candidate.commune}`;
     const official = pickOfficialCommune(communes, candidate.read);
-    if (official) return `${candidate.postal} ${official}`;
+    if (official) return `${candidate.postal} ${await disambiguatedCommune(candidate.postal, official)}`;
   }
   return "";
 }
