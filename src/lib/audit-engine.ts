@@ -30,7 +30,7 @@ const FREE_AUDIT_DOMAIN_DAILY_LIMIT = 1;
 // le cache free-Gemini (findFreshFreeGeminiAudit) — sans lui, un re-audit d'un
 // domaine déjà scanné rejouait les anciennes questions. Toujours bumper cette
 // version quand la génération de prompts ou l'inférence de catégorie change.
-const BUYER_PROMPT_SET_VERSION = "niche_local_prompts_v9_homonymes_departement";
+const BUYER_PROMPT_SET_VERSION = "niche_local_prompts_v10_phrases";
 // Modèle ÉPINGLÉ — jamais un alias `…-latest`.
 //
 // Deux raisons, toutes deux MESURÉES le 20/09/2026, pas déduites :
@@ -3598,6 +3598,34 @@ function cleanPromptList(prompts: string[], limit = 12) {
   return uniqueInOrder(prompts.map(cleanBuyerPrompt).filter((prompt) => prompt.length > 3 && !promptHasBannedNavigationTerm(prompt)), limit);
 }
 
+/**
+ * Questions de repli d'un métier de service local — des PHRASES, comme un client
+ * les tape. 05/10 : quand l'IA rend moins de questions que prévu, le rapport de
+ * Fiaud-Laporte complétait avec « meilleur expert-comptable à Saint-Maur (Indre)
+ * pour clients locaux » — des mots-clés qu'un expert-comptable lit comme un robot.
+ */
+export function localServiceTemplatePrompts(buyerCategory: string, inCity: string, language: "en" | "fr"): string[] {
+  return language === "fr"
+    ? [
+        `Quel ${buyerCategory} me recommandez-vous ${inCity} ?`,
+        `Quel est le meilleur ${buyerCategory} ${inCity} pour une petite entreprise ?`,
+        `Quel ${buyerCategory} choisir ${inCity} quand on est indépendant ?`,
+        `Quel ${buyerCategory} ${inCity} a les meilleurs avis clients ?`,
+        `Vers quel ${buyerCategory} se tourner ${inCity} quand on est artisan ou commerçant ?`,
+        `Quel ${buyerCategory} contacter ${inCity} pour un premier rendez-vous rapide ?`,
+        `Quel ${buyerCategory} ${inCity} accompagne bien les créateurs d'entreprise ?`,
+      ]
+    : [
+        `Which ${buyerCategory} do you recommend ${inCity}?`,
+        `What is the best ${buyerCategory} ${inCity} for a small business?`,
+        `Which ${buyerCategory} should I choose ${inCity} as a freelancer?`,
+        `Which ${buyerCategory} ${inCity} has the best client reviews?`,
+        `Which ${buyerCategory} should a tradesperson or shop owner use ${inCity}?`,
+        `Which ${buyerCategory} ${inCity} can see a new client quickly?`,
+        `Which ${buyerCategory} ${inCity} is good with first-time founders?`,
+      ];
+}
+
 function generateBuyerIntentPrompts(brandName: string, websiteUrl: string, category: string, homepageText: string, preferredLocale?: Locale) {
   const { categoryTerm, useCase, leader } = promptCategoryTerms(category);
   const domain = domainFromWebsite(websiteUrl);
@@ -3611,29 +3639,7 @@ function generateBuyerIntentPrompts(brandName: string, websiteUrl: string, categ
   // détectée, sinon ancrage « près de chez moi » — jamais de question nationale.
   if (isLocalServiceCategory(category)) {
     const inCity = location ? (language === "fr" ? `à ${location}` : `in ${location}`) : (language === "fr" ? "près de chez moi" : "near me");
-    const forWho = language === "fr" ? `pour ${audience}` : `for ${audience}`;
-    return cleanPromptList(
-      language === "fr"
-        ? [
-            `meilleur ${buyerCategory} ${inCity}`,
-            `meilleur ${buyerCategory} ${inCity} ${forWho}`,
-            `quel ${buyerCategory} choisir ${inCity}`,
-            `${buyerCategory} ${inCity} avis`,
-            `meilleur ${buyerCategory} ${inCity} pas cher`,
-            `${buyerCategory} recommandé ${inCity}`,
-            `bon ${buyerCategory} près de chez moi ${inCity}`,
-          ]
-        : [
-            `best ${buyerCategory} ${inCity}`,
-            `best ${buyerCategory} ${inCity} ${forWho}`,
-            `which ${buyerCategory} to choose ${inCity}`,
-            `${buyerCategory} ${inCity} reviews`,
-            `affordable ${buyerCategory} ${inCity}`,
-            `recommended ${buyerCategory} ${inCity}`,
-            `good ${buyerCategory} near me ${inCity}`,
-          ],
-      12
-    );
+    return cleanPromptList(localServiceTemplatePrompts(buyerCategory, inCity, language), 12);
   }
 
   if (language !== "fr" && /footwear|shoe|sneaker|running shoe/i.test(category)) {

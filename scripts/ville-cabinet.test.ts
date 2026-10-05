@@ -14,6 +14,7 @@ import {
   communeNameFromText,
   contactPageCandidates,
   inferLocationFromHomepage,
+  localServiceTemplatePrompts,
   pickOfficialCommune,
   postalCandidates,
 } from "@/lib/audit-engine";
@@ -76,4 +77,16 @@ test("catégorie — toutes les variantes comptables ramenées au cabinet (30/09
     assert.equal(canonicalCategory(raw), "accounting firm", raw);
   }
   assert.equal(canonicalCategory("fashion jewelry"), "fashion jewelry");
+});
+
+// 05/10 — questions de repli : des phrases, pas des mots-clés (« … pour clients locaux »).
+
+test("les questions de repli d'un cabinet local sont des phrases avec la ville", () => {
+  const prompts = localServiceTemplatePrompts("expert-comptable", "à Saint-Maur (Indre)", "fr");
+  assert.ok(prompts.length >= 6);
+  for (const prompt of prompts) {
+    assert.match(prompt, /\?$/, `pas une question : ${prompt}`);
+    assert.ok(prompt.includes("à Saint-Maur (Indre)"), `ville absente : ${prompt}`);
+    assert.doesNotMatch(prompt, /clients locaux|pas cher|^meilleur /i);
+  }
 });
