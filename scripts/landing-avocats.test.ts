@@ -17,8 +17,32 @@ test("la page avocats ne parle jamais d'expert-comptable", () => {
 });
 
 test("même offre, même caisse que la home", () => {
-  assert.deepEqual(avocatsCopy.pricingTiers, homeCopy.fr.pricingTiers);
-  assert.equal(avocatsCopy.pricingGuarantee, homeCopy.fr.pricingGuarantee);
+  const [, home] = homeCopy.fr.pricingTiers;
+  const [, page] = avocatsCopy.pricingTiers;
+  assert.equal(page.price, home.price);
+  assert.equal(page.href, home.href);
+  assert.equal(page.plan, home.plan);
+  assert.equal(page.cta, home.cta);
+});
+
+// Revue du 08/10 (GO Charles) : vouvoiement, aucune affirmation non mesurée,
+// pas de comparaison agence, validation avant publication annoncée.
+test("vouvoiement : aucun tutoiement sur la page avocats", () => {
+  // Bornes Unicode : « prête » ne doit pas matcher « te ».
+  const tu = /(?<!\p{L})(tu|ton|ta|tes|toi|te|t'|fais|donne-nous|connecte-toi|réessaie|vérifie|indique|reviens|écris)(?!\p{L})/iu;
+  const offender = strings(avocatsCopy).find((text) => tu.test(text.replace(/« [^»]* »/g, "")));
+  assert.equal(offender, undefined, `tutoiement : ${offender}`);
+});
+
+test("ni « client perdu » ni comparaison avec une agence", () => {
+  const offender = strings(avocatsCopy).find((text) => /perdu|agence|2 000|20 000|chaque jour, l'IA/i.test(text));
+  assert.equal(offender, undefined, `affirmation retirée le 08/10 : ${offender}`);
+});
+
+test("la page annonce que rien n'est publié sans validation", () => {
+  const all = strings(avocatsCopy).join(" ");
+  assert.match(all, /brouillon/);
+  assert.match(all, /sans votre validation/);
 });
 
 test("la FAQ répond à la déontologie et aux questions testées", () => {

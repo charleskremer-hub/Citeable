@@ -4,9 +4,9 @@
  */
 import { ensureAuditSchema, pool } from "@/lib/db";
 import { generateAiSiteAnswers, loadAiSite } from "@/lib/ai-site-store";
-import { normalizeRootDomain } from "@/lib/ai-site";
+import { normalizeRootDomain, schemaTypeForTrade } from "@/lib/ai-site";
 import { sendMail } from "@/lib/mailer";
-import { decryptSecret, encryptSecret, ensureLlmsTxtPlugin, siteServesLlmsTxt, upsertWpPage, wpAnswerPage } from "@/lib/wp-connect";
+import { decryptSecret, encryptSecret, ensureLlmsTxtPlugin, siteServesLlmsTxt, upsertWpPage, wpAnswerPage, wpEditLink, type WpPublishMode } from "@/lib/wp-connect";
 
 export type CmsConnection = {
   domain: string;
@@ -41,10 +41,31 @@ export async function loadCmsConnection(domain: string): Promise<CmsConnection |
 }
 
 /**
- * Publie (ou met à jour) la page-réponses sur le site connecté. Écrit les
- * réponses d'abord si l'agent de contenu ne l'a pas encore fait.
+ * Validation avant publication (08/10/2026, GO Charles) : pour un cabinet
+ * d'avocats, la page part en brouillon et l'avocat la publie lui-même. Même
+ * détection que le type schema.org (`LegalService`) : une seule règle métier.
  */
-export async function publishAnswersToWordPress(domain: string): Promise<{ ok: true; url: string; firstTime: boolean; llmsTxt?: string | null } | { ok: false; reason: string }> {
+export function publishModeForTrade(tradeLabel: string): WpPublishMode {
+  return schemaTypeForTrade(tradeLabel) === "LegalService" ? "review" : "publish";
+}
+
+/** Le cabinet relit-il ses pages avant publication ? (page /brancher, emails) */
+export async function publishModeForDomain(domain: string): Promise<WpPublishMode> {
+  const site = await loadAiSite(domain).catch(() => null);
+  return site ? publishModeForTrade(site.tradeLabel) : "publish";
+}
+
+export type PublishOutcome =
+  | { ok: true; url: string; firstTime: boolean; llmsTxt?: string | null; mode: WpPublishMode; draft?: boolean; untouched?: boolean }
+  | { ok: false; reason: string };
+
+/**
+ * Publie (ou met à jour) la page-réponses sur le site connecté. Écrit les
+ * réponses d'abord si l'agent de contenu ne l'a pas encore fait. Avocats :
+ * dépose un brouillon (`draft`), ou ne touche à rien si l'avocat a déjà publié
+ * la page (`untouched`).
+ */
+export async function publishAnswersToWordPress(domain: string): Promise<PublishOutcome> {
   const connection = await loadCmsConnection(domain);
   if (!connection || connection.platform !== "wordpress") return { ok: false, reason: "not_connected" };
   const password = decryptSecret(connection.secret_enc);
@@ -69,8 +90,9 @@ export async function publishAnswersToWordPress(domain: string): Promise<{ ok: t
     llmsStatus = "detail" in setup ? `${setup.status}:${setup.detail}` : setup.status;
   }
 
+  const mode = publishModeForTrade(site.tradeLabel);
   const page = wpAnswerPage(site, { tradeLabel: site.tradeLabel, city: site.city });
-  const saved = await upsertWpPage(connection.rest_url, creds, { ...page, id: connection.page_id });
+  const saved = await upsertWpPage(connection.rest_url, creds, { ...page, id: connection.page_id }, fetch, mode);
   if (!saved.ok) {
     await pool.query(`UPDATE cms_connections SET last_error = $2, status = CASE WHEN $2 LIKE 'http_401%' OR $2 LIKE 'http_403%' THEN 'revoked' ELSE status END, updated_at = now() WHERE domain = $1`, [domain, saved.reason]);
     return saved;
@@ -79,11 +101,44 @@ export async function publishAnswersToWordPress(domain: string): Promise<{ ok: t
   if (llmsStatus === "activated") void fetch(new URL("/wp-cron.php?doing_wp_cron", connection.site_url).toString(), { signal: AbortSignal.timeout(5000) }).catch(() => undefined);
   // Preuve, pas promesse : `live` seulement si /llms.txt répond vraiment.
   if (llmsStatus === "activated" && (await siteServesLlmsTxt(connection.site_url))) llmsStatus = "live";
+  // Brouillon : `page_url` = l'écran WordPress où le cabinet relit et publie ;
+  // `published_at` = date d'écriture (cadence mensuelle), statut `awaiting_review`.
+  const draft = mode === "review" && saved.status !== "publish";
+  const url = draft ? wpEditLink(connection.site_url, saved.id) : saved.link;
   await pool.query(
-    `UPDATE cms_connections SET page_id = $2, page_url = $3, published_at = now(), status = 'published', last_error = NULL, llms_txt_status = $4, updated_at = now() WHERE domain = $1`,
-    [domain, saved.id, saved.link, llmsStatus]
+    `UPDATE cms_connections SET page_id = $2, page_url = $3, published_at = now(), status = $5, last_error = NULL, llms_txt_status = $4, updated_at = now() WHERE domain = $1`,
+    [domain, saved.id, url, llmsStatus, draft ? "awaiting_review" : "published"]
   );
-  return { ok: true, url: saved.link, firstTime: !connection.page_id, llmsTxt: llmsStatus };
+  return { ok: true, url, firstTime: !connection.page_id, llmsTxt: llmsStatus, mode, ...(draft ? { draft: true } : {}), ...(saved.untouched ? { untouched: true } : {}) };
+}
+
+/** Avocats : « votre page est prête, relisez-la et publiez-la » (vouvoiement). */
+export function buildReviewEmail(args: { domain: string; url: string; firstTime: boolean; llmsTxt?: string | null }) {
+  const llms =
+    args.llmsTxt === "live" || args.llmsTxt === "activated"
+      ? [
+          `Votre site sert aussi désormais un fichier llms.txt (https://${args.domain}/llms.txt), la fiche que ChatGPT, Claude et Perplexity lisent pour comprendre un cabinet. Il est généré par l'extension gratuite « Website LLMs.txt », désactivable à tout moment dans WordPress → Extensions.`,
+          "",
+        ]
+      : [];
+  return {
+    subject: args.firstTime ? `Votre page est prête à relire sur ${args.domain}` : `Mise à jour à relire sur ${args.domain}`,
+    text: [
+      "Bonjour Maître,",
+      "",
+      args.firstTime
+        ? "L'agent GetPick a rédigé, à partir des informations de votre site, les réponses aux questions que vos futurs clients posent à l'IA. La page est enregistrée en brouillon sur votre WordPress : rien n'est en ligne."
+        : "L'agent GetPick a reposé les questions de vos futurs clients à l'IA et mis à jour le brouillon de votre page. Rien n'est en ligne.",
+      "",
+      "Pour la relire, la modifier et la publier :",
+      args.url,
+      "",
+      "Elle s'en tient aux faits de votre site — sans superlatif, sans comparaison avec un confrère, sans promesse de résultat. Vous pouvez la modifier librement, ou ne pas la publier.",
+      "",
+      ...llms,
+      "Charles — GetPick",
+    ].join("\n"),
+  };
 }
 
 /** Texte du mail « c'est publié » envoyé au cabinet (sans I/O, testable). */
@@ -124,7 +179,7 @@ export function buildPublishedEmail(args: { domain: string; url: string; firstTi
 }
 
 /** Prévient le cabinet (l'email de son diagnostic). Jamais bloquant. */
-export async function notifyCustomerPublished(domain: string, url: string, firstTime: boolean, llmsTxt?: string | null): Promise<void> {
+export async function notifyCustomerPublished(domain: string, url: string, firstTime: boolean, llmsTxt?: string | null, review = false): Promise<void> {
   try {
     const row = await pool.query<{ email: string | null }>(
       `SELECT a.email FROM ai_sites s JOIN audits a ON a.id = s.audit_id WHERE s.domain = $1`,
@@ -132,7 +187,7 @@ export async function notifyCustomerPublished(domain: string, url: string, first
     );
     const to = row.rows[0]?.email;
     if (!to || !to.includes("@")) return;
-    const mail = buildPublishedEmail({ domain, url, firstTime, llmsTxt });
+    const mail = (review ? buildReviewEmail : buildPublishedEmail)({ domain, url, firstTime, llmsTxt });
     await sendMail({ to, subject: mail.subject, text: mail.text });
   } catch (error) {
     console.error("published email failed", error instanceof Error ? error.message : error);
@@ -181,7 +236,7 @@ export async function refreshDueConnectedSites(limit = 2): Promise<Array<{ domai
   }
   const due = await pool.query<{ domain: string }>(
     `SELECT domain FROM cms_connections
-     WHERE status IN ('connected', 'published')
+     WHERE status IN ('connected', 'published', 'awaiting_review')
        AND ((published_at IS NULL AND created_at < now() - interval '10 minutes') OR published_at < now() - interval '30 days')
      ORDER BY COALESCE(published_at, created_at) ASC
      LIMIT $1`,
@@ -197,7 +252,8 @@ export async function refreshDueConnectedSites(limit = 2): Promise<Array<{ domai
     if (latest) await pool.query(`UPDATE ai_sites SET audit_id = $2 WHERE domain = $1`, [domain, latest.id]);
     await generateAiSiteAnswers(domain);
     const published = await publishAnswersToWordPress(domain);
-    if (published.ok) await notifyCustomerPublished(domain, published.url, published.firstTime, published.llmsTxt);
+    // Page publiée par l'avocat : laissée telle quelle, aucun mail « mis à jour ».
+    if (published.ok && !published.untouched) await notifyCustomerPublished(domain, published.url, published.firstTime, published.llmsTxt, published.draft === true);
     results.push({ domain, ok: published.ok, detail: published.ok ? published.url : published.reason });
   }
   return results;

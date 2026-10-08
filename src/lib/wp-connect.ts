@@ -253,32 +253,66 @@ export function wpAnswerPage(site: AiSiteContent, args: { tradeLabel: string; ci
   return { title, slug, content: body };
 }
 
+/**
+ * Mode de publication (08/10/2026, GO Charles).
+ *  - `publish` : l'agent publie lui-même (expert-comptables : « zéro geste »).
+ *  - `review`  : cabinets d'avocats. La page part en BROUILLON ; l'avocat la
+ *    relit et clique « Publier ». La responsabilité déontologique d'un contenu
+ *    publié sur le site d'un avocat est la sienne : rien n'est mis en ligne sans
+ *    lui. Et une page qu'IL a publiée n'est plus jamais réécrite en silence —
+ *    on ne modifie pas un contenu juridique en ligne sans relecture.
+ */
+export type WpPublishMode = "publish" | "review";
+
+export type WpUpsertResult =
+  | { ok: true; id: number; link: string; jsonLdKept?: boolean; status?: string; untouched?: boolean }
+  | { ok: false; reason: string };
+
 /** Crée la page, ou met à jour celle déjà publiée (jamais de doublon). */
 export async function upsertWpPage(
   restUrl: string,
   creds: { login: string; password: string },
   page: WpAnswerPage & { id?: number | null },
-  fetchImpl: FetchImpl = fetch
-): Promise<{ ok: true; id: number; link: string; jsonLdKept?: boolean } | { ok: false; reason: string }> {
-  const target = page.id ? wpEndpoint(restUrl, `wp/v2/pages/${page.id}`) : wpEndpoint(restUrl, "wp/v2/pages");
+  fetchImpl: FetchImpl = fetch,
+  mode: WpPublishMode = "publish"
+): Promise<WpUpsertResult> {
+  const headers = { Authorization: basicAuth(creds.login, creds.password), "Content-Type": "application/json", "User-Agent": UA, Accept: "application/json" };
   try {
+    if (mode === "review" && page.id) {
+      // Le cabinet a-t-il publié la page entre-temps ? Alors on n'y touche plus.
+      const read = new URL(wpEndpoint(restUrl, `wp/v2/pages/${page.id}`));
+      read.searchParams.set("context", "edit");
+      const current = await fetchImpl(read.toString(), { headers, signal: AbortSignal.timeout(15000) });
+      if (current.ok) {
+        const live = (await current.json()) as { id?: number; link?: string; status?: string };
+        if (live.status === "publish") return { ok: true, id: page.id, link: live.link ?? "", status: "publish", untouched: true };
+      }
+    }
+    const target = page.id ? wpEndpoint(restUrl, `wp/v2/pages/${page.id}`) : wpEndpoint(restUrl, "wp/v2/pages");
     const response = await fetchImpl(target, {
       method: "POST",
-      headers: { Authorization: basicAuth(creds.login, creds.password), "Content-Type": "application/json", "User-Agent": UA, Accept: "application/json" },
-      body: JSON.stringify({ title: page.title, slug: page.slug, content: page.content, status: "publish" }),
+      headers,
+      body: JSON.stringify({ title: page.title, slug: page.slug, content: page.content, status: mode === "review" ? "draft" : "publish" }),
       signal: AbortSignal.timeout(15000),
     });
     // Page supprimée par le cabinet entre-temps : on la recrée, une seule fois.
-    if (page.id && response.status === 404) return upsertWpPage(restUrl, creds, { ...page, id: null }, fetchImpl);
+    if (page.id && response.status === 404) return upsertWpPage(restUrl, creds, { ...page, id: null }, fetchImpl, mode);
     if (!response.ok) return { ok: false, reason: `http_${response.status}` };
-    const saved = (await response.json()) as { id?: number; link?: string; content?: { rendered?: string; raw?: string } };
+    const saved = (await response.json()) as { id?: number; link?: string; status?: string; content?: { rendered?: string; raw?: string } };
     const stored = `${saved.content?.raw ?? ""}${saved.content?.rendered ?? ""}`;
     // Inconnu (réponse sans `content`) = clé absente, jamais un faux « retiré ».
     const kept = saved.content && page.content.includes("application/ld+json") ? { jsonLdKept: /application\/ld\+json/.test(stored) } : {};
-    return typeof saved.id === "number" ? { ok: true, id: saved.id, link: saved.link ?? "", ...kept } : { ok: false, reason: "no_id" };
+    const status = mode === "review" ? { status: saved.status ?? "draft" } : {};
+    return typeof saved.id === "number" ? { ok: true, id: saved.id, link: saved.link ?? "", ...kept, ...status } : { ok: false, reason: "no_id" };
   } catch (error) {
     return { ok: false, reason: error instanceof Error ? error.message : "network" };
   }
+}
+
+/** L'écran WordPress où le cabinet relit le brouillon et clique « Publier ». */
+export function wpEditLink(siteUrl: string, pageId: number): string {
+  // `site_url` peut porter un sous-dossier (WordPress installé sous /site/).
+  return `${siteUrl.replace(/\/+$/, "")}/wp-admin/post.php?post=${pageId}&action=edit`;
 }
 
 // --- llms.txt à la RACINE du site (GO Charles 01/10/2026) -----------------------

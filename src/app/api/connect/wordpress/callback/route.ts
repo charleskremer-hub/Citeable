@@ -39,10 +39,11 @@ export async function GET(req: NextRequest) {
   await saveWordPressConnection({ domain, siteUrl: parsed.siteUrl, restUrl, userLogin: parsed.userLogin, password: parsed.password });
   after(async () => {
     const published = await publishAnswersToWordPress(domain);
-    if (published.ok) await notifyCustomerPublished(domain, published.url, published.firstTime, published.llmsTxt);
+    if (published.ok && !published.untouched) await notifyCustomerPublished(domain, published.url, published.firstTime, published.llmsTxt, published.draft === true);
+    const done = published.ok ? (published.draft ? "brouillon à relire" : "page publiée") : "publication en échec";
     await sendFounderAlert(
-      `[GetPick] Site connecté : ${domain}${published.ok ? " — page publiée" : " — publication en échec"}`,
-      published.ok ? `Page publiée : ${published.url}` : `Échec : ${published.reason}. Relancer via /api/admin/ai-site (publish).`
+      `[GetPick] Site connecté : ${domain} — ${done}`,
+      published.ok ? `${published.draft ? "Brouillon déposé (validation avocat)" : "Page publiée"} : ${published.url}` : `Échec : ${published.reason}. Relancer via /api/admin/ai-site (publish).`
     );
   });
   back.searchParams.set("connexion", "ok");

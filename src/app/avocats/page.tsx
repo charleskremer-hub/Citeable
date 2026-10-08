@@ -8,7 +8,7 @@ import HomeClient from "../HomeClient";
 export const metadata: Metadata = {
   title: "GetPick — L'agent qui fait recommander les avocats par l'IA",
   description:
-    "Quand un client cherche un avocat dans sa ville, l'IA répond un nom. GetPick te montre le confrère cité à ta place, puis écrit sur ton site les réponses que l'IA lit — un clic pour le connecter. Diagnostic gratuit en 2 minutes.",
+    "Quand un client cherche un avocat dans sa ville, l'IA répond un nom. GetPick vous montre ce que Gemini et ChatGPT répondent, puis rédige les réponses que l'IA lit — vous les relisez et les publiez. Diagnostic gratuit en 2 minutes.",
   alternates: { canonical: "https://www.getpick.ai/avocats" },
 };
 

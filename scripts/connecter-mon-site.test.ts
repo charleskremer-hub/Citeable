@@ -180,3 +180,46 @@ test("rapport (inspiré Pinniq, 30/09) — besoin client et place dans la répon
   ]);
   assert.equal(summary[0].need, "Paie & social", "les angles morts d'abord");
 });
+
+// Avocats (08/10/2026, GO Charles) : brouillon, et jamais de réécriture d'une page publiée par l'avocat.
+test("avocats — la page part en brouillon, jamais publiée par l'agent", async () => {
+  const calls: Array<{ url: string; init?: RequestInit }> = [];
+  const page = wpAnswerPage(site, { tradeLabel: "cabinet d'avocats", city: "Nantes" });
+  const created = await upsertWpPage("https://a.fr/wp-json/", { login: "u", password: "p" }, page, fakeFetch({ "https://a.fr/wp-json/wp/v2/pages": { status: 201, body: { id: 42, link: "https://a.fr/?page_id=42", status: "draft" } } }, calls), "review");
+  assert.deepEqual(created, { ok: true, id: 42, link: "https://a.fr/?page_id=42", status: "draft" });
+  assert.equal(JSON.parse(String(calls[0].init?.body)).status, "draft");
+});
+
+test("avocats — brouillon encore non publié : mis à jour en place, toujours en brouillon", async () => {
+  const calls: Array<{ url: string; init?: RequestInit }> = [];
+  const page = wpAnswerPage(site, { tradeLabel: "cabinet d'avocats", city: "Nantes" });
+  const updated = await upsertWpPage("https://a.fr/wp-json/", { login: "u", password: "p" }, { ...page, id: 42 }, fakeFetch({
+    "https://a.fr/wp-json/wp/v2/pages/42?context=edit": { body: { id: 42, status: "draft" } },
+    "https://a.fr/wp-json/wp/v2/pages/42": { body: { id: 42, link: "l", status: "draft" } },
+  }, calls), "review");
+  assert.deepEqual(updated, { ok: true, id: 42, link: "l", status: "draft" });
+  assert.equal(JSON.parse(String(calls.at(-1)?.init?.body)).status, "draft");
+});
+
+test("avocats — page publiée par l'avocat : l'agent n'y touche plus", async () => {
+  const calls: Array<{ url: string; init?: RequestInit }> = [];
+  const page = wpAnswerPage(site, { tradeLabel: "cabinet d'avocats", city: "Nantes" });
+  const result = await upsertWpPage("https://a.fr/wp-json/", { login: "u", password: "p" }, { ...page, id: 42 }, fakeFetch({
+    "https://a.fr/wp-json/wp/v2/pages/42?context=edit": { body: { id: 42, status: "publish", link: "https://a.fr/questions-frequentes-nantes/" } },
+  }, calls), "review");
+  assert.deepEqual(result, { ok: true, id: 42, link: "https://a.fr/questions-frequentes-nantes/", status: "publish", untouched: true });
+  assert.equal(calls.filter((call) => call.init?.method === "POST").length, 0, "aucune écriture sur une page publiée par l'avocat");
+});
+
+test("avocats — mode choisi par le métier ; lien d'édition WordPress ; mail en vouvoiement", async () => {
+  const { publishModeForTrade, buildReviewEmail } = await import("@/lib/cms-connection-store");
+  const { wpEditLink } = await import("@/lib/wp-connect");
+  assert.equal(publishModeForTrade("cabinet d'avocats"), "review");
+  assert.equal(publishModeForTrade("cabinet d'expertise comptable"), "publish");
+  assert.equal(wpEditLink("https://a.fr/site/", 42), "https://a.fr/site/wp-admin/post.php?post=42&action=edit");
+  const mail = buildReviewEmail({ domain: "a.fr", url: "https://a.fr/wp-admin/post.php?post=42&action=edit", firstTime: true });
+  assert.match(mail.subject, /prête à relire/);
+  assert.match(mail.text, /brouillon/);
+  assert.match(mail.text, /rien n'est en ligne/);
+  assert.doesNotMatch(mail.text, /\b(tu|ton|ta|tes)\b/);
+});

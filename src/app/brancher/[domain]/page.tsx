@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AI_CNAME_TARGET, AI_SUBDOMAIN, dnsProviderFromNameservers, dohLookup, normalizeRootDomain, providerSteps, verifyAiSiteToken, webmasterMessage } from "@/lib/ai-site";
-import { loadCmsConnection } from "@/lib/cms-connection-store";
+import { loadCmsConnection, publishModeForDomain } from "@/lib/cms-connection-store";
 import { discoverSite } from "@/lib/wp-connect";
 import CheckButton from "./CheckButton";
 
@@ -33,7 +33,41 @@ export default async function BrancherPage({
   if (!domain || !verifyAiSiteToken(domain, k)) notFound();
 
   const connection = await loadCmsConnection(domain).catch(() => null);
+  // Avocats (08/10/2026) : vouvoiement, et la page part en brouillon à relire.
+  const review = (await publishModeForDomain(domain).catch(() => "publish")) === "review";
   const connectHref = `/api/connect/wordpress/start?d=${encodeURIComponent(domain)}&k=${encodeURIComponent(k)}`;
+
+  if (review && connection && connection.status !== "revoked") {
+    return (
+      <main className="mx-auto max-w-2xl px-4 py-12 text-[#132A43]">
+        <p className="text-xs font-black uppercase tracking-[0.12em] text-[#17705B]">Site connecté</p>
+        <h1 className="mt-2 text-3xl font-black leading-tight">C&apos;est fait. L&apos;agent travaille sur {domain}.</h1>
+        <p className="mt-3 text-base leading-7 text-[#5B6B82]">
+          {connection.status === "published" && connection.page_url ? (
+            <>
+              Votre page est en ligne :{" "}
+              <a className="font-black text-[#123E5C] underline" href={connection.page_url}>
+                {connection.page_url}
+              </a>
+              . Chaque mois, nous reposons les questions de vos futurs clients à l&apos;IA et vous envoyons le résultat.
+            </>
+          ) : connection.page_url ? (
+            <>
+              Votre page est prête, en brouillon : rien n&apos;est en ligne.{" "}
+              <a className="font-black text-[#123E5C] underline" href={connection.page_url}>
+                Relisez-la et publiez-la dans WordPress →
+              </a>
+            </>
+          ) : (
+            <>L&apos;agent rédige vos réponses et les dépose en brouillon sur votre WordPress dans les minutes qui viennent. Vous recevez le lien par email pour les relire et les publier.</>
+          )}
+        </p>
+        <p className="mt-6 text-sm leading-6 text-[#5E6E86]">
+          Vous gardez la main : l&apos;accès « GetPick — agent GEO » se retire à tout moment dans votre WordPress (Profil → Mots de passe d&apos;application).
+        </p>
+      </main>
+    );
+  }
 
   if (connection && connection.status !== "revoked") {
     return (
@@ -62,6 +96,31 @@ export default async function BrancherPage({
 
   const site = await discoverSite(domain);
   const error = connexion && connexion !== "ok" ? CONNECTION_ERRORS[connexion] ?? "La connexion n'a pas abouti. Recommence, ou réponds à notre email : on s'en occupe." : null;
+
+  if (site.kind === "wordpress" && review) {
+    return (
+      <main className="mx-auto max-w-2xl px-4 py-12 text-[#132A43]">
+        <p className="text-xs font-black uppercase tracking-[0.12em] text-[#123E5C]">Un clic · 1 minute · sans webmaster</p>
+        <h1 className="mt-2 text-3xl font-black leading-tight">Connectez {domain} à votre agent GEO</h1>
+        <p className="mt-3 text-base leading-7 text-[#5B6B82]">
+          Vous vous connectez à votre WordPress et cliquez « Approuver ». L&apos;agent rédige alors, à partir des informations de votre site, les
+          réponses aux questions que vos futurs clients posent à l&apos;IA, et les dépose en <strong>brouillon</strong>. Vous les relisez et les
+          publiez vous-même : rien n&apos;est mis en ligne sans votre validation.
+        </p>
+        {error ? <p className="mt-4 rounded-xl border border-[#B04329] bg-white p-3 text-sm font-bold text-[#B04329]">{error}</p> : null}
+        <a href={connectHref} className="mt-8 inline-block rounded-2xl bg-[#123E5C] px-6 py-4 text-base font-black text-white">
+          Connecter mon site WordPress →
+        </a>
+        <ul className="mt-8 grid gap-2 text-sm leading-6 text-[#5E6E86]">
+          <li>· Une seule page, « Questions fréquentes », en brouillon. Aucune autre page touchée, rien de publié sans vous.</li>
+          <li>· Sans superlatif, sans comparaison avec un confrère, sans promesse de résultat.</li>
+          <li>· Une page que vous avez publiée n&apos;est jamais modifiée sans vous.</li>
+          <li>· Si votre site n&apos;a pas encore de fichier llms.txt (la fiche que lisent ChatGPT, Claude et Perplexity), l&apos;agent active l&apos;extension gratuite « Website LLMs.txt » de l&apos;annuaire WordPress — désactivable en un clic.</li>
+          <li>· Accès révocable à tout moment (WordPress → Profil → Mots de passe d&apos;application). Aucune mention de GetPick sur votre site.</li>
+        </ul>
+      </main>
+    );
+  }
 
   if (site.kind === "wordpress") {
     return (
