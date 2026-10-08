@@ -17,6 +17,7 @@ export default function DashboardMockup({
   topRival,
   rankText,
   locale,
+  vous = false,
 }: {
   brandName: string;
   engineName: string;
@@ -28,6 +29,7 @@ export default function DashboardMockup({
   topRival: { name: string; count: number } | null;
   rankText: string;
   locale: Locale;
+  vous?: boolean;
 }) {
   const fr = locale === "fr";
   const months = fr ? ["Aujourd'hui", "Mois 1", "Mois 2", "Mois 3"] : ["Today", "Month 1", "Month 2", "Month 3"];
@@ -38,7 +40,7 @@ export default function DashboardMockup({
   const x = (i: number) => 70 + (i * (width - 110)) / 3;
   const y = (value: number) => height - 26 - (value / Math.max(1, total)) * (height - 46);
   const tiles = [
-    { label: fr ? `Ton rang dans ${rankEngineName ?? engineName}` : `Your rank in ${rankEngineName ?? engineName}`, value: rankText, tone: "#123E5C" },
+    { label: fr ? (vous ? `Votre rang dans ${rankEngineName ?? engineName}` : `Ton rang dans ${rankEngineName ?? engineName}`) : `Your rank in ${rankEngineName ?? engineName}`, value: rankText, tone: "#123E5C" },
     { label: fr ? `Cité par ${engineName}` : `Named by ${engineName}`, value: `${cited}/${total}`, tone: "#17705B" },
     { label: fr ? "Confrère n°1" : "Top peer", value: topRival ? `${topRival.name} · ${topRival.count}/${total}` : "—", tone: "#B04329" },
   ];
@@ -76,7 +78,7 @@ export default function DashboardMockup({
 
           <div className="mt-3 rounded-xl border border-[#E4E9F0] bg-[#FBFCFD] p-3">
             <p className="m-0 text-[0.6875rem] font-black uppercase tracking-[0.08em] text-[#5E6E86]">
-              {fr ? "Questions où tu es cité, mois après mois" : "Questions where you're named, month after month"}
+              {fr ? (vous ? "Questions où vous êtes cité, mois après mois" : "Questions où tu es cité, mois après mois") : "Questions where you're named, month after month"}
             </p>
             <svg viewBox={`0 0 ${width} ${height}`} className="mt-1 w-full" role="img" aria-label={fr ? "Évolution mensuelle" : "Monthly trend"}>
               {[0, Math.round(total / 2), total].map((tick) => (
@@ -148,7 +150,7 @@ export default function DashboardMockup({
       </div>
       <figcaption className="mt-2 text-xs font-bold leading-5 text-[#5E6E86]">
         {fr
-          ? "Aperçu de ton tableau de bord, rempli avec la mesure d'aujourd'hui. Chaque mois ajoute une colonne : tu vois, question par question, qui l'IA cite — toi ou ton confrère."
+          ? (vous ? "Aperçu de votre tableau de bord, rempli avec la mesure d'aujourd'hui. Chaque mois ajoute une colonne : vous voyez, question par question, qui l'IA cite — vous ou un confrère." : "Aperçu de ton tableau de bord, rempli avec la mesure d'aujourd'hui. Chaque mois ajoute une colonne : tu vois, question par question, qui l'IA cite — toi ou ton confrère.")
           : "Preview of your dashboard, filled with today's measurement. Each month adds a column: you see, question by question, who AI names — you or your peer."}
       </figcaption>
     </figure>

@@ -1,5 +1,5 @@
 import { emailDeliveryNoticeVisible, type EmailDeliveryNoticeState } from "@/lib/email-delivery-notice";
-import { auditCopy, type Locale } from "@/lib/i18n";
+import { auditCopyFor, type Locale } from "@/lib/i18n";
 
 /**
  * G2 — UN ENVOI RATÉ NE DOIT JAMAIS ÊTRE MUET.
@@ -16,12 +16,13 @@ import { auditCopy, type Locale } from "@/lib/i18n";
  */
 export type EmailDeliveryNoticeProps = EmailDeliveryNoticeState & {
   locale: Locale;
+  vous?: boolean;
   reportUrl: string;
 };
 
-export default function EmailDeliveryNotice({ locale, reportUrl, ...state }: EmailDeliveryNoticeProps) {
+export default function EmailDeliveryNotice({ locale, vous = false, reportUrl, ...state }: EmailDeliveryNoticeProps) {
   if (!emailDeliveryNoticeVisible(state)) return null;
-  const copy = auditCopy[locale];
+  const copy = auditCopyFor(locale, vous);
 
   return (
     <div className="mt-5 rounded-2xl border border-[#8A6420]/25 bg-[#8A6420]/10 p-4 text-sm leading-6 text-[#8A6420]">

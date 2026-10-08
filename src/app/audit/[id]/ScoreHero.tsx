@@ -25,6 +25,7 @@ export default function ScoreHero({
   engineRows,
   plural = false,
   locale,
+  vous = false,
 }: {
   brandName: string;
   engineName: string;
@@ -40,6 +41,7 @@ export default function ScoreHero({
   engineRows?: EngineRow[];
   plural?: boolean;
   locale: Locale;
+  vous?: boolean;
 }) {
   const fr = locale === "fr";
   const where = city ? (fr ? `À ${city}, ` : `In ${city}, `) : "";
@@ -83,7 +85,7 @@ export default function ScoreHero({
                 {entry.self && rank ? rank : entry.self ? "—" : 1 + podium.filter((other) => other.count > entry.count).length}
               </span>
               <span className={`truncate text-sm ${entry.self ? "font-black text-white" : "font-bold text-white/85"}`}>
-                {entry.self ? (fr ? `${entry.name} (toi)` : `${entry.name} (you)`) : entry.name}
+                {entry.self ? (fr ? (vous ? `${entry.name} (vous)` : `${entry.name} (toi)`) : `${entry.name} (you)`) : entry.name}
               </span>
               <span className="h-2.5 overflow-hidden rounded-full bg-white/15">
                 <span className="block h-full rounded-full" style={{ width: `${Math.max(4, (entry.count / max) * 100)}%`, background: entry.self ? "#4CC3A3" : "rgba(255,255,255,0.55)" }} />
@@ -104,7 +106,7 @@ export default function ScoreHero({
           <div key={row.engine || "single"} className="mt-3 flex flex-wrap items-center gap-2" data-testid={row.engine ? `hero-engine-${row.engine}` : undefined}>
             <span className="text-xs font-bold text-white/75">
               {row.engine
-                ? fr ? `${row.engine} te cite sur ${row.cited}/${row.checked} :` : `${row.engine} names you on ${row.cited}/${row.checked}:`
+                ? fr ? (vous ? `${row.engine} vous cite sur ${row.cited}/${row.checked} :` : `${row.engine} te cite sur ${row.cited}/${row.checked} :`) : `${row.engine} names you on ${row.cited}/${row.checked}:`
                 : fr ? `Cité sur ${cited} question${cited > 1 ? "s" : ""} sur ${total} :` : `Named on ${cited} of ${total} questions:`}
             </span>
             <ul className="m-0 flex list-none gap-1 p-0">

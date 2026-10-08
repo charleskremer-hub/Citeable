@@ -597,6 +597,57 @@ export const auditCopy = {
   },
 } as const;
 
+/**
+ * RAPPORT AVOCATS EN VOUVOIEMENT (08/10/2026, GO Charles). Le rapport
+ * /audit/[id] est la page vers laquelle pointent les emails de prospection aux
+ * avocats — qui vouvoient. Un rapport qui tutoie un avocat contredit l'email qui
+ * l'y a amené. Même détection que le reste du produit : catégorie « law firm ».
+ * Et la publication se fait APRÈS validation de l'avocat (brouillon WordPress).
+ */
+export function isLawCategory(category: string | null | undefined): boolean {
+  return category === "law firm";
+}
+
+export const auditCopyVous = {
+  ...auditCopy.fr,
+  title: (brandName: string) => `${brandName} — votre visibilité dans l'IA`,
+  runningText: "Patientez 20 à 60 secondes : nous vérifions de vrais résultats, sans rien inventer.",
+  engineUnavailable: (engine: string) => `${engine} est indisponible ; réessayez.`,
+  emailUndeliveredTitle: "Nous n'avons pas réussi à vous envoyer ce rapport par email.",
+  emailUndeliveredBody: "Rien n'est perdu : le rapport est sur cette page. Gardez le lien ci-dessous, il reste valable.",
+  reportReassurance: `${SERVICE_TRIAL_LABEL.fr}. Carte demandée, rien n'est débité pendant l'essai. Pour arrêter : un email à hello@getpick.ai avant la fin, vous ne payez rien.`,
+  verdictRivalReplacement: (engine: string, rival: string, prompt: string) => `Sur « ${prompt} », ${engine} recommande ${rival}. Pas vous.`,
+  verdictRivalAlso: (engine: string, rival: string, prompt: string) => `Sur « ${prompt} », ${engine} vous cite — et cite aussi ${rival}.`,
+  publishLockedEyebrow: `Fait pour vous · ${SERVICE_TRIAL_LABEL.fr}`,
+  publishLockedTitle: "Ce que GetPick fait pour vous",
+  publishLockedBody: `L'agent rédige, depuis les faits de votre site, la réponse à chaque question que vos futurs clients posent à l'IA, sans superlatif ni promesse de résultat, et la dépose en brouillon sur votre WordPress. Vous la relisez et la publiez : rien n'est mis en ligne sans votre validation. ${RECHECK_CADENCE.fr.every.charAt(0).toUpperCase() + RECHECK_CADENCE.fr.every.slice(1)}, il repose ces questions à l'IA avec recherche web : vous voyez qui elle cite.`,
+  publishTitle: "À publier sur votre site",
+  methodTitle: "De vraies questions de clients. Jamais votre nom.",
+  methodBody: (engine: string) =>
+    `Nous ne posons à ${engine} que des questions qu'un client taperait avant de choisir son avocat — jamais « avis sur Maître X ». Une question qui porte votre nom renvoie presque toujours une mention et gonfle le score. Ces questions sont le test honnête : vous cite-t-il quand personne ne vous a mentionné ?`,
+  categoryPerceptionEyebrow: "Ce que l'IA croit que vous faites",
+  categoryPerceptionMismatchTitle: "L'IA ne sait pas ce que vous faites.",
+  categoryPerceptionMatchTitle: "L'IA sait ce que vous faites.",
+  categoryPerceptionYouSell: "Votre site présente",
+  categoryPerceptionAiThinks: "L'IA vous décrit comme",
+  categoryPerceptionMismatchBody: (engine: string) =>
+    `${engine} vous range dans une autre catégorie que votre activité réelle. C'est en amont du score : un moteur qui vous a mal classé ne vous fera pas figurer dans les questions qui comptent.`,
+  categoryPerceptionMismatchAction:
+    "Faites dire à une page, dès la première phrase, ce que fait le cabinet et pour qui — domaines d'intervention et ville. Puis reprenez exactement cette formulation sur les annuaires que l'IA lit à votre sujet.",
+  categoryPerceptionMatchBody: (engine: string) =>
+    `${engine} vous classe dans la bonne catégorie. L'enjeu, s'il y en a un, est d'être cité À L'INTÉRIEUR de cette catégorie — pas d'être mal compris.`,
+  sentimentEyebrow: "Ce que l'IA dit de vous",
+  sentimentTitle: "Image du cabinet",
+  sentimentBodyPositive: "Quand l'IA vous mentionne, le ton est favorable — gardez des faits publics cohérents pour le préserver.",
+  sentimentBodyNeutral: "L'IA vous décrit factuellement, sans plus. Des informations plus précises sur vos domaines et modalités aident.",
+  sentimentBodyNegative: "L'IA vous présente mal ou de façon inexacte. Corrigez d'abord les faits publics qu'elle peut lire.",
+  sentimentBodyUnknown: "L'IA vous décrit à peine. Être nommé sur les questions de vos futurs clients est la première étape.",
+};
+
+/** Le jeu de textes du rapport : vouvoiement pour un cabinet d'avocats en français. */
+export function auditCopyFor(locale: Locale, vous = false) {
+  return locale === "fr" && vous ? auditCopyVous : auditCopy[locale];
+}
 
 export function localizeCategoryLabel(category: string | undefined, locale: Locale) {
   const clean = (category ?? "").trim();
@@ -643,13 +694,13 @@ export type BrandSentimentView = {
   guidance: string;
 };
 
-export function brandSentimentView(sentiment: SentimentLike, locale: Locale): BrandSentimentView {
+export function brandSentimentView(sentiment: SentimentLike, locale: Locale, vous = false): BrandSentimentView {
   const label =
     sentiment.label === "positive" || sentiment.label === "neutral" || sentiment.label === "negative"
       ? sentiment.label
       : "not_enough_signal";
   const justification = (sentiment.justification ?? "").trim();
-  const copy = auditCopy[locale];
+  const copy = auditCopyFor(locale, vous);
 
   if (label === "positive") {
     return {

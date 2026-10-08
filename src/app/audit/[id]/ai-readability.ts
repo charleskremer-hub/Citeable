@@ -23,7 +23,9 @@ export type AiReadabilityItem = {
 
 export function aiReadabilityItems(
   input: { llmsFound: boolean | null; structuredDataFound: boolean | null; crawlState: "ok" | "blocked" | "unreachable" | null; blocked: string[] },
-  locale: "fr" | "en"
+  locale: "fr" | "en",
+  /** Avocats (08/10) : vouvoiement, et publication après validation. */
+  vous = false
 ): AiReadabilityItem[] {
   const fr = locale === "fr";
   const unreachable = input.crawlState === "unreachable" || input.crawlState === null;
@@ -32,15 +34,15 @@ export function aiReadabilityItems(
       key: "llms_txt",
       label: "llms.txt",
       measured: unreachable ? null : input.llmsFound,
-      why: fr ? "La fiche que ChatGPT, Gemini et Perplexity lisent pour savoir qui tu es, ce que tu fais et pour qui." : "The file ChatGPT, Gemini and Perplexity read to learn who you are, what you do and for whom.",
-      getpick: fr ? "GetPick l'écrit depuis les faits de ton site et le tient à jour." : "GetPick writes it from your site's facts and keeps it current.",
+      why: fr ? (vous ? "La fiche que ChatGPT, Gemini et Perplexity lisent pour savoir qui vous êtes, ce que vous faites et pour qui." : "La fiche que ChatGPT, Gemini et Perplexity lisent pour savoir qui tu es, ce que tu fais et pour qui.") : "The file ChatGPT, Gemini and Perplexity read to learn who you are, what you do and for whom.",
+      getpick: fr ? (vous ? "GetPick l'écrit depuis les faits de votre site et le tient à jour." : "GetPick l'écrit depuis les faits de ton site et le tient à jour.") : "GetPick writes it from your site's facts and keeps it current.",
     },
     {
       key: "structured_data",
       label: fr ? "Données structurées (JSON-LD)" : "Structured data (JSON-LD)",
       measured: input.structuredDataFound,
-      why: fr ? "Ton métier, ta ville, tes domaines et les réponses à tes clients, dans le format que les moteurs extraient sans deviner." : "Your trade, city, practice areas and client answers, in the format engines extract without guessing.",
-      getpick: fr ? "GetPick les publie sur ton site avec la page de réponses (WordPress : en un clic)." : "GetPick publishes them on your site with the answers page (WordPress: one click).",
+      why: fr ? (vous ? "Votre métier, votre ville, vos domaines et les réponses à vos clients, dans le format que les moteurs extraient sans deviner." : "Ton métier, ta ville, tes domaines et les réponses à tes clients, dans le format que les moteurs extraient sans deviner.") : "Your trade, city, practice areas and client answers, in the format engines extract without guessing.",
+      getpick: fr ? (vous ? "GetPick les intègre à la page de réponses, que vous relisez et publiez sur votre site (WordPress : en un clic)." : "GetPick les publie sur ton site avec la page de réponses (WordPress : en un clic).") : "GetPick publishes them on your site with the answers page (WordPress: one click).",
     },
     {
       key: "ai_crawlers",
@@ -48,9 +50,9 @@ export function aiReadabilityItems(
       measured: unreachable ? null : input.crawlState === "ok",
       why:
         input.crawlState === "blocked" && input.blocked.length
-          ? fr ? `Ton robots.txt bloque : ${input.blocked.join(", ")}. Ces IA ne peuvent pas lire ton site.` : `Your robots.txt blocks: ${input.blocked.join(", ")}. These AIs cannot read your site.`
-          : fr ? "GPTBot, ClaudeBot, PerplexityBot et Google-Extended doivent pouvoir lire ton site." : "GPTBot, ClaudeBot, PerplexityBot and Google-Extended must be able to read your site.",
-      getpick: fr ? "GetPick vérifie l'accès à chaque passage et te signale tout blocage." : "GetPick checks access on every pass and flags any block.",
+          ? fr ? (vous ? `Votre robots.txt bloque : ${input.blocked.join(", ")}. Ces IA ne peuvent pas lire votre site.` : `Ton robots.txt bloque : ${input.blocked.join(", ")}. Ces IA ne peuvent pas lire ton site.`) : `Your robots.txt blocks: ${input.blocked.join(", ")}. These AIs cannot read your site.`
+          : fr ? (vous ? "GPTBot, ClaudeBot, PerplexityBot et Google-Extended doivent pouvoir lire votre site." : "GPTBot, ClaudeBot, PerplexityBot et Google-Extended doivent pouvoir lire ton site.") : "GPTBot, ClaudeBot, PerplexityBot and Google-Extended must be able to read your site.",
+      getpick: fr ? (vous ? "GetPick vérifie l'accès à chaque passage et vous signale tout blocage." : "GetPick vérifie l'accès à chaque passage et te signale tout blocage.") : "GetPick checks access on every pass and flags any block.",
     },
   ];
 }

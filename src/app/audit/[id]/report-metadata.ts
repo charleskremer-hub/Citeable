@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { pool } from "@/lib/db";
-import { localeFromUnknown } from "@/lib/i18n";
+import { isLawCategory, localeFromUnknown } from "@/lib/i18n";
 
 /**
  * Titre propre au rapport (bug 01/10/2026, audit 9591fb6e) : la page héritait du
@@ -15,9 +15,16 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return { title: "GetPick", robots };
   try {
     // Pas de migration ici : lecture seule, la page s'en charge (bug 01/10).
-    const row = (await pool.query<{ brand_name: string; locale: string | null }>(`SELECT brand_name, raw_results->>'locale' AS locale FROM audits WHERE id = $1`, [id])).rows[0];
+    const row = (await pool.query<{ brand_name: string; locale: string | null; category: string | null }>(`SELECT brand_name, raw_results->>'locale' AS locale, raw_results->>'category' AS category FROM audits WHERE id = $1`, [id])).rows[0];
     if (!row) return { title: "GetPick", robots };
     const fr = localeFromUnknown(row.locale ?? "fr") === "fr";
+    if (fr && isLawCategory(row.category)) {
+      return {
+        title: `${row.brand_name} — votre visibilité dans l'IA · GetPick`,
+        description: `Ce que Gemini et ChatGPT répondent à vos futurs clients, et quels confrères ils citent à la place de ${row.brand_name}.`,
+        robots,
+      };
+    }
     return {
       title: fr ? `${row.brand_name} — ta visibilité dans l'IA · GetPick` : `${row.brand_name} — your AI visibility · GetPick`,
       description: fr

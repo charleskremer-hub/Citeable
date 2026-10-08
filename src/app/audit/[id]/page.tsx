@@ -6,7 +6,7 @@ import { requestTrafficClass } from "@/lib/traffic-filter";
 import { RECHECK_CADENCE, SERVICE_PLAN_PRICE_EUR } from "@/lib/plan-promises";
 import { ensureAuditSchema, pool } from "@/lib/db";
 import { recordReportLinkOpened } from "@/lib/funnel";
-import { auditCopy, brandSentimentView, localeFromHeaders, localeFromUnknown, localizeCategoryLabel, localizePlainAction, type Locale } from "@/lib/i18n";
+import { auditCopy, auditCopyFor, brandSentimentView, isLawCategory, localeFromHeaders, localeFromUnknown, localizeCategoryLabel, localizePlainAction, type Locale } from "@/lib/i18n";
 import { categoryPerceptionFromPrompts, extractSourceCitationReports, generateGeoAgentAssetsFromAudit, hostnameFromUrl, isAnonymousEmail, isAuditedBrandName, reportUrlForAudit, robotsTxtFixForBlockedCrawlers, youtubeContentTipIsRelevant } from "@/lib/audit-engine";
 import type { BrandSentiment, BuyerIntentPromptResult, CategoryPerception, DetectedPlatform, IcpSegmentMetadata, PlainAction, SourceCitationReport } from "@/lib/audit-engine";
 import { AUDIT_SHARE_TOKEN_PARAM, auditShareTokenState, verifyAuditShareToken } from "@/lib/audit-share-token";
@@ -130,7 +130,10 @@ export default async function AuditPage({
   if (!audit) notFound();
 
   const locale = audit.raw_results?.locale ? localeFromUnknown(audit.raw_results.locale) : headerLocale;
-  const copy = auditCopy[locale];
+  // Avocats (08/10/2026) : le rapport vouvoie, comme l'email qui y mène.
+  const vous = locale === "fr" && isLawCategory(audit.raw_results?.category);
+  const copy = auditCopyFor(locale, vous);
+  const forVous = (text: string) => (vous ? text.replace(/questions d'achat/g, "questions de clients") : text);
 
   const failed = audit.raw_results?.status === "failed";
   const icpSegment = audit.raw_results?.icpSegment;
@@ -182,7 +185,7 @@ export default async function AuditPage({
   // --- RAPPORT VERROUILLÉ : le verdict tient en trois blocs, puis la porte. ---
   if (reportAccess.locked) {
     const lostQuestions = lostBuyerQuestions(questions);
-    const headline = engines2 ? twoEngineHeadline(engines2, { brandName: audit.brand_name, questionCount, locale: locale === "fr" ? "fr" : "en" }) : lockedVerdictHeadline({
+    const headline = forVous(engines2 ? twoEngineHeadline(engines2, { brandName: audit.brand_name, questionCount, locale: locale === "fr" ? "fr" : "en" }) : lockedVerdictHeadline({
       brandName: audit.brand_name,
       engineName: answerEngineName,
       questionCount,
@@ -190,7 +193,7 @@ export default async function AuditPage({
       lostCount: lostQuestions.length,
       competitors: verdictCompetitors(questions),
       locale,
-    });
+    }));
 
     return (
       <main className="min-h-screen bg-[#F5F7FA] text-[#132A43]" style={{ fontFamily: "var(--font-sans)" }}>
@@ -213,6 +216,7 @@ export default async function AuditPage({
 
           <div className="flex flex-1 flex-col justify-center gap-4 pb-8 sm:gap-5">
             <LockedVerdict
+              vous={vous}
               brandName={audit.brand_name}
               websiteUrl={audit.website_url}
               headline={headline}
@@ -221,7 +225,7 @@ export default async function AuditPage({
             />
 
             {reportAccess.reason === "claim" ? (
-              <ClaimReportGate auditId={audit.id} locale={locale} />
+              <ClaimReportGate auditId={audit.id} locale={locale} vous={vous} />
             ) : (
               <PaidReportGate auditId={audit.id} isAgentReport={isAgentReport} locale={locale} />
             )}
@@ -253,7 +257,7 @@ export default async function AuditPage({
   const color = scoreColor(score);
   const lostQuestions = complete && !failed ? lostBuyerQuestions(questions) : [];
   // LE VERDICT : même phrase, même plancher que le rapport verrouillé.
-  const verdictHeadline = complete && !failed && engines2
+  const verdictHeadline = forVous(complete && !failed && engines2
     ? twoEngineHeadline(engines2, { brandName: audit.brand_name, questionCount, locale: locale === "fr" ? "fr" : "en" })
     : complete && !failed
     ? lockedVerdictHeadline({
@@ -265,7 +269,7 @@ export default async function AuditPage({
         competitors: verdictCompetitors(questions),
         locale,
       })
-    : "";
+    : "");
   const rival = complete && !failed ? verdictRival(questions) : null;
   const proof = complete && !failed && isAgentReport ? treatmentProof(audit.brand_name, displayCategory, questions, competitors, answerEngineName, locale, icpSegment) : null;
   const monitorContentBlocks = complete && !failed && isMonitorReport
@@ -291,14 +295,14 @@ export default async function AuditPage({
   // Visiteur interne (cookie gp_internal) : la caisse de TEST Stripe si elle est configurée — E2E sans vraie carte.
   const checkoutUrl = requestTrafficClass(await headers()).trafficClass === "internal" && isCheckoutConfigured(SERVICE_TEST_CHECKOUT_URL) ? SERVICE_TEST_CHECKOUT_URL : SERVICE_CHECKOUT_URL;
   const rankText = ranking.rank ? `${rankLabel(ranking.rank, locale)} / ${ranking.cabinets}` : locale === "fr" ? "hors classement" : "not ranked";
-  const sentiment = brandSentimentView(audit.raw_results?.brandSentiment ?? { label: "not_enough_signal", justification: "not enough signal" }, locale);
+  const sentiment = brandSentimentView(audit.raw_results?.brandSentiment ?? { label: "not_enough_signal", justification: "not enough signal" }, locale, vous);
   // Sans categoryPerception stocké (anciens audits), on recalcule — le repli
   // rend "not_enough_signal", jamais un verdict inventé.
   const categoryPerception: CategoryPerception =
     audit.raw_results?.categoryPerception ?? categoryPerceptionFromPrompts(questions, audit.raw_results?.category ?? "");
 
   const aiCrawl = complete && !failed ? await checkAiCrawlability(audit.website_url) : null;
-  const aiReadability = aiCrawl ? aiReadabilityItems({ llmsFound: aiCrawl.llmsFound, structuredDataFound: audit.raw_results?.structuredDataFound ?? null, crawlState: aiCrawl.state, blocked: aiCrawl.blocked }, locale === "fr" ? "fr" : "en") : [];
+  const aiReadability = aiCrawl ? aiReadabilityItems({ llmsFound: aiCrawl.llmsFound, structuredDataFound: audit.raw_results?.structuredDataFound ?? null, crawlState: aiCrawl.state, blocked: aiCrawl.blocked }, locale === "fr" ? "fr" : "en", vous) : [];
 
   // Fichiers machine : TIERS PAYANTS SEULEMENT. Le tier gratuit ne les calcule
   // même pas — aucun contenu de fichier machine n'existe dans son HTML.
@@ -401,7 +405,7 @@ export default async function AuditPage({
                       : copy.verdictRivalAlso(answerEngineName, rival.name, rival.prompt)}
                   </p>
                 ) : null}
-                <ScoreHero brandName={audit.brand_name} engineName={engines2?.label ?? answerEngineName} plural={Boolean(engines2)} city={cityFromPrompts(questions.map((question) => question.prompt))} rank={ranking.rank} tied={ranking.tied} cabinets={ranking.cabinets} podium={engines2 ? citationLeaderboard({ brandName: audit.brand_name, brandCount: engines2.brandCount, rivals: engines2.rivals, limit: 4 }) : citationLeaderboard({ brandName: audit.brand_name, brandCount: brandMentionCount, rivals: rankedCompetitors, limit: 4 })} cited={brandMentionCount} total={engines2?.totalAnswers ?? questionCount} states={questions.map((question) => promptAnalysis(question).state)} engineRows={engines2?.engines} locale={locale} />
+                <ScoreHero brandName={audit.brand_name} engineName={engines2?.label ?? answerEngineName} plural={Boolean(engines2)} city={cityFromPrompts(questions.map((question) => question.prompt))} rank={ranking.rank} tied={ranking.tied} cabinets={ranking.cabinets} podium={engines2 ? citationLeaderboard({ brandName: audit.brand_name, brandCount: engines2.brandCount, rivals: engines2.rivals, limit: 4 }) : citationLeaderboard({ brandName: audit.brand_name, brandCount: brandMentionCount, rivals: rankedCompetitors, limit: 4 })} cited={brandMentionCount} total={engines2?.totalAnswers ?? questionCount} states={questions.map((question) => promptAnalysis(question).state)} engineRows={engines2?.engines} locale={locale} vous={vous} />
                 <p className="m-0 text-xs font-bold text-[#5E6E86]">{copy.scoreCategoryLine(score, displayCategory)}</p>
                 {isAnswerEngineReport && answerEngine?.realLlmCall ? (
                   <p
@@ -417,6 +421,7 @@ export default async function AuditPage({
 
             <EmailDeliveryNotice
               locale={locale}
+              vous={vous}
               complete={complete}
               failed={failed}
               emailIsAnonymous={isAnonymousEmail(audit.email)}
@@ -507,7 +512,7 @@ export default async function AuditPage({
           </div>
 
           {complete && !failed && boardRows.length ? (
-            <QuestionBoard rows={boardRows} engineName={answerEngineName} locale={locale} />
+            <QuestionBoard rows={boardRows} engineName={answerEngineName} locale={locale} vous={vous} />
           ) : null}
 
           {complete && !failed && isMonitorReport ? (
@@ -547,8 +552,8 @@ export default async function AuditPage({
                   <h2 className="m-0 text-2xl leading-none tracking-[-0.04em]" style={{ fontFamily: "var(--font-display)" }}>
                     {copy.publishLockedTitle}
                   </h2>
-                  {aiReadability.length ? <AiReadabilityBlock items={aiReadability} brandName={audit.brand_name} locale={locale === "fr" ? "fr" : "en"} /> : null}
-                  {valuePlan ? <ServiceValueBlock plan={valuePlan} sources={sourcesSummary(questions, auditDomain)} engineName={answerEngineName} brandName={audit.brand_name} locale={locale} rows={boardRows} cited={brandMentionCount} total={questionCount} topRival={topRival} rankText={rankText} rankEngineName={engines2?.label} /> : (
+                  {aiReadability.length ? <AiReadabilityBlock items={aiReadability} brandName={audit.brand_name} locale={locale === "fr" ? "fr" : "en"} vous={vous} /> : null}
+                  {valuePlan ? <ServiceValueBlock vous={vous} plan={valuePlan} sources={sourcesSummary(questions, auditDomain)} engineName={answerEngineName} brandName={audit.brand_name} locale={locale} rows={boardRows} cited={brandMentionCount} total={questionCount} topRival={topRival} rankText={rankText} rankEngineName={engines2?.label} /> : (
                     <p className="m-0 mt-3 text-sm font-bold leading-6 text-[#5B6B82]">{copy.publishLockedBody}</p>
                   )}
                   <div className="mt-5">

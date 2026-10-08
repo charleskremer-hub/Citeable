@@ -5,6 +5,8 @@ import { useState } from "react";
 type ClaimReportGateProps = {
   auditId: string;
   locale: "fr" | "en";
+  /** Avocats (08/10) : vouvoiement. */
+  vous?: boolean;
 };
 
 /**
@@ -14,7 +16,7 @@ type ClaimReportGateProps = {
  * "un résultat", on l'échange contre le détail (questions testées, concurrents,
  * actions). C'est la contrepartie honnête et ça retire le frein d'entrée.
  */
-export default function ClaimReportGate({ auditId, locale }: ClaimReportGateProps) {
+export default function ClaimReportGate({ auditId, locale, vous = false }: ClaimReportGateProps) {
   const fr = locale === "fr";
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
@@ -43,11 +45,11 @@ export default function ClaimReportGate({ auditId, locale }: ClaimReportGateProp
         {fr ? "Rapport complet" : "Full report"}
       </p>
       <h2 className="m-0 mt-2 text-2xl leading-[1.1] tracking-[-0.03em]" style={{ fontFamily: "var(--font-display)" }}>
-        {fr ? "Vois les questions testées et qui est cité à ta place." : "See the questions tested and who is cited instead of you."}
+        {fr ? (vous ? "Voyez les questions testées et qui est cité à votre place." : "Vois les questions testées et qui est cité à ta place.") : "See the questions tested and who is cited instead of you."}
       </h2>
       <p className="m-0 mt-2 text-sm font-bold leading-6 text-[#5B6B82]">
         {fr
-          ? "Ton score est déjà calculé. Entre ton email pour débloquer le détail : chaque question posée à l'IA, les concurrents nommés, et ce qu'il faut publier pour être cité."
+          ? (vous ? "Votre score est déjà calculé. Indiquez votre email pour débloquer le détail : chaque question posée à l'IA, les confrères nommés, et ce qu'il faut publier pour être cité." : "Ton score est déjà calculé. Entre ton email pour débloquer le détail : chaque question posée à l'IA, les concurrents nommés, et ce qu'il faut publier pour être cité.")
           : "Your score is already calculated. Enter your email to unlock the detail: every question asked to the AI, the competitors named, and what to publish to get cited."}
       </p>
 
@@ -57,7 +59,7 @@ export default function ClaimReportGate({ auditId, locale }: ClaimReportGateProp
           required
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          placeholder={fr ? "ton@email.com" : "you@email.com"}
+          placeholder={fr ? (vous ? "vous@votrecabinet.fr" : "ton@email.com") : "you@email.com"}
           className="w-full rounded-xl border border-[#E4E9F0] bg-[#FBFCFD] px-4 py-3 text-base text-[#132A43] outline-none"
         />
         <button
@@ -71,12 +73,12 @@ export default function ClaimReportGate({ auditId, locale }: ClaimReportGateProp
 
       {status === "error" ? (
         <p className="m-0 mt-2 text-xs font-bold text-[#C0492E]">
-          {fr ? "Ça n'a pas marché. Réessaie." : "That did not work. Try again."}
+          {fr ? (vous ? "Cela n'a pas fonctionné. Réessayez." : "Ça n'a pas marché. Réessaie.") : "That did not work. Try again."}
         </p>
       ) : null}
 
       <p className="m-0 mt-3 text-xs font-bold text-[#5E6E86]">
-        {fr ? "Pas de spam. Ton rapport, et c'est tout." : "No spam. Your report, nothing else."}
+        {fr ? (vous ? "Pas de spam. Votre rapport, et c'est tout." : "Pas de spam. Ton rapport, et c'est tout.") : "No spam. Your report, nothing else."}
       </p>
     </section>
   );

@@ -530,6 +530,8 @@ export function serviceValuePlan(args: {
   brandDomain?: string;
 }): ServiceValuePlan {
   const fr = args.locale === "fr";
+  // Avocats (08/10) : vouvoiement, et la page part en brouillon à valider.
+  const vous = fr && args.category === "law firm";
   const q = (text: string) => (fr ? `« ${text} »` : `“${text}”`);
   const lost = args.lostQuestions.length;
 
@@ -540,13 +542,19 @@ export function serviceValuePlan(args: {
     : lost > 0
       ? fr
         ? lost >= args.questionCount
-          ? `Aujourd'hui, ${args.engineName} ne te cite sur aucune des ${args.questionCount} questions de tes clients. L'objectif : devenir sa réponse.`
-          : `Aujourd'hui, ${args.engineName} ne te cite pas sur ${lost} des ${args.questionCount} questions de tes clients. L'objectif : devenir aussi sa réponse sur ${lost > 1 ? "celles-là" : "celle-là"}.`
+          ? vous
+            ? `Aujourd'hui, ${args.engineName} ne vous cite sur aucune des ${args.questionCount} questions de vos futurs clients. L'objectif : devenir sa réponse.`
+            : `Aujourd'hui, ${args.engineName} ne te cite sur aucune des ${args.questionCount} questions de tes clients. L'objectif : devenir sa réponse.`
+          : vous
+            ? `Aujourd'hui, ${args.engineName} ne vous cite pas sur ${lost} des ${args.questionCount} questions de vos futurs clients. L'objectif : devenir aussi sa réponse sur ${lost > 1 ? "celles-là" : "celle-là"}.`
+            : `Aujourd'hui, ${args.engineName} ne te cite pas sur ${lost} des ${args.questionCount} questions de tes clients. L'objectif : devenir aussi sa réponse sur ${lost > 1 ? "celles-là" : "celle-là"}.`
         : lost >= args.questionCount
           ? `Today, ${args.engineName} names you on none of your clients' ${args.questionCount} questions. The goal: become its answer.`
           : `Today, ${args.engineName} does not name you on ${lost} of your clients' ${args.questionCount} questions. The goal: become its answer there too.`
       : fr
-        ? `${args.engineName} te cite déjà. L'objectif : le rester, chaque mois, face à tes confrères.`
+        ? vous
+          ? `${args.engineName} vous cite déjà. L'objectif : le rester, chaque mois, face à vos confrères.`
+          : `${args.engineName} te cite déjà. L'objectif : le rester, chaque mois, face à tes confrères.`
         : `${args.engineName} already names you. The goal: stay there, every month, against your peers.`;
 
   let value: ServiceValuePlan["value"];
@@ -568,25 +576,33 @@ export function serviceValuePlan(args: {
     {
       when: fr ? "Jour 1" : "Day 1",
       what: fr
-        ? `Notre agent GEO écrit, depuis les faits de ton site, la réponse à ${covered === 1 ? "cette question" : `ces ${covered} questions`}${firstQuestion ? `, à commencer par ${q(firstQuestion)}` : ""}.`
+        ? vous
+          ? `L'agent rédige, depuis les faits de votre site, sans superlatif ni promesse de résultat, la réponse à ${covered === 1 ? "cette question" : `ces ${covered} questions`}${firstQuestion ? `, à commencer par ${q(firstQuestion)}` : ""}.`
+          : `Notre agent GEO écrit, depuis les faits de ton site, la réponse à ${covered === 1 ? "cette question" : `ces ${covered} questions`}${firstQuestion ? `, à commencer par ${q(firstQuestion)}` : ""}.`
         : `Our GEO agent writes, from the facts on your site, the answer to ${covered === 1 ? "this question" : `these ${covered} questions`}${firstQuestion ? `, starting with ${q(firstQuestion)}` : ""}.`,
     },
     {
       when: fr ? "Sous 48 h" : "Within 48 h",
       what: fr
-        ? `Publiées par l'agent sur ${args.brandDomain ?? "ton site"} — ton seul geste : connecter ton site en un clic, sans webmaster.`
+        ? vous
+          ? `Déposées en brouillon sur ${args.brandDomain ?? "votre site"}. Vous les relisez et les publiez : rien n'est mis en ligne sans votre validation.`
+          : `Publiées par l'agent sur ${args.brandDomain ?? "ton site"} — ton seul geste : connecter ton site en un clic, sans webmaster.`
         : `Published by the agent on ${args.brandDomain ?? "your website"} — your only step: connect your site in one click, no webmaster.`,
     },
     {
       when: args.recheckEvery.charAt(0).toUpperCase() + args.recheckEvery.slice(1),
       what: fr
-        ? `Les mêmes questions reposées à ${args.engineName}, avec recherche web. Tu vois, une par une, qui est cité — toi ou ${args.rival?.name ?? "tes confrères"} — et quelles pages l'IA a lues.`
+        ? vous
+          ? `Les mêmes questions reposées à ${args.engineName}, avec recherche web. Vous voyez, une par une, qui est cité — vous ou ${args.rival?.name ?? "vos confrères"} — et quelles pages l'IA a lues.`
+          : `Les mêmes questions reposées à ${args.engineName}, avec recherche web. Tu vois, une par une, qui est cité — toi ou ${args.rival?.name ?? "tes confrères"} — et quelles pages l'IA a lues.`
         : `The same questions asked to ${args.engineName} again, with web search. You see, one by one, who gets named — you or ${args.rival?.name ?? "your peers"} — and which pages AI read.`,
     },
     {
       when: fr ? "En continu" : "Ongoing",
       what: fr
-        ? `Ton tableau de bord : ta visibilité dans l'IA face à ${peers.length ? peers.join(", ") : "tes confrères"}.`
+        ? vous
+          ? `Votre tableau de bord : votre visibilité dans l'IA face à ${peers.length ? peers.join(", ") : "vos confrères"}.`
+          : `Ton tableau de bord : ta visibilité dans l'IA face à ${peers.length ? peers.join(", ") : "tes confrères"}.`
         : `Your dashboard: your AI visibility against ${peers.length ? peers.join(", ") : "your peers"}.`,
     },
   ];

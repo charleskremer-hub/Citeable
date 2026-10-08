@@ -11,10 +11,12 @@ export default function QuestionBoard({
   rows,
   engineName,
   locale,
+  vous = false,
 }: {
   rows: BoardRow[];
   engineName: string;
   locale: Locale;
+  vous?: boolean;
 }) {
   const fr = locale === "fr";
   const needs = needsSummary(rows);
@@ -28,13 +30,13 @@ export default function QuestionBoard({
         {fr ? `Les ${rows.length} questions posées à ${askedTo}` : `The ${rows.length} questions asked to ${askedTo}`}
       </p>
       <h2 className="m-0 mt-2 text-[1.6rem] leading-[1.1] tracking-[-0.03em]" style={{ fontFamily: "var(--font-display)" }}>
-        {fr ? "Ce que tes futurs clients demandent — et qui l'IA leur donne" : "What your future clients ask — and who AI gives them"}
+        {fr ? (vous ? "Ce que vos futurs clients demandent — et qui l'IA leur donne" : "Ce que tes futurs clients demandent — et qui l'IA leur donne") : "What your future clients ask — and who AI gives them"}
       </h2>
       <p className="m-0 mt-2 text-sm font-bold leading-6 text-[#5B6B82]">
         {fr
           ? multi
-            ? "Posées telles quelles, comme un client, recherche web activée. Ton nom n'est jamais dans la question."
-            : "Posées telles quelles, comme un client, avec recherche Google. Ton nom n'est jamais dans la question."
+            ? (vous ? "Posées telles quelles, comme un client, recherche web activée. Votre nom n'est jamais dans la question." : "Posées telles quelles, comme un client, recherche web activée. Ton nom n'est jamais dans la question.")
+            : (vous ? "Posées telles quelles, comme un client, avec recherche Google. Votre nom n'est jamais dans la question." : "Posées telles quelles, comme un client, avec recherche Google. Ton nom n'est jamais dans la question.")
           : multi
             ? "Asked as-is, like a client, with web search on. Your name is never in the question."
             : "Asked as-is, like a client, with Google search. Your name is never in the question."}
@@ -52,8 +54,8 @@ export default function QuestionBoard({
                 </p>
                 <p className="m-0 text-sm font-bold text-[#5B6B82]">
                   {none
-                    ? fr ? `${item.engine} ne te nomme sur aucune question` : `${item.engine} names you on no question`
-                    : fr ? `questions où ${item.engine} te nomme` : `questions where ${item.engine} names you`}
+                    ? fr ? (vous ? `${item.engine} ne vous nomme sur aucune question` : `${item.engine} ne te nomme sur aucune question`) : `${item.engine} names you on no question`
+                    : fr ? (vous ? `questions où ${item.engine} vous nomme` : `questions où ${item.engine} te nomme`) : `questions where ${item.engine} names you`}
                 </p>
                 {item.asked > item.checked ? (
                   <p className="m-0 mt-1 text-xs font-bold text-[#5E6E86]" data-testid="platform-unchecked-note">
@@ -71,7 +73,7 @@ export default function QuestionBoard({
       {needs.length > 1 ? (
         <div className="mt-5 rounded-2xl bg-[#F5F7FA] p-4" data-testid="needs-summary">
           <p className="m-0 text-xs font-black uppercase tracking-[0.12em] text-[#5E6E86]">
-            {fr ? "Par besoin client : tes angles morts d'abord" : "By client need: your blind spots first"}
+            {fr ? (vous ? "Par besoin client : vos angles morts d'abord" : "Par besoin client : tes angles morts d'abord") : "By client need: your blind spots first"}
           </p>
           <ul className="m-0 mt-3 flex list-none flex-wrap gap-2 p-0">
             {needs.map((item) => {
@@ -126,7 +128,7 @@ export default function QuestionBoard({
                       ? row.position.rank === 1
                         ? fr ? "✓ Cité en 1er" : "✓ Named first"
                         : fr ? `✓ Cité ${row.position.rank}e sur ${row.position.of}` : `✓ Named ${row.position.rank} of ${row.position.of}`
-                      : fr ? "✓ Tu es cité" : "✓ You're named"
+                      : fr ? (vous ? "✓ Vous êtes cité" : "✓ Tu es cité") : "✓ You're named"
                     : missing ? (fr ? "✗ Pas cité" : "✗ Not named") : fr ? "— Non vérifié" : "— Not checked"}
                 </span>
               </div>
@@ -154,11 +156,11 @@ export default function QuestionBoard({
                   <span className="text-xs font-black" style={{ color: row.crossCheck.state === "recommended" ? "#17705B" : "#B04329" }}>
                     {row.crossCheck.state === "recommended"
                       ? row.crossCheck.position?.rank === 1
-                        ? fr ? `✓ ${row.crossCheck.engine} te cite en 1er` : `✓ ${row.crossCheck.engine} names you first`
-                        : fr ? `✓ ${row.crossCheck.engine} te cite aussi` : `✓ ${row.crossCheck.engine} names you too`
+                        ? fr ? (vous ? `✓ ${row.crossCheck.engine} vous cite en 1er` : `✓ ${row.crossCheck.engine} te cite en 1er`) : `✓ ${row.crossCheck.engine} names you first`
+                        : fr ? (vous ? `✓ ${row.crossCheck.engine} vous cite aussi` : `✓ ${row.crossCheck.engine} te cite aussi`) : `✓ ${row.crossCheck.engine} names you too`
                       : row.crossCheck.rivals.length
                         ? fr ? `✗ ${row.crossCheck.engine} cite :` : `✗ ${row.crossCheck.engine} names:`
-                        : fr ? `✗ ${row.crossCheck.engine} ne te cite pas` : `✗ ${row.crossCheck.engine} doesn't name you`}
+                        : fr ? (vous ? `✗ ${row.crossCheck.engine} ne vous cite pas` : `✗ ${row.crossCheck.engine} ne te cite pas`) : `✗ ${row.crossCheck.engine} doesn't name you`}
                   </span>
                   {row.crossCheck.state === "missing"
                     ? row.crossCheck.rivals.map((name) => (
@@ -183,7 +185,7 @@ export default function QuestionBoard({
                       className={`rounded-md px-2 py-0.5 text-[0.6875rem] font-black ${page.own ? "text-[#17705B]" : "text-[#5B6B82]"}`}
                       style={{ background: page.own ? "#1F8A701A" : "#EEF2F7" }}
                     >
-                      {page.own ? (fr ? `✓ ton site · ${page.domain}` : `✓ your site · ${page.domain}`) : page.domain}
+                      {page.own ? (fr ? (vous ? `✓ votre site · ${page.domain}` : `✓ ton site · ${page.domain}`) : `✓ your site · ${page.domain}`) : page.domain}
                     </span>
                   ))}
                 </div>

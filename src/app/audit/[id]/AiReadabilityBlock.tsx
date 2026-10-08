@@ -2,14 +2,14 @@ import type { AiReadabilityItem } from "./ai-readability";
 import { aiReadabilityScore } from "./ai-readability";
 
 /** « Ton site, lisible par les IA » — état mesuré en direct + ce que GetPick pose. */
-export default function AiReadabilityBlock({ items, brandName, locale }: { items: AiReadabilityItem[]; brandName: string; locale: "fr" | "en" }) {
+export default function AiReadabilityBlock({ items, brandName, locale, vous = false }: { items: AiReadabilityItem[]; brandName: string; locale: "fr" | "en"; vous?: boolean }) {
   const fr = locale === "fr";
   const { ok, measured } = aiReadabilityScore(items);
   if (measured === 0) return null;
   return (
     <div className="mt-4 rounded-2xl border border-[#E4E9F0] bg-white p-4" data-testid="ai-readability">
       <p className="m-0 text-xs font-black uppercase tracking-[0.1em] text-[#123E5C]">
-        {fr ? "Ton site, lisible par les IA" : "Your site, readable by AI"}
+        {fr ? (vous ? "Votre site, lisible par les IA" : "Ton site, lisible par les IA") : "Your site, readable by AI"}
       </p>
       <p className="m-0 mt-1 text-sm font-bold leading-6 text-[#5B6B82]">
         {fr

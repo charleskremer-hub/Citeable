@@ -19,12 +19,14 @@ export default function ServiceValueBlock({
   topRival,
   rankText,
   rankEngineName,
+  vous = false,
 }: {
   plan: ServiceValuePlan;
   sources: SourcesSummary;
   engineName: string;
   brandName: string;
   locale: Locale;
+  vous?: boolean;
   rows: BoardRow[];
   cited: number;
   total: number;
@@ -82,6 +84,7 @@ export default function ServiceValueBlock({
       </ol>
       {rows.length ? (
         <DashboardMockup
+          vous={vous}
           brandName={brandName}
           engineName={engineName}
           rows={rows}

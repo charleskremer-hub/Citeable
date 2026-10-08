@@ -20,12 +20,15 @@ export default function LockedVerdict({
   headline,
   lostQuestions,
   locale,
+  vous = false,
 }: {
   brandName: string;
   websiteUrl: string;
   headline: string;
   lostQuestions: string[];
   locale: Locale;
+  /** Avocats (08/10) : ni « perdues » ni « acheteurs ». */
+  vous?: boolean;
 }) {
   const fr = locale === "fr";
 
@@ -48,10 +51,10 @@ export default function LockedVerdict({
       {lostQuestions.length ? (
         <section className="rounded-[1.5rem] border border-[#C0492E]/25 bg-[#C0492E]/[0.05] p-5 sm:p-6" data-testid="locked-lost-questions">
           <p className="m-0 text-xs font-black uppercase tracking-[0.12em] text-[#C0492E]">
-            {fr ? "Questions d'achat perdues" : "Lost buyer questions"}
+            {fr ? (vous ? "Questions où vous n'êtes pas cité" : "Questions d'achat perdues") : "Lost buyer questions"}
           </p>
           <h2 className="m-0 mt-2 text-2xl leading-[1.1] tracking-[-0.03em]" style={{ fontFamily: "var(--font-display)" }}>
-            {fr ? `Des vraies questions d'acheteurs. ${brandName} n'y est pas.` : `Real buyer questions. ${brandName} isn't in the answers.`}
+            {fr ? (vous ? `De vraies questions de clients. ${brandName} n'apparaît pas dans les réponses.` : `Des vraies questions d'acheteurs. ${brandName} n'y est pas.`) : `Real buyer questions. ${brandName} isn't in the answers.`}
           </h2>
           <ol className="m-0 mt-4 grid list-none gap-2 p-0">
             {lostQuestions.map((prompt) => (
